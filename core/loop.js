@@ -1,94 +1,117 @@
-// core/loop.js
-// ─────────────────────────────────────────────
-//  Game loop principal
-//  Fase 0 — Base técnica
-// ─────────────────────────────────────────────
-
-import * as THREE from 'three';
-
-const clock   = new THREE.Clock();
-let   frameCount = 0;
-let   lastFPS    = performance.now();
-
-const fpsEl    = document.getElementById('fps');
-const statusEl = document.getElementById('status');
-
 /**
- * Inicia el render loop.
- * En fases futuras se le pasarán: player, enemies, ui, etc.
+ * loop.js — Game loop principal (Fase 1)
+ * Ashes of the Reborn | Valiant Gaming
+ *
+ * Integra: escena | player | joystick | cámara
+ * Reemplaza la rotación demo de Fase 0.
  */
-export function startLoop(scene, camera, renderer) {
 
-  const player    = scene.getObjectByName('player_placeholder');
-  const particles = scene.getObjectByName('ambient_particles');
-  const fireMesh  = scene.userData.fireMesh;
-  const fireLight = scene.userData.fireLight;
+import { initScene }         from './scene.js';
+import { Player }            from './player.js';
+import { VirtualJoystick }   from './joystick.js';
+import { ThirdPersonCamera } from './camera.js';
 
-  let time = 0;
+// ─── Config ──────────────────────────────────────────────────────────────────
 
-  function update(delta) {
-    time += delta;
+const MAX_PIXEL_RATIO  = 2;
+const SHADOW_MAP_SIZE  = 1024;
+const TARGET_FPS       = 60;
+const FRAME_CAP        = 1 / 20;   // delta máximo para evitar saltos grandes
 
-    // ── Animar fogata ──────────────────────
-    if (fireMesh && fireLight) {
-      const flicker = 1.5 + Math.sin(time * 12) * 0.4 + Math.sin(time * 7.3) * 0.2;
-      fireLight.intensity = flicker;
-      fireMesh.scale.setScalar(0.9 + Math.sin(time * 9) * 0.15);
-    }
+// ─── Estado global del loop ──────────────────────────────────────────────────
 
-    // ── Animar partículas ambiente ─────────
-    if (particles) {
-      const pos = particles.geometry.attributes.position;
-      for (let i = 0; i < pos.count; i++) {
-        pos.setY(i, pos.getY(i) + 0.004);
-        pos.setX(i, pos.getX(i) + Math.sin(time + i) * 0.001);
-        // reset si sube mucho
-        if (pos.getY(i) > 8) pos.setY(i, 0);
-      }
-      pos.needsUpdate = true;
-    }
+let renderer, scene, camera;
+let player, joystick, thirdPersonCamera;
+let lastTime = 0;
+let running  = false;
 
-    // ── Animar placeholder del jugador ─────
-    // Solo una respiración sutil — se reemplaza en Fase 1
-    if (player) {
-      player.position.y = 1.0 + Math.sin(time * 1.8) * 0.04;
-    }
+// FPS counter
+let fpsFrames = 0;
+let fpsAccum  = 0;
+let fpsEl     = null;
 
-    // ── Rotar cámara lentamente (demo Fase 0) ─
-    // En Fase 1 la cámara seguirá al jugador en vez de rotar
-    camera.position.x = Math.sin(time * 0.08) * 18;
-    camera.position.z = Math.cos(time * 0.08) * 18;
-    camera.position.y = 12 + Math.sin(time * 0.12) * 1.5;
-    camera.lookAt(0, 1, 0);
-  }
+// ─── Init ────────────────────────────────────────────────────────────────────
 
-  function render() {
-    const delta = clock.getDelta();
+export function initLoop() {
+  // Escena (devuelve { renderer, scene, camera })
+  const result = initScene();
+  renderer = result.renderer;
+  scene    = result.scene;
+  camera   = result.camera;
 
-    // ── FPS counter ────────────────────────
-    frameCount++;
-    const now = performance.now();
-    if (now - lastFPS >= 1000) {
-      const fps = Math.round(frameCount * 1000 / (now - lastFPS));
-      if (fpsEl) fpsEl.textContent = fps + ' FPS';
-      frameCount = 0;
-      lastFPS = now;
+  // Renderer config de rendimiento
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
+  renderer.shadowMap.enabled  = true;
+  renderer.shadowMap.mapSize  = { width: SHADOW_MAP_SIZE, height: SHADOW_MAP_SIZE };
 
-      // Advertencia de rendimiento en móvil
-      if (fps < 30 && statusEl) {
-        statusEl.textContent = '⚠ RENDIMIENTO BAJO — ' + fps + ' FPS';
-        statusEl.style.color = 'rgba(200,80,40,0.7)';
-      } else if (statusEl) {
-        statusEl.textContent = 'ESCENA CARGADA';
-        statusEl.style.color = 'rgba(201,168,76,0.5)';
-      }
-    }
+  // Sistemas Fase 1
+  player            = new Player(scene);
+  joystick          = new VirtualJoystick();
+  thirdPersonCamera = new ThirdPersonCamera(camera, player);
 
-    update(delta);
-    renderer.render(scene, camera);
-    requestAnimationFrame(render);
-  }
+  // FPS display
+  _initFPSCounter();
 
-  requestAnimationFrame(render);
-  console.log('[LOOP] Game loop iniciado.');
+  running = true;
+  requestAnimationFrame(_tick);
 }
+
+// ─── Game loop ───────────────────────────────────────────────────────────────
+
+function _tick(timestamp) {
+  if (!running) return;
+  requestAnimationFrame(_tick);
+
+  // Delta time
+  const delta = Math.min((timestamp - lastTime) * 0.001, FRAME_CAP);
+  lastTime = timestamp;
+
+  // FPS
+  _updateFPS(delta);
+
+  // ── Sistemas ──────────────────────────────────────────────────────────────
+  const input = joystick.getInput();
+  player.update(delta, input, camera);
+  thirdPersonCamera.update(delta);
+
+  // Render
+  renderer.render(scene, camera);
+}
+
+// ─── FPS counter ─────────────────────────────────────────────────────────────
+
+function _initFPSCounter() {
+  fpsEl = document.createElement('div');
+  Object.assign(fpsEl.style, {
+    position:   'fixed',
+    top:        '8px',
+    right:      '8px',
+    color:      'rgba(255,220,100,0.7)',
+    fontFamily: 'monospace',
+    fontSize:   '11px',
+    zIndex:     '200',
+    pointerEvents: 'none',
+  });
+  document.body.appendChild(fpsEl);
+}
+
+function _updateFPS(delta) {
+  fpsFrames++;
+  fpsAccum += delta;
+  if (fpsAccum >= 0.5) {
+    const fps = Math.round(fpsFrames / fpsAccum);
+    fpsEl.textContent = `${fps} FPS`;
+    fpsFrames = 0;
+    fpsAccum  = 0;
+  }
+}
+
+// ─── Control externo ─────────────────────────────────────────────────────────
+
+export function stopLoop() {
+  running = false;
+}
+
+export function getPlayer()  { return player; }
+export function getCamera()  { return thirdPersonCamera; }
+export function getScene()   { return scene; }
