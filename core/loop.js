@@ -2,116 +2,120 @@
  * loop.js — Game loop principal (Fase 1)
  * Ashes of the Reborn | Valiant Gaming
  *
- * Integra: escena | player | joystick | cámara
- * Reemplaza la rotación demo de Fase 0.
+ * Recibe scene, camera, renderer desde game.html (igual que Fase 0).
+ * Integra: Player | VirtualJoystick | ThirdPersonCamera
  */
 
-import { initScene }         from './scene.js';
-import { Player }            from './player.js';
-import { VirtualJoystick }   from './joystick.js';
+import * as THREE          from 'three';
+import { Player }          from './player.js';
+import { VirtualJoystick } from './joystick.js';
 import { ThirdPersonCamera } from './camera.js';
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const MAX_PIXEL_RATIO  = 2;
-const SHADOW_MAP_SIZE  = 1024;
-const TARGET_FPS       = 60;
-const FRAME_CAP        = 1 / 20;   // delta máximo para evitar saltos grandes
+const FRAME_CAP = 1 / 20; // delta máximo (evita saltos si la pestaña pierde foco)
 
-// ─── Estado global del loop ──────────────────────────────────────────────────
+// ─── Estado ──────────────────────────────────────────────────────────────────
 
-let renderer, scene, camera;
-let player, joystick, thirdPersonCamera;
-let lastTime = 0;
-let running  = false;
+let _scene, _camera, _renderer;
+let _player, _joystick, _thirdCam;
+let _lastTime = 0;
+let _running  = false;
 
-// FPS counter
-let fpsFrames = 0;
-let fpsAccum  = 0;
-let fpsEl     = null;
+// FPS
+let _fpsFrames = 0;
+let _fpsAccum  = 0;
+const _fpsEl   = document.getElementById('fps');
 
-// ─── Init ────────────────────────────────────────────────────────────────────
+// ─── startLoop ───────────────────────────────────────────────────────────────
 
-export function initLoop() {
-  // Escena (devuelve { renderer, scene, camera })
-  const result = initScene();
-  renderer = result.renderer;
-  scene    = result.scene;
-  camera   = result.camera;
+/**
+ * Llamado desde game.html después de que initScene() termina.
+ * @param {THREE.Scene}              scene
+ * @param {THREE.PerspectiveCamera}  camera
+ * @param {THREE.WebGLRenderer}      renderer
+ */
+export function startLoop(scene, camera, renderer) {
+  _scene    = scene;
+  _camera   = camera;
+  _renderer = renderer;
 
-  // Renderer config de rendimiento
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
-  renderer.shadowMap.enabled  = true;
-  renderer.shadowMap.mapSize  = { width: SHADOW_MAP_SIZE, height: SHADOW_MAP_SIZE };
+  // Quitar el placeholder de jugador que puso scene.js (Fase 0)
+  const placeholder = scene.getObjectByName('player_placeholder');
+  if (placeholder) scene.remove(placeholder);
 
   // Sistemas Fase 1
-  player            = new Player(scene);
-  joystick          = new VirtualJoystick();
-  thirdPersonCamera = new ThirdPersonCamera(camera, player);
+  _player   = new Player(scene);
+  _joystick = new VirtualJoystick();
+  _thirdCam = new ThirdPersonCamera(camera, _player);
 
-  // FPS display
-  _initFPSCounter();
-
-  running = true;
+  _running  = true;
+  _lastTime = performance.now();
   requestAnimationFrame(_tick);
 }
 
-// ─── Game loop ───────────────────────────────────────────────────────────────
+// ─── Loop ────────────────────────────────────────────────────────────────────
 
 function _tick(timestamp) {
-  if (!running) return;
+  if (!_running) return;
   requestAnimationFrame(_tick);
 
-  // Delta time
-  const delta = Math.min((timestamp - lastTime) * 0.001, FRAME_CAP);
-  lastTime = timestamp;
+  const delta = Math.min((timestamp - _lastTime) * 0.001, FRAME_CAP);
+  _lastTime = timestamp;
 
-  // FPS
   _updateFPS(delta);
+  _animateScene(timestamp);
 
-  // ── Sistemas ──────────────────────────────────────────────────────────────
-  const input = joystick.getInput();
-  player.update(delta, input, camera);
-  thirdPersonCamera.update(delta);
+  // ── Sistemas de Fase 1 ────────────────────────────────────────────────────
+  const input = _joystick.getInput();
+  _player.update(delta, input, _camera);
+  _thirdCam.update(delta);
 
-  // Render
-  renderer.render(scene, camera);
+  _renderer.render(_scene, _camera);
 }
 
-// ─── FPS counter ─────────────────────────────────────────────────────────────
+// ─── Animaciones de escena (fogata, partículas) ───────────────────────────────
 
-function _initFPSCounter() {
-  fpsEl = document.createElement('div');
-  Object.assign(fpsEl.style, {
-    position:   'fixed',
-    top:        '8px',
-    right:      '8px',
-    color:      'rgba(255,220,100,0.7)',
-    fontFamily: 'monospace',
-    fontSize:   '11px',
-    zIndex:     '200',
-    pointerEvents: 'none',
-  });
-  document.body.appendChild(fpsEl);
-}
+function _animateScene(timestamp) {
+  const t = timestamp * 0.001;
 
-function _updateFPS(delta) {
-  fpsFrames++;
-  fpsAccum += delta;
-  if (fpsAccum >= 0.5) {
-    const fps = Math.round(fpsFrames / fpsAccum);
-    fpsEl.textContent = `${fps} FPS`;
-    fpsFrames = 0;
-    fpsAccum  = 0;
+  // Fogata
+  const fireLight = _scene.userData.fireLight;
+  const fireMesh  = _scene.userData.fireMesh;
+  if (fireLight) {
+    fireLight.intensity = 1.8 + Math.sin(t * 7.3) * 0.4 + Math.sin(t * 13.1) * 0.2;
+  }
+  if (fireMesh) {
+    fireMesh.position.y = 0.5 + Math.sin(t * 9) * 0.04;
+    fireMesh.scale.setScalar(1 + Math.sin(t * 11) * 0.08);
+  }
+
+  // Partículas flotantes
+  const particles = _scene.getObjectByName('ambient_particles');
+  if (particles) {
+    particles.rotation.y = t * 0.015;
+    const pos = particles.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      pos.setY(i, pos.getY(i) + 0.003);
+      if (pos.getY(i) > 8) pos.setY(i, 0);
+    }
+    pos.needsUpdate = true;
   }
 }
 
-// ─── Control externo ─────────────────────────────────────────────────────────
+// ─── FPS ─────────────────────────────────────────────────────────────────────
 
-export function stopLoop() {
-  running = false;
+function _updateFPS(delta) {
+  _fpsFrames++;
+  _fpsAccum += delta;
+  if (_fpsAccum >= 0.5 && _fpsEl) {
+    _fpsEl.textContent = Math.round(_fpsFrames / _fpsAccum) + ' FPS';
+    _fpsFrames = 0;
+    _fpsAccum  = 0;
+  }
 }
 
-export function getPlayer()  { return player; }
-export function getCamera()  { return thirdPersonCamera; }
-export function getScene()   { return scene; }
+// ─── API ─────────────────────────────────────────────────────────────────────
+
+export function stopLoop()  { _running = false; }
+export function getPlayer() { return _player; }
