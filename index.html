@@ -68,33 +68,68 @@
       pointer-events: all;
     }
 
+    /* ══ AVISO GIRAR DISPOSITIVO ══ */
+    #rotate-warning {
+      position: fixed; inset: 0;
+      background: #0F1E30;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px;
+      z-index: 999;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s;
+    }
+    #rotate-warning.show { opacity: 1; pointer-events: all; }
+    .rotate-icon {
+      font-size: 2.8rem;
+      animation: rotateAnim 1.5s ease-in-out infinite;
+    }
+    @keyframes rotateAnim {
+      0%,100% { transform: rotate(0deg); }
+      50%      { transform: rotate(90deg); }
+    }
+    .rotate-text {
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem; letter-spacing: 0.3em;
+      color: #C9A84C; text-align: center;
+      text-transform: uppercase;
+    }
+    .rotate-sub {
+      font-family: 'EB Garamond', serif;
+      font-size: 0.9rem; color: rgba(201,168,76,0.45);
+      text-align: center; font-style: italic;
+    }
+
     /* ══ SCREEN 1: VALIANT GAMING LOGO ══ */
-    #screen-logo { background: #05050A; }
+    /* Fondo igual al azul marino de la imagen */
+    #screen-logo {
+      background: radial-gradient(ellipse 80% 70% at 50% 50%,
+        #1E3050 0%, #142038 40%, #0A1420 100%);
+    }
 
     .studio-logo {
       display: flex; flex-direction: column;
-      align-items: center; gap: 28px;
+      align-items: center; gap: 0;
       opacity: 0;
     }
     .studio-logo.reveal {
       animation: logoReveal 4.8s ease forwards;
     }
     @keyframes logoReveal {
-      0%   { opacity: 0; transform: scale(0.92) translateY(8px); }
+      0%   { opacity: 0; transform: scale(0.94) translateY(6px); }
       18%  { opacity: 1; transform: scale(1) translateY(0); }
       72%  { opacity: 1; transform: scale(1); }
-      100% { opacity: 0; transform: scale(1.03); }
+      100% { opacity: 0; transform: scale(1.02); }
     }
     .logo-emblem {
-      width: min(300px, 72vw);
+      /* Ocupa casi toda la pantalla en landscape — la imagen ya incluye texto */
+      width: min(480px, 88vw);
       height: auto;
       display: block;
-      filter: drop-shadow(0 0 32px rgba(201,168,76,0.3));
+      /* Sin drop-shadow extra — la imagen ya tiene su propio glow */
     }
-    @media (orientation: landscape) {
-      .logo-emblem { width: min(240px, 38vw); }
+    @media (orientation: portrait) {
+      .logo-emblem { width: min(320px, 85vw); }
     }
-    /* El texto ya viene en la imagen — los ocultamos */
     .studio-name, .studio-sub { display: none; }
 
     /* ══ SCREEN 2: DEATH SCENE ══ */
@@ -507,6 +542,13 @@
 </head>
 <body>
 
+<!-- AVISO GIRAR -->
+<div id="rotate-warning">
+  <div class="rotate-icon">📱</div>
+  <div class="rotate-text">Gira tu dispositivo</div>
+  <div class="rotate-sub">Este juego está diseñado para modo horizontal</div>
+</div>
+
 <canvas id="particles"></canvas>
 <div class="vignette"></div>
 <div id="flash"></div>
@@ -515,7 +557,7 @@
 <!-- SCREEN 1: LOGO -->
 <div class="screen" id="screen-logo">
   <div class="studio-logo" id="studioLogo">
-    <img src="Valiant.png" class="logo-emblem" alt="Valiant Gaming" />
+    <img src="valiant.png" class="logo-emblem" alt="Valiant Gaming" />
   </div>
 </div>
 
@@ -961,6 +1003,17 @@ window.addEventListener('load', () => {
   if (screen.orientation && screen.orientation.lock) {
     screen.orientation.lock('landscape').catch(() => {});
   }
+
+  // Aviso de girar si está en vertical
+  const warning = document.getElementById('rotate-warning');
+  function checkOrientation() {
+    const isPortrait = window.innerHeight > window.innerWidth;
+    warning.classList.toggle('show', isPortrait);
+  }
+  checkOrientation();
+  window.addEventListener('resize', checkOrientation);
+  window.addEventListener('orientationchange', checkOrientation);
+
   setTimeout(runIntro, 250);
 });
 </script>
