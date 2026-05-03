@@ -200,4 +200,4 @@ export class ThirdPersonCamera {
   destroy() {
     this._zone.remove();
   }
-  }
+}
