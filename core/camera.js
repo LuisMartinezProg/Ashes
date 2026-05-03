@@ -1,198 +1,203 @@
 /**
- * joystick.js — Virtual joystick táctil para móvil
+ * camera.js — Cámara en tercera persona que sigue al jugador
  * Ashes of the Reborn | Valiant Gaming
  *
- * Devuelve un objeto { dx, dy } normalizado [-1, 1]
- * El joystick aparece donde el jugador toca la mitad izquierda de la pantalla.
+ * - Offset configurable (detrás y arriba del jugador)
+ * - Lerp suave para evitar cortes bruscos
+ * - Zona táctil derecha para rotar la cámara (drag horizontal)
+ * - Sin gimbal lock: usa ángulos esféricos
  */
 
-export class VirtualJoystick {
-  constructor() {
-    // Estado interno
-    this.active   = false;
-    this.touchId  = null;
+import * as THREE from 'three';
 
-    // Posición del "base" (donde empezó el toque)
-    this.baseX = 0;
-    this.baseY = 0;
+// ─── Constantes ──────────────────────────────────────────────────────────────
 
-    // Posición actual del pulgar
-    this.stickX = 0;
-    this.stickY = 0;
+const DEFAULT_DISTANCE  = 7.0;    // distancia al jugador
+const DEFAULT_ELEVATION = 0.38;   // ángulo vertical (rad) — vista ligeramente picada
+const MIN_ELEVATION     = 0.08;   // mínimo ángulo (casi horizontal)
+const MAX_ELEVATION     = 1.1;    // máximo ángulo (casi cenital)
+const LERP_POSITION     = 6.0;    // suavidad del seguimiento
+const LERP_LOOKAT       = 8.0;    // suavidad del look-at
+const ROTATION_SENS     = 0.005;  // sensibilidad del giro táctil
 
-    // Radio máximo de desplazamiento (px)
-    this.radius = 55;
+// ─── ThirdPersonCamera ───────────────────────────────────────────────────────
 
-    // Output normalizado
-    this.dx = 0;
-    this.dy = 0;
+export class ThirdPersonCamera {
+  /**
+   * @param {THREE.PerspectiveCamera} camera  — cámara existente de la escena
+   * @param {Player}                  player  — instancia de Player
+   */
+  constructor(camera, player) {
+    this.camera = camera;
+    this.player = player;
 
-    // Canvas propio para dibujarse
-    this._createCanvas();
+    // Ángulos esféricos
+    this.azimuth   = Math.PI;       // horizontal (detrás del jugador al inicio)
+    this.elevation = DEFAULT_ELEVATION;
+    this.distance  = DEFAULT_DISTANCE;
+
+    // Target suave del look-at
+    this._lookTarget = new THREE.Vector3();
+
+    // Posición ideal calculada
+    this._idealPos   = new THREE.Vector3();
+
+    // Estado del giro táctil
+    this._dragActive  = false;
+    this._dragTouchId = null;
+    this._dragLastX   = 0;
+    this._dragLastY   = 0;
+
+    this._createTouchZone();
     this._bindEvents();
+
+    // Snap inmediato al inicio (sin lerp)
+    this._snapToPlayer();
   }
 
-  // ─── DOM ────────────────────────────────────────────────────────────────────
+  // ─── Zona táctil derecha ─────────────────────────────────────────────────
 
-  _createCanvas() {
-    this.canvas = document.createElement('canvas');
-    this.canvas.id = 'joystick-canvas';
-    Object.assign(this.canvas.style, {
+  _createTouchZone() {
+    this._zone = document.createElement('div');
+    Object.assign(this._zone.style, {
       position:      'fixed',
-      bottom:        '0',
-      left:          '0',
-      width:         '50%',       // zona táctil = mitad izquierda
+      top:           '0',
+      right:         '0',
+      width:         '50%',
       height:        '100%',
       zIndex:        '100',
-      pointerEvents: 'auto',
       touchAction:   'none',
+      pointerEvents: 'auto',
     });
-    // El canvas real se dimensiona en _resize
-    document.body.appendChild(this.canvas);
-    this.ctx = this.canvas.getContext('2d');
-    this._resize();
+    document.body.appendChild(this._zone);
   }
-
-  _resize() {
-    // La mitad izquierda de la pantalla
-    this.canvas.width  = window.innerWidth  * 0.5 * (window.devicePixelRatio || 1);
-    this.canvas.height = window.innerHeight * (window.devicePixelRatio || 1);
-    this.canvas.style.width  = window.innerWidth * 0.5 + 'px';
-    this.canvas.style.height = window.innerHeight + 'px';
-    this._draw();
-  }
-
-  // ─── EVENTOS ────────────────────────────────────────────────────────────────
 
   _bindEvents() {
-    this.canvas.addEventListener('touchstart',  this._onStart.bind(this),  { passive: false });
-    this.canvas.addEventListener('touchmove',   this._onMove.bind(this),   { passive: false });
-    this.canvas.addEventListener('touchend',    this._onEnd.bind(this),    { passive: false });
-    this.canvas.addEventListener('touchcancel', this._onEnd.bind(this),    { passive: false });
-    window.addEventListener('resize', this._resize.bind(this));
+    this._zone.addEventListener('touchstart',  this._onTouchStart.bind(this),  { passive: false });
+    this._zone.addEventListener('touchmove',   this._onTouchMove.bind(this),   { passive: false });
+    this._zone.addEventListener('touchend',    this._onTouchEnd.bind(this),    { passive: false });
+    this._zone.addEventListener('touchcancel', this._onTouchEnd.bind(this),    { passive: false });
+
+    // Soporte mouse en desktop (debug)
+    this._zone.addEventListener('mousedown',   this._onMouseDown.bind(this));
+    window.addEventListener('mousemove',       this._onMouseMove.bind(this));
+    window.addEventListener('mouseup',         this._onMouseUp.bind(this));
   }
 
-  _onStart(e) {
+  // ─── Touch handlers ──────────────────────────────────────────────────────
+
+  _onTouchStart(e) {
     e.preventDefault();
-    if (this.active) return;          // sólo un toque a la vez
-
-    const touch = e.changedTouches[0];
-    const rect  = this.canvas.getBoundingClientRect();
-
-    this.active   = true;
-    this.touchId  = touch.identifier;
-    this.baseX    = touch.clientX - rect.left;
-    this.baseY    = touch.clientY - rect.top;
-    this.stickX   = this.baseX;
-    this.stickY   = this.baseY;
-    this._draw();
+    if (this._dragActive) return;
+    const t = e.changedTouches[0];
+    this._dragActive  = true;
+    this._dragTouchId = t.identifier;
+    this._dragLastX   = t.clientX;
+    this._dragLastY   = t.clientY;
   }
 
-  _onMove(e) {
+  _onTouchMove(e) {
     e.preventDefault();
-    if (!this.active) return;
-
-    // Busca el toque correcto por ID
-    let touch = null;
-    for (const t of e.changedTouches) {
-      if (t.identifier === this.touchId) { touch = t; break; }
+    if (!this._dragActive) return;
+    let t = null;
+    for (const touch of e.changedTouches) {
+      if (touch.identifier === this._dragTouchId) { t = touch; break; }
     }
-    if (!touch) return;
+    if (!t) return;
 
-    const rect = this.canvas.getBoundingClientRect();
-    const rawX = touch.clientX - rect.left;
-    const rawY = touch.clientY - rect.top;
+    const dx = t.clientX - this._dragLastX;
+    const dy = t.clientY - this._dragLastY;
+    this._dragLastX = t.clientX;
+    this._dragLastY = t.clientY;
 
-    // Limitar al radio
-    const ddx = rawX - this.baseX;
-    const ddy = rawY - this.baseY;
-    const dist = Math.sqrt(ddx * ddx + ddy * ddy);
-    const clamped = Math.min(dist, this.radius);
-    const angle   = Math.atan2(ddy, ddx);
-
-    this.stickX = this.baseX + Math.cos(angle) * clamped;
-    this.stickY = this.baseY + Math.sin(angle) * clamped;
-
-    // Normalizar output
-    this.dx = (dist > 8) ? Math.cos(angle) * Math.min(dist / this.radius, 1) : 0;
-    this.dy = (dist > 8) ? Math.sin(angle) * Math.min(dist / this.radius, 1) : 0;
-
-    this._draw();
+    this._applyDelta(dx, dy);
   }
 
-  _onEnd(e) {
+  _onTouchEnd(e) {
     e.preventDefault();
     for (const t of e.changedTouches) {
-      if (t.identifier === this.touchId) {
-        this.active  = false;
-        this.touchId = null;
-        this.dx      = 0;
-        this.dy      = 0;
-        this._draw();
+      if (t.identifier === this._dragTouchId) {
+        this._dragActive  = false;
+        this._dragTouchId = null;
         break;
       }
     }
   }
 
-  // ─── RENDER ─────────────────────────────────────────────────────────────────
+  // ─── Mouse handlers (debug desktop) ─────────────────────────────────────
 
-  _draw() {
-    const dpr = window.devicePixelRatio || 1;
-    const ctx  = this.ctx;
-    const w    = this.canvas.width;
-    const h    = this.canvas.height;
-
-    ctx.clearRect(0, 0, w, h);
-
-    if (!this.active) return;
-
-    // Escalar para DPR
-    const bx = this.baseX  * dpr;
-    const by = this.baseY  * dpr;
-    const sx = this.stickX * dpr;
-    const sy = this.stickY * dpr;
-    const r  = this.radius  * dpr;
-
-    // Base (aro exterior)
-    ctx.beginPath();
-    ctx.arc(bx, by, r, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-    ctx.lineWidth   = 2 * dpr;
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.fill();
-
-    // Línea base → stick
-    ctx.beginPath();
-    ctx.moveTo(bx, by);
-    ctx.lineTo(sx, sy);
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-    ctx.lineWidth   = 1.5 * dpr;
-    ctx.stroke();
-
-    // Stick (pulgar)
-    const sr = 22 * dpr;
-    const grad = ctx.createRadialGradient(sx - sr * 0.3, sy - sr * 0.3, sr * 0.1, sx, sy, sr);
-    grad.addColorStop(0, 'rgba(255,200,100,0.85)');
-    grad.addColorStop(1, 'rgba(200,100,30,0.55)');
-
-    ctx.beginPath();
-    ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,200,100,0.45)';
-    ctx.lineWidth   = 1.5 * dpr;
-    ctx.stroke();
+  _onMouseDown(e) {
+    this._dragActive = true;
+    this._dragLastX  = e.clientX;
+    this._dragLastY  = e.clientY;
   }
 
-  // ─── API PÚBLICA ────────────────────────────────────────────────────────────
+  _onMouseMove(e) {
+    if (!this._dragActive) return;
+    const dx = e.clientX - this._dragLastX;
+    const dy = e.clientY - this._dragLastY;
+    this._dragLastX = e.clientX;
+    this._dragLastY = e.clientY;
+    this._applyDelta(dx, dy);
+  }
 
-  /** Retorna { dx, dy } normalizado, listo para mover al jugador */
-  getInput() {
-    return { dx: this.dx, dy: this.dy };
+  _onMouseUp() {
+    this._dragActive = false;
+  }
+
+  // ─── Lógica de rotación ──────────────────────────────────────────────────
+
+  _applyDelta(dx, dy) {
+    this.azimuth   -= dx * ROTATION_SENS;
+    this.elevation += dy * ROTATION_SENS;
+    // Clampar elevación
+    this.elevation = Math.max(MIN_ELEVATION, Math.min(MAX_ELEVATION, this.elevation));
+  }
+
+  // ─── Posición ideal en esfera ────────────────────────────────────────────
+
+  _calcIdealPosition() {
+    const target = this.player.chestPosition;
+    // Coordenadas esféricas → cartesianas
+    const sinEl = Math.sin(this.elevation);
+    const cosEl = Math.cos(this.elevation);
+    const x = target.x + this.distance * cosEl * Math.sin(this.azimuth);
+    const y = target.y + this.distance * sinEl;
+    const z = target.z + this.distance * cosEl * Math.cos(this.azimuth);
+    this._idealPos.set(x, y, z);
+  }
+
+  _snapToPlayer() {
+    this._calcIdealPosition();
+    this.camera.position.copy(this._idealPos);
+    this._lookTarget.copy(this.player.chestPosition);
+    this.camera.lookAt(this._lookTarget);
+  }
+
+  // ─── Update (llamado cada frame) ─────────────────────────────────────────
+
+  /**
+   * @param {number} delta — segundos desde el último frame
+   */
+  update(delta) {
+    this._calcIdealPosition();
+
+    // Lerp posición
+    this.camera.position.lerp(this._idealPos, Math.min(LERP_POSITION * delta, 1));
+
+    // Lerp look-at target hacia el pecho del jugador
+    this._lookTarget.lerp(this.player.chestPosition, Math.min(LERP_LOOKAT * delta, 1));
+    this.camera.lookAt(this._lookTarget);
+  }
+
+  // ─── Accessors ───────────────────────────────────────────────────────────
+
+  /** Ángulo azimutal actual — útil para orientar el movimiento relativo a cámara */
+  get azimuthAngle() {
+    return this.azimuth;
   }
 
   destroy() {
-    this.canvas.remove();
+    this._zone.remove();
   }
 }
