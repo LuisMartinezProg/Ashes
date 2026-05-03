@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ashes of the Reborn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold:       #C9A84C;
+      --gold-light: #E8C97A;
+      --gold-dim:   #7A6030;
+      --ash:        #1A1A1E;
+      --ash-mid:    #12121A;
+      --ash-deep:   #0A0A10;
+      --ember:      #8B2A0A;
+      --smoke:      #2E2E38;
+      --text:       #D4C9A8;
+      --text-dim:   #7A7060;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--ash-deep);
+      font-family: 'EB Garamond', serif;
+      color: var(--text);
+      cursor: default;
+    }
+
+    /* ─── PARTICLE CANVAS ─── */
+    #particles {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── VIGNETTE ─── */
+    .vignette {
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center,
+        transparent 30%,
+        rgba(5,5,10,0.7) 80%,
+        rgba(5,5,10,0.97) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ─── SCREENS ─── */
+    .screen {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10;
+      transition: opacity 0.05s;
+    }
+    .screen.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ══ SCREEN 1: VALIANT GAMING LOGO ══ */
+    #screen-logo { background: #05050A; }
+
+    .studio-logo {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 28px;
+      opacity: 0;
+    }
+    .studio-logo.reveal {
+      animation: logoReveal 4.8s ease forwards;
+    }
+    @keyframes logoReveal {
+      0%   { opacity: 0; transform: scale(0.92) translateY(8px); }
+      18%  { opacity: 1; transform: scale(1) translateY(0); }
+      72%  { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.03); }
+    }
+    .logo-emblem {
+      width: 110px; height: 110px;
+      filter: drop-shadow(0 0 28px rgba(201,168,76,0.45));
+    }
+    .studio-name {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.3rem, 2.8vw, 2rem);
+      letter-spacing: 0.38em;
+      color: var(--gold);
+      text-shadow: 0 0 40px rgba(201,168,76,0.25);
+    }
+    .studio-sub {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.55rem, 1vw, 0.7rem);
+      letter-spacing: 0.55em;
+      color: var(--gold-dim);
+    }
+
+    /* ══ SCREEN 2: DEATH SCENE ══ */
+    #screen-death { background: #07070F; }
+
+    .rain-overlay {
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        180deg,
+        transparent 0px, transparent 3px,
+        rgba(100,120,160,0.025) 3px, rgba(100,120,160,0.025) 4px
+      );
+      animation: rainFall 0.35s linear infinite;
+      opacity: 0;
+      transition: opacity 1.8s;
+    }
+    .rain-overlay.visible { opacity: 1; }
+    @keyframes rainFall {
+      from { background-position: 0 0; }
+      to   { background-position: 18px 72px; }
+    }
+    .street-glow {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 35%;
+      background: linear-gradient(to top, rgba(50,70,110,0.12) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    .neon-flicker {
+      position: absolute; top: 16%; right: 14%;
+      width: 5px; height: 5px; border-radius: 50%;
+      background: rgba(140,170,255,0.55);
+      box-shadow: 0 0 18px 7px rgba(110,140,255,0.15);
+      animation: flicker 4s steps(1) infinite;
+    }
+    @keyframes flicker {
+      0%,17%,21%,24%,52%,56%,100% { opacity: 1; }
+      19%,23%,54% { opacity: 0.25; }
+    }
+
+    /* ══ SCREEN 3: LIMBO ══ */
+    #screen-limbo { background: #F2EEE4; }
+
+    .limbo-fog {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 85% 65% at 50% 50%,
+        rgba(255,255,255,0.96) 0%,
+        rgba(228,222,210,0.88) 50%,
+        rgba(195,188,175,0.72) 100%);
+      animation: fogPulse 7s ease-in-out infinite;
+    }
+    @keyframes fogPulse {
+      0%,100% { opacity: 0.88; transform: scale(1); }
+      50%      { opacity: 1;   transform: scale(1.025); }
+    }
+    .limbo-light {
+      position: absolute;
+      width: 280px; height: 280px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,245,1) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -62%);
+      filter: blur(45px);
+      animation: lightFloat 9s ease-in-out infinite;
+    }
+    @keyframes lightFloat {
+      0%,100% { transform: translate(-50%, -62%); opacity: 0.55; }
+      50%      { transform: translate(-50%, -56%); opacity: 0.9; }
+    }
+    #screen-limbo .dialogue-box {
+      background: rgba(240,235,220,0.92);
+      border-color: rgba(120,100,60,0.25);
+      border-top-color: rgba(120,100,60,0.55);
+    }
+    #screen-limbo .dialogue-box::before {
+      background: linear-gradient(90deg, transparent, rgba(150,120,60,0.7), transparent);
+    }
+    #screen-limbo .dialogue-text { color: #28221A; }
+    #screen-limbo .speaker-name  { color: #6A5020; }
+    #screen-limbo .direction-text { color: #8A7850; }
+    #screen-limbo .continue-hint { color: #9A8A60; }
+    #screen-limbo .choice-btn {
+      background: rgba(240,235,220,0.9);
+      border-color: rgba(120,100,60,0.22);
+      color: #2A2018;
+    }
+    #screen-limbo .choice-btn:hover { color: #6A5020; border-color: rgba(150,120,60,0.6); }
+    #screen-limbo .choice-btn::before { background: #8A6830; }
+
+    /* ══ SCREEN 4: MENU PRINCIPAL ══ */
+    #screen-menu { background: var(--ash-deep); }
+
+    .menu-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 55% 75% at 50% 105%,
+          rgba(139,42,10,0.22) 0%, transparent 58%),
+        radial-gradient(ellipse 35% 35% at 18% 28%,
+          rgba(201,168,76,0.04) 0%, transparent 48%),
+        linear-gradient(180deg, #04040A 0%, #0E0E1A 100%);
+    }
+    .menu-title-wrap {
+      position: relative; text-align: center;
+      margin-bottom: 56px;
+    }
+    .menu-title-bg {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(2.2rem, 6.5vw, 5.5rem);
+      font-weight: 900;
+      color: transparent;
+      -webkit-text-stroke: 1px var(--gold-dim);
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+      opacity: 0.12; pointer-events: none;
+      filter: blur(2px);
+    }
+    .menu-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(2.2rem, 6.5vw, 5.5rem);
+      font-weight: 900;
+      background: linear-gradient(175deg,
+        var(--gold-light) 0%,
+        var(--gold) 45%,
+        var(--gold-dim) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 28px rgba(201,168,76,0.2));
+      position: relative;
+    }
+    .menu-subtitle {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.6rem, 1.2vw, 0.82rem);
+      letter-spacing: 0.48em;
+      color: var(--gold-dim);
+      margin-top: 16px;
+      text-transform: uppercase;
+    }
+    .menu-divider {
+      width: 180px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 28px auto 46px;
+      position: relative;
+    }
+    .menu-divider::before {
+      content: '✦';
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--gold); font-size: 0.65rem;
+      background: var(--ash-deep); padding: 0 8px;
+    }
+    .menu-options {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+    }
+    .menu-btn {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.72rem, 1.4vw, 0.95rem);
+      letter-spacing: 0.22em;
+      color: var(--text-dim);
+      background: none; border: none;
+      padding: 13px 52px;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.28s, letter-spacing 0.28s;
+      text-transform: uppercase;
+    }
+    .menu-btn::before {
+      content: '';
+      position: absolute; bottom: 7px; left: 50%;
+      transform: translateX(-50%) scaleX(0);
+      width: 55%; height: 1px;
+      background: var(--gold);
+      transition: transform 0.28s;
+    }
+    .menu-btn:hover { color: var(--gold); letter-spacing: 0.32em; }
+    .menu-btn:hover::before { transform: translateX(-50%) scaleX(1); }
+    .menu-btn.primary {
+      color: var(--gold-light);
+      font-size: clamp(0.8rem, 1.6vw, 1.05rem);
+    }
+    .menu-btn.primary:hover { color: #fff; }
+    .menu-version {
+      position: absolute; bottom: 22px; right: 30px;
+      font-family: 'Cinzel', serif; font-size: 0.58rem;
+      letter-spacing: 0.2em; color: var(--text-dim); opacity: 0.35;
+    }
+
+    /* ─── DIALOGUE BOX ─── */
+    .dialogue-box {
+      position: absolute; bottom: 7%; left: 50%;
+      transform: translateX(-50%);
+      width: min(780px, 92vw);
+      background: rgba(8,8,14,0.9);
+      border: 1px solid rgba(201,168,76,0.18);
+      border-top: 2px solid rgba(201,168,76,0.48);
+      padding: 26px 34px 22px;
+      backdrop-filter: blur(10px);
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .dialogue-box.visible { opacity: 1; }
+    .dialogue-box::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+    .speaker-name {
+      font-family: 'Cinzel', serif;
+      font-size: 0.72rem; letter-spacing: 0.32em;
+      color: var(--gold); text-transform: uppercase;
+      margin-bottom: 9px; min-height: 1.2em;
+    }
+    .dialogue-text {
+      font-family: 'EB Garamond', serif;
+      font-size: clamp(1rem, 1.75vw, 1.18rem);
+      line-height: 1.72; color: var(--text);
+      min-height: 2.4em;
+    }
+    .direction-text {
+      font-family: 'EB Garamond', serif;
+      font-style: italic;
+      font-size: clamp(0.88rem, 1.45vw, 1.02rem);
+      color: var(--text-dim); line-height: 1.65;
+      min-height: 2em;
+    }
+    .continue-hint {
+      text-align: right; margin-top: 12px;
+      font-family: 'Cinzel', serif; font-size: 0.58rem;
+      letter-spacing: 0.32em; color: var(--gold-dim);
+      opacity: 0; transition: opacity 0.4s;
+      animation: blink 2s ease-in-out infinite;
+    }
+    .continue-hint.visible { opacity: 1; }
+    @keyframes blink {
+      0%,100% { opacity: 0.35; } 50% { opacity: 0.9; }
+    }
+
+    /* ─── CHOICE BOX ─── */
+    .choice-box {
+      position: absolute; bottom: 7%; left: 50%;
+      transform: translateX(-50%);
+      width: min(780px, 92vw);
+      display: flex; flex-direction: column; gap: 8px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.5s;
+    }
+    .choice-box.visible { opacity: 1; pointer-events: all; }
+
+    .choice-btn {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.72rem, 1.35vw, 0.92rem);
+      letter-spacing: 0.1em; color: var(--text);
+      background: rgba(8,8,14,0.88);
+      border: 1px solid rgba(201,168,76,0.18);
+      padding: 15px 26px; cursor: pointer;
+      text-align: left;
+      transition: all 0.22s; backdrop-filter: blur(10px);
+      position: relative; overflow: hidden;
+    }
+    .choice-btn::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: var(--gold);
+      transform: scaleY(0); transition: transform 0.22s;
+    }
+    .choice-btn:hover {
+      border-color: rgba(201,168,76,0.55);
+      color: var(--gold-light); padding-left: 34px;
+    }
+    .choice-btn:hover::before { transform: scaleY(1); }
+
+    /* ─── OVERLAYS ─── */
+    #flash {
+      position: fixed; inset: 0; background: #fff;
+      opacity: 0; pointer-events: none; z-index: 100;
+    }
+    #fade {
+      position: fixed; inset: 0; background: #04040A;
+      opacity: 1; pointer-events: none; z-index: 50;
+      transition: opacity 1.2s ease;
+    }
+    #fade.clear { opacity: 0; }
+
+    .ripple {
+      position: fixed; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.5);
+      transform: scale(0); pointer-events: none; z-index: 99;
+      animation: rippleOut 0.65s ease-out forwards;
+    }
+    @keyframes rippleOut { to { transform: scale(9); opacity: 0; } }
+
+    #audio-note {
+      position: fixed; bottom: 18px; left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Cinzel', serif; font-size: 0.58rem;
+      letter-spacing: 0.28em; color: var(--gold-dim);
+      opacity: 0; transition: opacity 1.2s; z-index: 200;
+      white-space: nowrap;
+    }
+    #audio-note.show { opacity: 0.45; }
+  </style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+<div class="vignette"></div>
+<div id="flash"></div>
+<div id="fade"></div>
+
+<!-- SCREEN 1: LOGO -->
+<div class="screen" id="screen-logo">
+  <div class="studio-logo" id="studioLogo">
+    <div class="logo-emblem">
+      <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="200" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stop-color="#E8C97A"/>
+            <stop offset="50%"  stop-color="#C9A84C"/>
+            <stop offset="100%" stop-color="#7A6030"/>
+          </linearGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <!-- Crown -->
+        <polygon points="100,8 116,46 100,38 84,46" fill="url(#gGold)" filter="url(#glow)"/>
+        <polygon points="57,22 79,56 66,50 52,62"   fill="url(#gGold)" filter="url(#glow)"/>
+        <polygon points="143,22 121,56 134,50 148,62" fill="url(#gGold)" filter="url(#glow)"/>
+        <!-- Shield outline -->
+        <path d="M38 66 L162 66 L162 142 Q162 178 100 192 Q38 178 38 142 Z"
+              fill="url(#gGold)" opacity="0.1"/>
+        <path d="M38 66 L162 66 L162 142 Q162 178 100 192 Q38 178 38 142 Z"
+              fill="none" stroke="url(#gGold)" stroke-width="2.5"/>
+        <!-- V -->
+        <path d="M60 82 L100 150 L140 82" fill="none"
+              stroke="url(#gGold)" stroke-width="7.5"
+              stroke-linejoin="round" stroke-linecap="round" filter="url(#glow)"/>
+        <!-- G -->
+        <path d="M76 110 Q76 90 100 90 Q124 90 124 110 L112 110 Q112 100 100 100 Q88 100 88 110 Q88 120 100 120 Q109 120 112 116 L112 111 L100 111"
+              fill="none" stroke="url(#gGold)" stroke-width="3.5"
+              stroke-linecap="round" filter="url(#glow)"/>
+      </svg>
+    </div>
+    <div class="studio-name">VALIANT GAMING</div>
+    <div class="studio-sub">PRESENTA</div>
+  </div>
+</div>
+
+<!-- SCREEN 2: MUERTE -->
+<div class="screen" id="screen-death">
+  <div class="rain-overlay" id="rain"></div>
+  <div class="street-glow"></div>
+  <div class="neon-flicker"></div>
+  <div class="dialogue-box" id="death-dialogue">
+    <div class="speaker-name"  id="death-speaker"></div>
+    <div class="direction-text" id="death-dir"></div>
+    <div class="dialogue-text"  id="death-text"></div>
+    <div class="continue-hint"  id="death-hint">[ CONTINUAR ]</div>
+  </div>
+</div>
+
+<!-- SCREEN 3: LIMBO -->
+<div class="screen" id="screen-limbo">
+  <div class="limbo-fog"></div>
+  <div class="limbo-light"></div>
+  <div class="dialogue-box" id="limbo-dialogue">
+    <div class="speaker-name"  id="limbo-speaker"></div>
+    <div class="direction-text" id="limbo-dir"></div>
+    <div class="dialogue-text"  id="limbo-text"></div>
+    <div class="continue-hint"  id="limbo-hint">[ CONTINUAR ]</div>
+  </div>
+  <div class="choice-box" id="limbo-choices">
+    <button class="choice-btn" data-choice="accept">— De acuerdo.</button>
+    <button class="choice-btn" data-choice="refuse">— No.</button>
+  </div>
+</div>
+
+<!-- SCREEN 4: MENÚ -->
+<div class="screen" id="screen-menu">
+  <div class="menu-bg"></div>
+  <div style="position:relative;text-align:center;z-index:2;">
+    <div class="menu-title-wrap">
+      <div class="menu-title-bg">ASHES OF THE REBORN</div>
+      <div class="menu-title">ASHES OF THE REBORN</div>
+      <div class="menu-subtitle">Un mundo aguarda. Un destino elegido.</div>
+    </div>
+    <div class="menu-divider"></div>
+    <nav class="menu-options">
+      <button class="menu-btn primary" onclick="startGame()">Nueva Partida</button>
+      <button class="menu-btn" style="opacity:0.45;cursor:not-allowed">Continuar</button>
+      <button class="menu-btn" style="opacity:0.45;cursor:not-allowed">Opciones</button>
+      <button class="menu-btn" onclick="replayIntro()">Ver Introducción</button>
+    </nav>
+  </div>
+  <div class="menu-version">BETA v0.1 — IRONFELL</div>
+</div>
+
+<div id="audio-note">ACTIVA EL AUDIO PARA MEJOR EXPERIENCIA</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  ASHES OF THE REBORN — INTRO ENGINE
+//  Valiant Gaming © 2026
+// ══════════════════════════════════════════════
+
+// ── PARTICLES ────────────────────────────────
+const canvas = document.getElementById('particles');
+const ctx    = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor() { this.reset(true); }
+  reset(random) {
+    this.x    = Math.random() * canvas.width;
+    this.y    = random ? Math.random() * canvas.height : canvas.height + 5;
+    this.size = Math.random() * 1.1 + 0.2;
+    this.vx   = (Math.random() - 0.5) * 0.1;
+    this.vy   = -(Math.random() * 0.22 + 0.06);
+    this.maxL = Math.random() * 280 + 160;
+    this.life = random ? Math.random() * this.maxL : 0;
+    this.hue  = Math.random() * 25 + 32;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy; this.life++;
+    if (this.life > this.maxL || this.y < -4) this.reset(false);
+  }
+  draw() {
+    const p = this.life / this.maxL;
+    const a = p < 0.12 ? p/0.12 : p > 0.78 ? (1-p)/0.22 : 1;
+    ctx.save();
+    ctx.globalAlpha = a * 0.3;
+    ctx.fillStyle = `hsl(${this.hue},58%,58%)`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+const parts = Array.from({length:90}, () => new Particle());
+(function loop() { ctx.clearRect(0,0,canvas.width,canvas.height); parts.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(loop); })();
+
+// ── SCREEN MANAGER ───────────────────────────
+const SCREENS = {
+  logo:  document.getElementById('screen-logo'),
+  death: document.getElementById('screen-death'),
+  limbo: document.getElementById('screen-limbo'),
+  menu:  document.getElementById('screen-menu'),
+};
+
+function showScreen(id) {
+  Object.values(SCREENS).forEach(s => s.classList.remove('active'));
+  if (id && SCREENS[id]) SCREENS[id].classList.add('active');
+}
+
+const fadeEl = document.getElementById('fade');
+function fadeIn(cb, ms=1200) {
+  fadeEl.style.transition = 'none';
+  fadeEl.style.opacity = '1';
+  fadeEl.classList.remove('clear');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    fadeEl.style.transition = `opacity ${ms}ms ease`;
+    fadeEl.style.opacity = '0';
+    setTimeout(() => { fadeEl.classList.add('clear'); cb&&cb(); }, ms);
+  }));
+}
+function fadeOut(cb, ms=1000) {
+  fadeEl.classList.remove('clear');
+  fadeEl.style.transition = `opacity ${ms}ms ease`;
+  fadeEl.style.opacity = '1';
+  setTimeout(() => cb&&cb(), ms);
+}
+
+const flashEl = document.getElementById('flash');
+function gunFlash(cb) {
+  flashEl.style.transition = 'none';
+  flashEl.style.opacity = '1';
+  const r = Object.assign(document.createElement('div'), { className:'ripple' });
+  Object.assign(r.style, { width:'50px', height:'50px', top:'44%', left:'47%', marginLeft:'-25px', marginTop:'-25px' });
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 750);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    flashEl.style.transition = 'opacity 0.85s ease';
+    flashEl.style.opacity = '0';
+    setTimeout(() => cb&&cb(), 950);
+  }));
+}
+
+// ── TYPEWRITER ───────────────────────────────
+function typewrite(el, text, speed, cb) {
+  el.textContent = '';
+  let i = 0;
+  const t = setInterval(() => {
+    el.textContent += text[i++];
+    if (i >= text.length) { clearInterval(t); cb&&setTimeout(cb,250); }
+  }, speed||26);
+  return t;
+}
+
+// ── DIALOGUE ENGINE ──────────────────────────
+let seq = [], step = 0, waiting = false, onSeqDone = null;
+let choiceCb = null;
+
+function runSeq(sequence, done) {
+  seq = sequence; step = 0; waiting = false; onSeqDone = done;
+  nextStep();
+}
+
+function nextStep() {
+  if (step >= seq.length) { onSeqDone&&onSeqDone(); return; }
+  const s = seq[step];
+
+  if (s.type === 'dir' || s.type === 'line') {
+    const box  = document.getElementById(s.box+'-dialogue');
+    const spk  = document.getElementById(s.box+'-speaker');
+    const dir  = document.getElementById(s.box+'-dir');
+    const txt  = document.getElementById(s.box+'-text');
+    const hint = document.getElementById(s.box+'-hint');
+
+    box.classList.add('visible');
+    hint.classList.remove('visible');
+
+    if (s.type === 'dir') {
+      spk.textContent = '';
+      txt.textContent = '';
+      typewrite(dir, s.text, 20, () => { waiting = true; hint.classList.add('visible'); });
+    } else {
+      dir.textContent = '';
+      spk.textContent = (s.speaker||'').toUpperCase();
+      typewrite(txt, '— '+s.text, 25, () => { waiting = true; hint.classList.add('visible'); });
+    }
+  }
+
+  else if (s.type === 'action') {
+    s.fn(() => { step++; nextStep(); });
+  }
+
+  else if (s.type === 'choice') {
+    document.getElementById(s.box+'-dialogue').classList.remove('visible');
+    const cbox = document.getElementById(s.box+'-choices');
+    cbox.classList.add('visible');
+    choiceCb = (choice) => {
+      cbox.classList.remove('visible');
+      choiceCb = null;
+      if (s.branches&&s.branches[choice]) s.branches[choice]();
+      else { step++; nextStep(); }
+    };
+  }
+}
+
+function advance() {
+  if (!waiting) return;
+  waiting = false;
+  step++;
+  nextStep();
+}
+
+// ── SEQUENCES ────────────────────────────────
+
+const SEQ_DEATH = [
+  {type:'dir',  box:'death', text:'Barranquilla, Colombia. Noche. Lluvia pesada.'},
+  {type:'dir',  box:'death', text:'Una tienda pequeña. Luz de neón blanca. El protagonista está en el mostrador.'},
+  {type:'line', box:'death', speaker:'Tendero',      text:'Ya está, son doce mil.'},
+  {type:'dir',  box:'death', text:'La puerta se abre de golpe. Un hombre encapuchado. Pistola en mano. Todo cambia en un segundo.'},
+  {type:'line', box:'death', speaker:'Asaltante',    text:'Quietos. Nadie se mueva.'},
+  {type:'line', box:'death', speaker:'Asaltante',    text:'La caja. Todo lo que hay. Ya.'},
+  {type:'dir',  box:'death', text:'El tendero saca los billetes. El asaltante los cuenta. No son suficientes. Vuelve a apuntar.'},
+  {type:'dir',  box:'death', text:'El protagonista ve sus ojos — ya no hay duda. Da un paso al frente.'},
+  {type:'line', box:'death', speaker:'Protagonista', text:'Ya tienes lo que querías.'},
+  {type:'dir',  box:'death', text:'El asaltante gira. Un segundo. Solo la lluvia.'},
+  {type:'action', fn(next) {
+    waiting = false;
+    document.getElementById('death-dialogue').classList.remove('visible');
+    setTimeout(() => {
+      gunFlash(() => {
+        fadeOut(() => {
+          showScreen('limbo');
+          fadeIn(() => {
+            document.getElementById('rain').classList.remove('visible');
+            runSeq(SEQ_LIMBO, goMenu);
+            document.getElementById('limbo-dialogue').classList.add('visible');
+          }, 1600);
+        }, 1500);
+      });
+    }, 500);
+  }}
+];
+
+const SEQ_LIMBO = [
+  {type:'dir',  box:'limbo', text:'Silencio absoluto. Luz blanca sin forma. Sin suelo. Sin horizonte. Sin dolor.'},
+  {type:'dir',  box:'limbo', text:'El protagonista está de pie. Mira sus manos. Las cierra. Las abre. Reales. Sólidas.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Qué...?'},
+  {type:'dir',  box:'limbo', text:'Una presencia aparece. No llega caminando. Simplemente — está. Su forma no es fija, cambia sutilmente.'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Curioso. Te resististe.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Dónde estoy?'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'En el espacio entre lo que fuiste y lo que podrías ser. No tiene nombre más útil que ese.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'Estoy muerto.'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Esa palabra implica un final. Lo que tienes frente a ti no lo es.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Quién eres?'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Soy quien te eligió. Antes de que nacieras. Antes de que murieras. Antes de que tuvieras un nombre que recordar.'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'He enviado almas antes que tú. Con voluntad. Con inteligencia. Con poder. Todas fallaron.'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Tú diste un paso al frente por un hombre que no conocías. Sin calcular. Sin dudar. Eso no se puede enseñar.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Qué me estás pidiendo?'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'No te pido nada. Te ofrezco una segunda vida en un mundo que no conoces, con un conflicto que lleva siglos sin resolverse. Puedes aceptar... o simplemente dejar de ser.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Y si acepto y fallo también?'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Entonces esta conversación nunca habrá ocurrido.'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'¿Qué decides?'},
+  {type:'choice', box:'limbo', branches:{
+    accept: () => runSeq(SEQ_ACCEPT, goMenu),
+    refuse: () => runSeq(SEQ_REFUSE1, null),
+  }}
+];
+
+const SEQ_ACCEPT = [
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'De acuerdo.'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Bien.'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Llegarás sin nada. Sin recuerdos de este lugar. Solo con lo que siempre fuiste.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'Espera — ¿cómo sabré qué hacer?'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Lo mismo que hiciste esta noche. Dar un paso al frente.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Volveré a verte?'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Al final de todo... puede que descubras que siempre estuve ahí.'},
+  {type:'dir',  box:'limbo', text:'Las palabras se vuelven eco. La luz lo consume todo.'},
+  {type:'action', fn(next) {
+    document.getElementById('limbo-dialogue').classList.remove('visible');
+    fadeOut(() => next(), 2000);
+  }}
+];
+
+const SEQ_REFUSE1 = [
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'No.'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Entendible.'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Hay personas en Aeltherion que morirán sin que nadie dé ese paso. No te lo digo para convencerte. Solo para que lo sepas.'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'La decisión sigue siendo tuya.'},
+  {type:'choice', box:'limbo', branches:{
+    accept: () => runSeq(SEQ_ACCEPT, goMenu),
+    refuse: () => runSeq(SEQ_REFUSE2, null),
+  }}
+];
+
+const SEQ_REFUSE2 = [
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Está bien.'},
+  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Fue un honor conocerte.'},
+  {type:'dir',  box:'limbo', text:'El blanco lo consume todo. Una calma extraña. Y luego — nada.'},
+  {type:'action', fn(next) {
+    document.getElementById('limbo-dialogue').classList.remove('visible');
+    fadeOut(() => {
+      showScreen(null);
+      setTimeout(showEndCard, 400);
+    }, 2200);
+  }}
+];
+
+function showEndCard() {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;inset:0;background:#04040A;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:300;opacity:0;transition:opacity 1.6s;';
+  el.innerHTML = `
+    <p style="font-family:'EB Garamond',serif;font-style:italic;
+       font-size:clamp(1rem,1.9vw,1.28rem);color:#C9A84C;
+       text-align:center;line-height:2.1;max-width:480px;padding:0 24px;">
+      "Algunos eligen el descanso.<br>
+      Aeltherion sigue esperando<br>a alguien que no lo haga."
+    </p>
+    <button onclick="location.reload()" style="margin-top:52px;font-family:'Cinzel',serif;
+      font-size:0.65rem;letter-spacing:0.32em;color:#7A6030;
+      background:none;border:1px solid #7A6030;padding:13px 34px;
+      cursor:pointer;transition:all 0.25s;"
+      onmouseover="this.style.color='#C9A84C';this.style.borderColor='#C9A84C'"
+      onmouseout="this.style.color='#7A6030';this.style.borderColor='#7A6030'">
+      VOLVER AL INICIO
+    </button>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.style.opacity='1'));
+}
+
+// ── NAVIGATION ───────────────────────────────
+function goMenu() {
+  fadeOut(() => { showScreen('menu'); fadeIn(null, 1800); }, 1100);
+}
+
+function startGame() {
+  fadeOut(() => {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;inset:0;background:#04040A;display:flex;align-items:center;justify-content:center;z-index:300;opacity:0;transition:opacity 1.2s;';
+    el.innerHTML = `<div style="text-align:center;">
+      <p style="font-family:'Cinzel',serif;font-size:clamp(0.7rem,1.4vw,0.95rem);
+         letter-spacing:0.3em;color:#C9A84C;margin-bottom:16px;">IRONFELL — BETA v0.1</p>
+      <p style="font-family:'EB Garamond',serif;font-style:italic;
+         font-size:clamp(0.9rem,1.6vw,1.1rem);color:#7A7060;">
+         El mundo de Aeltherion está siendo construido...</p>
+      <p style="font-family:'Cinzel',serif;font-size:0.6rem;
+         letter-spacing:0.25em;color:#4A4030;margin-top:40px;">
+         Three.js • Próximamente</p>
+    </div>`;
+    document.body.appendChild(el);
+    fadeIn(() => requestAnimationFrame(()=>requestAnimationFrame(()=>el.style.opacity='1')), 1000);
+  }, 900);
+}
+
+function replayIntro() {
+  fadeOut(() => {
+    showScreen(null);
+    setTimeout(runIntro, 300);
+  }, 700);
+}
+
+// ── INPUT ────────────────────────────────────
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('choice-btn')) {
+    if (choiceCb) choiceCb(e.target.dataset.choice);
+    return;
+  }
+  if (e.target.classList.contains('menu-btn')) return;
+  advance();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'Enter') {
+    if (choiceCb) return;
+    advance();
+  }
+});
+
+// ── BOOT ─────────────────────────────────────
+function runIntro() {
+  showScreen('logo');
+  const logo = document.getElementById('studioLogo');
+  logo.classList.remove('reveal');
+  void logo.offsetWidth;
+  logo.classList.add('reveal');
+  fadeIn(null, 900);
+
+  setTimeout(() => {
+    const note = document.getElementById('audio-note');
+    note.classList.add('show');
+    setTimeout(() => note.classList.remove('show'), 3800);
+  }, 600);
+
+  // Logo → Death scene
+  setTimeout(() => {
+    fadeOut(() => {
+      showScreen('death');
+      fadeIn(() => {
+        document.getElementById('rain').classList.add('visible');
+        runSeq(SEQ_DEATH, null); // death seq handles its own transition
+      }, 1300);
+    }, 1100);
+  }, 5200);
+}
+
+window.addEventListener('load', () => setTimeout(runIntro, 250));
+</script>
+</body>
+</html>
