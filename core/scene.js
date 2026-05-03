@@ -32,7 +32,7 @@ export async function initScene() {
   // ── ESCENA ────────────────────────────────
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0A0D14);  // noche de Aeltherion
-  scene.fog = new THREE.FogExp2(0x0A0D14, 0.035); // niebla atmosférica
+  scene.fog = new THREE.FogExp2(0x0A0D14, 0.015);; // niebla atmosférica
 
   // ── CÁMARA ────────────────────────────────
   // Perspectiva isométrica suave — ideal para RPG de acción en móvil
@@ -66,7 +66,7 @@ export async function initScene() {
 
   // Luz de relleno — tono cálido dorado (fuego del pueblo)
   const fillLight = new THREE.PointLight(0xC9A84C, 1.5, 25);
-  fillLight.position.set(0, 3, 0);
+  fillLight.position.set(0, 1, 0);
   scene.add(fillLight);
 
   // ── SUELO ─────────────────────────────────
