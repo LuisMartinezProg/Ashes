@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Ashes of the Reborn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --navy: #0d1b2a;
+      --navy2: #1b2a4a;
+      --gold: #c9a84c;
+      --gold2: #f0d080;
+      --ash: #e8e0d0;
+      --crimson: #8b1a1a;
+      --glow: rgba(201, 168, 76, 0.3);
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--navy);
+      font-family: 'Crimson Text', serif;
+      color: var(--ash);
+      cursor: default;
+    }
+
+    /* ─── PANTALLAS ─── */
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s ease;
+    }
+    .screen.hidden { opacity: 0; pointer-events: none; }
+
+    /* ─── PARTÍCULAS ─── */
+    #particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 2px; height: 2px;
+      background: var(--gold);
+      border-radius: 50%;
+      animation: float linear infinite;
+      opacity: 0;
+    }
+    @keyframes float {
+      0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
+      10%  { opacity: 0.6; }
+      90%  { opacity: 0.3; }
+      100% { transform: translateY(-10vh) translateX(var(--dx)); opacity: 0; }
+    }
+
+    /* ─── FONDO ANIMADO ─── */
+    .bg-gradient {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 80%, rgba(139,26,26,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(201,168,76,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(27,42,74,0.8) 0%, var(--navy) 70%);
+      z-index: 0;
+    }
+
+    /* ─── LOGO SCREEN ─── */
+    #screen-logo {
+      z-index: 10;
+      background: #000;
+    }
+    #screen-logo .studio-name {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(14px, 3vw, 22px);
+      letter-spacing: 0.4em;
+      color: #888;
+      animation: fadeInOut 2.5s ease forwards;
+    }
+    @keyframes fadeInOut {
+      0%   { opacity: 0; }
+      30%  { opacity: 1; }
+      70%  { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    /* ─── TITLE SCREEN ─── */
+    #screen-title { z-index: 5; }
+
+    .title-wrap {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      animation: titleReveal 1.5s ease forwards;
+    }
+    @keyframes titleReveal {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .title-eyebrow {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(9px, 1.8vw, 13px);
+      letter-spacing: 0.5em;
+      color: var(--gold);
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+
+    .title-main {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(28px, 7vw, 72px);
+      font-weight: 900;
+      color: var(--gold2);
+      line-height: 1.1;
+      text-shadow:
+        0 0 40px rgba(201,168,76,0.6),
+        0 0 80px rgba(201,168,76,0.2),
+        0 4px 20px rgba(0,0,0,0.8);
+      letter-spacing: 0.05em;
+    }
+
+    .title-sub {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(14px, 3.5vw, 36px);
+      font-weight: 400;
+      color: var(--ash);
+      opacity: 0.7;
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+
+    .title-divider {
+      width: 200px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 24px auto;
+    }
+
+    .title-tagline {
+      font-family: 'Crimson Text', serif;
+      font-style: italic;
+      font-size: clamp(12px, 2vw, 18px);
+      color: var(--ash);
+      opacity: 0.5;
+      letter-spacing: 0.1em;
+    }
+
+    .press-start {
+      margin-top: 48px;
+      font-family: 'Cinzel', serif;
+      font-size: clamp(11px, 2vw, 16px);
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      animation: pulse 2s ease-in-out infinite;
+      cursor: pointer;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* ─── MAIN MENU ─── */
+    #screen-menu { z-index: 5; }
+
+    .menu-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(20px, 5vw, 42px);
+      color: var(--gold2);
+      text-shadow: 0 0 30px rgba(201,168,76,0.5);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .menu-divider {
+      width: 160px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto 40px;
+    }
+
+    .menu-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: min(320px, 80vw);
+    }
+
+    .menu-btn {
+      position: relative;
+      padding: 14px 32px;
+      background: transparent;
+      border: 1px solid rgba(201,168,76,0.3);
+      color: var(--ash);
+      font-family: 'Cinzel', serif;
+      font-size: clamp(12px, 2.5vw, 16px);
+      letter-spacing: 0.2em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      overflow: hidden;
+    }
+    .menu-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(201,168,76,0.1), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.4s ease;
+    }
+    .menu-btn:hover::before { transform: translateX(100%); }
+    .menu-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold2);
+      text-shadow: 0 0 10px rgba(201,168,76,0.5);
+      box-shadow: 0 0 20px rgba(201,168,76,0.1);
+    }
+    .menu-btn:active { transform: scale(0.97); }
+
+    /* ─── GAME WORLD (Three.js) ─── */
+    #screen-game {
+      z-index: 3;
+      background: transparent;
+    }
+    #game-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ─── HUD ─── */
+    #hud {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 6;
+      display: none;
+    }
+    #hud.active { display: block; }
+
+    /* Status bar top */
+    .hud-top {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: all;
+    }
+
+    .hud-menu-btn {
+      width: 44px; height: 44px;
+      background: rgba(13,27,42,0.85);
+      border: 1px solid rgba(201,168,76,0.4);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-size: 20px;
+      transition: all 0.2s;
+    }
+    .hud-menu-btn:hover { border-color: var(--gold); box-shadow: 0 0 10px var(--glow); }
+
+    .hud-connection {
+      background: rgba(13,27,42,0.85);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      color: var(--gold);
+      letter-spacing: 0.1em;
+    }
+    .ping-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: #4caf50;
+      border-radius: 50%;
+      margin-right: 6px;
+      animation: pingBlink 1.5s infinite;
+    }
+    @keyframes pingBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* Bars left */
+    .hud-bars {
+      position: absolute;
+      bottom: 100px;
+      left: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bar-label {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      color: var(--ash);
+      opacity: 0.7;
+      width: 14px;
+      letter-spacing: 0.05em;
+    }
+    .bar-track {
+      width: 100px;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    .bar-hp   { background: linear-gradient(90deg, #c0392b, #e74c3c); width: 85%; }
+    .bar-sta  { background: linear-gradient(90deg, #27ae60, #2ecc71); width: 100%; }
+    .bar-mp   { background: linear-gradient(90deg, #2980b9, #3498db); width: 70%; }
+
+    /* Joystick left bottom */
+    .hud-joystick {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 90px; height: 90px;
+      background: rgba(13,27,42,0.6);
+      border: 2px solid rgba(201,168,76,0.3);
+      border-radius: 50%;
+      pointer-events: all;
+      touch-action: none;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .joystick-knob {
+      width: 36px; height: 36px;
+      background: radial-gradient(circle, rgba(201,168,76,0.8), rgba(201,168,76,0.3));
+      border-radius: 50%;
+      border: 1px solid var(--gold);
+      transition: transform 0.1s ease;
+    }
+
+    /* Skills bottom right */
+    .hud-skills {
+      position: absolute;
+      bottom: 20px;
+      right: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      pointer-events: all;
+    }
+    .skill-btn {
+      width: 56px; height: 56px;
+      background: rgba(13,27,42,0.85);
+      border: 1px solid rgba(201,168,76,0.4);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .skill-btn:hover { border-color: var(--gold); box-shadow: 0 0 12px var(--glow); }
+    .skill-btn:active { transform: scale(0.92); }
+    .skill-icon { font-size: 22px; }
+    .skill-key {
+      font-family: 'Cinzel', serif;
+      font-size: 8px;
+      color: var(--gold);
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+    .skill-cd {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gold);
+      transform-origin: left;
+    }
+
+    /* Attack btn */
+    .hud-attack {
+      position: absolute;
+      bottom: 26px;
+      right: 152px;
+      width: 60px; height: 60px;
+      background: radial-gradient(circle, rgba(139,26,26,0.8), rgba(139,26,26,0.4));
+      border: 2px solid rgba(200,80,80,0.6);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      pointer-events: all;
+      font-size: 26px;
+      transition: all 0.15s;
+    }
+    .hud-attack:active { transform: scale(0.88); box-shadow: 0 0 20px rgba(200,80,80,0.5); }
+
+    /* Bag */
+    .hud-bag {
+      position: absolute;
+      bottom: 96px;
+      right: 16px;
+      width: 44px; height: 44px;
+      background: rgba(13,27,42,0.85);
+      border: 1px solid rgba(201,168,76,0.4);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      pointer-events: all;
+      font-size: 20px;
+      transition: all 0.2s;
+    }
+    .hud-bag:hover { border-color: var(--gold); }
+
+    /* Minimap */
+    .hud-minimap {
+      position: absolute;
+      top: 70px;
+      right: 16px;
+      width: 80px; height: 80px;
+      background: rgba(13,27,42,0.85);
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    .minimap-inner {
+      width: 100%; height: 100%;
+      background: radial-gradient(circle, #1b3a2a 0%, #0d1b2a 80%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .minimap-player {
+      width: 6px; height: 6px;
+      background: var(--gold);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--gold);
+    }
+
+    /* ─── PAUSE MENU ─── */
+    #screen-pause {
+      z-index: 20;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+    }
+
+    /* ─── GACHA SCREEN ─── */
+    #screen-gacha {
+      z-index: 15;
+      background: rgba(0,0,0,0.92);
+    }
+
+    .gacha-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(22px, 5vw, 40px);
+      color: var(--gold2);
+      text-shadow: 0 0 30px rgba(201,168,76,0.6);
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .gacha-sub {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(10px, 1.8vw, 13px);
+      letter-spacing: 0.3em;
+      color: var(--ash);
+      opacity: 0.5;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .gacha-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .gacha-tab {
+      padding: 8px 20px;
+      background: transparent;
+      border: 1px solid rgba(201,168,76,0.3);
+      color: var(--ash);
+      font-family: 'Cinzel', serif;
+      font-size: clamp(10px, 1.8vw, 12px);
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      transition: all 0.2s;
+      opacity: 0.6;
+    }
+    .gacha-tab.active {
+      border-color: var(--gold);
+      color: var(--gold2);
+      opacity: 1;
+      background: rgba(201,168,76,0.08);
+    }
+
+    .gacha-showcase {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 600px;
+    }
+
+    .gacha-card {
+      width: clamp(70px, 15vw, 90px);
+      height: clamp(100px, 20vw, 130px);
+      border-radius: 10px;
+      border: 1px solid rgba(201,168,76,0.4);
+      background: linear-gradient(180deg, #1b2a4a 0%, #0d1b2a 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.3s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .gacha-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(201,168,76,0.05) 0%, transparent 60%);
+    }
+    .gacha-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--gold);
+      box-shadow: 0 8px 24px rgba(201,168,76,0.2);
+    }
+    .gacha-card-icon { font-size: 32px; }
+    .gacha-card-name {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      color: var(--ash);
+      opacity: 0.8;
+      text-align: center;
+      letter-spacing: 0.05em;
+      padding: 0 4px;
+    }
+    .gacha-card-rarity {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      font-size: 10px;
+    }
+
+    .gacha-btns {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .gacha-pull-btn {
+      padding: 14px 28px;
+      background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.05));
+      border: 1px solid var(--gold);
+      color: var(--gold2);
+      font-family: 'Cinzel', serif;
+      font-size: clamp(11px, 2vw, 14px);
+      letter-spacing: 0.2em;
+      cursor: pointer;
+      transition: all 0.3s;
+      border-radius: 4px;
+    }
+    .gacha-pull-btn:hover {
+      background: rgba(201,168,76,0.2);
+      box-shadow: 0 0 20px rgba(201,168,76,0.3);
+      transform: translateY(-2px);
+    }
+    .gacha-pull-btn:active { transform: scale(0.96); }
+
+    .gacha-currency {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Cinzel', serif;
+      font-size: clamp(11px, 2vw, 14px);
+      color: var(--gold2);
+    }
+
+    .gacha-back {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid rgba(201,168,76,0.3);
+      color: var(--ash);
+      font-family: 'Cinzel', serif;
+      font-size: clamp(10px, 1.8vw, 13px);
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .gacha-back:hover { border-color: var(--gold); color: var(--gold2); }
+
+    /* ─── GACHA RESULT ─── */
+    #gacha-result {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      background: rgba(0,0,0,0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s;
+    }
+    #gacha-result.active { opacity: 1; pointer-events: all; }
+
+    .result-card {
+      width: min(200px, 50vw);
+      height: min(280px, 65vw);
+      background: linear-gradient(180deg, #2a1b4a 0%, #0d1b2a 100%);
+      border: 2px solid var(--gold);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: 0 0 60px rgba(201,168,76,0.4), inset 0 0 40px rgba(201,168,76,0.05);
+      animation: cardReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes cardReveal {
+      from { transform: scale(0.3) rotateY(180deg); opacity: 0; }
+      to   { transform: scale(1) rotateY(0deg); opacity: 1; }
+    }
+    .result-icon { font-size: 64px; }
+    .result-name {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(14px, 3vw, 20px);
+      color: var(--gold2);
+      text-align: center;
+      padding: 0 16px;
+    }
+    .result-rarity {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      opacity: 0.8;
+    }
+    .result-close {
+      margin-top: 24px;
+      padding: 12px 32px;
+      background: transparent;
+      border: 1px solid rgba(201,168,76,0.5);
+      color: var(--ash);
+      font-family: 'Cinzel', serif;
+      font-size: clamp(11px, 2vw, 14px);
+      letter-spacing: 0.2em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .result-close:hover { border-color: var(--gold); color: var(--gold2); }
+
+    /* ─── TRANSITION OVERLAY ─── */
+    #transition {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    #transition.fade-in  { opacity: 1; pointer-events: all; }
+
+    /* ─── TOAST ─── */
+    #toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(13,27,42,0.95);
+      border: 1px solid rgba(201,168,76,0.4);
+      color: var(--ash);
+      font-family: 'Cinzel', serif;
+      font-size: clamp(10px, 2vw, 13px);
+      letter-spacing: 0.1em;
+      padding: 10px 24px;
+      border-radius: 4px;
+      z-index: 50;
+      opacity: 0;
+      transition: all 0.3s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- Fondo y partículas -->
+<div class="bg-gradient"></div>
+<div id="particles"></div>
+
+<!-- Overlay de transición -->
+<div id="transition"></div>
+
+<!-- Toast de notificaciones -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     PANTALLA 1: LOGO DEL ESTUDIO
+══════════════════════════════════════════ -->
+<div id="screen-logo" class="screen">
+  <div class="studio-name">◆ &nbsp; ESTUDIO INDIE &nbsp; ◆</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PANTALLA 2: TÍTULO
+══════════════════════════════════════════ -->
+<div id="screen-title" class="screen hidden">
+  <div class="title-wrap">
+    <div class="title-eyebrow">◆ &nbsp; AELTHERION &nbsp; ◆</div>
+    <div class="title-main">ASHES</div>
+    <div class="title-sub">of the Reborn</div>
+    <div class="title-divider"></div>
+    <div class="title-tagline">Una segunda oportunidad en un mundo desconocido</div>
+    <div class="press-start" id="press-start">— TOCA PARA CONTINUAR —</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PANTALLA 3: MENÚ PRINCIPAL
+══════════════════════════════════════════ -->
+<div id="screen-menu" class="screen hidden">
+  <div class="menu-title">ASHES OF THE REBORN</div>
+  <div class="menu-divider"></div>
+  <div class="menu-options">
+    <button class="menu-btn" id="btn-new-game">⚔ &nbsp; NUEVA PARTIDA</button>
+    <button class="menu-btn" id="btn-continue" style="opacity:0.4; cursor:not-allowed;">📜 &nbsp; CONTINUAR</button>
+    <button class="menu-btn" id="btn-gacha">✨ &nbsp; INVOCACIÓN</button>
+    <button class="menu-btn" id="btn-settings" style="opacity:0.6;">⚙ &nbsp; AJUSTES</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PANTALLA 4: MUNDO 3D (Three.js)
+══════════════════════════════════════════ -->
+<div id="screen-game" class="screen hidden">
+  <canvas id="game-canvas"></canvas>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PANTALLA 5: GACHA
+══════════════════════════════════════════ -->
+<div id="screen-gacha" class="screen hidden">
+  <button class="gacha-back" id="gacha-back">← VOLVER</button>
+  <div class="gacha-title">✨ INVOCACIÓN</div>
+  <div class="gacha-sub">CRISTALES DE MAGIA</div>
+
+  <div class="gacha-tabs">
+    <button class="gacha-tab active" data-tab="tropas">TROPAS ÉLITE</button>
+    <button class="gacha-tab" data-tab="armas">ARMAS</button>
+    <button class="gacha-tab" data-tab="cosmeticos">APARIENCIAS</button>
+  </div>
+
+  <div class="gacha-showcase" id="gacha-showcase">
+    <!-- Cards generadas por JS -->
+  </div>
+
+  <div class="gacha-btns">
+    <button class="gacha-pull-btn" id="btn-pull-1">💎 INVOCAR × 1<br><small style="font-size:9px;opacity:0.7">160 Cristales</small></button>
+    <button class="gacha-pull-btn" id="btn-pull-10">💎💎 INVOCAR × 10<br><small style="font-size:9px;opacity:0.7">1600 Cristales</small></button>
+  </div>
+
+  <div class="gacha-currency">
+    <span>💎</span>
+    <span id="crystal-count">3200</span>
+    <span style="opacity:0.5; font-size:10px">CRISTALES</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     RESULTADO GACHA
+══════════════════════════════════════════ -->
+<div id="gacha-result">
+  <div class="result-card" id="result-card">
+    <div class="result-icon" id="result-icon">⚔</div>
+    <div class="result-name" id="result-name">Espada Arcana</div>
+    <div class="result-rarity" id="result-rarity">★★★★★ LEGENDARIO</div>
+  </div>
+  <button class="result-close" id="result-close">CONTINUAR</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     HUD DEL JUEGO
+══════════════════════════════════════════ -->
+<div id="hud">
+  <!-- Top bar -->
+  <div class="hud-top">
+    <div class="hud-menu-btn" id="hud-menu-btn">☰</div>
+    <div class="hud-connection">
+      <span class="ping-dot"></span>EN LÍNEA · 42ms
+    </div>
+  </div>
+
+  <!-- Minimap -->
+  <div class="hud-minimap">
+    <div class="minimap-inner">
+      <div class="minimap-player"></div>
+    </div>
+  </div>
+
+  <!-- Barras de vida -->
+  <div class="hud-bars">
+    <div class="bar-wrap">
+      <span class="bar-label">HP</span>
+      <div class="bar-track"><div class="bar-fill bar-hp"></div></div>
+    </div>
+    <div class="bar-wrap">
+      <span class="bar-label">ST</span>
+      <div class="bar-track"><div class="bar-fill bar-sta"></div></div>
+    </div>
+    <div class="bar-wrap">
+      <span class="bar-label">MP</span>
+      <div class="bar-track"><div class="bar-fill bar-mp"></div></div>
+    </div>
+  </div>
+
+  <!-- Joystick -->
+  <div class="hud-joystick" id="joystick">
+    <div class="joystick-knob" id="joystick-knob"></div>
+  </div>
+
+  <!-- Mochila -->
+  <div class="hud-bag" id="hud-bag">🎒</div>
+
+  <!-- Ataque -->
+  <div class="hud-attack" id="hud-attack">⚔</div>
+
+  <!-- Habilidades -->
+  <div class="hud-skills">
+    <div class="skill-btn" data-skill="0">
+      <div class="skill-icon">🔥</div>
+      <div class="skill-key">Q</div>
+    </div>
+    <div class="skill-btn" data-skill="1">
+      <div class="skill-icon">⚡</div>
+      <div class="skill-key">W</div>
+    </div>
+    <div class="skill-btn" data-skill="2">
+      <div class="skill-icon">❄</div>
+      <div class="skill-key">E</div>
+    </div>
+    <div class="skill-btn" data-skill="3">
+      <div class="skill-icon">🌀</div>
+      <div class="skill-key">R</div>
+    </div>
+  </div>
+</div>
+
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════
+//  UTILIDADES
+// ═══════════════════════════════════════════
+function $(id) { return document.getElementById(id); }
+
+function showToast(msg, duration = 2500) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function fadeTransition(cb) {
+  const overlay = $('transition');
+  overlay.classList.add('fade-in');
+  setTimeout(() => {
+    cb();
+    setTimeout(() => overlay.classList.remove('fade-in'), 400);
+  }, 400);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  $(id).classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════
+//  PARTÍCULAS
+// ═══════════════════════════════════════════
+function createParticles() {
+  const container = $('particles');
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 3 + 1;
+    p.style.cssText = `
+      left: ${Math.random() * 100}%;
+      width: ${size}px;
+      height: ${size}px;
+      --dx: ${(Math.random() - 0.5) * 100}px;
+      animation-duration: ${Math.random() * 8 + 6}s;
+      animation-delay: ${Math.random() * 8}s;
+      opacity: ${Math.random() * 0.5};
+    `;
+    container.appendChild(p);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  THREE.JS — MUNDO DE IRONFELL
+// ═══════════════════════════════════════════
+let renderer, scene, camera, player, animFrame;
+const keys = {};
+const playerState = { x: 0, y: 0.5, z: 0, ry: 0, speed: 0.06 };
+let joystickActive = false, joystickDir = { x: 0, z: 0 };
+let cameraAngle = 0, cameraDistance = 6, cameraHeight = 3;
+let lastTouchX = 0, touchRotating = false;
+
+function initThree() {
+  const canvas = $('game-canvas');
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.fog = new THREE.Fog(0x0d1b2a, 20, 60);
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0d1b2a);
+
+  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
+
+  buildWorld();
+  buildPlayer();
+  addLights();
+  gameLoop();
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+
+  // Teclado
+  window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
+  window.addEventListener('keyup',   e => { keys[e.key.toLowerCase()] = false; });
+
+  // Touch para rotar cámara
+  canvas.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) { touchRotating = true; lastTouchX = e.touches[1].clientX; }
+  }, { passive: true });
+  canvas.addEventListener('touchmove', e => {
+    if (touchRotating && e.touches.length === 2) {
+      const dx = e.touches[1].clientX - lastTouchX;
+      cameraAngle -= dx * 0.01;
+      lastTouchX = e.touches[1].clientX;
+    }
+  }, { passive: true });
+  canvas.addEventListener('touchend', () => { touchRotating = false; });
+  canvas.addEventListener('mousemove', e => {
+    if (e.buttons === 1) cameraAngle -= e.movementX * 0.005;
+  });
+}
+
+function buildWorld() {
+  // Suelo
+  const groundGeo = new THREE.PlaneGeometry(80, 80, 20, 20);
+  const groundMat = new THREE.MeshLambertMaterial({ color: 0x2a3a2a });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // Montañas de fondo
+  for (let i = 0; i < 12; i++) {
+    const h = Math.random() * 10 + 5;
+    const geo = new THREE.ConeGeometry(Math.random() * 4 + 2, h, 6);
+    const mat = new THREE.MeshLambertMaterial({ color: new THREE.Color().setHSL(0.6, 0.1, 0.15 + Math.random() * 0.1) });
+    const m = new THREE.Mesh(geo, mat);
+    const angle = (i / 12) * Math.PI * 2;
+    m.position.set(Math.cos(angle) * 28, h / 2, Math.sin(angle) * 28);
+    m.castShadow = true;
+    scene.add(m);
+  }
+
+  // Edificios de Ironfell
+  buildIronfell();
+
+  // Árboles
+  for (let i = 0; i < 20; i++) {
+    buildTree(
+      (Math.random() - 0.5) * 30,
+      0,
+      (Math.random() - 0.5) * 30
+    );
+  }
+
+  // Rocas decorativas
+  for (let i = 0; i < 15; i++) {
+    const geo = new THREE.DodecahedronGeometry(Math.random() * 0.4 + 0.2);
+    const mat = new THREE.MeshLambertMaterial({ color: 0x555566 });
+    const rock = new THREE.Mesh(geo, mat);
+    rock.position.set(
+      (Math.random() - 0.5) * 25,
+      0.2,
+      (Math.random() - 0.5) * 25
+    );
+    rock.rotation.set(Math.random(), Math.random(), Math.random());
+    rock.castShadow = true;
+    scene.add(rock);
+  }
+
+  // Estrellas
+  const starGeo = new THREE.BufferGeometry();
+  const starPos = [];
+  for (let i = 0; i < 800; i++) {
+    starPos.push((Math.random() - 0.5) * 200, Math.random() * 40 + 10, (Math.random() - 0.5) * 200);
+  }
+  starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+  const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, opacity: 0.8 });
+  scene.add(new THREE.Points(starGeo, starMat));
+}
+
+function buildIronfell() {
+  // Torre principal
+  buildBuilding(0, 0, 0, 1.5, 5, 1.5, 0x3a4a5a, true);
+  // Techo de la torre
+  const roofGeo = new THREE.ConeGeometry(1.2, 2, 4);
+  const roofMat = new THREE.MeshLambertMaterial({ color: 0x8b1a1a });
+  const roof = new THREE.Mesh(roofGeo, roofMat);
+  roof.position.set(0, 6, 0);
+  roof.castShadow = true;
+  scene.add(roof);
+
+  // Edificios secundarios
+  buildBuilding(-4, 0, -2, 1.2, 2.5, 1.2, 0x4a5a6a);
+  buildBuilding(3, 0, -3, 1, 2, 1, 0x3a4a5a);
+  buildBuilding(-3, 0, 3, 1.4, 3, 1.4, 0x4a5a6a);
+  buildBuilding(4, 0, 2, 1, 2.5, 1, 0x3a4a5a);
+  buildBuilding(0, 0, 4, 1.2, 2, 1.2, 0x4a5a6a);
+
+  // Muralla
+  for (let i = 0; i < 16; i++) {
+    const angle = (i / 16) * Math.PI * 2;
+    const wx = Math.cos(angle) * 8;
+    const wz = Math.sin(angle) * 8;
+    const geo = new THREE.BoxGeometry(1.2, 2, 1.2);
+    const mat = new THREE.MeshLambertMaterial({ color: 0x2a3a4a });
+    const wall = new THREE.Mesh(geo, mat);
+    wall.position.set(wx, 1, wz);
+    wall.castShadow = true;
+    scene.add(wall);
+  }
+
+  // Antorcha mágica
+  addMagicLight(0, 3, 2.5);
+  addMagicLight(-4, 2.5, -1);
+  addMagicLight(3, 2.5, -1.5);
+}
+
+function buildBuilding(x, y, z, w, h, d, color, castShadow = true) {
+  const geo = new THREE.BoxGeometry(w * 2, h, d * 2);
+  const mat = new THREE.MeshLambertMaterial({ color });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(x, y + h / 2, z);
+  mesh.castShadow = castShadow;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+}
+
+function buildTree(x, y, z) {
+  const trunkGeo = new THREE.CylinderGeometry(0.1, 0.15, 1.2, 6);
+  const trunkMat = new THREE.MeshLambertMaterial({ color: 0x4a3020 });
+  const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+  trunk.position.set(x, y + 0.6, z);
+  trunk.castShadow = true;
+  scene.add(trunk);
+
+  const leavesGeo = new THREE.ConeGeometry(0.7, 1.8, 7);
+  const leavesMat = new THREE.MeshLambertMaterial({ color: new THREE.Color().setHSL(0.3, 0.4, 0.15 + Math.random() * 0.1) });
+  const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+  leaves.position.set(x, y + 2, z);
+  leaves.castShadow = true;
+  scene.add(leaves);
+}
+
+function addMagicLight(x, y, z) {
+  const light = new THREE.PointLight(0xc9a84c, 1.5, 6);
+  light.position.set(x, y, z);
+  light.castShadow = false;
+  scene.add(light);
+
+  // Llama visual
+  const flameGeo = new THREE.SphereGeometry(0.15, 8, 8);
+  const flameMat = new THREE.MeshBasicMaterial({ color: 0xffaa22 });
+  const flame = new THREE.Mesh(flameGeo, flameMat);
+  flame.position.set(x, y, z);
+  scene.add(flame);
+}
+
+function buildPlayer() {
+  const group = new THREE.Group();
+
+  // Cuerpo
+  const bodyGeo = new THREE.BoxGeometry(0.5, 0.7, 0.3);
+  const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1b2a4a });
+  group.add(new THREE.Mesh(bodyGeo, bodyMat));
+
+  // Cabeza
+  const headGeo = new THREE.BoxGeometry(0.35, 0.35, 0.35);
+  const headMat = new THREE.MeshLambertMaterial({ color: 0xddbb99 });
+  const head = new THREE.Mesh(headGeo, headMat);
+  head.position.y = 0.52;
+  group.add(head);
+
+  // Capa mágica
+  const capeGeo = new THREE.BoxGeometry(0.52, 0.6, 0.1);
+  const capeMat = new THREE.MeshLambertMaterial({ color: 0x8b1a1a });
+  const cape = new THREE.Mesh(capeGeo, capeMat);
+  cape.position.set(0, 0, -0.2);
+  group.add(cape);
+
+  // Aura mágica
+  const auraLight = new THREE.PointLight(0x4488ff, 0.8, 2);
+  auraLight.position.y = 0.5;
+  group.add(auraLight);
+
+  group.position.set(playerState.x, playerState.y, playerState.z);
+  group.castShadow = true;
+  player = group;
+  scene.add(player);
+}
+
+function addLights() {
+  // Luz ambiental nocturna
+  scene.add(new THREE.AmbientLight(0x223355, 0.8));
+
+  // Luna
+  const moonLight = new THREE.DirectionalLight(0x8899bb, 0.6);
+  moonLight.position.set(-10, 20, -5);
+  moonLight.castShadow = true;
+  moonLight.shadow.mapSize.width = 1024;
+  moonLight.shadow.mapSize.height = 1024;
+  scene.add(moonLight);
+
+  // Luz de la torre
+  const towerLight = new THREE.PointLight(0xc9a84c, 2, 15);
+  towerLight.position.set(0, 8, 0);
+  scene.add(towerLight);
+}
+
+function updatePlayer() {
+  let dx = 0, dz = 0;
+
+  // Teclado
+  if (keys['w'] || keys['arrowup'])    dz -= 1;
+  if (keys['s'] || keys['arrowdown'])  dz += 1;
+  if (keys['a'] || keys['arrowleft'])  dx -= 1;
+  if (keys['d'] || keys['arrowright']) dx += 1;
+
+  // Joystick
+  if (joystickActive) { dx += joystickDir.x; dz += joystickDir.z; }
+
+  if (dx !== 0 || dz !== 0) {
+    const len = Math.sqrt(dx * dx + dz * dz);
+    dx /= len; dz /= len;
+
+    // Mover relativo a la cámara
+    const cos = Math.cos(cameraAngle);
+    const sin = Math.sin(cameraAngle);
+    const worldDx = dx * cos - dz * sin;
+    const worldDz = dx * sin + dz * cos;
+
+    playerState.x += worldDx * playerState.speed;
+    playerState.z += worldDz * playerState.speed;
+
+    // Rotar hacia donde camina
+    playerState.ry = Math.atan2(worldDx, worldDz);
+    player.rotation.y = playerState.ry;
+  }
+
+  // Límite del mundo
+  playerState.x = Math.max(-18, Math.min(18, playerState.x));
+  playerState.z = Math.max(-18, Math.min(18, playerState.z));
+
+  player.position.set(playerState.x, playerState.y, playerState.z);
+
+  // Cámara sigue al jugador
+  const cx = playerState.x + Math.sin(cameraAngle) * cameraDistance;
+  const cz = playerState.z + Math.cos(cameraAngle) * cameraDistance;
+  camera.position.set(cx, playerState.y + cameraHeight, cz);
+  camera.lookAt(playerState.x, playerState.y + 1, playerState.z);
+}
+
+let clock = 0;
+function gameLoop() {
+  animFrame = requestAnimationFrame(gameLoop);
+  clock += 0.016;
+  updatePlayer();
+
+  // Animar llamas
+  scene.traverse(obj => {
+    if (obj.isMesh && obj.material.color && obj.material.color.r > 0.9 && obj.material.color.g > 0.5) {
+      obj.position.y += Math.sin(clock * 4) * 0.002;
+    }
+  });
+
+  renderer.render(scene, camera);
+}
+
+// ═══════════════════════════════════════════
+//  JOYSTICK TÁCTIL
+// ═══════════════════════════════════════════
+function initJoystick() {
+  const joystick = $('joystick');
+  const knob = $('joystick-knob');
+  const radius = 27;
+
+  function handleMove(cx, cy) {
+    const rect = joystick.getBoundingClientRect();
+    const cx0 = rect.left + rect.width / 2;
+    const cy0 = rect.top + rect.height / 2;
+    let dx = cx - cx0, dy = cy - cy0;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > radius) { dx = dx / dist * radius; dy = dy / dist * radius; }
+    knob.style.transform = `translate(${dx}px, ${dy}px)`;
+    joystickDir.x = dx / radius;
+    joystickDir.z = dy / radius;
+    joystickActive = true;
+  }
+
+  function reset() {
+    knob.style.transform = '';
+    joystickDir = { x: 0, z: 0 };
+    joystickActive = false;
+  }
+
+  joystick.addEventListener('touchstart', e => {
+    e.preventDefault();
+    handleMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+
+  joystick.addEventListener('touchmove', e => {
+    e.preventDefault();
+    handleMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+
+  joystick.addEventListener('touchend', reset);
+  joystick.addEventListener('mousedown', e => handleMove(e.clientX, e.clientY));
+  window.addEventListener('mousemove', e => { if (joystickActive) handleMove(e.clientX, e.clientY); });
+  window.addEventListener('mouseup', reset);
+}
+
+// ═══════════════════════════════════════════
+//  GACHA
+// ═══════════════════════════════════════════
+const gachaData = {
+  tropas: [
+    { icon: '🐉', name: 'Guardia Draconoide', rarity: '★★★★★' },
+    { icon: '🧝', name: 'Arquero Élfico', rarity: '★★★★' },
+    { icon: '⚔', name: 'Caballero de Ironfell', rarity: '★★★' },
+    { icon: '🔮', name: 'Mago Homúnculo', rarity: '★★★★' },
+    { icon: '🛡', name: 'Enano Blindado', rarity: '★★★' },
+  ],
+  armas: [
+    { icon: '⚡', name: 'Espada del Rayo', rarity: '★★★★★' },
+    { icon: '🌙', name: 'Daga Lunar', rarity: '★★★★' },
+    { icon: '🔥', name: 'Cetro de Ceniza', rarity: '★★★★★' },
+    { icon: '❄', name: 'Lanza Glacial', rarity: '★★★' },
+    { icon: '💫', name: 'Arco Estelar', rarity: '★★★★' },
+  ],
+  cosmeticos: [
+    { icon: '👑', name: 'Corona del Renacido', rarity: '★★★★★' },
+    { icon: '🌟', name: 'Manto Dorado', rarity: '★★★★' },
+    { icon: '🎭', name: 'Máscara de Sombra', rarity: '★★★' },
+    { icon: '🦋', name: 'Alas de Mariposa', rarity: '★★★★' },
+    { icon: '🌸', name: 'Corona de Flores', rarity: '★★★' },
+  ]
+};
+
+let currentTab = 'tropas';
+let crystals = 3200;
+
+function renderGachaCards() {
+  const showcase = $('gacha-showcase');
+  showcase.innerHTML = '';
+  gachaData[currentTab].forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'gacha-card';
+    card.innerHTML = `
+      <div class="gacha-card-rarity">${item.rarity[0]}</div>
+      <div class="gacha-card-icon">${item.icon}</div>
+      <div class="gacha-card-name">${item.name}</div>
+    `;
+    showcase.appendChild(card);
+  });
+}
+
+function doPull(count) {
+  const cost = count * 160;
+  if (crystals < cost) { showToast('⚠ Cristales insuficientes'); return; }
+  crystals -= cost;
+  $('crystal-count').textContent = crystals.toLocaleString();
+
+  const pool = gachaData[currentTab];
+  const result = pool[Math.floor(Math.random() * pool.length)];
+
+  $('result-icon').textContent = result.icon;
+  $('result-name').textContent = result.name;
+  $('result-rarity').textContent = result.rarity + (result.rarity.length >= 5 ? ' LEGENDARIO' : ' ÉPICO');
+
+  // Recrear card para reiniciar animación
+  const card = $('result-card');
+  const newCard = card.cloneNode(true);
+  card.parentNode.replaceChild(newCard, card);
+
+  $('gacha-result').classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+//  FLUJO DE PANTALLAS
+// ═══════════════════════════════════════════
+function startGame() {
+  fadeTransition(() => {
+    showScreen('screen-game');
+    $('hud').classList.add('active');
+    if (!renderer) {
+      initThree();
+      initJoystick();
+    } else {
+      gameLoop();
+    }
+  });
+  showToast('⚔ Bienvenido a Ironfell');
+}
+
+function goToMenu() {
+  fadeTransition(() => {
+    showScreen('screen-menu');
+    $('hud').classList.remove('active');
+    if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  });
+}
+
+function goToGacha() {
+  fadeTransition(() => {
+    showScreen('screen-gacha');
+    renderGachaCards();
+  });
+}
+
+// ═══════════════════════════════════════════
+//  EVENTOS
+// ═══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  createParticles();
+
+  // Logo → Título
+  setTimeout(() => {
+    fadeTransition(() => showScreen('screen-title'));
+  }, 2800);
+
+  // Título → Menú
+  $('press-start').addEventListener('click', () => {
+    fadeTransition(() => showScreen('screen-menu'));
+  });
+
+  // Menú
+  $('btn-new-game').addEventListener('click', startGame);
+  $('btn-gacha').addEventListener('click', goToGacha);
+  $('btn-settings').addEventListener('click', () => showToast('⚙ Ajustes disponibles próximamente'));
+  $('btn-continue').addEventListener('click', () => showToast('📜 No hay partida guardada'));
+
+  // Gacha tabs
+  document.querySelectorAll('.gacha-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.gacha-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentTab = tab.dataset.tab;
+      renderGachaCards();
+    });
+  });
+
+  $('btn-pull-1').addEventListener('click', () => doPull(1));
+  $('btn-pull-10').addEventListener('click', () => doPull(10));
+  $('gacha-back').addEventListener('click', () => {
+    if (renderer) { fadeTransition(() => { showScreen('screen-game'); $('hud').classList.add('active'); gameLoop(); }); }
+    else goToMenu();
+  });
+  $('result-close').addEventListener('click', () => $('gacha-result').classList.remove('active'));
+
+  // HUD
+  $('hud-menu-btn').addEventListener('click', () => {
+    if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+    goToMenu();
+  });
+  $('hud-attack').addEventListener('click', () => showToast('⚔ ¡Ataque!'));
+  $('hud-bag').addEventListener('click', () => showToast('🎒 Inventario próximamente'));
+
+  document.querySelectorAll('.skill-btn').forEach((btn, i) => {
+    const names = ['🔥 Bola de fuego', '⚡ Chispa en cadena', '❄ Lanza de hielo', '🌀 Onda sísmica'];
+    btn.addEventListener('click', () => showToast(names[i]));
+  });
+
+  // Botón gacha desde HUD (si lo añades)
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') goToMenu();
+    if (e.key === 'g' || e.key === 'G') goToGacha();
+  });
+});
+</script>
+</body>
+</html>
