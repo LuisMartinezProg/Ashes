@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Ashes of the Reborn</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #000;
+      touch-action: none;
+    }
+
+    #canvas-container {
+      position: fixed; inset: 0;
+    }
+
+    #canvas-container canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* ── HUD (placeholder Fase 0) ── */
+    #hud {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #fps {
+      position: absolute; top: 12px; left: 14px;
+      font-family: monospace; font-size: 11px;
+      color: rgba(201,168,76,0.6);
+      letter-spacing: 0.1em;
+    }
+
+    #phase-label {
+      position: absolute; top: 12px; right: 14px;
+      font-family: monospace; font-size: 10px;
+      color: rgba(201,168,76,0.4);
+      letter-spacing: 0.15em;
+    }
+
+    #status {
+      position: absolute; bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      font-family: monospace; font-size: 11px;
+      color: rgba(201,168,76,0.5);
+      letter-spacing: 0.2em;
+      text-align: center;
+    }
+
+    /* ── LOADING ── */
+    #loading {
+      position: fixed; inset: 0;
+      background: #04040A;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 100;
+      transition: opacity 0.8s ease;
+    }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+
+    .load-title {
+      font-family: 'Georgia', serif;
+      font-size: clamp(1rem, 3vw, 1.4rem);
+      letter-spacing: 0.4em;
+      color: #C9A84C;
+      margin-bottom: 32px;
+      text-transform: uppercase;
+    }
+
+    .load-bar-wrap {
+      width: 200px; height: 2px;
+      background: rgba(201,168,76,0.15);
+      position: relative; overflow: hidden;
+    }
+    .load-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #7A6030, #C9A84C, #E8C97A);
+      width: 0%;
+      transition: width 0.4s ease;
+      box-shadow: 0 0 8px rgba(201,168,76,0.5);
+    }
+
+    .load-text {
+      margin-top: 16px;
+      font-family: monospace; font-size: 10px;
+      letter-spacing: 0.3em;
+      color: rgba(201,168,76,0.4);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div id="loading">
+  <div class="load-title">Aeltherion</div>
+  <div class="load-bar-wrap">
+    <div class="load-bar" id="load-bar"></div>
+  </div>
+  <div class="load-text" id="load-text">INICIANDO...</div>
+</div>
+
+<!-- Three.js canvas -->
+<div id="canvas-container"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="fps">-- FPS</div>
+  <div id="phase-label">FASE 0 — BASE</div>
+  <div id="status">ESCENA CARGADA</div>
+</div>
+
+<!-- Three.js desde CDN (ES module) -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+  import { initScene }  from './core/scene.js';
+  import { startLoop }  from './core/loop.js';
+  import { initResize } from './core/resize.js';
+
+  // ── LOADING PROGRESS ─────────────────────
+  const bar  = document.getElementById('load-bar');
+  const txt  = document.getElementById('load-text');
+
+  function setProgress(pct, label) {
+    bar.style.width = pct + '%';
+    txt.textContent = label;
+  }
+
+  // ── BOOT ─────────────────────────────────
+  async function boot() {
+    try {
+      setProgress(20, 'CARGANDO TRES.JS...');
+      await new Promise(r => setTimeout(r, 300));
+
+      setProgress(50, 'CONSTRUYENDO ESCENA...');
+      const { scene, camera, renderer } = await initScene();
+      await new Promise(r => setTimeout(r, 200));
+
+      setProgress(75, 'CONFIGURANDO CÁMARA...');
+      initResize(camera, renderer);
+      await new Promise(r => setTimeout(r, 200));
+
+      setProgress(95, 'INICIANDO LOOP...');
+      startLoop(scene, camera, renderer);
+      await new Promise(r => setTimeout(r, 300));
+
+      setProgress(100, 'LISTO');
+      await new Promise(r => setTimeout(r, 400));
+
+      // Ocultar loading
+      const loading = document.getElementById('loading');
+      loading.classList.add('hidden');
+      setTimeout(() => loading.remove(), 900);
+
+    } catch (err) {
+      txt.textContent = 'ERROR: ' + err.message;
+      bar.style.background = '#8B2A0A';
+      console.error('[BOOT ERROR]', err);
+    }
+  }
+
+  window.addEventListener('load', boot);
+</script>
+
+</body>
+</html>
