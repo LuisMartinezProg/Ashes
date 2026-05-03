@@ -2,7 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="screen-orientation" content="landscape" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Ashes of the Reborn</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -182,34 +185,70 @@
     /* ══ SCREEN 4: MENU PRINCIPAL ══ */
     #screen-menu { background: var(--ash-deep); }
 
+    /* Forzar orientación horizontal via CSS hint */
+    @media (orientation: portrait) {
+      #screen-menu .menu-layout {
+        flex-direction: column;
+        text-align: center;
+      }
+      #screen-menu .menu-left { border-right: none; border-bottom: 1px solid rgba(201,168,76,0.1); padding-bottom: 20px; }
+      #screen-menu .menu-title { font-size: 1.6rem; }
+      #screen-menu .menu-subtitle { font-size: 0.6rem; }
+    }
+
     .menu-bg {
       position: absolute; inset: 0;
       background:
-        radial-gradient(ellipse 55% 75% at 50% 105%,
-          rgba(139,42,10,0.22) 0%, transparent 58%),
-        radial-gradient(ellipse 35% 35% at 18% 28%,
-          rgba(201,168,76,0.04) 0%, transparent 48%),
-        linear-gradient(180deg, #04040A 0%, #0E0E1A 100%);
+        radial-gradient(ellipse 70% 60% at 100% 100%,
+          rgba(139,42,10,0.28) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 50% at 0% 0%,
+          rgba(201,168,76,0.05) 0%, transparent 50%),
+        linear-gradient(135deg, #04040A 0%, #0A0A16 100%);
     }
-    .menu-title-wrap {
-      position: relative; text-align: center;
-      margin-bottom: 56px;
+
+    /* Layout horizontal: izquierda = título, derecha = opciones */
+    .menu-layout {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: row;
+      align-items: center;
+      width: 100%; height: 100%;
+      padding: 0 6vw;
+      gap: 0;
     }
+
+    .menu-left {
+      flex: 1;
+      display: flex; flex-direction: column;
+      justify-content: center;
+      padding-right: 5vw;
+      border-right: 1px solid rgba(201,168,76,0.12);
+    }
+
+    .menu-right {
+      flex: 0 0 auto;
+      display: flex; flex-direction: column;
+      justify-content: center;
+      padding-left: 5vw;
+      min-width: 200px;
+    }
+
+    .menu-title-wrap { position: relative; }
+
     .menu-title-bg {
       font-family: 'Cinzel Decorative', serif;
-      font-size: clamp(2.2rem, 6.5vw, 5.5rem);
+      font-size: clamp(1.4rem, 4.5vw, 4rem);
       font-weight: 900;
       color: transparent;
       -webkit-text-stroke: 1px var(--gold-dim);
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
+      position: absolute; top: 50%; left: 0;
+      transform: translateY(-50%);
       white-space: nowrap;
-      opacity: 0.12; pointer-events: none;
+      opacity: 0.1; pointer-events: none;
       filter: blur(2px);
     }
     .menu-title {
       font-family: 'Cinzel Decorative', serif;
-      font-size: clamp(1.6rem, 5vw, 5.5rem);
+      font-size: clamp(1.4rem, 4.5vw, 4rem);
       font-weight: 900;
       background: linear-gradient(175deg,
         var(--gold-light) 0%,
@@ -218,53 +257,78 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      filter: drop-shadow(0 0 28px rgba(201,168,76,0.2));
+      filter: drop-shadow(0 0 24px rgba(201,168,76,0.2));
       position: relative;
+      line-height: 1.15;
     }
     .menu-subtitle {
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.55rem, 1.2vw, 0.82rem);
-      letter-spacing: 0.35em;
+      font-size: clamp(0.52rem, 1vw, 0.72rem);
+      letter-spacing: 0.4em;
       color: var(--gold-dim);
-      margin-top: 10px;
+      margin-top: 14px;
       text-transform: uppercase;
     }
     .menu-divider {
-      width: 180px; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
-      margin: 28px auto 46px;
+      width: 120px; height: 1px;
+      background: linear-gradient(90deg, var(--gold), transparent);
+      margin: 20px 0;
       position: relative;
     }
     .menu-divider::before {
       content: '✦';
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      color: var(--gold); font-size: 0.65rem;
-      background: var(--ash-deep); padding: 0 8px;
+      position: absolute; top: 50%; left: 0;
+      transform: translateY(-50%);
+      color: var(--gold); font-size: 0.6rem;
+      background: var(--ash-deep); padding-right: 8px;
     }
+    .menu-studio {
+      font-family: 'Cinzel', serif;
+      font-size: 0.58rem; letter-spacing: 0.3em;
+      color: var(--gold-dim); opacity: 0.5;
+      text-transform: uppercase;
+    }
+
     .menu-options {
       display: flex; flex-direction: column;
-      align-items: center; gap: 4px;
+      align-items: flex-start; gap: 2px;
     }
     .menu-btn {
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.85rem, 2vw, 0.95rem);
+      font-size: clamp(0.82rem, 1.8vw, 0.95rem);
       letter-spacing: 0.18em;
       color: var(--text-dim);
       background: none; border: none;
-      padding: 16px 52px;
+      padding: 14px 0 14px 16px;
       cursor: pointer;
       position: relative;
-      transition: color 0.2s;
+      transition: color 0.2s, padding-left 0.2s;
       text-transform: uppercase;
       -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
     }
-    .menu-btn:active { color: var(--gold); }
+    .menu-btn::before {
+      content: '';
+      position: absolute; left: 0; top: 50%;
+      transform: translateY(-50%) scaleY(0);
+      width: 2px; height: 60%;
+      background: var(--gold);
+      transition: transform 0.2s;
+    }
+    .menu-btn:active, .menu-btn:hover {
+      color: var(--gold-light); padding-left: 22px;
+    }
+    .menu-btn:active::before, .menu-btn:hover::before { transform: translateY(-50%) scaleY(1); }
     .menu-btn.primary {
       color: var(--gold-light);
-      font-size: clamp(0.95rem, 2.2vw, 1.05rem);
+      font-size: clamp(0.9rem, 2vw, 1rem);
     }
-    .menu-btn.primary:active { color: #fff; }
+    .menu-btn.primary:active, .menu-btn.primary:hover { color: #fff; }
+    .menu-version {
+      position: absolute; bottom: 16px; right: 20px;
+      font-family: 'Cinzel', serif; font-size: 0.55rem;
+      letter-spacing: 0.2em; color: var(--text-dim); opacity: 0.3;
+    }
     .menu-version {
       position: absolute; bottom: 22px; right: 30px;
       font-family: 'Cinzel', serif; font-size: 0.58rem;
@@ -499,21 +563,28 @@
 <!-- SCREEN 4: MENÚ -->
 <div class="screen" id="screen-menu">
   <div class="menu-bg"></div>
-  <div style="position:relative;text-align:center;z-index:2;">
-    <div class="menu-title-wrap">
-      <div class="menu-title-bg">ASHES OF THE REBORN</div>
-      <div class="menu-title">ASHES OF THE REBORN</div>
+  <div class="menu-layout">
+    <!-- IZQUIERDA: título -->
+    <div class="menu-left">
+      <div class="menu-title-wrap">
+        <div class="menu-title-bg">ASHES OF<br>THE REBORN</div>
+        <div class="menu-title">ASHES OF<br>THE REBORN</div>
+      </div>
       <div class="menu-subtitle">Un mundo aguarda. Un destino elegido.</div>
+      <div class="menu-divider"></div>
+      <div class="menu-studio">Valiant Gaming · Beta v0.1</div>
     </div>
-    <div class="menu-divider"></div>
-    <nav class="menu-options">
-      <button class="menu-btn primary" onclick="startGame()">Nueva Partida</button>
-      <button class="menu-btn" style="opacity:0.45;cursor:not-allowed">Continuar</button>
-      <button class="menu-btn" style="opacity:0.45;cursor:not-allowed">Opciones</button>
-      <button class="menu-btn" onclick="replayIntro()">Ver Introducción</button>
-    </nav>
+    <!-- DERECHA: opciones -->
+    <div class="menu-right">
+      <nav class="menu-options">
+        <button class="menu-btn primary" onclick="startGame()">Nueva Partida</button>
+        <button class="menu-btn" style="opacity:0.4;pointer-events:none">Continuar</button>
+        <button class="menu-btn" style="opacity:0.4;pointer-events:none">Opciones</button>
+        <button class="menu-btn" onclick="replayIntro()">Ver Introducción</button>
+      </nav>
+    </div>
   </div>
-  <div class="menu-version">BETA v0.1 — IRONFELL</div>
+  <div class="menu-version">IRONFELL</div>
 </div>
 
 <div id="audio-note">ACTIVA EL AUDIO PARA MEJOR EXPERIENCIA</div>
@@ -885,7 +956,13 @@ function runIntro() {
   }, 5200);
 }
 
-window.addEventListener('load', () => setTimeout(runIntro, 250));
+window.addEventListener('load', () => {
+  // Intentar forzar landscape
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch(() => {});
+  }
+  setTimeout(runIntro, 250);
+});
 </script>
 </body>
 </html>
