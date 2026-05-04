@@ -191,6 +191,7 @@ async function boot() {
 
     // ── 4. Conecta el arma elegida y arranca el HUD ───────────────────────
     combat.setWeapon(weaponType);
+    hud.setWeaponIcon(weaponType);
     hud.show();
 
     console.log(`[Boot] Arma seleccionada: ${weaponType}. ¡A combatir!`);
