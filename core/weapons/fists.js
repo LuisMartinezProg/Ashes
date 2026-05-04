@@ -1,10 +1,10 @@
 // core/weapons/fists.js — Arma: Puños
-// Fase 2: 2 golpes en combo. Golpe 1 jab, golpe 2 cross fuerte.
+// Combo de 2 golpes. Jab + cross fuerte.
 
 import * as THREE from 'three';
 
-const DAMAGE   = [8, 22];
-const ANIM_DUR = [220, 380];
+const DAMAGE      = [8, 22];
+const ANIM_DUR    = [220, 380];
 const FLASH_COLOR = [0xffffff, 0xff6622];
 
 export class FistsWeapon {
@@ -12,7 +12,6 @@ export class FistsWeapon {
     this.player   = playerGroup;
     this.comboMax = 2;
 
-    // Dos esferas pequeñas como puños placeholder
     this._leftFist  = this._buildFist(-0.28);
     this._rightFist = this._buildFist( 0.28);
     this.player.add(this._leftFist);
@@ -21,20 +20,21 @@ export class FistsWeapon {
     this._flashTimeout = null;
   }
 
-  execute(hitIndex, enemies, range) {
+  execute(hitIndex) {
     this._playSwingAnim(hitIndex);
     return true;
   }
 
-  getDamage(hitIndex) {
-    return DAMAGE[hitIndex] ?? DAMAGE[0];
-  }
+  getDamage(hitIndex)      { return DAMAGE[hitIndex]   ?? DAMAGE[0]; }
+  getAnimDuration(hitIndex){ return ANIM_DUR[hitIndex] ?? ANIM_DUR[0]; }
 
-  getAnimDuration(hitIndex) {
-    return ANIM_DUR[hitIndex] ?? ANIM_DUR[0];
-  }
+  update(delta, enemies) {}
 
-  update(delta) {}
+  destroy() {
+    clearTimeout(this._flashTimeout);
+    this.player.remove(this._leftFist);
+    this.player.remove(this._rightFist);
+  }
 
   // ── Visual ──────────────────────────────────────────────────────────────────
 
@@ -42,20 +42,19 @@ export class FistsWeapon {
     const geo  = new THREE.SphereGeometry(0.1, 6, 6);
     const mat  = new THREE.MeshBasicMaterial({ color: 0xffccaa });
     const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(xOffset, 0.05, 0.15); // adelante y a los lados
+    mesh.position.set(xOffset, 0.05, 0.15);
     return mesh;
   }
 
   _playSwingAnim(hitIndex) {
     clearTimeout(this._flashTimeout);
 
-    // Golpe 1: puño derecho. Golpe 2: puño izquierdo con más fuerza.
     const activeFist = hitIndex === 0 ? this._rightFist : this._leftFist;
     const color      = FLASH_COLOR[hitIndex];
     const duration   = ANIM_DUR[hitIndex];
 
     activeFist.material.color.setHex(color);
-    activeFist.position.z = 0.45; // extiende el puño hacia adelante
+    activeFist.position.z = 0.45;
 
     this._flashTimeout = setTimeout(() => {
       activeFist.material.color.setHex(0xffccaa);
