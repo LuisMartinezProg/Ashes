@@ -1,6 +1,5 @@
 // core/scene.js
 // Ashes of the Reborn | Valiant Gaming
-// Sombras desactivadas para compatibilidad móvil (Fase 1)
 
 import * as THREE from 'three';
 
@@ -14,19 +13,17 @@ export async function initScene() {
 
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.shadowMap.enabled   = false;  // desactivado hasta Fase 5
+  renderer.shadowMap.enabled   = false;
   renderer.toneMapping         = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.8;
-  renderer.setClearColor(0x1A2A3A, 1);
+  renderer.toneMappingExposure = 1.6;
   renderer.outputColorSpace    = THREE.SRGBColorSpace;
 
   document.getElementById('canvas-container').appendChild(renderer.domElement);
 
   // ── ESCENA ────────────────────────────────
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0A0D14);
-  scene.fog = new THREE.FogExp2(0x1A2535);
-          
+  scene.background = new THREE.Color(0x87CEEB);
+  scene.fog = new THREE.FogExp2(0xB0D4F1, 0.008);
 
   // ── CÁMARA ────────────────────────────────
   const aspect = window.innerWidth / window.innerHeight;
@@ -35,37 +32,37 @@ export async function initScene() {
   camera.lookAt(0, 0, 0);
 
   // ── ILUMINACIÓN ───────────────────────────
-  const ambientLight = new THREE.AmbientLight(0x1A2A4A, 3.0;
+  const ambientLight = new THREE.AmbientLight(0xFFF5E0, 3.5);
   scene.add(ambientLight);
 
-  const moonLight = new THREE.DirectionalLight(0x8899CC, 3.0);
-  moonLight.position.set(-10, 20, 10);
-  moonLight.castShadow = false;
-  scene.add(moonLight);
+  const sunLight = new THREE.DirectionalLight(0xFFD580, 3.0);
+  sunLight.position.set(-10, 20, 10);
+  sunLight.castShadow = false;
+  scene.add(sunLight);
 
-  const fillLight = new THREE.PointLight(0xC9A84C, 2.0, 30);
+  const fillLight = new THREE.PointLight(0xFFAA44, 2.0, 30);
   fillLight.position.set(0, 1, 0);
   scene.add(fillLight);
 
   // ── SUELO ─────────────────────────────────
   const groundGeo = new THREE.PlaneGeometry(60, 60, 20, 20);
   const groundMat = new THREE.MeshStandardMaterial({
-    color:     0x1A2A1A,
+    color:     0x4A7A3A,
     roughness: 0.95,
     metalness: 0.0,
   });
   const ground = new THREE.Mesh(groundGeo, groundMat);
-  ground.rotation.x   = -Math.PI / 2;
+  ground.rotation.x    = -Math.PI / 2;
   ground.receiveShadow = false;
   scene.add(ground);
 
   // ── PLACEHOLDER JUGADOR (se quita en loop.js) ─
   const playerGeo = new THREE.CapsuleGeometry(0.4, 1.2, 4, 8);
   const playerMat = new THREE.MeshStandardMaterial({
-    color:    0xC9A84C,
-    roughness: 0.4,
-    metalness: 0.3,
-    emissive:  0x3A2A00,
+    color:             0xC9A84C,
+    roughness:         0.4,
+    metalness:         0.3,
+    emissive:          0x3A2A00,
     emissiveIntensity: 0.3,
   });
   const playerMesh = new THREE.Mesh(playerGeo, playerMat);
@@ -87,11 +84,11 @@ export async function initScene() {
 
 function buildPlaceholderTown(scene) {
   const structures = [
-    [ 4,  4,  3, 2.5, 3,  0x3A2A1A],
-    [-5,  3,  2.5, 2, 2.5, 0x2A1E12],
-    [ 0,  6,  2, 3,   2,   0x2E2418],
-    [-3, -4,  4, 1.2, 3,   0x1E2E1A],
-    [ 5, -3,  1.5, 4, 1.5, 0x2A2A1E],
+    [ 4,  4,  3,   2.5, 3,   0x8B6343],
+    [-5,  3,  2.5, 2,   2.5, 0x7A5C3A],
+    [ 0,  6,  2,   3,   2,   0x6B4F2E],
+    [-3, -4,  4,   1.2, 3,   0x5A7A4A],
+    [ 5, -3,  1.5, 4,   1.5, 0x6A7A5A],
   ];
 
   structures.forEach(([x, z, w, h, d, color]) => {
@@ -133,10 +130,10 @@ function buildAmbientParticles(scene) {
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
 
   const mat = new THREE.PointsMaterial({
-    color:           0xC9A84C,
-    size:            0.05,
+    color:           0xFFE566,
+    size:            0.06,
     transparent:     true,
-    opacity:         0.35,
+    opacity:         0.5,
     sizeAttenuation: true,
   });
 
