@@ -16,7 +16,7 @@ export async function initScene() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled   = false;  // desactivado hasta Fase 5
   renderer.toneMapping         = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.1;
+  renderer.toneMappingExposure = 1.8;
   renderer.outputColorSpace    = THREE.SRGBColorSpace;
 
   document.getElementById('canvas-container').appendChild(renderer.domElement);
@@ -33,10 +33,10 @@ export async function initScene() {
   camera.lookAt(0, 0, 0);
 
   // ── ILUMINACIÓN ───────────────────────────
-  const ambientLight = new THREE.AmbientLight(0x1A2A4A, 1.5);
+  const ambientLight = new THREE.AmbientLight(0x1A2A4A, 3.0;
   scene.add(ambientLight);
 
-  const moonLight = new THREE.DirectionalLight(0x8899CC, 1.5);
+  const moonLight = new THREE.DirectionalLight(0x8899CC, 3.0);
   moonLight.position.set(-10, 20, 10);
   moonLight.castShadow = false;
   scene.add(moonLight);
