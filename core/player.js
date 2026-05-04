@@ -1,3 +1,4 @@
+
 /**
  * player.js — Cápsula jugador + lógica de movimiento
  * Ashes of the Reborn | Valiant Gaming
@@ -61,21 +62,21 @@ export class Player {
     );
     const body = new THREE.Mesh(bodyGeo, mat);
     body.position.y = CAPSULE_H * 0.5;
-    body.castShadow = false;
+    body.castShadow = true;
     this.root.add(body);
 
     // Cabeza (esfera superior)
     const headGeo = new THREE.SphereGeometry(CAPSULE_R, 16, 12);
     const head    = new THREE.Mesh(headGeo, mat);
     head.position.y = CAPSULE_H - CAPSULE_R;
-    head.castShadow = false;
+    head.castShadow = true;
     this.root.add(head);
 
     // Pie (esfera inferior)
     const footGeo = new THREE.SphereGeometry(CAPSULE_R, 16, 12);
     const foot    = new THREE.Mesh(footGeo, mat);
     foot.position.y = CAPSULE_R;
-    foot.castShadow = false;
+    foot.castShadow = true;
     this.root.add(foot);
 
     // Referencia al mesh principal para animaciones futuras
