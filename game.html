@@ -126,7 +126,7 @@
 
 <script type="module">
 import { initScene }                        from './core/scene.js';
-import { startLoop, getPlayer, setSkillSystem } from './core/loop.js';
+import { startLoop, getPlayer, setSkillSystem, setCombatSystem } from './core/loop.js';
 import { initResize }                       from './core/resize.js';
 import { CombatSystem }                     from './core/combat.js';
 import { Enemy }                            from './core/enemy.js';
@@ -161,7 +161,8 @@ async function boot() {
 
     // ── 2. Sistemas base (sin arma todavía) ───────────────────────────────
     const combat = new CombatSystem(getPlayer().root, camera);
-    combat.setScene(scene);  // necesario para armas de proyectil
+    combat.setScene(scene);
+    setCombatSystem(combat);// necesario para armas de proyectil
 
     const skills = new SkillSystem(scene, getPlayer().root);
     const hud    = new HUD(combat, skills);
