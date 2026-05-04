@@ -18,7 +18,7 @@ const FRAME_CAP = 1 / 20; // delta máximo (evita saltos si la pestaña pierde f
 // ─── Estado ──────────────────────────────────────────────────────────────────
 
 let _scene, _camera, _renderer;
-let _player, _joystick, _thirdCam;
+let _player, _joystick, _thirdCam, _skillSystem;
 let _lastTime = 0;
 let _running  = false;
 
@@ -70,6 +70,7 @@ function _tick(timestamp) {
   const input = _joystick.getInput();
   _player.update(delta, input, _camera);
   _thirdCam.update(delta);
+  if (_skillSystem) _skillSystem.update(delta);
 
   _renderer.render(_scene, _camera);
 }
@@ -119,3 +120,4 @@ function _updateFPS(delta) {
 
 export function stopLoop()  { _running = false; }
 export function getPlayer() { return _player; }
+export function setSkillSystem(s) { _skillSystem = s; }
