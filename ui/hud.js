@@ -330,5 +330,9 @@ export class HUD {
 
   _showEnemyBar(visible) {
     this._enemyBarEl.style.display = visible ? 'block' : 'none';
+ }
+  setWeaponIcon(type) {
+  const icons = { fists: '✊', sword: '⚔️', magic: '🔮', bow: '🏹' };
+  this._attackBtnEl.textContent = icons[type] ?? '⚔';
   }
 }
