@@ -17,6 +17,7 @@ export async function initScene() {
   renderer.shadowMap.enabled   = false;  // desactivado hasta Fase 5
   renderer.toneMapping         = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.8;
+  renderer.setClearColor(0x1A2A3A, 1);
   renderer.outputColorSpace    = THREE.SRGBColorSpace;
 
   document.getElementById('canvas-container').appendChild(renderer.domElement);
@@ -24,7 +25,8 @@ export async function initScene() {
   // ── ESCENA ────────────────────────────────
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0A0D14);
-  scene.fog = new THREE.FogExp2(0x0A0D14, 0.015);
+  scene.fog = new THREE.FogExp2(0x1A2535);
+          
 
   // ── CÁMARA ────────────────────────────────
   const aspect = window.innerWidth / window.innerHeight;
