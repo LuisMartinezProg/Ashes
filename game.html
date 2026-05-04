@@ -109,7 +109,7 @@
 
 <div id="hud">
   <div id="fps">-- FPS</div>
-  <div id="phase-label">FASE 1 — MOVIMIENTO</div>
+  <div id="phase-label">FASE 2 — COMBATE</div>
   <div id="status">AELTHERION</div>
 </div>
 
@@ -123,9 +123,12 @@
 </script>
 
 <script type="module">
-  import { initScene }  from './core/scene.js';
-  import { startLoop }  from './core/loop.js';
-  import { initResize } from './core/resize.js';
+import { initScene }    from './core/scene.js';
+import { startLoop }    from './core/loop.js';
+import { initResize }   from './core/resize.js';
+import { CombatSystem } from './core/combat.js';
+import { Enemy }        from './core/enemy.js';
+import { HUD }          from './ui/hud.js';
 
   const bar = document.getElementById('load-bar');
   const txt = document.getElementById('load-text');
@@ -142,6 +145,17 @@
 
       setProgress(50, 'CONSTRUYENDO ESCENA...');
       const { scene, camera, renderer } = await initScene();
+      const combat = new CombatSystem(scene.userData.player, camera);
+
+const enemy = new Enemy(scene, { x: 4, z: -3 }, (e) => {
+  combat.unregisterEnemy(e);
+  hud.detachEnemyBar();
+});
+combat.registerEnemy(enemy);
+
+const hud = new HUD(combat);
+hud.attachEnemyBar(enemy);
+hud.show();
       await new Promise(r => setTimeout(r, 200));
 
       setProgress(75, 'CONFIGURANDO CÁMARA...');
