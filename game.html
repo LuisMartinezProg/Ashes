@@ -160,10 +160,11 @@ const combat = new CombatSystem(getPlayer().root, camera);
 const skills = new SkillSystem(scene, getPlayer().root);
 const hud = new HUD(combat, skills);
 
-    const enemy = new Enemy(scene, { x: 4, z: -3 }, (e) => {
-      combat.unregisterEnemy(e);
-      hud.detachEnemyBar();
-    });
+const enemy = new Enemy(scene, { x: 4, z: -3 }, (e) => {
+  combat.unregisterEnemy(e);
+  skills.registerEnemies([]);
+  hud.detachEnemyBar();
+});
     combat.registerEnemy(enemy);
 skills.registerEnemies([enemy]);
 setSkillSystem(skills);
