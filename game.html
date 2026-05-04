@@ -93,8 +93,10 @@
     }
   </style>
 </head>
-  <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+
+<script src="//cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init();</script>
+
 <body>
 
 <div id="loading">
@@ -123,8 +125,6 @@
 </script>
 
 <script type="module">
-
-<script type="module">
 import { initScene }    from './core/scene.js';
 import { startLoop }    from './core/loop.js';
 import { initResize }   from './core/resize.js';
@@ -132,75 +132,59 @@ import { CombatSystem } from './core/combat.js';
 import { Enemy }        from './core/enemy.js';
 import { HUD }          from './ui/hud.js';
 
-setProgress(75, 'CONFIGURANDO CÁMARA...');
-initResize(camera, renderer);
-await new Promise(r => setTimeout(r, 200));
+const bar = document.getElementById('load-bar');
+const txt = document.getElementById('load-text');
 
-setProgress(95, 'INICIANDO LOOP...');
-startLoop(scene, camera, renderer);
+function setProgress(pct, label) {
+  bar.style.width = pct + '%';
+  txt.textContent = label;
+}
 
-const playerMesh = scene.getObjectByName('player_placeholder');
-const combat = new CombatSystem(playerMesh, camera);
-const hud = new HUD(combat);
+async function boot() {
+  try {
+    setProgress(20, 'CARGANDO THREE.JS...');
+    await new Promise(r => setTimeout(r, 300));
 
-const enemy = new Enemy(scene, { x: 4, z: -3 }, (e) => {
-  combat.unregisterEnemy(e);
-  hud.detachEnemyBar();
-});
-combat.registerEnemy(enemy);
-hud.attachEnemyBar(enemy);
-hud.show();
+    setProgress(50, 'CONSTRUYENDO ESCENA...');
+    const { scene, camera, renderer } = await initScene();
+    await new Promise(r => setTimeout(r, 200));
 
-await new Promise(r => setTimeout(r, 300));
+    setProgress(75, 'CONFIGURANDO CÁMARA...');
+    initResize(camera, renderer);
+    await new Promise(r => setTimeout(r, 200));
 
-  function setProgress(pct, label) {
-    bar.style.width = pct + '%';
-    txt.textContent = label;
+    setProgress(95, 'INICIANDO LOOP...');
+    startLoop(scene, camera, renderer);
+
+    const playerMesh = scene.getObjectByName('player_placeholder');
+    const combat = new CombatSystem(playerMesh, camera);
+    const hud = new HUD(combat);
+
+    const enemy = new Enemy(scene, { x: 4, z: -3 }, (e) => {
+      combat.unregisterEnemy(e);
+      hud.detachEnemyBar();
+    });
+    combat.registerEnemy(enemy);
+    hud.attachEnemyBar(enemy);
+    hud.show();
+
+    await new Promise(r => setTimeout(r, 300));
+
+    setProgress(100, 'LISTO');
+    await new Promise(r => setTimeout(r, 400));
+
+    const loading = document.getElementById('loading');
+    loading.classList.add('hidden');
+    setTimeout(() => loading.remove(), 900);
+
+  } catch (err) {
+    txt.textContent = 'ERROR: ' + err.message;
+    bar.style.background = '#8B2A0A';
+    console.error('[BOOT ERROR]', err);
   }
+}
 
-  async function boot() {
-    try {
-      setProgress(20, 'CARGANDO THREE.JS...');
-      await new Promise(r => setTimeout(r, 300));
-
-      setProgress(50, 'CONSTRUYENDO ESCENA...');
-      const { scene, camera, renderer } = await initScene();
-      const combat = new CombatSystem(scene.userData.player, camera);
-
-const enemy = new Enemy(scene, { x: 4, z: -3 }, (e) => {
-  combat.unregisterEnemy(e);
-  hud.detachEnemyBar();
-});
-combat.registerEnemy(enemy);
-
-const hud = new HUD(combat);
-hud.attachEnemyBar(enemy);
-hud.show();
-      await new Promise(r => setTimeout(r, 200));
-
-      setProgress(75, 'CONFIGURANDO CÁMARA...');
-      initResize(camera, renderer);
-      await new Promise(r => setTimeout(r, 200));
-
-      setProgress(95, 'INICIANDO LOOP...');
-      startLoop(scene, camera, renderer);
-      await new Promise(r => setTimeout(r, 300));
-
-      setProgress(100, 'LISTO');
-      await new Promise(r => setTimeout(r, 400));
-
-      const loading = document.getElementById('loading');
-      loading.classList.add('hidden');
-      setTimeout(() => loading.remove(), 900);
-
-    } catch (err) {
-      txt.textContent = 'ERROR: ' + err.message;
-      bar.style.background = '#8B2A0A';
-      console.error('[BOOT ERROR]', err);
-    }
-  }
-
-  window.addEventListener('load', boot);
+window.addEventListener('load', boot);
 </script>
 
 </body>
