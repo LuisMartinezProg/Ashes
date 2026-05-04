@@ -26,7 +26,7 @@ export class BowWeapon {
     const target = this._findTarget(enemies);
     this._playDrawAnim(hitIndex);
     if (target && this._scene) {
-      this._spawnArrow(hitIndex, target, enemies);
+      this._spawnArrow(hitIndex, target);
     }
     return !!target;
   }
@@ -80,7 +80,7 @@ export class BowWeapon {
     return closest;
   }
 
-  _spawnArrow(hitIndex, target, enemies) {
+  _spawnArrow(hitIndex, target ) {
     const dir = target.mesh.position.clone()
       .sub(this.player.position)
       .setY(0)
