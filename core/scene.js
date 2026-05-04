@@ -140,4 +140,4 @@ function buildAmbientParticles(scene) {
   const particles = new THREE.Points(geo, mat);
   particles.name  = 'ambient_particles';
   scene.add(particles);
-}
+                                                 }
