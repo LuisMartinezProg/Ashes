@@ -57,7 +57,8 @@ export class Fireball {
       let hit = false;
       for (const e of p.enemies) {
         if (e.isDead()) continue;
-        if (p.mesh.position.distanceTo(e.mesh.position) < 0.8) {
+         const enemyCenter = e.mesh.position.clone().add(new THREE.Vector3(0, 0.8, 0));
+if (p.mesh.position.distanceTo(enemyCenter) < 1.2) {
           e.takeDamage(DAMAGE);
           hit = true;
           break;
