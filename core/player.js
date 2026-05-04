@@ -4,10 +4,10 @@
  * Ashes of the Reborn | Valiant Gaming
  *
  * Depende de Three.js (global o importado antes).
- * Recibe el input del joystick y mueve la cápsula en el mundo.
+ * Recibe el input del joystick y meve l cápsula en el mundo.
  */
 
-import * as THREE from 'https://unpkg.com/three@0.157.0/build/three.module.js';
+import * as THREE from 'three';
 
 // ─── Constantes ─────────────────────────────────────────────────────────────
 
