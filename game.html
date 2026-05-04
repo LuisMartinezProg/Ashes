@@ -159,8 +159,7 @@ async function boot() {
 const playerMesh = scene.getObjectByName('player_placeholder');
 
 
-    const playerMesh = scene.getObjectByName('player_placeholder');
-    const combat = new CombatSystem(playerMesh, camera);
+const combat = new CombatSystem(getPlayer().root, camera);
     const hud = new HUD(combat);
 
     const enemy = new Enemy(scene, { x: 4, z: -3 }, (e) => {
