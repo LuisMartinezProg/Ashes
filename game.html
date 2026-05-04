@@ -155,6 +155,13 @@ async function boot() {
 
     setProgress(95, 'INICIANDO LOOP...');
     startLoop(scene, camera, renderer);
+    console.log('[DEBUG] Iniciando combate...');
+const playerMesh = scene.getObjectByName('player_placeholder');
+console.log('[DEBUG] playerMesh:', playerMesh);
+const combat = new CombatSystem(playerMesh, camera);
+console.log('[DEBUG] combat OK');
+const hud = new HUD(combat);
+console.log('[DEBUG] hud OK');
 
     const playerMesh = scene.getObjectByName('player_placeholder');
     const combat = new CombatSystem(playerMesh, camera);
