@@ -12,7 +12,7 @@
 import { Fireball } from '../skills/fireball.js';
 
 const MAX_ENERGY    = 100;
-const ENERGY_REGEN  = 8;    // energía por segundo (regeneración pasiva)
+const ENERGY_REGEN  = 3;    // energía por segundo (regeneración pasiva)
 const FIREBALL_COST = 30;   // energía que consume la bola de fuego
 
 export class SkillSystem {
