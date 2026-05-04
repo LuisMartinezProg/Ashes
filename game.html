@@ -165,7 +165,8 @@ const hud = new HUD(combat, skills);
       hud.detachEnemyBar();
     });
     combat.registerEnemy(enemy);
-    hud.attachEnemyBar(enemy);
+skills.registerEnemies([enemy]);
+hud.attachEnemyBar(enemy);
     hud.show();
 
     await new Promise(r => setTimeout(r, 300));
