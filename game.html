@@ -111,7 +111,7 @@
 
 <div id="hud">
   <div id="fps">-- FPS</div>
-  <div id="phase-label">FASE 2 — COMBATE</div>
+  <div id="phase-label">FASE 4 — ARMAS</div>
   <div id="status">AELTHERION</div>
 </div>
 
@@ -125,13 +125,15 @@
 </script>
 
 <script type="module">
-import { initScene }    from './core/scene.js';
+import { initScene }                        from './core/scene.js';
 import { startLoop, getPlayer, setSkillSystem } from './core/loop.js';
-import { initResize }   from './core/resize.js';
-import { CombatSystem } from './core/combat.js';
-import { Enemy }        from './core/enemy.js';
-import { HUD }         from './ui/hud.js';
-import { SkillSystem } from './core/skillSystem.js';
+import { initResize }                       from './core/resize.js';
+import { CombatSystem }                     from './core/combat.js';
+import { Enemy }                            from './core/enemy.js';
+import { HUD }                              from './ui/hud.js';
+import { SkillSystem }                      from './core/skillSystem.js';
+import { showWeaponSelect }                 from './ui/weaponSelect.js';
+
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -142,6 +144,7 @@ function setProgress(pct, label) {
 
 async function boot() {
   try {
+    // ── 1. Carga inicial ──────────────────────────────────────────────────
     setProgress(20, 'CARGANDO THREE.JS...');
     await new Promise(r => setTimeout(r, 300));
 
@@ -155,30 +158,41 @@ async function boot() {
 
     setProgress(95, 'INICIANDO LOOP...');
     startLoop(scene, camera, renderer);
-    
-const combat = new CombatSystem(getPlayer().root, camera);
-const skills = new SkillSystem(scene, getPlayer().root);
-const hud = new HUD(combat, skills);
 
-const enemy = new Enemy(scene, { x: 4, z: -3 }, (e) => {
-  combat.unregisterEnemy(e);
-  skills.registerEnemies([]);
-  hud.detachEnemyBar();
-});
+    // ── 2. Sistemas base (sin arma todavía) ───────────────────────────────
+    const combat = new CombatSystem(getPlayer().root, camera);
+    combat.setScene(scene);  // necesario para armas de proyectil
+
+    const skills = new SkillSystem(scene, getPlayer().root);
+    const hud    = new HUD(combat, skills);
+
+    const enemy = new Enemy(scene, { x: 4, z: -3 }, (e) => {
+      combat.unregisterEnemy(e);
+      skills.registerEnemies([]);
+      hud.detachEnemyBar();
+    });
+
     combat.registerEnemy(enemy);
-skills.registerEnemies([enemy]);
-setSkillSystem(skills);
-hud.attachEnemyBar(enemy);
-    hud.show();
+    skills.registerEnemies([enemy]);
+    setSkillSystem(skills);
+    hud.attachEnemyBar(enemy);
 
-    await new Promise(r => setTimeout(r, 300));
-
+    // ── 3. Oculta loading — muestra selección de arma ─────────────────────
     setProgress(100, 'LISTO');
-    await new Promise(r => setTimeout(r, 400));
+    await new Promise(r => setTimeout(r, 300));
 
     const loading = document.getElementById('loading');
     loading.classList.add('hidden');
     setTimeout(() => loading.remove(), 900);
+
+    // La pantalla de selección aparece sobre el juego ya renderizando
+    const weaponType = await showWeaponSelect();
+
+    // ── 4. Conecta el arma elegida y arranca el HUD ───────────────────────
+    combat.setWeapon(weaponType);
+    hud.show();
+
+    console.log(`[Boot] Arma seleccionada: ${weaponType}. ¡A combatir!`);
 
   } catch (err) {
     txt.textContent = 'ERROR: ' + err.message;
