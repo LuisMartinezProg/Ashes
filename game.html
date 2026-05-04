@@ -130,8 +130,8 @@ import { startLoop, getPlayer } from './core/loop.js';
 import { initResize }   from './core/resize.js';
 import { CombatSystem } from './core/combat.js';
 import { Enemy }        from './core/enemy.js';
-import { HUD }          from './ui/hud.js';
-
+import { HUD }         from './ui/hud.js';
+import { SkillSystem } from './core/skillSystem.js';
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -157,7 +157,8 @@ async function boot() {
     startLoop(scene, camera, renderer);
     
 const combat = new CombatSystem(getPlayer().root, camera);
-    const hud = new HUD(combat);
+const skills = new SkillSystem(scene, getPlayer().root);
+const hud = new HUD(combat, skills);
 
     const enemy = new Enemy(scene, { x: 4, z: -3 }, (e) => {
       combat.unregisterEnemy(e);
