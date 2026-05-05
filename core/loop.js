@@ -9,7 +9,7 @@ let _scene, _camera, _renderer;
 let _player, _joystick, _thirdCam, _skillSystem, _combatSystem, _enemies = [];
 let _lastTime = 0;
 let _running  = false;
-
+let _npcs = [], _dialogueUI = null;
 let _fpsFrames = 0;
 let _fpsAccum  = 0;
 const _fpsEl   = document.getElementById('fps');
@@ -49,6 +49,7 @@ function _tick(timestamp) {
     if (e && typeof e.isDead === 'function') e.update(delta);
   }
   if (_combatSystem) _combatSystem.update(delta);
+  for (const n of _npcs) n.update(timestamp * 0.001);
 
   _renderer.render(_scene, _camera);
 }
@@ -93,3 +94,5 @@ export function getPlayer() { return _player; }
 export function setSkillSystem(s)  { _skillSystem = s; }
 export function setCombatSystem(c) { _combatSystem = c; }
 export function setEnemies(list)   { _enemies = list; }
+export function setNPCs(list)        { _npcs = list; }
+export function setDialogueUI(ui)    { _dialogueUI = ui; }
