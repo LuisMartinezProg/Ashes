@@ -157,6 +157,7 @@ async function boot() {
     startLoop(scene, camera, renderer);
 
     const combat = new CombatSystem(getPlayer().root, camera);
+    combat.setScene(scene);
     const skills = new SkillSystem(scene, getPlayer().root);
     const hud    = new HUD(combat, skills);
 
