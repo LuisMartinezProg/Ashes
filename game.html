@@ -67,6 +67,9 @@ import { Enemy, spawnEnemies } from './core/enemy.js';
 import { HUD }              from './ui/hud.js';
 import { SkillSystem }      from './core/skillSystem.js';
 import { showWeaponSelect } from './ui/weaponSelect.js';
+  import { spawnNPCs }   from './core/npc.js';
+import { DialogueUI }  from './ui/dialogue.js';
+import { setNPCs, setDialogueUI } from './core/loop.js';
 
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -111,6 +114,39 @@ async function boot() {
     skills.registerEnemies(enemies);
     setSkillSystem(skills);
     setEnemies(enemies);
+
+// ── NPCs y diálogo ──────────────────────────────────────────────
+const dialogueUI = new DialogueUI();
+const npcs       = spawnNPCs(scene);
+setNPCs(npcs);
+setDialogueUI(dialogueUI);
+
+let _nearNPC = null;
+function _checkNPCProximity() {
+  if (dialogueUI.isActive()) return;
+  const playerPos = player.root.position;
+  let found = null;
+
+  for (const npc of npcs) {
+    if (npc.isPlayerInRange(playerPos)) { found = npc; break; }
+  }
+
+  if (found && found !== _nearNPC) {
+    _nearNPC = found;
+    dialogueUI.showTalkBtn(() => {
+      dialogueUI.openDialogue(
+        found.dialogue.name,
+        found.dialogue.lines,
+        () => { _nearNPC = null; }
+      );
+    });
+  } else if (!found && _nearNPC) {
+    _nearNPC = null;
+    dialogueUI.hideTalkBtn();
+  }
+}
+
+setInterval(_checkNPCProximity, 200);
 
     // HUD del primer enemigo como referencia visual
     hud.attachEnemyBar(enemies[0]);
