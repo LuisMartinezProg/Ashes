@@ -19,7 +19,6 @@ const SPAWN_POINTS = [
   { x:   0, z:  15 },
 ];
 
-// ── ESTADOS ──────────────────────────────────────────────────────────────────
 const STATE = {
   PATROL:  'patrol',
   CHASE:   'chase',
@@ -37,12 +36,10 @@ export class Enemy {
     this.dead    = false;
     this.hudBar  = null;
 
-    // ── Estado ──────────────────────────────────────────────────────────────
     this._state       = STATE.PATROL;
     this._attackTimer = 0;
     this._waitTimer   = 0;
 
-    // ── Waypoints de patrulla (triángulo alrededor del spawn) ────────────────
     const ox = position.x;
     const oz = position.z;
     this._waypoints = [
@@ -52,7 +49,6 @@ export class Enemy {
     ];
     this._waypointIdx = 0;
 
-    // ── Mesh ────────────────────────────────────────────────────────────────
     this.mesh = new THREE.Group();
 
     const bodyGeo = new THREE.CylinderGeometry(0.3, 0.3, 1.0, 10);
@@ -108,8 +104,8 @@ export class Enemy {
 
     if (dist < 0.3) {
       this._waypointIdx = (this._waypointIdx + 1) % this._waypoints.length;
-      this._state      = STATE.WAITING;
-      this._waitTimer  = PATROL_WAIT;
+      this._state       = STATE.WAITING;
+      this._waitTimer   = PATROL_WAIT;
       return;
     }
 
@@ -136,7 +132,7 @@ export class Enemy {
   _updateChase(delta) {
     if (!this.player) return;
 
-    const playerPos = this.player.mesh.position;
+    const playerPos = this.player.root.position;
 
     if (!this._playerInRange(DETECT_RANGE * 1.5)) {
       this._state = STATE.PATROL;
@@ -167,16 +163,13 @@ export class Enemy {
       this._doAttack();
     }
 
-    // Mirar al jugador mientras ataca
-    const playerPos = this.player.mesh.position;
-    this._lookAt(playerPos);
+    this._lookAt(this.player.root.position);
   }
 
   _doAttack() {
     if (!this.player || this.player.isDead?.()) return;
     this.player.takeDamage(ATTACK_DAMAGE);
 
-    // Flash rojo en el enemigo al atacar
     for (const mat of this._materials) mat.color.setHex(0xff6600);
     setTimeout(() => {
       if (!this.dead) {
@@ -218,7 +211,7 @@ export class Enemy {
 
   _playerInRange(range) {
     if (!this.player) return false;
-    return this._distTo(this.player.mesh.position) <= range;
+    return this._distTo(this.player.root.position) <= range;
   }
 
   // ── Daño / Muerte ────────────────────────────────────────────────────────
@@ -259,4 +252,4 @@ export class Enemy {
 export function spawnEnemies(scene, player, customPoints = null) {
   const points = customPoints ?? SPAWN_POINTS;
   return points.map(p => new Enemy(scene, p, player));
-}
+        }
