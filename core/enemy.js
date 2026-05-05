@@ -85,17 +85,17 @@ export class Enemy {
   }
 
   update(delta) {
-    if (this._dying) { this._updateDeathAnim(delta); return; }
-    if (this.dead)   return;
+  if (!this.mesh)  return;
+  if (this._dying) { this._updateDeathAnim(delta); return; }
+  if (this.dead)   return;
 
-    switch (this._state) {
-      case STATE.PATROL:  this._updatePatrol(delta);  break;
-      case STATE.WAITING: this._updateWaiting(delta); break;
-      case STATE.CHASE:   this._updateChase(delta);   break;
-      case STATE.ATTACK:  this._updateAttack(delta);  break;
-    }
+  switch (this._state) {
+    case STATE.PATROL:  this._updatePatrol(delta);  break;
+    case STATE.WAITING: this._updateWaiting(delta); break;
+    case STATE.CHASE:   this._updateChase(delta);   break;
+    case STATE.ATTACK:  this._updateAttack(delta);  break;
   }
-
+  }
   // ── Estados ──────────────────────────────────────────────────────────────
 
   _updatePatrol(delta) {
@@ -235,16 +235,18 @@ export class Enemy {
     for (const mat of this._materials) mat.color.setHex(0x440000);
   }
 
-  _updateDeathAnim(delta) {
-    this._dyingTimer -= delta * 1000;
-    this.mesh.position.y -= delta * 1.2;
-    const t = Math.max(0, this._dyingTimer / DEATH_DURATION);
-    this.mesh.scale.setScalar(t);
-    if (this._dyingTimer <= 0) {
-      this._dying = false;
-      this.scene.remove(this.mesh);
-    }
+_updateDeathAnim(delta) {
+  if (!this.mesh) return;
+  this._dyingTimer -= delta * 1000;
+  this.mesh.position.y -= delta * 1.2;
+  const t = Math.max(0, this._dyingTimer / DEATH_DURATION);
+  this.mesh.scale.setScalar(t);
+  if (this._dyingTimer <= 0) {
+    this._dying = false;
+    this.scene.remove(this.mesh);
+    this.mesh = null;
   }
+}
 }
 
 // ── SPAWN ────────────────────────────────────────────────────────────────────
