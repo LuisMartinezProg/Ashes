@@ -45,7 +45,7 @@ window.onerror = function(msg, src, line) {
 
 <div id="hud">
   <div id="fps">-- FPS</div>
-  <div id="phase-label">FASE 4 — COMBATE</div>
+  <div id="phase-label">FASE 5B — PATRULLA</div>
   <div id="status">AELTHERION</div>
 </div>
 
@@ -63,7 +63,7 @@ import { initScene }        from './core/scene.js';
 import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies } from './core/loop.js';
 import { initResize }       from './core/resize.js';
 import { CombatSystem }     from './core/combat.js';
-import { Enemy }            from './core/enemy.js';
+import { Enemy, spawnEnemies } from './core/enemy.js';
 import { HUD }              from './ui/hud.js';
 import { SkillSystem }      from './core/skillSystem.js';
 import { showWeaponSelect } from './ui/weaponSelect.js';
@@ -92,29 +92,31 @@ async function boot() {
     setProgress(95, 'INICIANDO LOOP...');
     startLoop(scene, camera, renderer);
 
-    const combat = new CombatSystem(getPlayer().root, camera);
+    const player = getPlayer();
+
+    const combat = new CombatSystem(player.root, camera);
     combat.setScene(scene);
     setCombatSystem(combat);
 
-    const skills = new SkillSystem(scene, getPlayer().root);
+    const skills = new SkillSystem(scene, player.root);
     const hud    = new HUD(combat, skills);
 
-    const enemy = new Enemy(scene, { x: 4, z: -3 }, (e) => {
-      combat.unregisterEnemy(e);
-      skills.registerEnemies([]);
-      setEnemies([]);
-      hud.detachEnemyBar();
+    // ── Enemigos con patrulla ──────────────────────────────────────────────
+    const enemies = spawnEnemies(scene, player);
+
+    enemies.forEach(e => {
+      combat.registerEnemy(e);
     });
 
-    combat.registerEnemy(enemy);
-    skills.registerEnemies([enemy]);
+    skills.registerEnemies(enemies);
     setSkillSystem(skills);
-    setEnemies([enemy]);
+    setEnemies(enemies);
 
-    enemy.playerRef = getPlayer();
-    getPlayer().onDamage = (hp, max) => hud.updatePlayerHp(hp, max);
-    hud.updatePlayerHp(getPlayer().hp, getPlayer().maxHp);
-    hud.attachEnemyBar(enemy);
+    // HUD del primer enemigo como referencia visual
+    hud.attachEnemyBar(enemies[0]);
+
+    player.onDamage = (hp, max) => hud.updatePlayerHp(hp, max);
+    hud.updatePlayerHp(player.hp, player.maxHp);
 
     setProgress(100, 'LISTO');
     await new Promise(r => setTimeout(r, 300));
@@ -129,6 +131,7 @@ async function boot() {
     hud.show();
 
     console.log('[Boot] Arma: ' + weaponType);
+    console.log('[Boot] Enemigos spawneados: ' + enemies.length);
 
   } catch (err) {
     txt.textContent = 'ERROR: ' + err.message;
