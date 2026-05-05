@@ -18,7 +18,7 @@ const FRAME_CAP = 1 / 20; // delta máximo (evita saltos si la pestaña pierde f
 // ─── Estado ──────────────────────────────────────────────────────────────────
 
 let _scene, _camera, _renderer;
-let _player, _joystick, _thirdCam, _skillSystem, _combatSystem;
+let _player, _joystick, _thirdCam, _skillSystem, _combatSystem, _enemies = [];
 let _lastTime = 0;
 let _running  = false;
 
@@ -71,6 +71,7 @@ function _tick(timestamp) {
   _player.update(delta, input, _camera);
   _thirdCam.update(delta);
   if (_skillSystem) _skillSystem.update(delta);
+  for (const e of _enemies) e.update(delta);
   if (_combatSystem) _combatSystem.update(delta);
 
   _renderer.render(_scene, _camera);
@@ -123,3 +124,4 @@ export function stopLoop()  { _running = false; }
 export function getPlayer() { return _player; }
 export function setSkillSystem(s) { _skillSystem = s; }
 export function setCombatSystem(c) { _combatSystem = c; }
+export function setEnemies(list) { _enemies = list; }
