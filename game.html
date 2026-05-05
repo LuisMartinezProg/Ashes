@@ -196,16 +196,16 @@ async function boot() {
     hud.show();
 
 const resetBtn = document.createElement('button');
-resetBtn.textContent = '↺';
-Object.assign(resetBtn.style, {
-  position: 'fixed', top: '12px', left: '50%',
-  transform: 'translateX(-50%)',
-  zIndex: '999', background: 'rgba(0,0,0,0.5)',
-  border: '1px solid rgba(201,168,76,0.4)',
-  color: '#C9A84C', fontFamily: 'monospace',
-  fontSize: '18px', padding: '4px 12px',
-  borderRadius: '4px', cursor: 'pointer',
-  pointerEvents: 'all',
+resetBtn.addEventListener('click', () => {
+  enemy.hp = enemy.maxHp;
+  enemy.dead = false;
+  enemy._dying = false;
+  enemy.mesh.position.y = 0;
+  enemy.mesh.scale.setScalar(1);
+  enemy._materials[0].color.setHex(0xcc2222);
+  enemy._materials[1].color.setHex(0xdd3333);
+  if (enemy.hudBar) enemy.hudBar.update(enemy.hp, enemy.maxHp);
+});
 });
 resetBtn.addEventListener('click', () => {
   enemy.hp = enemy.maxHp;
