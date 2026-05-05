@@ -315,18 +315,16 @@ export class HUD {
     const pct = Math.max(0, energy / maxEnergy) * 100;
     this._energyFill.style.width = `${pct}%`;
   }
-
   _updateSkillCooldown(progress) {
     if (!this._skillCoolEl) return;
-    // progress 0 = recién usado (overlay lleno), 1 = listo (overlay vacío)
     const coverPct = (1 - progress) * 100;
     this._skillCoolEl.style.height = `${coverPct}%`;
-
-    // Atenúa el botón cuando está en cooldown
     if (this._skillBtnEl) {
       this._skillBtnEl.style.opacity = progress < 1 ? '0.5' : '1';
     }
-    _showEnemyBar(visible) {
+  }
+
+  _showEnemyBar(visible) {
     this._enemyBarEl.style.display = visible ? 'block' : 'none';
   }
 
@@ -334,7 +332,6 @@ export class HUD {
     const icons = { fists: '✊', sword: '⚔️', magic: '🔮', bow: '🏹' };
     this._attackBtnEl.textContent = icons[type] ?? '⚔';
   }
-  }
-  }
-  
+}
 
+  
