@@ -121,7 +121,9 @@
   }
 }
 </script>
-
+window.onerror = (msg, src, line) => {
+  document.body.innerHTML = `<pre style="color:red;padding:20px">${msg}\n${src}\nLine: ${line}</pre>`;
+};
 <script type="module">
 import { initScene }     from './core/scene.js';
 import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies } from './core/loop.js';
