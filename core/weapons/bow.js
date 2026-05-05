@@ -46,7 +46,8 @@ export class BowWeapon {
       let hit = false;
       for (const e of enemies) {
         if (e.isDead()) continue;
-        if (a.mesh.position.distanceTo(e.mesh.position) < 0.5) {
+        const ap = a.mesh.position, ep = e.mesh.position;
+if (Math.sqrt((ap.x-ep.x)**2 + (ap.z-ep.z)**2) < 0.8) {
           e.takeDamage(a.damage);
           hit = true;
           break;
