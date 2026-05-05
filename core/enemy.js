@@ -85,17 +85,18 @@ export class Enemy {
   }
 
   update(delta) {
-  if (!this.mesh)  return;
-  if (this._dying) { this._updateDeathAnim(delta); return; }
-  if (this.dead)   return;
+    if (!this.mesh)  return;
+    if (this._dying) { this._updateDeathAnim(delta); return; }
+    if (this.dead)   return;
 
-  switch (this._state) {
-    case STATE.PATROL:  this._updatePatrol(delta);  break;
-    case STATE.WAITING: this._updateWaiting(delta); break;
-    case STATE.CHASE:   this._updateChase(delta);   break;
-    case STATE.ATTACK:  this._updateAttack(delta);  break;
+    switch (this._state) {
+      case STATE.PATROL:  this._updatePatrol(delta);  break;
+      case STATE.WAITING: this._updateWaiting(delta); break;
+      case STATE.CHASE:   this._updateChase(delta);   break;
+      case STATE.ATTACK:  this._updateAttack(delta);  break;
+    }
   }
-  }
+
   // ── Estados ──────────────────────────────────────────────────────────────
 
   _updatePatrol(delta) {
@@ -181,34 +182,34 @@ export class Enemy {
 
   // ── Movimiento ───────────────────────────────────────────────────────────
 
- _moveTo(target, speed, delta) {
-  if (!this.mesh) return;
-  const pos  = this.mesh.position;
-  const dx   = target.x - pos.x;
-  const dz   = target.z - pos.z;
-  const dist = Math.sqrt(dx*dx + dz*dz);
-  if (dist < 0.01) return;
-  const step = Math.min(speed * delta, dist);
-  pos.x += (dx / dist) * step;
-  pos.z += (dz / dist) * step;
-  this._lookAt(target);
- } 
-_lookAt(target) {
-  if (!this.mesh) return;
-  const dx = target.x - this.mesh.position.x;
-  const dz = target.z - this.mesh.position.z;
-  if (Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01) {
-    this.mesh.rotation.y = Math.atan2(dx, dz);
+  _moveTo(target, speed, delta) {
+    if (!this.mesh) return;
+    const pos  = this.mesh.position;
+    const dx   = target.x - pos.x;
+    const dz   = target.z - pos.z;
+    const dist = Math.sqrt(dx*dx + dz*dz);
+    if (dist < 0.01) return;
+    const step = Math.min(speed * delta, dist);
+    pos.x += (dx / dist) * step;
+    pos.z += (dz / dist) * step;
+    this._lookAt(target);
   }
-}
-  
-  
-_distTo(target) {
-  if (!this.mesh) return Infinity;
-  const dx = target.x - this.mesh.position.x;
-  const dz = target.z - this.mesh.position.z;
-  return Math.sqrt(dx*dx + dz*dz);
-  
+
+  _lookAt(target) {
+    if (!this.mesh) return;
+    const dx = target.x - this.mesh.position.x;
+    const dz = target.z - this.mesh.position.z;
+    if (Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01) {
+      this.mesh.rotation.y = Math.atan2(dx, dz);
+    }
+  }
+
+  _distTo(target) {
+    if (!this.mesh) return Infinity;
+    const dx = target.x - this.mesh.position.x;
+    const dz = target.z - this.mesh.position.z;
+    return Math.sqrt(dx*dx + dz*dz);
+  }
 
   _playerInRange(range) {
     if (!this.player) return false;
@@ -236,18 +237,18 @@ _distTo(target) {
     for (const mat of this._materials) mat.color.setHex(0x440000);
   }
 
-_updateDeathAnim(delta) {
-  if (!this.mesh) return;
-  this._dyingTimer -= delta * 1000;
-  this.mesh.position.y -= delta * 1.2;
-  const t = Math.max(0, this._dyingTimer / DEATH_DURATION);
-  this.mesh.scale.setScalar(t);
-  if (this._dyingTimer <= 0) {
-    this._dying = false;
-    this.scene.remove(this.mesh);
-    this.mesh = null;
+  _updateDeathAnim(delta) {
+    if (!this.mesh) return;
+    this._dyingTimer -= delta * 1000;
+    this.mesh.position.y -= delta * 1.2;
+    const t = Math.max(0, this._dyingTimer / DEATH_DURATION);
+    this.mesh.scale.setScalar(t);
+    if (this._dyingTimer <= 0) {
+      this._dying = false;
+      this.scene.remove(this.mesh);
+      this.mesh = null;
+    }
   }
-}
 }
 
 // ── SPAWN ────────────────────────────────────────────────────────────────────
@@ -255,4 +256,4 @@ _updateDeathAnim(delta) {
 export function spawnEnemies(scene, player, customPoints = null) {
   const points = customPoints ?? SPAWN_POINTS;
   return points.map(p => new Enemy(scene, p, player));
-        
+      }
