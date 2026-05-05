@@ -29,6 +29,8 @@ export class Player {
 
     // Dirección de cara actual (en radianes, sobre eje Y)
     this.facingAngle = 0;
+    this.hp    = 100;
+this.maxHp = 100;
 
     // Vector de movimiento world-space (calculado cada frame)
     this._moveDir = new THREE.Vector3();
@@ -165,6 +167,10 @@ export class Player {
   /** Punto de interés para la cámara (a la altura del pecho) */
   get chestPosition() {
     return this.root.position.clone().add(new THREE.Vector3(0, CAPSULE_H * 0.65, 0));
+  }
+  takeDamage(amount) {
+  this.hp = Math.max(0, this.hp - amount);
+  if (this.onDamage) this.onDamage(this.hp, this.maxHp);
   }
 
   destroy() {
