@@ -28,7 +28,10 @@ export class MagicWeapon {
   update(delta, enemies = []) {
     for (let i = this._projectiles.length - 1; i >= 0; i--) {
       const p = this._projectiles[i];
-      if (!p.target || p.target.dead) { this._destroyProjectile(i); continue; }
+      // FIX: usar isDead() en vez de .dead
+      if (!p.target || typeof p.target.isDead !== 'function' || p.target.isDead()) {
+        this._destroyProjectile(i); continue;
+      }
       const dir = p.target.mesh.position.clone().sub(p.mesh.position).normalize();
       p.mesh.position.addScaledVector(dir, PROJECTILE_SPEED * delta);
       if (p.mesh.position.distanceTo(p.target.mesh.position) < 0.4) {
@@ -50,7 +53,8 @@ export class MagicWeapon {
   _findTarget(enemies) {
     let closest = null, minDist = Infinity;
     for (const e of enemies) {
-      if (e.dead) continue;
+      // FIX: usar isDead() en vez de .dead
+      if (!e || typeof e.isDead !== 'function' || e.isDead()) continue;
       const dist = this.player.position.distanceTo(e.mesh.position);
       if (dist < minDist) { minDist = dist; closest = e; }
     }
