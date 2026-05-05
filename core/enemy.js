@@ -53,8 +53,12 @@ export class Enemy {
   }
 
   // ── API pública ─────────────────────────────────────────────────────────────
+/** Retorna true si el enemigo está muerto. */
+isDead() { return this.dead; }
+// ── API pública ─────────────────────────────────────────────────────────────
 
-
+/** Recibe daño. Llamado por CombatSystem. */
+takeDamage(amount) {
 
   /** Recibe daño. Llamado por CombatSystem. */
   takeDamage(amount) {
