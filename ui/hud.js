@@ -326,15 +326,15 @@ export class HUD {
     if (this._skillBtnEl) {
       this._skillBtnEl.style.opacity = progress < 1 ? '0.5' : '1';
     }
+    _showEnemyBar(visible) {
+    this._enemyBarEl.style.display = visible ? 'block' : 'none';
   }
 
-  _showEnemyBar(visible) {
-    this._enemyBarEl.style.display = visible ? 'block' : 'none';
- 
-  }
   setWeaponIcon(type) {
-  const icons = { fists: '✊', sword: '⚔️', magic: '🔮', bow: '🏹' };
-  this._attackBtnEl.textContent = icons[type] ?? '⚔';
-}
-}
-}
+    const icons = { fists: '✊', sword: '⚔️', magic: '🔮', bow: '🏹' };
+    this._attackBtnEl.textContent = icons[type] ?? '⚔';
+  }
+  }
+  }
+  
+
