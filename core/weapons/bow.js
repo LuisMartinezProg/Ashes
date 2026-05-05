@@ -36,6 +36,7 @@ export class BowWeapon {
 
   /** @param {number} delta @param {Array} enemies — lista viva de enemies */
   update(delta, enemies = []) {
+    console.log('bow update, arrows:', this._arrows.length, 'enemies:', enemies.length);
     for (let i = this._arrows.length - 1; i >= 0; i--) {
       const a = this._arrows[i];
 
