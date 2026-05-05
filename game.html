@@ -6,7 +6,7 @@
   <title>Ashes of the Reborn</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; touch-action: none; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     #canvas-container { position: fixed; inset: 0; }
     #canvas-container canvas { display: block; width: 100% !important; height: 100% !important; }
     #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
@@ -45,7 +45,7 @@ window.onerror = function(msg, src, line) {
 
 <div id="hud">
   <div id="fps">-- FPS</div>
-  <div id="phase-label">FASE 5B — PATRULLA</div>
+  <div id="phase-label">FASE 5C — NPCs</div>
   <div id="status">AELTHERION</div>
 </div>
 
