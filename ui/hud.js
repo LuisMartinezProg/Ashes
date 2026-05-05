@@ -1,11 +1,3 @@
-// ui/hud.js — HUD de combate
-// Fase 3: barra de vida enemigo + botón ataque + botón habilidad + barra energía
-//
-// USO:
-//   const hud = new HUD(combatSystem, skillSystem);
-//   hud.attachEnemyBar(enemy);
-//   hud.show();
-
 export class HUD {
   constructor(combatSystem, skillSystem = null) {
     this.combat = combatSystem;
@@ -14,16 +6,20 @@ export class HUD {
     this._enemyBarEl  = null;
     this._fillEl      = null;
     this._hpTextEl    = null;
+    
+    // Nueva: Barra del jugador
+    this._playerHpFill = null;
+    this._playerHpText = null;
+
     this._attackBtnEl = null;
     this._skillBtnEl  = null;
-    this._skillCoolEl = null; // overlay de cooldown en el botón
+    this._skillCoolEl = null;
     this._energyFill  = null;
     this._container   = null;
 
     this._build();
     this._bindButtons();
 
-    // Conecta callbacks del skillSystem si existe
     if (this.skills) {
       this.skills.onEnergyUpdate = (e, max) => this._updateEnergy(e, max);
       this.skills.onSkillCooldown = (name, progress) => {
@@ -33,6 +29,14 @@ export class HUD {
   }
 
   // ── API pública ─────────────────────────────────────────────────────────────
+
+  // ESTA ES LA FUNCIÓN QUE FALTABA Y CAUSABA EL ERROR
+  updatePlayerHp(hp, max) {
+    if (!this._playerHpFill) return;
+    const pct = Math.max(0, hp / max) * 100;
+    this._playerHpFill.style.width = `${pct}%`;
+    if (this._playerHpText) this._playerHpText.textContent = `HP: ${hp}/${max}`;
+  }
 
   attachEnemyBar(enemy) {
     enemy.hudBar = {
@@ -62,6 +66,7 @@ export class HUD {
     });
 
     this._buildEnemyBar();
+    this._buildPlayerHpBar(); // Nueva función
     this._buildEnergyBar();
     this._buildAttackButton();
     if (this.skills) this._buildSkillButton();
@@ -69,7 +74,57 @@ export class HUD {
     document.body.appendChild(this._container);
   }
 
-  // ── Barra de vida del enemigo ───────────────────────────────────────────────
+  // ── Barra de vida del Jugador (Nueva) ──────────────────────────────────────
+
+  _buildPlayerHpBar() {
+    const wrap = document.createElement('div');
+    Object.assign(wrap.style, {
+      position     : 'absolute',
+      bottom       : '80px', // Por encima de la de energía
+      left         : '50%',
+      transform    : 'translateX(-50%)',
+      width        : '40vw',
+      maxWidth     : '220px',
+      background   : 'rgba(0,0,0,0.45)',
+      border       : '1px solid rgba(255,100,100,0.2)',
+      borderRadius : '4px',
+      padding      : '4px 8px',
+    });
+
+    this._playerHpText = document.createElement('div');
+    Object.assign(this._playerHpText.style, {
+      color        : '#ffaaaa',
+      fontSize     : '9px',
+      fontFamily   : 'monospace',
+      marginBottom : '3px',
+      letterSpacing: '1px',
+    });
+    this._playerHpText.textContent = 'HP';
+
+    const track = document.createElement('div');
+    Object.assign(track.style, {
+      width        : '100%',
+      height       : '8px',
+      background   : '#220000',
+      borderRadius : '4px',
+      overflow     : 'hidden',
+    });
+
+    this._playerHpFill = document.createElement('div');
+    Object.assign(this._playerHpFill.style, {
+      height     : '100%',
+      width      : '100%',
+      background : 'linear-gradient(90deg, #aa0000, #ff4444)',
+      transition : 'width 0.2s ease',
+    });
+
+    track.appendChild(this._playerHpFill);
+    wrap.appendChild(this._playerHpText);
+    wrap.appendChild(track);
+    this._container.appendChild(wrap);
+  }
+
+  // ── (El resto de tus funciones permanecen igual...) ─────────────────────────
 
   _buildEnemyBar() {
     this._enemyBarEl = document.createElement('div');
@@ -131,8 +186,6 @@ export class HUD {
     this._container.appendChild(this._enemyBarEl);
   }
 
-  // ── Barra de energía mágica (esquina inferior izquierda) ────────────────────
-
   _buildEnergyBar() {
     const wrap = document.createElement('div');
     Object.assign(wrap.style, {
@@ -182,8 +235,6 @@ export class HUD {
     this._container.appendChild(wrap);
   }
 
-  // ── Botón de ataque ─────────────────────────────────────────────────────────
-
   _buildAttackButton() {
     this._attackBtnEl = document.createElement('button');
     this._attackBtnEl.textContent = '⚔';
@@ -212,15 +263,13 @@ export class HUD {
     this._container.appendChild(this._attackBtnEl);
   }
 
-  // ── Botón de habilidad (junto al de ataque) ─────────────────────────────────
-
   _buildSkillButton() {
     this._skillBtnEl = document.createElement('button');
     this._skillBtnEl.textContent = '🔥';
     Object.assign(this._skillBtnEl.style, {
       position        : 'absolute',
       bottom          : '32px',
-      right           : '116px',   // a la izquierda del botón de ataque
+      right           : '116px',
       width           : '64px',
       height          : '64px',
       borderRadius    : '50%',
@@ -239,29 +288,24 @@ export class HUD {
       boxShadow       : '0 0 12px rgba(255,80,20,0.4)',
       transition      : 'transform 0.08s',
       overflow        : 'hidden',
-      position        : 'absolute',
     });
 
-    // Overlay de cooldown (se llena de abajo hacia arriba)
     this._skillCoolEl = document.createElement('div');
     Object.assign(this._skillCoolEl.style, {
       position     : 'absolute',
       bottom       : '0',
       left         : '0',
       width        : '100%',
-      height       : '0%',        // crece cuando está en cooldown
+      height       : '0%',
       background   : 'rgba(0,0,0,0.6)',
       borderRadius : '50%',
       transition   : 'height 0.1s linear',
       pointerEvents: 'none',
     });
 
-    this._skillBtnEl.style.position = 'absolute';
     this._skillBtnEl.appendChild(this._skillCoolEl);
     this._container.appendChild(this._skillBtnEl);
   }
-
-  // ── Eventos de botones ──────────────────────────────────────────────────────
 
   _bindButtons() {
     const pressAtk = (e) => {
@@ -293,8 +337,6 @@ export class HUD {
     }, 140);
   }
 
-  // ── Updates ─────────────────────────────────────────────────────────────────
-
   _updateBar(hp, maxHp) {
     const pct = Math.max(0, hp / maxHp) * 100;
     this._fillEl.style.width = `${pct}%`;
@@ -315,6 +357,7 @@ export class HUD {
     const pct = Math.max(0, energy / maxEnergy) * 100;
     this._energyFill.style.width = `${pct}%`;
   }
+
   _updateSkillCooldown(progress) {
     if (!this._skillCoolEl) return;
     const coverPct = (1 - progress) * 100;
@@ -332,6 +375,5 @@ export class HUD {
     const icons = { fists: '✊', sword: '⚔️', magic: '🔮', bow: '🏹' };
     this._attackBtnEl.textContent = icons[type] ?? '⚔';
   }
-}
-
-  
+      }
+      
