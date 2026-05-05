@@ -35,7 +35,7 @@ export class BowWeapon {
       a.traveled += a.speed * delta;
       let hit = false;
       for (const e of enemies) {
-        if (e.dead) continue;
+        if (!e || typeof e.isDead !== 'function' || e.isDead()) continue;
         const ap = a.mesh.position, ep = e.mesh.position;
         if (Math.sqrt((ap.x-ep.x)**2 + (ap.z-ep.z)**2) < 0.8) {
           e.takeDamage(a.damage);
@@ -60,7 +60,7 @@ export class BowWeapon {
   _findTarget(enemies) {
     let closest = null, minDist = Infinity;
     for (const e of enemies) {
-      if (e.dead) continue;
+      if (!e || typeof e.isDead !== 'function' || e.isDead()) continue;
       const dist = this.player.position.distanceTo(e.mesh.position);
       if (dist < minDist) { minDist = dist; closest = e; }
     }
