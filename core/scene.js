@@ -248,8 +248,27 @@ function buildSmith(scene, x, z) {
 }
 
 // ── EDIFICIO: POZO ────────────────────────────────────────────────────────────
-function buildWell(scene, x, z) {
+  function buildWell(scene, x, z) {
   const g = new THREE.Group();
+
+  const baseGeo = new THREE.CylinderGeometry(0.9, 1.0, 0.6, 12);
+  const base    = new THREE.Mesh(baseGeo, MAT.stone);
+  base.position.set(0, 0.3, 0);
+  g.add(base);
+
+  const rimGeo = new THREE.TorusGeometry(0.9, 0.1, 6, 12);
+  const rim    = new THREE.Mesh(rimGeo, MAT.stoneDark);
+  rim.rotation.x = Math.PI/2;
+  rim.position.y = 0.65;
+  g.add(rim);
+
+  box(0.12, 1.4, 0.12, MAT.wood, -0.75, 1.3, 0, g);
+  box(0.12, 1.4, 0.12, MAT.wood,  0.75, 1.3, 0, g);
+  box(1.62, 0.12, 0.12, MAT.wood, 0, 2.05, 0, g);
+  box(2.0, 0.08, 1.2, MAT.roof, 0, 2.2, 0, g);
+
+  addToScene(g, scene, x, z);
+  }
 
   // Base circular
   const baseGeo = new THREE.CylinderGeometry(0.9, 1.0, 0.6, 12);
