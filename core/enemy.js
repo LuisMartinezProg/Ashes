@@ -181,33 +181,34 @@ export class Enemy {
 
   // ── Movimiento ───────────────────────────────────────────────────────────
 
-  _moveTo(target, speed, delta) {
-    const pos  = this.mesh.position;
-    const dx   = target.x - pos.x;
-    const dz   = target.z - pos.z;
-    const dist = Math.sqrt(dx*dx + dz*dz);
-    if (dist < 0.01) return;
-
-    const step = Math.min(speed * delta, dist);
-    pos.x += (dx / dist) * step;
-    pos.z += (dz / dist) * step;
-
-    this._lookAt(target);
+ _moveTo(target, speed, delta) {
+  if (!this.mesh) return;
+  const pos  = this.mesh.position;
+  const dx   = target.x - pos.x;
+  const dz   = target.z - pos.z;
+  const dist = Math.sqrt(dx*dx + dz*dz);
+  if (dist < 0.01) return;
+  const step = Math.min(speed * delta, dist);
+  pos.x += (dx / dist) * step;
+  pos.z += (dz / dist) * step;
+  this._lookAt(target);
+ } 
+_lookAt(target) {
+  if (!this.mesh) return;
+  const dx = target.x - this.mesh.position.x;
+  const dz = target.z - this.mesh.position.z;
+  if (Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01) {
+    this.mesh.rotation.y = Math.atan2(dx, dz);
   }
-
-  _lookAt(target) {
-    const dx = target.x - this.mesh.position.x;
-    const dz = target.z - this.mesh.position.z;
-    if (Math.abs(dx) > 0.01 || Math.abs(dz) > 0.01) {
-      this.mesh.rotation.y = Math.atan2(dx, dz);
-    }
-  }
-
-  _distTo(target) {
-    const dx = target.x - this.mesh.position.x;
-    const dz = target.z - this.mesh.position.z;
-    return Math.sqrt(dx*dx + dz*dz);
-  }
+}
+  
+  
+_distTo(target) {
+  if (!this.mesh) return Infinity;
+  const dx = target.x - this.mesh.position.x;
+  const dz = target.z - this.mesh.position.z;
+  return Math.sqrt(dx*dx + dz*dz);
+  
 
   _playerInRange(range) {
     if (!this.player) return false;
