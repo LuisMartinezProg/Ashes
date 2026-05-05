@@ -194,6 +194,25 @@ async function boot() {
     hud.setWeaponIcon(weaponType);
     hud.show();
 
+const resetBtn = document.createElement('button');
+resetBtn.textContent = '↺';
+Object.assign(resetBtn.style, {
+  position: 'fixed', top: '12px', left: '50%',
+  transform: 'translateX(-50%)',
+  zIndex: '999', background: 'rgba(0,0,0,0.5)',
+  border: '1px solid rgba(201,168,76,0.4)',
+  color: '#C9A84C', fontFamily: 'monospace',
+  fontSize: '18px', padding: '4px 12px',
+  borderRadius: '4px', cursor: 'pointer',
+  pointerEvents: 'all',
+});
+resetBtn.addEventListener('click', () => {
+  enemy.hp = enemy.maxHp;
+  enemy.isDead = () => false;
+  if (enemy.hudBar) enemy.hudBar.update(enemy.hp, enemy.maxHp);
+});
+document.body.appendChild(resetBtn);
+
     console.log(`[Boot] Arma seleccionada: ${weaponType}. ¡A combatir!`);
 
   } catch (err) {
