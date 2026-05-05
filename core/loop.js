@@ -1,208 +1,95 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Ashes of the Reborn</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+import * as THREE          from 'three';
+import { Player }          from './player.js';
+import { VirtualJoystick } from './joystick.js';
+import { ThirdPersonCamera } from './camera.js';
 
-    html, body {
-      width: 100%; height: 100%;
-      overflow: hidden;
-      background: #000;
-      touch-action: none;
-    }
+const FRAME_CAP = 1 / 20;
 
-    #canvas-container { position: fixed; inset: 0; }
+let _scene, _camera, _renderer;
+let _player, _joystick, _thirdCam, _skillSystem, _combatSystem, _enemies = [];
+let _lastTime = 0;
+let _running  = false;
 
-    #canvas-container canvas {
-      display: block;
-      width: 100% !important;
-      height: 100% !important;
-    }
+let _fpsFrames = 0;
+let _fpsAccum  = 0;
+const _fpsEl   = document.getElementById('fps');
 
-    #hud {
-      position: fixed; inset: 0;
-      pointer-events: none;
-      z-index: 10;
-    }
+export function startLoop(scene, camera, renderer) {
+  _scene    = scene;
+  _camera   = camera;
+  _renderer = renderer;
 
-    #fps {
-      position: absolute; top: 12px; left: 14px;
-      font-family: monospace; font-size: 11px;
-      color: rgba(201,168,76,0.6);
-      letter-spacing: 0.1em;
-    }
+  const placeholder = scene.getObjectByName('player_placeholder');
+  if (placeholder) scene.remove(placeholder);
 
-    #phase-label {
-      position: absolute; top: 12px; right: 14px;
-      font-family: monospace; font-size: 10px;
-      color: rgba(201,168,76,0.4);
-      letter-spacing: 0.15em;
-    }
+  _player   = new Player(scene);
+  _joystick = new VirtualJoystick();
+  _thirdCam = new ThirdPersonCamera(camera, _player);
 
-    #status {
-      position: absolute; bottom: 20px; left: 50%;
-      transform: translateX(-50%);
-      font-family: monospace; font-size: 11px;
-      color: rgba(201,168,76,0.5);
-      letter-spacing: 0.2em;
-      text-align: center;
-    }
+  _running  = true;
+  _lastTime = performance.now();
+  requestAnimationFrame(_tick);
+}
 
-    #loading {
-      position: fixed; inset: 0;
-      background: #04040A;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      z-index: 100;
-      transition: opacity 0.8s ease;
-    }
-    #loading.hidden { opacity: 0; pointer-events: none; }
+function _tick(timestamp) {
+  if (!_running) return;
+  requestAnimationFrame(_tick);
 
-    .load-title {
-      font-family: 'Georgia', serif;
-      font-size: clamp(1rem, 3vw, 1.4rem);
-      letter-spacing: 0.4em;
-      color: #C9A84C;
-      margin-bottom: 32px;
-      text-transform: uppercase;
-    }
+  const delta = Math.min((timestamp - _lastTime) * 0.001, FRAME_CAP);
+  _lastTime = timestamp;
 
-    .load-bar-wrap {
-      width: 200px; height: 2px;
-      background: rgba(201,168,76,0.15);
-      position: relative; overflow: hidden;
-    }
-    .load-bar {
-      height: 100%;
-      background: linear-gradient(90deg, #7A6030, #C9A84C, #E8C97A);
-      width: 0%;
-      transition: width 0.4s ease;
-      box-shadow: 0 0 8px rgba(201,168,76,0.5);
-    }
+  _updateFPS(delta);
+  _animateScene(timestamp);
 
-    .load-text {
-      margin-top: 16px;
-      font-family: monospace; font-size: 10px;
-      letter-spacing: 0.3em;
-      color: rgba(201,168,76,0.4);
-    }
-  </style>
-</head>
-
-<script src="//cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
-
-<body>
-
-<div id="loading">
-  <div class="load-title">Aeltherion</div>
-  <div class="load-bar-wrap">
-    <div class="load-bar" id="load-bar"></div>
-  </div>
-  <div class="load-text" id="load-text">INICIANDO...</div>
-</div>
-
-<div id="canvas-container"></div>
-
-<div id="hud">
-  <div id="fps">-- FPS</div>
-  <div id="phase-label">FASE 4 — COMBATE</div>
-  <div id="status">AELTHERION</div>
-</div>
-
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  const input = _joystick.getInput();
+  _player.update(delta, input, _camera);
+  _thirdCam.update(delta);
+  if (_skillSystem) _skillSystem.update(delta);
+  for (const e of _enemies) {
+    if (e && typeof e.isDead === 'function') e.update(delta);
   }
-}
-</script>
+  if (_combatSystem) _combatSystem.update(delta);
 
-<script type="module">
-import { initScene }     from './core/scene.js';
-import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies } from './core/loop.js';
-import { initResize }    from './core/resize.js';
-import { CombatSystem }  from './core/combat.js';
-import { Enemy }         from './core/enemy.js';
-import { HUD }           from './ui/hud.js';
-import { SkillSystem }   from './core/skillSystem.js';
-import { showWeaponSelect } from './ui/weaponSelect.js';
-
-const bar = document.getElementById('load-bar');
-const txt = document.getElementById('load-text');
-
-function setProgress(pct, label) {
-  bar.style.width = pct + '%';
-  txt.textContent = label;
+  _renderer.render(_scene, _camera);
 }
 
-async function boot() {
-  try {
-    setProgress(20, 'CARGANDO THREE.JS...');
-    await new Promise(r => setTimeout(r, 300));
+function _animateScene(timestamp) {
+  const t = timestamp * 0.001;
 
-    setProgress(50, 'CONSTRUYENDO ESCENA...');
-    const { scene, camera, renderer } = await initScene();
-    await new Promise(r => setTimeout(r, 200));
+  const fireLight = _scene.userData.fireLight;
+  const fireMesh  = _scene.userData.fireMesh;
+  if (fireLight) {
+    fireLight.intensity = 1.8 + Math.sin(t * 7.3) * 0.4 + Math.sin(t * 13.1) * 0.2;
+  }
+  if (fireMesh) {
+    fireMesh.position.y = 0.5 + Math.sin(t * 9) * 0.04;
+    fireMesh.scale.setScalar(1 + Math.sin(t * 11) * 0.08);
+  }
 
-    setProgress(75, 'CONFIGURANDO CÁMARA...');
-    initResize(camera, renderer);
-    await new Promise(r => setTimeout(r, 200));
-
-    setProgress(95, 'INICIANDO LOOP...');
-    startLoop(scene, camera, renderer);
-
-    const combat = new CombatSystem(getPlayer().root, camera);
-    combat.setScene(scene);       // ← FIX 1
-    setCombatSystem(combat);      // ← FIX 2
-
-    const skills = new SkillSystem(scene, getPlayer().root);
-    const hud    = new HUD(combat, skills);
-
-    const enemy = new Enemy(scene, { x: 4, z: -3 }, (e) => {
-      combat.unregisterEnemy(e);
-      skills.registerEnemies([]);
-      setEnemies([]);
-      hud.detachEnemyBar();
-    });
-
-    combat.registerEnemy(enemy);
-    skills.registerEnemies([enemy]);
-    setSkillSystem(skills);
-    setEnemies([enemy]);
-
-    enemy.playerRef = getPlayer();
-    getPlayer().onDamage = (hp, max) => hud.updatePlayerHp(hp, max);
-    hud.updatePlayerHp(getPlayer().hp, getPlayer().maxHp);
-    hud.attachEnemyBar(enemy);
-
-    setProgress(100, 'LISTO');
-    await new Promise(r => setTimeout(r, 300));
-
-    const loading = document.getElementById('loading');
-    loading.classList.add('hidden');
-    setTimeout(() => loading.remove(), 900);
-
-    const weaponType = await showWeaponSelect();
-    combat.setWeapon(weaponType);
-    hud.setWeaponIcon(weaponType);
-    hud.show();
-
-    console.log(`[Boot] Arma: ${weaponType}`);
-
-  } catch (err) {
-    txt.textContent = 'ERROR: ' + err.message;
-    bar.style.background = '#8B2A0A';
-    console.error('[BOOT ERROR]', err);
+  const particles = _scene.getObjectByName('ambient_particles');
+  if (particles) {
+    particles.rotation.y = t * 0.015;
+    const pos = particles.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      pos.setY(i, pos.getY(i) + 0.003);
+      if (pos.getY(i) > 8) pos.setY(i, 0);
+    }
+    pos.needsUpdate = true;
   }
 }
 
-window.addEventListener('load', boot);
-</script>
+function _updateFPS(delta) {
+  _fpsFrames++;
+  _fpsAccum += delta;
+  if (_fpsAccum >= 0.5 && _fpsEl) {
+    _fpsEl.textContent = Math.round(_fpsFrames / _fpsAccum) + ' FPS';
+    _fpsFrames = 0;
+    _fpsAccum  = 0;
+  }
+}
 
-</body>
-</html>
+export function stopLoop()  { _running = false; }
+export function getPlayer() { return _player; }
+export function setSkillSystem(s)  { _skillSystem = s; }
+export function setCombatSystem(c) { _combatSystem = c; }
+export function setEnemies(list)   { _enemies = list; }
