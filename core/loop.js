@@ -71,7 +71,9 @@ function _tick(timestamp) {
   _player.update(delta, input, _camera);
   _thirdCam.update(delta);
   if (_skillSystem) _skillSystem.update(delta);
-  for (const e of _enemies) e.update(delta);
+  for (const e of _enemies) {
+  if (e && typeof e.isDead === 'function') e.update(delta);
+  }
   if (_combatSystem) _combatSystem.update(delta);
 
   _renderer.render(_scene, _camera);
