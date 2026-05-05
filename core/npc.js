@@ -18,7 +18,6 @@ export class NPC {
     this.dialogue = DIALOGUES[def.id];
     this._range   = INTERACT_RANGE;
 
-    // ── Mesh ────────────────────────────────────────────────────────────
     this.mesh = new THREE.Group();
 
     const bodyGeo = new THREE.CylinderGeometry(0.3, 0.3, 1.0, 10);
@@ -31,7 +30,6 @@ export class NPC {
     const head    = new THREE.Mesh(headGeo, headMat);
     head.position.y = 1.28;
 
-    // Indicador dorado flotante
     const dotGeo = new THREE.SphereGeometry(0.08, 6, 6);
     const dotMat = new THREE.MeshBasicMaterial({ color: 0xC9A84C });
     this._dot    = new THREE.Mesh(dotGeo, dotMat);
@@ -49,7 +47,6 @@ export class NPC {
     return Math.sqrt(dx*dx + dz*dz) <= this._range;
   }
 
-  // Animación idle del indicador
   update(t) {
     this._dot.position.y = 1.9 + Math.sin(t * 2.5) * 0.08;
   }
