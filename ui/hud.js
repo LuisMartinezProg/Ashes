@@ -337,3 +337,4 @@ export class HUD {
   this._attackBtnEl.textContent = icons[type] ?? '⚔';
 }
 }
+}
