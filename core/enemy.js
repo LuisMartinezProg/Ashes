@@ -54,10 +54,7 @@ export class Enemy {
 
   // ── API pública ─────────────────────────────────────────────────────────────
 
-  takeDamage(amount) {
-  console.log('takeDamage llamado', amount, 'dead:', this.dead);
-  if (this.dead) return;
-  }
+
 
   /** Recibe daño. Llamado por CombatSystem. */
   takeDamage(amount) {
