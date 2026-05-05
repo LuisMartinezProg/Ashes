@@ -255,4 +255,4 @@ _updateDeathAnim(delta) {
 export function spawnEnemies(scene, player, customPoints = null) {
   const points = customPoints ?? SPAWN_POINTS;
   return points.map(p => new Enemy(scene, p, player));
-        }
+        
