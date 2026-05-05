@@ -75,7 +75,7 @@ if (Math.sqrt((ap.x-ep.x)**2 + (ap.z-ep.z)**2) < 0.8) {
   _findTarget(enemies) {
     let closest = null, minDist = Infinity;
     for (const e of enemies) {
-      if (e.dead()) continue;
+      if (e.isDead()) continue;
       const dist = this.player.position.distanceTo(e.mesh.position);
       if (dist < minDist) { minDist = dist; closest = e; }
     }
