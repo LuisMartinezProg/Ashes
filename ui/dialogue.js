@@ -7,6 +7,7 @@ export class DialogueUI {
     this._lines    = [];
     this._idx      = 0;
     this._onClose  = null;
+    this._onShop   = null;
 
     this._buildPanel();
     this._buildTalkBtn();
@@ -26,13 +27,15 @@ export class DialogueUI {
     this._talkBtn.style.display = 'none';
   }
 
-  openDialogue(name, lines, onClose = null) {
+  openDialogue(name, lines, onClose = null, onShop = null) {
     this._lines   = lines;
     this._idx     = 0;
     this._onClose = onClose;
+    this._onShop  = onShop;
     this._active  = true;
 
     this._nameEl.textContent = name;
+    this._shopBtn.style.display = onShop ? 'block' : 'none';
     this._showLine();
     this._panel.style.display = 'flex';
   }
@@ -68,7 +71,14 @@ export class DialogueUI {
       boxShadow      : '0 0 24px rgba(201,168,76,0.1)',
     });
 
-    // Nombre del NPC
+    // Header: nombre + botón comprar
+    const headerRow = document.createElement('div');
+    Object.assign(headerRow.style, {
+      display        : 'flex',
+      justifyContent : 'space-between',
+      alignItems     : 'center',
+    });
+
     this._nameEl = document.createElement('div');
     Object.assign(this._nameEl.style, {
       color        : '#C9A84C',
@@ -78,7 +88,35 @@ export class DialogueUI {
       textTransform: 'uppercase',
     });
 
-    // Texto de la línea
+    this._shopBtn = document.createElement('button');
+    this._shopBtn.textContent = '🛒 Comprar';
+    Object.assign(this._shopBtn.style, {
+      display      : 'none',
+      padding      : '5px 12px',
+      background   : 'rgba(201,168,76,0.2)',
+      border       : '1px solid rgba(201,168,76,0.5)',
+      borderRadius : '4px',
+      color        : '#C9A84C',
+      fontFamily   : 'monospace',
+      fontSize     : '10px',
+      cursor       : 'pointer',
+      pointerEvents: 'all',
+      outline      : 'none',
+      WebkitTapHighlightColor: 'transparent',
+    });
+    this._shopBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      this.closeDialogue();
+      if (this._onShop) this._onShop();
+    }, { passive: false });
+    this._shopBtn.addEventListener('mousedown', () => {
+      this.closeDialogue();
+      if (this._onShop) this._onShop();
+    });
+
+    headerRow.appendChild(this._nameEl);
+    headerRow.appendChild(this._shopBtn);
+
     this._lineEl = document.createElement('div');
     Object.assign(this._lineEl.style, {
       color      : 'rgba(255,245,220,0.88)',
@@ -88,7 +126,6 @@ export class DialogueUI {
       minHeight  : '40px',
     });
 
-    // Botón siguiente/cerrar
     this._nextBtn = document.createElement('button');
     Object.assign(this._nextBtn.style, {
       alignSelf       : 'flex-end',
@@ -112,7 +149,7 @@ export class DialogueUI {
     }, { passive: false });
     this._nextBtn.addEventListener('mousedown', () => this._advance());
 
-    this._panel.appendChild(this._nameEl);
+    this._panel.appendChild(headerRow);
     this._panel.appendChild(this._lineEl);
     this._panel.appendChild(this._nextBtn);
     document.body.appendChild(this._panel);
@@ -144,8 +181,6 @@ export class DialogueUI {
     });
     document.body.appendChild(this._talkBtn);
   }
-
-  // ── Lógica de diálogo ────────────────────────────────────────────────────
 
   _showLine() {
     this._lineEl.textContent = this._lines[this._idx];
