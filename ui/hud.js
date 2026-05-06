@@ -345,7 +345,7 @@ export class HUD {
     const pressAtk = (e) => {
       e.preventDefault();
       // Pasar el enemigo golpeado al HUD para enfocar su barra
-      const target = this.combat._closestEnemyInRange();
+      const target = this.combat.closestEnemyInRange();
       if (target) this.attachEnemyBar(target);
       this.combat.triggerAttack();
       this._animateBtn(this._attackBtnEl, 'rgba(220,80,40,0.9)');
