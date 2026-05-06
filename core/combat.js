@@ -1,7 +1,7 @@
 // core/combat.js — Núcleo del sistema de combate
 // Fase 4: soporte para 4 armas con setWeapon(type)
 
-import { FistsWeapon } from './weapons/fists.js';
+import { KatanaWeapon } from './weapons/katana.js';
 import { SwordWeapon  } from './weapons/sword.js';
 import { MagicWeapon  } from './weapons/magic.js';
 import { BowWeapon    } from './weapons/bow.js';
