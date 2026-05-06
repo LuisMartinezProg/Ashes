@@ -232,12 +232,6 @@ _castSkill(skillId, btn) {
   if (ok) this._animateBtn(btn);
 }
   
-    } else {
-      // Placeholder para habilidades futuras
-      console.log(`[SkillBar] Cast: ${skillId}`);
-      this._animateBtn(btn);
-    }
-  }
 
   _animateBtn(btn) {
     btn.style.transform = 'scale(0.88)';
