@@ -227,13 +227,11 @@ export class SkillBar {
     cooldownEl.style.height = `${coverPct}%`;
     btn.style.opacity = progress < 1 ? '0.55' : '1';
   }
-
-  _castSkill(skillId, btn) {
-    // Por ahora solo fireball está implementado
-    // En Fase 6 completa cada skillId llama su handler
-    if (skillId === 'fireball') {
-      const ok = this.skillSystem.castFireball();
-      if (ok) this._animateBtn(btn);
+_castSkill(skillId, btn) {
+  const ok = this.skillSystem.castSkill(skillId);
+  if (ok) this._animateBtn(btn);
+}
+  
     } else {
       // Placeholder para habilidades futuras
       console.log(`[SkillBar] Cast: ${skillId}`);
