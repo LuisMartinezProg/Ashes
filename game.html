@@ -156,9 +156,12 @@ async function boot() {
     hud.updatePlayerHp(player.hp, player.maxHp);
 
     // ── Loop de barra de enemigo más cercano ──────────────────────────────
+  hud.show();
+
+    // ── Loop de barra de enemigo más cercano ──────────────────────────────
     setInterval(() => hud.updateEnemyBar(player.root.position), 300);
 
-    setProgress(100, 'LISTO');
+    console.log('[Boot] Arma: ' + weaponType);
     await new Promise(r => setTimeout(r, 300));
 
     const loading = document.getElementById('loading');
