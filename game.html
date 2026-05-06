@@ -45,7 +45,7 @@ window.onerror = function(msg, src, line) {
 
 <div id="hud">
   <div id="fps">-- FPS</div>
-  <div id="phase-label">FASE 5C — NPCs</div>
+  <div id="phase-label">FASE 5D — TIENDA</div>
   <div id="status">AELTHERION</div>
 </div>
 
@@ -59,19 +59,19 @@ window.onerror = function(msg, src, line) {
 </script>
 
 <script type="module">
-import { initScene }        from './core/scene.js';
-import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies } from './core/loop.js';
-import { initResize }       from './core/resize.js';
-import { CombatSystem }     from './core/combat.js';
-import { Enemy, spawnEnemies } from './core/enemy.js';
-import { HUD }              from './ui/hud.js';
-import { SkillSystem }      from './core/skillSystem.js';
-import { showWeaponSelect } from './ui/weaponSelect.js';
-  import { spawnNPCs }   from './core/npc.js';
-import { DialogueUI }  from './ui/dialogue.js';
-import { setNPCs, setDialogueUI } from './core/loop.js';
-  import { ShopUI }    from './ui/shop.js';
-import { inventory } from './core/inventory.js';
+import { initScene }                                                          from './core/scene.js';
+import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies,
+         setNPCs, setDialogueUI }                                             from './core/loop.js';
+import { initResize }                                                         from './core/resize.js';
+import { CombatSystem }                                                       from './core/combat.js';
+import { spawnEnemies }                                                       from './core/enemy.js';
+import { HUD }                                                                from './ui/hud.js';
+import { SkillSystem }                                                        from './core/skillSystem.js';
+import { showWeaponSelect }                                                   from './ui/weaponSelect.js';
+import { spawnNPCs }                                                          from './core/npc.js';
+import { DialogueUI }                                                         from './ui/dialogue.js';
+import { ShopUI }                                                             from './ui/shop.js';
+import { inventory }                                                          from './core/inventory.js';
 
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -106,77 +106,50 @@ async function boot() {
     const skills = new SkillSystem(scene, player.root);
     const hud    = new HUD(combat, skills);
 
-    // ── Enemigos con patrulla ──────────────────────────────────────────────
+    // ── Enemigos ──────────────────────────────────────────────────────────
     const enemies = spawnEnemies(scene, player);
-
-    enemies.forEach(e => {
-      combat.registerEnemy(e);
-    });
-
+    enemies.forEach(e => combat.registerEnemy(e));
     skills.registerEnemies(enemies);
     setSkillSystem(skills);
     setEnemies(enemies);
 
-// ── NPCs y diálogo ──────────────────────────────────────────────
-const dialogueUI = new DialogueUI();
-const npcs       = spawnNPCs(scene);
-setNPCs(npcs);
-setDialogueUI(dialogueUI);
+    // ── NPCs + Diálogo + Tienda ───────────────────────────────────────────
+    const dialogueUI = new DialogueUI();
+    const shopUI     = new ShopUI();
+    const npcs       = spawnNPCs(scene);
+    setNPCs(npcs);
+    setDialogueUI(dialogueUI);
 
-const shopUI = new ShopUI();
+    let _nearNPC = null;
+    function _checkNPCProximity() {
+      if (dialogueUI.isActive() || shopUI.isActive()) return;
+      const playerPos = player.root.position;
+      let found = null;
 
-let _nearNPC = null;
-function _checkNPCProximity() {
-  if (dialogueUI.isActive() || shopUI.isActive()) return;
-  const playerPos = player.root.position;
-  let found = null;
+      for (const npc of npcs) {
+        if (npc.isPlayerInRange(playerPos)) { found = npc; break; }
+      }
 
-  for (const npc of npcs) {
-    if (npc.isPlayerInRange(playerPos)) { found = npc; break; }
-  }
+      if (found && found !== _nearNPC) {
+        _nearNPC = found;
+        dialogueUI.showTalkBtn(() => {
+          dialogueUI.openDialogue(
+            found.dialogue.name,
+            found.dialogue.lines,
+            () => { _nearNPC = null; },
+            found.isShop() ? () => shopUI.open(found.dialogue.shop) : null
+          );
+        });
+      } else if (!found && _nearNPC) {
+        _nearNPC = null;
+        dialogueUI.hideTalkBtn();
+      }
+    }
 
-  if (found && found !== _nearNPC) {
-    _nearNPC = found;
-    dialogueUI.showTalkBtn(() => {
-      dialogueUI.openDialogue(
-        found.dialogue.name,
-        found.dialogue.lines,
-        () => { _nearNPC = null; },
-        found.isShop() ? () => shopUI.open(found.dialogue.shop) : null
-      );
-    });
-  } else if (!found && _nearNPC) {
-    _nearNPC = null;
-    dialogueUI.hideTalkBtn();
-  }
-}
+    setInterval(_checkNPCProximity, 200);
 
-setInterval(_checkNPCProximity, 200);
-
-  for (const npc of npcs) {
-    if (npc.isPlayerInRange(playerPos)) { found = npc; break; }
-  }
-
-  if (found && found !== _nearNPC) {
-    _nearNPC = found;
-    dialogueUI.showTalkBtn(() => {
-      dialogueUI.openDialogue(
-        found.dialogue.name,
-        found.dialogue.lines,
-        () => { _nearNPC = null; }
-      );
-    });
-  } else if (!found && _nearNPC) {
-    _nearNPC = null;
-    dialogueUI.hideTalkBtn();
-  }
-}
-
-setInterval(_checkNPCProximity, 200);
-
-    // HUD del primer enemigo como referencia visual
+    // ── HUD ───────────────────────────────────────────────────────────────
     hud.attachEnemyBar(enemies[0]);
-
     player.onDamage = (hp, max) => hud.updatePlayerHp(hp, max);
     hud.updatePlayerHp(player.hp, player.maxHp);
 
@@ -193,7 +166,7 @@ setInterval(_checkNPCProximity, 200);
     hud.show();
 
     console.log('[Boot] Arma: ' + weaponType);
-    console.log('[Boot] Enemigos spawneados: ' + enemies.length);
+    console.log('[Boot] Enemigos: ' + enemies.length);
 
   } catch (err) {
     txt.textContent = 'ERROR: ' + err.message;
