@@ -45,10 +45,9 @@ window.onerror = function(msg, src, line) {
 
 <div id="hud">
   <div id="fps">-- FPS</div>
-  <div id="phase-label">FASE 5D — TIENDA</div>
+  <div id="phase-label">FASE 6 — HABILIDADES</div>
   <div id="status">AELTHERION</div>
 </div>
-  
 
 <script type="importmap">
 {
@@ -73,6 +72,9 @@ import { spawnNPCs }                                                          fr
 import { DialogueUI }                                                         from './ui/dialogue.js';
 import { ShopUI }                                                             from './ui/shop.js';
 import { inventory }                                                          from './core/inventory.js';
+import { Progression }                                                        from './core/progression.js';
+import { SkillBar }                                                           from './ui/skillBar.js';
+import { SubtypeMenu }                                                        from './ui/subtypeMenu.js';
 
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -104,8 +106,9 @@ async function boot() {
     combat.setScene(scene);
     setCombatSystem(combat);
 
-    const skills = new SkillSystem(scene, player.root);
-    const hud    = new HUD(combat, skills);
+    const skills      = new SkillSystem(scene, player.root);
+    const progression = new Progression();
+    const hud         = new HUD(combat, skills);
 
     // ── Enemigos ──────────────────────────────────────────────────────────
     const enemies = spawnEnemies(scene, player);
@@ -113,8 +116,6 @@ async function boot() {
     skills.registerEnemies(enemies);
     setSkillSystem(skills);
     setEnemies(enemies);
-
-    // Pasar lista de enemigos al HUD (para updateEnemyBar en loop)
     hud.setEnemies(enemies);
 
     // ── NPCs + Diálogo + Tienda ───────────────────────────────────────────
@@ -129,11 +130,9 @@ async function boot() {
       if (dialogueUI.isActive() || shopUI.isActive()) return;
       const playerPos = player.root.position;
       let found = null;
-
       for (const npc of npcs) {
         if (npc.isPlayerInRange(playerPos)) { found = npc; break; }
       }
-
       if (found && found !== _nearNPC) {
         _nearNPC = found;
         dialogueUI.showTalkBtn(() => {
@@ -149,11 +148,19 @@ async function boot() {
         dialogueUI.hideTalkBtn();
       }
     }
-
     setInterval(_checkNPCProximity, 200);
-// ── HUD player ────────────────────────────────────────────────────────
+
+    // ── HUD player ────────────────────────────────────────────────────────
     player.onDamage = (hp, max) => hud.updatePlayerHp(hp, max);
     hud.updatePlayerHp(player.hp, player.maxHp);
+
+    // ── XP al matar enemigo ───────────────────────────────────────────────
+    enemies.forEach(e => {
+      e.onDeath = () => {
+        progression.addXP(combat._weaponType, 25);
+        console.log(`[XP] +25 → ${combat._weaponType}: ${progression.getXP(combat._weaponType)}`);
+      };
+    });
 
     setProgress(100, 'LISTO');
     await new Promise(r => setTimeout(r, 300));
@@ -167,19 +174,54 @@ async function boot() {
     hud.setWeaponIcon(weaponType);
     hud.show();
 
-    // ── Loop de barra de enemigo más cercano ──────────────────────────────
+    // ── Skill Bar + Subtype Menu ──────────────────────────────────────────
+    const skillBar     = new SkillBar(skills, progression);
+    const subtypeMenu  = new SubtypeMenu(progression, skillBar);
+
+    skillBar.setWeapon(weaponType);
+    skillBar.show();
+    subtypeMenu.setWeapon(weaponType);
+
+    // Botón para abrir el menú de subtipo (esquina superior izquierda)
+    const subtypeBtn = document.createElement('button');
+    subtypeBtn.textContent = '⚗';
+    Object.assign(subtypeBtn.style, {
+      position        : 'fixed',
+      top             : '48px',
+      left            : '14px',
+      width           : '36px',
+      height          : '36px',
+      borderRadius    : '8px',
+      border          : '1px solid rgba(201,168,76,0.4)',
+      background      : 'rgba(10,8,20,0.8)',
+      color           : '#C9A84C',
+      fontSize        : '16px',
+      cursor          : 'pointer',
+      pointerEvents   : 'all',
+      zIndex          : '150',
+      display         : 'flex',
+      alignItems      : 'center',
+      justifyContent  : 'center',
+      WebkitTapHighlightColor: 'transparent',
+    });
+    subtypeBtn.addEventListener('click', () => subtypeMenu.open(combat._weaponType));
+    subtypeBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      subtypeMenu.open(combat._weaponType);
+    }, { passive: false });
+    document.body.appendChild(subtypeBtn);
+
+    // ── Loop barra enemigo ────────────────────────────────────────────────
     setInterval(() => hud.updateEnemyBar(player.root.position), 300);
 
     console.log('[Boot] Arma: ' + weaponType);
     console.log('[Boot] Enemigos: ' + enemies.length);
-    console.log('[Boot] Arma: ' + weaponType);
-    console.log('[Boot] Enemigos: ' + enemies.length);
-} catch (err) {
+
+  } catch (err) {
     txt.textContent = 'ERROR: ' + (err.message || err.toString());
     console.error('[BOOT ERROR]', err.message, err.stack);
     bar.style.background = '#8B2A0A';
   }
-  
 }
 
 window.addEventListener('load', boot);
