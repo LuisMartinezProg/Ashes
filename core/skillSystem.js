@@ -1,65 +1,82 @@
-// core/skillSystem.js — Sistema base de habilidades
-// Fase 3: gestiona habilidades activas, energía mágica, cooldowns
-//
-// USO en game.html:
-//   import { SkillSystem } from './core/skillSystem.js';
-//   const skills = new SkillSystem(scene, getPlayer().root);
-//   skills.registerEnemies(enemyList);
-//
-// En el loop:
-//   skills.update(delta);
+// core/skillSystem.js — Ashes of the Reborn | Valiant Gaming
+// Fase 6: gestiona todas las habilidades, energía mágica, cooldowns
 
-import { Fireball } from '../skills/fireball.js';
+import { Fireball   } from '../skills/fireball.js';
+import { IceShard   } from '../skills/iceShard.js';
+import { WindGust   } from '../skills/windGust.js';
+import { ThornShot  } from '../skills/thornShot.js';
 
-const MAX_ENERGY    = 100;
-const ENERGY_REGEN  = 3;    // energía por segundo (regeneración pasiva)
-const FIREBALL_COST = 30;   // energía que consume la bola de fuego
+const MAX_ENERGY   = 100;
+const ENERGY_REGEN = 3;
+
+// Costo de energía por habilidad
+const SKILL_COST = {
+  fireball  : 30,
+  ice_shard : 30,
+  gust      : 25,
+  thorn     : 30,
+  // Las demás usan 30 por defecto
+};
 
 export class SkillSystem {
   constructor(scene, playerGroup) {
     this.scene   = scene;
     this.player  = playerGroup;
-    this.enemies = [];        // se actualiza desde game.html
+    this.enemies = [];
 
-    // Energía mágica
     this.energy    = MAX_ENERGY;
     this.maxEnergy = MAX_ENERGY;
 
-    // Callback para actualizar la UI de energía
-    this.onEnergyUpdate = null;
+    this.onEnergyUpdate  = null;
+    this.onSkillCooldown = null;
 
-    // Habilidades registradas — Fase 3: solo fireball
-    this.fireball = new Fireball(scene, playerGroup);
-
-    // Cuando el cooldown cambia, notifica al HUD
-    this.fireball.onCooldownUpdate = (progress) => {
-      if (this.onSkillCooldown) this.onSkillCooldown('fireball', progress);
+    // Instancias de habilidades
+    this._skills = {
+      fireball : new Fireball (scene, playerGroup),
+      ice_shard: new IceShard (scene, playerGroup),
+      gust     : new WindGust (scene, playerGroup),
+      thorn    : new ThornShot(scene, playerGroup),
     };
+
+    // Conectar callbacks de cooldown
+    for (const [id, skill] of Object.entries(this._skills)) {
+      skill.onCooldownUpdate = (progress) => {
+        if (this.onSkillCooldown) this.onSkillCooldown(id, progress);
+      };
+    }
   }
 
-  // ── API pública ─────────────────────────────────────────────────────────────
+  // ── API pública ───────────────────────────────────────────────────────────
 
-  /** Actualiza la lista de enemigos activos */
   registerEnemies(list) {
     this.enemies = list;
-    // Pasa la lista al fireball para colisiones
-    this.fireball._enemyList = list;
   }
 
-  /** Intenta lanzar la bola de fuego */
-  castFireball() {
-    if (!this.fireball.isReady()) return false;
-    if (this.energy < FIREBALL_COST) return false;
+  /** Lanza una habilidad por su ID */
+  castSkill(skillId) {
+    const skill = this._skills[skillId];
+    if (!skill) {
+      console.warn(`[SkillSystem] Habilidad no implementada: ${skillId}`);
+      return false;
+    }
 
-    const success = this.fireball.cast(this.enemies);
+    const cost = SKILL_COST[skillId] ?? 30;
+    if (!skill.isReady())        return false;
+    if (this.energy < cost)      return false;
+
+    const success = skill.cast(this.enemies);
     if (success) {
-      this.energy -= FIREBALL_COST;
+      this.energy -= cost;
       if (this.onEnergyUpdate) this.onEnergyUpdate(this.energy, this.maxEnergy);
     }
     return success;
   }
 
-  /** Llamado cada frame desde loop.js o game.html */
+  /** Mantener compatibilidad con código anterior */
+  castFireball() {
+    return this.castSkill('fireball');
+  }
+
   update(delta) {
     // Regenera energía
     if (this.energy < this.maxEnergy) {
@@ -67,8 +84,9 @@ export class SkillSystem {
       if (this.onEnergyUpdate) this.onEnergyUpdate(this.energy, this.maxEnergy);
     }
 
-    // Actualiza la bola de fuego (proyectiles, cooldown)
-    this.fireball.update(delta);
+    // Actualiza todas las habilidades
+    for (const skill of Object.values(this._skills)) {
+      skill.update(delta);
+    }
   }
-        }
-
+}
