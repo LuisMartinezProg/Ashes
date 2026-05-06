@@ -152,18 +152,11 @@ async function boot() {
     }
 
     setInterval(_checkNPCProximity, 200);
-
-    // ── HUD player ────────────────────────────────────────────────────────
+// ── HUD player ────────────────────────────────────────────────────────
     player.onDamage = (hp, max) => hud.updatePlayerHp(hp, max);
     hud.updatePlayerHp(player.hp, player.maxHp);
 
-    // ── Loop de barra de enemigo más cercano ──────────────────────────────
-  hud.show();
-
-    // ── Loop de barra de enemigo más cercano ──────────────────────────────
-    setInterval(() => hud.updateEnemyBar(player.root.position), 300);
-
-    console.log('[Boot] Arma: ' + weaponType);
+    setProgress(100, 'LISTO');
     await new Promise(r => setTimeout(r, 300));
 
     const loading = document.getElementById('loading');
@@ -175,6 +168,11 @@ async function boot() {
     hud.setWeaponIcon(weaponType);
     hud.show();
 
+    // ── Loop de barra de enemigo más cercano ──────────────────────────────
+    setInterval(() => hud.updateEnemyBar(player.root.position), 300);
+
+    console.log('[Boot] Arma: ' + weaponType);
+    console.log('[Boot] Enemigos: ' + enemies.length);
     console.log('[Boot] Arma: ' + weaponType);
     console.log('[Boot] Enemigos: ' + enemies.length);
 } catch (err) {
