@@ -7,15 +7,18 @@ import { DIALOGUES } from '../data/dialogues.js';
 const INTERACT_RANGE = 2.5;
 
 const NPC_DEFS = [
-  { id: 'aldeano', x:  2,   z:  2,   color: 0x8899AA },
-  { id: 'herrero', x: -10,  z: -13,  color: 0x886644 },
-  { id: 'guardia', x:  17,  z:  0,   color: 0x445566 },
+  { id: 'aldeano',        x:  2,   z:  2,   color: 0x8899AA },
+  { id: 'herrero',        x: -10,  z: -13,  color: 0x886644 },
+  { id: 'guardia',        x:  17,  z:  0,   color: 0x445566 },
+  { id: 'vendedor_armas', x:  6,   z:  6,   color: 0xCC9944 },
+  { id: 'vendedor_items', x:  8,   z:  6,   color: 0x44AA88 },
 ];
 
 export class NPC {
   constructor(scene, def) {
     this.id       = def.id;
     this.dialogue = DIALOGUES[def.id];
+    this.shop     = def.shop ?? this.dialogue?.shop ?? null;
     this._range   = INTERACT_RANGE;
 
     this.mesh = new THREE.Group();
@@ -35,6 +38,15 @@ export class NPC {
     this._dot    = new THREE.Mesh(dotGeo, dotMat);
     this._dot.position.y = 1.9;
 
+    // Ícono de tienda encima del punto dorado
+    if (this.dialogue?.shop) {
+      const shopGeo = new THREE.SphereGeometry(0.1, 6, 6);
+      const shopMat = new THREE.MeshBasicMaterial({ color: 0xFFDD00 });
+      const shopDot = new THREE.Mesh(shopGeo, shopMat);
+      shopDot.position.y = 2.1;
+      this.mesh.add(shopDot);
+    }
+
     this.mesh.add(body, head, this._dot);
     this.mesh.position.set(def.x, 0, def.z);
 
@@ -47,6 +59,8 @@ export class NPC {
     return Math.sqrt(dx*dx + dz*dz) <= this._range;
   }
 
+  isShop() { return !!this.dialogue?.shop; }
+
   update(t) {
     this._dot.position.y = 1.9 + Math.sin(t * 2.5) * 0.08;
   }
@@ -54,4 +68,4 @@ export class NPC {
 
 export function spawnNPCs(scene) {
   return NPC_DEFS.map(def => new NPC(scene, def));
-}
+      }
