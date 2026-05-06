@@ -1,4 +1,5 @@
-// ui/hud.js
+ }
+     // ui/hud.js
 // Ashes of the Reborn | Valiant Gaming
 
 export class HUD {
@@ -375,4 +376,4 @@ export class HUD {
   _showEnemyBar(visible) {
     this._enemyBarEl.style.display = visible ? 'block' : 'none';
   }
-        }
+  }   }
