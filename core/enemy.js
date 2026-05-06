@@ -10,6 +10,7 @@ const ATTACK_RANGE    = 1.4;
 const ATTACK_COOLDOWN = 1.2;
 const ATTACK_DAMAGE   = 8;
 const PATROL_WAIT     = 1.5;
+const RESPAWN_TIME    = 30; // segundos
 
 const SPAWN_POINTS = [
   { x:  12, z:  5  },
@@ -29,16 +30,19 @@ const STATE = {
 
 export class Enemy {
   constructor(scene, position = { x: 0, z: 0 }, player = null) {
-    this.scene   = scene;
-    this.player  = player;
-    this.hp      = ENEMY_MAX_HP;
-    this.maxHp   = ENEMY_MAX_HP;
-    this.dead    = false;
-    this.hudBar  = null;
+    this.scene    = scene;
+    this.player   = player;
+    this.hp       = ENEMY_MAX_HP;
+    this.maxHp    = ENEMY_MAX_HP;
+    this.dead     = false;
+    this.hudBar   = null;
+    this.onDeath  = null;
 
+    this._spawnPos    = { x: position.x, z: position.z };
     this._state       = STATE.PATROL;
     this._attackTimer = 0;
     this._waitTimer   = 0;
+    this._respawnTimer = 0;
 
     const ox = position.x;
     const oz = position.z;
@@ -49,6 +53,19 @@ export class Enemy {
     ];
     this._waypointIdx = 0;
 
+    this.mesh = null;
+    this._materials    = [];
+    this._flashTimeout = null;
+    this._dying        = false;
+    this._dyingTimer   = 0;
+
+    this._buildMesh(position);
+    scene.add(this.mesh);
+  }
+
+  // ── Build mesh ───────────────────────────────────────────────────────────
+
+  _buildMesh(position) {
     this.mesh = new THREE.Group();
 
     const bodyGeo = new THREE.CylinderGeometry(0.3, 0.3, 1.0, 10);
@@ -63,13 +80,7 @@ export class Enemy {
 
     this.mesh.add(body, head);
     this.mesh.position.set(position.x, 0, position.z);
-
-    this._materials    = [bodyMat, headMat];
-    this._flashTimeout = null;
-    this._dying        = false;
-    this._dyingTimer   = 0;
-
-    scene.add(this.mesh);
+    this._materials = [bodyMat, headMat];
   }
 
   // ── API pública ──────────────────────────────────────────────────────────
@@ -85,6 +96,11 @@ export class Enemy {
   }
 
   update(delta) {
+    if (!this.mesh && this.dead) {
+      this._respawnTimer -= delta;
+      if (this._respawnTimer <= 0) this._respawn();
+      return;
+    }
     if (!this.mesh)  return;
     if (this._dying) { this._updateDeathAnim(delta); return; }
     if (this.dead)   return;
@@ -216,7 +232,7 @@ export class Enemy {
     return this._distTo(this.player.root.position) <= range;
   }
 
-  // ── Daño / Muerte ────────────────────────────────────────────────────────
+  // ── Daño / Muerte / Respawn ───────────────────────────────────────────────
 
   _flashDamage() {
     clearTimeout(this._flashTimeout);
@@ -235,6 +251,7 @@ export class Enemy {
     this._dyingTimer = DEATH_DURATION;
     this._state      = STATE.DEAD;
     for (const mat of this._materials) mat.color.setHex(0x440000);
+    if (this.onDeath) this.onDeath();
   }
 
   _updateDeathAnim(delta) {
@@ -246,8 +263,25 @@ export class Enemy {
     if (this._dyingTimer <= 0) {
       this._dying = false;
       this.scene.remove(this.mesh);
-      this.mesh = null;
+      this.mesh          = null;
+      this._respawnTimer = RESPAWN_TIME;
+      console.log(`[Enemy] Respawn en ${RESPAWN_TIME}s`);
     }
+  }
+
+  _respawn() {
+    this.hp    = ENEMY_MAX_HP;
+    this.dead  = false;
+    this._dying       = false;
+    this._dyingTimer  = 0;
+    this._attackTimer = 0;
+    this._waitTimer   = 0;
+    this._waypointIdx = 0;
+    this._state       = STATE.PATROL;
+
+    this._buildMesh(this._spawnPos);
+    this.scene.add(this.mesh);
+    console.log(`[Enemy] Respawneado en (${this._spawnPos.x}, ${this._spawnPos.z})`);
   }
 }
 
@@ -256,4 +290,4 @@ export class Enemy {
 export function spawnEnemies(scene, player, customPoints = null) {
   const points = customPoints ?? SPAWN_POINTS;
   return points.map(p => new Enemy(scene, p, player));
-      }
+}
