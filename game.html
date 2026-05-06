@@ -48,6 +48,8 @@ window.onerror = function(msg, src, line) {
   <div id="phase-label">FASE 5D — TIENDA</div>
   <div id="status">AELTHERION</div>
 </div>
+  async function boot() {
+  try {}
 
 <script type="importmap">
 {
@@ -175,12 +177,12 @@ async function boot() {
 
     console.log('[Boot] Arma: ' + weaponType);
     console.log('[Boot] Enemigos: ' + enemies.length);
-
-  } catch (err) {
-    txt.textContent = 'ERROR: ' + err.message;
+} catch (err) {
+    txt.textContent = 'ERROR: ' + (err.message || err.toString());
+    console.error('[BOOT ERROR]', err.message, err.stack);
     bar.style.background = '#8B2A0A';
-    console.error('[BOOT ERROR]', err);
   }
+  
 }
 
 window.addEventListener('load', boot);
