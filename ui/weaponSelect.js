@@ -7,16 +7,19 @@
 
 const WEAPONS = [
   {
-    type  : 'fists',
-    name  : 'Puños Vacíos',
-    label : 'PUGILISTA',
-    icon  : '✊',
+    const WEAPONS = [
+  {
+    type  : 'katana',
+    name  : 'Katana del Alba',
+    label : 'ESPADACHÍN',
+    icon  : '🗡️',
     range : 'CUERPO A CUERPO',
-    stats : { VEL: 95, ALC: 30, DMG: 55 },
-    accent: '#e8693a',
-    glow  : 'rgba(232,105,58,0.35)',
-    desc  : 'Combo rápido de 2 golpes. Sin distancia, sin piedad.',
+    stats : { VEL: 90, ALC: 45, DMG: 70 },
+    accent: '#e8c9a0',
+    glow  : 'rgba(232,201,160,0.35)',
+    desc  : 'Corte veloz + tajo descendente. Elegante y letal.',
   },
+    
   {
     type  : 'sword',
     name  : 'Espada de Cinzas',
