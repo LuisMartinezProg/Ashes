@@ -6,6 +6,7 @@ export class HUD {
     this.combat = combatSystem;
     this.skills = skillSystem;
     this._currentEnemy = null;
+    this._enemies = [];
 
     this._enemyBarEl   = null;
     this._fillEl       = null;
@@ -31,6 +32,10 @@ export class HUD {
 
   // ── API pública ──────────────────────────────────────────────────────────
 
+  setEnemies(enemiesArray) {
+    this._enemies = enemiesArray;
+  }
+
   updatePlayerHp(hp, max) {
     if (!this._playerHpFill) return;
     const pct = Math.max(0, hp / max) * 100;
@@ -38,20 +43,44 @@ export class HUD {
     if (this._playerHpText) this._playerHpText.textContent = `HP: ${hp}/${max}`;
   }
 
+  // Llamar esto cuando el jugador golpea a un enemigo específico
   attachEnemyBar(enemy) {
-    if (this._currentEnemy) this._currentEnemy.hudBar = null;
+    if (!enemy || enemy.isDead()) return;
     this._currentEnemy = enemy;
-    enemy.hudBar = {
-      update: (hp, maxHp) => this._updateBar(hp, maxHp),
-    };
     this._updateBar(enemy.hp, enemy.maxHp);
     this._showEnemyBar(true);
   }
 
   detachEnemyBar() {
-    if (this._currentEnemy) this._currentEnemy.hudBar = null;
     this._currentEnemy = null;
     this._showEnemyBar(false);
+  }
+
+  // Llamar en el game loop para mantener la barra actualizada
+  updateEnemyBar(playerPosition) {
+    // Si el enemigo actual murió, buscar otro
+    if (this._currentEnemy && this._currentEnemy.isDead()) {
+      this._currentEnemy = null;
+    }
+
+    // Si no hay enemigo actual, buscar el más cercano
+    if (!this._currentEnemy && this._enemies.length > 0) {
+      let closest = null, minDist = Infinity;
+      for (const e of this._enemies) {
+        if (e.isDead()) continue;
+        const d = playerPosition.distanceTo(e.mesh.position);
+        if (d < minDist) { minDist = d; closest = e; }
+      }
+      this._currentEnemy = closest;
+    }
+
+    // Actualizar barra con el enemigo actual
+    if (this._currentEnemy && !this._currentEnemy.isDead()) {
+      this._updateBar(this._currentEnemy.hp, this._currentEnemy.maxHp);
+      this._showEnemyBar(true);
+    } else {
+      this._showEnemyBar(false);
+    }
   }
 
   show() { this._container.style.display = 'block'; }
@@ -315,6 +344,9 @@ export class HUD {
   _bindButtons() {
     const pressAtk = (e) => {
       e.preventDefault();
+      // Pasar el enemigo golpeado al HUD para enfocar su barra
+      const target = this.combat._closestEnemyInRange();
+      if (target) this.attachEnemyBar(target);
       this.combat.triggerAttack();
       this._animateBtn(this._attackBtnEl, 'rgba(220,80,40,0.9)');
     };
@@ -354,8 +386,6 @@ export class HUD {
     } else {
       this._fillEl.style.background = 'linear-gradient(90deg, #882200, #cc2200)';
     }
-
-    if (hp <= 0) setTimeout(() => this._showEnemyBar(false), 900);
   }
 
   _updateEnergy(energy, maxEnergy) {
