@@ -30,4 +30,46 @@ export const DIALOGUES = {
     ],
   },
 
+  vendedor_armas: {
+    name: 'Armero',
+    shop: 'armas',
+    lines: [
+      'Bienvenido a mi armería, viajero.',
+      'Tengo las mejores armas de la región.',
+    ],
+  },
+
+  vendedor_items: {
+    name: 'Alquimista',
+    shop: 'items',
+    lines: [
+      'Pociones, elixires... todo lo que necesitas para sobrevivir.',
+      'Mis precios son justos, mi calidad inigualable.',
+    ],
+  },
+
+};
+
+// ── TIENDAS ──────────────────────────────────────────────────────────────────
+
+export const SHOPS = {
+
+  armas: {
+    title: 'Armería',
+    items: [
+      { id: 'sword',  name: 'Espada',     icon: '⚔️',  price: 80,  desc: 'Daño equilibrado. Buena para combate directo.' },
+      { id: 'bow',    name: 'Arco',       icon: '🏹',  price: 100, desc: 'Ataque a distancia. Requiere puntería.' },
+      { id: 'magic',  name: 'Orbe Mágico',icon: '🔮',  price: 120, desc: 'Canaliza energía arcana. Alto daño mágico.' },
+    ],
+  },
+
+  items: {
+    title: 'Alquimia',
+    items: [
+      { id: 'potion_hp',     name: 'Poción HP',      icon: '🧪', price: 20,  desc: 'Restaura 30 puntos de vida.' },
+      { id: 'potion_energy', name: 'Poción Energía',  icon: '⚗️', price: 25,  desc: 'Restaura 40 puntos de energía.' },
+      { id: 'potion_hp_max', name: 'Elixir Mayor',    icon: '🫧', price: 60,  desc: 'Restaura toda la vida.' },
+    ],
+  },
+
 };
