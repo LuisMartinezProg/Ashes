@@ -1,22 +1,22 @@
+// ui/hud.js
+// Ashes of the Reborn | Valiant Gaming
+
 export class HUD {
   constructor(combatSystem, skillSystem = null) {
     this.combat = combatSystem;
     this.skills = skillSystem;
     this._currentEnemy = null;
 
-    this._enemyBarEl  = null;
-    this._fillEl      = null;
-    this._hpTextEl    = null;
-    
-    // Nueva: Barra del jugador
+    this._enemyBarEl   = null;
+    this._fillEl       = null;
+    this._hpTextEl     = null;
     this._playerHpFill = null;
     this._playerHpText = null;
-
-    this._attackBtnEl = null;
-    this._skillBtnEl  = null;
-    this._skillCoolEl = null;
-    this._energyFill  = null;
-    this._container   = null;
+    this._attackBtnEl  = null;
+    this._skillBtnEl   = null;
+    this._skillCoolEl  = null;
+    this._energyFill   = null;
+    this._container    = null;
 
     this._build();
     this._bindButtons();
@@ -29,46 +29,40 @@ export class HUD {
     }
   }
 
-  // ── API pública ─────────────────────────────────────────────────────────────
+  // ── API pública ──────────────────────────────────────────────────────────
 
-  // ESTA ES LA FUNCIÓN QUE FALTABA Y CAUSABA EL ERROR
   updatePlayerHp(hp, max) {
     if (!this._playerHpFill) return;
     const pct = Math.max(0, hp / max) * 100;
     this._playerHpFill.style.width = `${pct}%`;
     if (this._playerHpText) this._playerHpText.textContent = `HP: ${hp}/${max}`;
   }
-attachEnemyBar(enemy) {
-  // Desconecta el anterior
-  if (this._currentEnemy) {
-    this._currentEnemy.hudBar = null;
-  }
-  this._currentEnemy = enemy;
-  enemy.hudBar = {
-    update: (hp, maxHp) => this._updateBar(hp, maxHp),
-  };
-  this._updateBar(enemy.hp, enemy.maxHp);
-  this._showEnemyBar(true);
-}
 
-detachEnemyBar() {
-  if (this._currentEnemy) this._currentEnemy.hudBar = null;
-  this._currentEnemy = null;
-  this._showEnemyBar(false);
-}
-  
+  attachEnemyBar(enemy) {
+    if (this._currentEnemy) this._currentEnemy.hudBar = null;
+    this._currentEnemy = enemy;
+    enemy.hudBar = {
+      update: (hp, maxHp) => this._updateBar(hp, maxHp),
+    };
     this._updateBar(enemy.hp, enemy.maxHp);
     this._showEnemyBar(true);
   }
 
   detachEnemyBar() {
+    if (this._currentEnemy) this._currentEnemy.hudBar = null;
+    this._currentEnemy = null;
     this._showEnemyBar(false);
   }
 
   show() { this._container.style.display = 'block'; }
   hide() { this._container.style.display = 'none'; }
 
-  // ── Construcción del DOM ────────────────────────────────────────────────────
+  setWeaponIcon(type) {
+    const icons = { katana: '🗡️', sword: '⚔️', magic: '🔮', bow: '🏹' };
+    this._attackBtnEl.textContent = icons[type] ?? '🗡️';
+  }
+
+  // ── Build ────────────────────────────────────────────────────────────────
 
   _build() {
     this._container = document.createElement('div');
@@ -81,7 +75,7 @@ detachEnemyBar() {
     });
 
     this._buildEnemyBar();
-    this._buildPlayerHpBar(); // Nueva función
+    this._buildPlayerHpBar();
     this._buildEnergyBar();
     this._buildAttackButton();
     if (this.skills) this._buildSkillButton();
@@ -89,13 +83,11 @@ detachEnemyBar() {
     document.body.appendChild(this._container);
   }
 
-  // ── Barra de vida del Jugador (Nueva) ──────────────────────────────────────
-
   _buildPlayerHpBar() {
     const wrap = document.createElement('div');
     Object.assign(wrap.style, {
       position     : 'absolute',
-      bottom       : '80px', // Por encima de la de energía
+      bottom       : '80px',
       left         : '50%',
       transform    : 'translateX(-50%)',
       width        : '40vw',
@@ -139,8 +131,6 @@ detachEnemyBar() {
     this._container.appendChild(wrap);
   }
 
-  // ── (El resto de tus funciones permanecen igual...) ─────────────────────────
-
   _buildEnemyBar() {
     this._enemyBarEl = document.createElement('div');
     Object.assign(this._enemyBarEl.style, {
@@ -178,11 +168,11 @@ detachEnemyBar() {
 
     this._fillEl = document.createElement('div');
     Object.assign(this._fillEl.style, {
-      height     : '100%',
-      width      : '100%',
-      background : 'linear-gradient(90deg, #cc2222, #ff4444)',
+      height      : '100%',
+      width       : '100%',
+      background  : 'linear-gradient(90deg, #cc2222, #ff4444)',
       borderRadius: '4px',
-      transition : 'width 0.15s ease',
+      transition  : 'width 0.15s ease',
     });
 
     this._hpTextEl = document.createElement('div');
@@ -237,11 +227,11 @@ detachEnemyBar() {
 
     this._energyFill = document.createElement('div');
     Object.assign(this._energyFill.style, {
-      height     : '100%',
-      width      : '100%',
-      background : 'linear-gradient(90deg, #2244cc, #66aaff)',
+      height      : '100%',
+      width       : '100%',
+      background  : 'linear-gradient(90deg, #2244cc, #66aaff)',
       borderRadius: '3px',
-      transition : 'width 0.1s ease',
+      transition  : 'width 0.1s ease',
     });
 
     track.appendChild(this._energyFill);
@@ -385,11 +375,4 @@ detachEnemyBar() {
   _showEnemyBar(visible) {
     this._enemyBarEl.style.display = visible ? 'block' : 'none';
   }
-
-setWeaponIcon(type) {
-  const icons = { katana: '🗡️', sword: '⚔️', magic: '🔮', bow: '🏹' };
-  this._attackBtnEl.textContent = icons[type] ?? '🗡️';
-}
-
-      }
-      
+        }
