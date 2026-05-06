@@ -405,4 +405,4 @@ export class HUD {
   _showEnemyBar(visible) {
     this._enemyBarEl.style.display = visible ? 'block' : 'none';
   }
-      }
+}
