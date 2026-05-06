@@ -156,10 +156,12 @@ async function boot() {
 
     // ── XP al matar enemigo ───────────────────────────────────────────────
     enemies.forEach(e => {
-      e.onDeath = () => {
-        progression.addXP(combat._weaponType, 25);
-        console.log(`[XP] +25 → ${combat._weaponType}: ${progression.getXP(combat._weaponType)}`);
-      };
+e.onDeath = () => {
+  const weapon = combat._weaponType ?? weaponType;
+  progression.addXP(weapon, 25);
+  console.log(`[XP] +25 → ${weapon}: ${progression.getXP(weapon)}`);
+};
+      
     });
 
     setProgress(100, 'LISTO');
