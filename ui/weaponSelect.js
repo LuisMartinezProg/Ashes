@@ -282,4 +282,4 @@ export function showWeaponSelect() {
     confirmBtn.addEventListener('click', confirm);
     confirmBtn.addEventListener('touchstart', confirm, { passive: false });
   });
-        }
+                                             }
