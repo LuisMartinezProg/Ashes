@@ -1,13 +1,6 @@
 // ui/weaponSelect.js — Ashes of the Reborn | Valiant Gaming
-//
-// USO en game.html:
-//   import { showWeaponSelect } from './ui/weaponSelect.js';
-//   const weaponType = await showWeaponSelect();
-//   // weaponType: 'fists' | 'sword' | 'magic' | 'bow'
 
 const WEAPONS = [
-  {
-    const WEAPONS = [
   {
     type  : 'katana',
     name  : 'Katana del Alba',
@@ -19,7 +12,6 @@ const WEAPONS = [
     glow  : 'rgba(232,201,160,0.35)',
     desc  : 'Corte veloz + tajo descendente. Elegante y letal.',
   },
-    
   {
     type  : 'sword',
     name  : 'Espada de Cinzas',
@@ -213,7 +205,6 @@ export function showWeaponSelect() {
 
     document.body.appendChild(overlay);
 
-    // ── Construye cards ─────────────────────────────────────────────────────
     const grid       = overlay.querySelector('#ws-grid');
     const confirmBtn = overlay.querySelector('#ws-confirm');
     let selectedType = null;
@@ -241,7 +232,6 @@ export function showWeaponSelect() {
         <div class="ws-card-desc">${w.desc}</div>
       `;
 
-      // Hover
       card.addEventListener('mouseenter', () => {
         if (selectedType === w.type) return;
         card.style.borderColor = `${w.accent}66`;
@@ -253,10 +243,8 @@ export function showWeaponSelect() {
         card.style.boxShadow   = '';
       });
 
-      // Selección
       const select = (e) => {
         e.preventDefault();
-        // Deselecciona anterior
         if (selectedType) {
           const prev = grid.querySelector(`[data-type="${selectedType}"]`);
           if (prev) {
@@ -279,14 +267,12 @@ export function showWeaponSelect() {
       grid.appendChild(card);
     });
 
-    // Anima las barras de stats
     requestAnimationFrame(() => requestAnimationFrame(() => {
       overlay.querySelectorAll('.ws-stat-fill').forEach(el => {
         el.style.width = el.dataset.val + '%';
       });
     }));
 
-    // ── Confirmar ───────────────────────────────────────────────────────────
     const confirm = (e) => {
       e.preventDefault();
       if (!selectedType) return;
@@ -296,5 +282,4 @@ export function showWeaponSelect() {
     confirmBtn.addEventListener('click', confirm);
     confirmBtn.addEventListener('touchstart', confirm, { passive: false });
   });
-                                 }
-
+}
