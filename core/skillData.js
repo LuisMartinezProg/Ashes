@@ -216,8 +216,9 @@ export const RARITY_COLORS = {
 // Subtipos desbloqueados por defecto al inicio
 // El resto se desbloquea por historia o XP especial
 export const DEFAULT_UNLOCKED = {
-  magic : ['fire'],
-  katana: ['speed'],
-  sword : ['strength'],
-  bow   : ['precision'],
+  magic : ['fire', 'ice', 'plant', 'wind'],
+  katana: ['speed', 'shadow', 'storm', 'honor'],
+  sword : ['strength', 'defense', 'fire', 'chaos'],
+  bow   : ['precision', 'poison', 'wind', 'shadow'],
 };
+  
