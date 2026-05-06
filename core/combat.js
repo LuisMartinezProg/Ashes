@@ -1,4 +1,5 @@
-// core/combat.js — Núcleo del sistema de combate
+// core/combat.js
+// Ashes of the Reborn | Valiant Gaming
 
 import { KatanaWeapon } from './weapons/katana.js';
 import { SwordWeapon  } from './weapons/sword.js';
@@ -90,6 +91,17 @@ export class CombatSystem {
     if (this._shakeActive) this._updateShake(delta);
   }
 
+  // Público — usado también por hud.js
+  closestEnemyInRange() {
+    let closest = null, minDist = Infinity;
+    for (const e of this.enemies) {
+      if (e.isDead()) continue;
+      const d = this.player.position.distanceTo(e.mesh.position);
+      if (d <= ATTACK_RANGE && d < minDist) { minDist = d; closest = e; }
+    }
+    return closest;
+  }
+
   _executeAttack(hitIndex) {
     this.attacking = true;
 
@@ -100,7 +112,7 @@ export class CombatSystem {
       this._triggerShake(0.5);
     } else {
       this.weapon.execute(hitIndex);
-      const target = this._closestEnemyInRange();
+      const target = this.closestEnemyInRange();
       if (target) {
         target.takeDamage(this.weapon.getDamage(hitIndex));
         this._triggerShake(1.0);
@@ -108,16 +120,6 @@ export class CombatSystem {
     }
 
     setTimeout(() => { this.attacking = false; }, this.weapon.getAnimDuration(hitIndex));
-  }
-
-  _closestEnemyInRange() {
-    let closest = null, minDist = Infinity;
-    for (const e of this.enemies) {
-      if (e.isDead()) continue;
-      const d = this.player.position.distanceTo(e.mesh.position);
-      if (d <= ATTACK_RANGE && d < minDist) { minDist = d; closest = e; }
-    }
-    return closest;
   }
 
   _triggerShake(intensity = 1.0) {
@@ -145,4 +147,4 @@ export class CombatSystem {
     this.camera.position.x += this._shakeOffsetX;
     this.camera.position.y += this._shakeOffsetY;
   }
-  }
+}
