@@ -113,6 +113,9 @@ async function boot() {
     setSkillSystem(skills);
     setEnemies(enemies);
 
+    // Pasar lista de enemigos al HUD (para updateEnemyBar en loop)
+    hud.setEnemies(enemies);
+
     // ── NPCs + Diálogo + Tienda ───────────────────────────────────────────
     const dialogueUI = new DialogueUI();
     const shopUI     = new ShopUI();
@@ -147,31 +150,13 @@ async function boot() {
     }
 
     setInterval(_checkNPCProximity, 200);
-    // Barra del enemigo más cercano
-setInterval(() => {
-  const playerPos = player.root.position;
-  let closest = null;
-  let minDist  = Infinity;
 
-  for (const e of enemies) {
-    if (e.isDead() || !e.mesh) continue;
-    const dx = e.mesh.position.x - playerPos.x;
-    const dz = e.mesh.position.z - playerPos.z;
-    const d  = Math.sqrt(dx*dx + dz*dz);
-    if (d < minDist) { minDist = d; closest = e; }
-  }
-
-  if (closest && closest !== hud._currentEnemy) {
-    hud.attachEnemyBar(closest);
-  } else if (!closest) {
-    hud.detachEnemyBar();
-  }
-}, 300);
-
-    // ── HUD ───────────────────────────────────────────────────────────────
-    hud.attachEnemyBar(enemies[0]);
+    // ── HUD player ────────────────────────────────────────────────────────
     player.onDamage = (hp, max) => hud.updatePlayerHp(hp, max);
     hud.updatePlayerHp(player.hp, player.maxHp);
+
+    // ── Loop de barra de enemigo más cercano ──────────────────────────────
+    setInterval(() => hud.updateEnemyBar(player.root.position), 300);
 
     setProgress(100, 'LISTO');
     await new Promise(r => setTimeout(r, 300));
@@ -194,7 +179,7 @@ setInterval(() => {
     console.error('[BOOT ERROR]', err);
   }
 }
-hud.setEnemies(combat.enemies);
+
 window.addEventListener('load', boot);
 </script>
 
