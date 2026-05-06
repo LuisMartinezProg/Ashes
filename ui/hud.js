@@ -2,6 +2,7 @@ export class HUD {
   constructor(combatSystem, skillSystem = null) {
     this.combat = combatSystem;
     this.skills = skillSystem;
+    this._currentEnemy = null;
 
     this._enemyBarEl  = null;
     this._fillEl      = null;
@@ -37,11 +38,25 @@ export class HUD {
     this._playerHpFill.style.width = `${pct}%`;
     if (this._playerHpText) this._playerHpText.textContent = `HP: ${hp}/${max}`;
   }
+attachEnemyBar(enemy) {
+  // Desconecta el anterior
+  if (this._currentEnemy) {
+    this._currentEnemy.hudBar = null;
+  }
+  this._currentEnemy = enemy;
+  enemy.hudBar = {
+    update: (hp, maxHp) => this._updateBar(hp, maxHp),
+  };
+  this._updateBar(enemy.hp, enemy.maxHp);
+  this._showEnemyBar(true);
+}
 
-  attachEnemyBar(enemy) {
-    enemy.hudBar = {
-      update: (hp, maxHp) => this._updateBar(hp, maxHp),
-    };
+detachEnemyBar() {
+  if (this._currentEnemy) this._currentEnemy.hudBar = null;
+  this._currentEnemy = null;
+  this._showEnemyBar(false);
+}
+  
     this._updateBar(enemy.hp, enemy.maxHp);
     this._showEnemyBar(true);
   }
