@@ -70,6 +70,8 @@ import { showWeaponSelect } from './ui/weaponSelect.js';
   import { spawnNPCs }   from './core/npc.js';
 import { DialogueUI }  from './ui/dialogue.js';
 import { setNPCs, setDialogueUI } from './core/loop.js';
+  import { ShopUI }    from './ui/shop.js';
+import { inventory } from './core/inventory.js';
 
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -121,11 +123,35 @@ const npcs       = spawnNPCs(scene);
 setNPCs(npcs);
 setDialogueUI(dialogueUI);
 
+const shopUI = new ShopUI();
+
 let _nearNPC = null;
 function _checkNPCProximity() {
-  if (dialogueUI.isActive()) return;
+  if (dialogueUI.isActive() || shopUI.isActive()) return;
   const playerPos = player.root.position;
   let found = null;
+
+  for (const npc of npcs) {
+    if (npc.isPlayerInRange(playerPos)) { found = npc; break; }
+  }
+
+  if (found && found !== _nearNPC) {
+    _nearNPC = found;
+    dialogueUI.showTalkBtn(() => {
+      dialogueUI.openDialogue(
+        found.dialogue.name,
+        found.dialogue.lines,
+        () => { _nearNPC = null; },
+        found.isShop() ? () => shopUI.open(found.dialogue.shop) : null
+      );
+    });
+  } else if (!found && _nearNPC) {
+    _nearNPC = null;
+    dialogueUI.hideTalkBtn();
+  }
+}
+
+setInterval(_checkNPCProximity, 200);
 
   for (const npc of npcs) {
     if (npc.isPlayerInRange(playerPos)) { found = npc; break; }
