@@ -71,7 +71,7 @@ export class HUD {
         const d = playerPosition.distanceTo(e.mesh.position);
         if (d < minDist) { minDist = d; closest = e; }
       }
-      this._currentEnemy = closest;
+      this._currentEnemy = minDist <= 8 ? closest : null;
     }
 
     // Actualizar barra con el enemigo actual
