@@ -21,11 +21,14 @@
     .load-text { margin-top: 16px; font-family: monospace; font-size: 10px; letter-spacing: 0.3em; color: rgba(201,168,76,0.4); }
   </style>
 </head>
-
-<script src="//cdn.jsdelivr.net/npm/eruda"></script>
-<script>
-  eruda.init()
-   // ← agrega esta línea
+<script type="module">
+  document.body.innerHTML += '<div style="color:lime;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;z-index:9999">MODULE OK</div>';
+  try {
+    const { initScene } = await import('./core/scene.js');
+    document.body.innerHTML += '<div style="color:lime;position:fixed;top:60%;left:50%;transform:translate(-50%,-50%);font-size:16px;z-index:9999">SCENE OK</div>';
+  } catch(e) {
+    document.body.innerHTML += '<div style="color:red;position:fixed;top:60%;left:50%;transform:translate(-50%,-50%);font-size:16px;z-index:9999">ERROR: ' + e.message + '</div>';
+  }
 </script>
 window.onerror = function(msg, src, line) {
   document.body.innerHTML = '<pre style="color:red;padding:20px;white-space:pre-wrap">' + msg + '\n' + src + '\nLine: ' + line + '</pre>';
