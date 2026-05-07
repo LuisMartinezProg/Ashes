@@ -8,7 +8,6 @@ import { QuickSlash    } from '../skills/katana/quickSlash.js';
 import { FlashStep     } from '../skills/katana/flashStep.js';
 import { BladeDance    } from '../skills/katana/bladeDance.js';
 import { ThousandCuts  } from '../skills/katana/thousandCuts.js';
- { ThornShot  } from '../skills/thornShot.js';
 
 const MAX_ENERGY   = 100;
 const ENERGY_REGEN = 3;
