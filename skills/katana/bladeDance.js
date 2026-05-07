@@ -1,3 +1,4 @@
+// skills/katana/bladeDance.js — Danza de Hojas
 import * as THREE from 'three';
 
 const DAMAGE = 80;
@@ -14,16 +15,23 @@ export class BladeDance {
     this.onCooldownUpdate = null;
   }
 
-  isReady() { return this._timer <= 0; }
-  getCooldownProgress() { return Math.min(1, 1 - this._timer / this.cooldown); }
+  isReady() {
+    return this._timer <= 0;
+  }
+
+  getCooldownProgress() {
+    return Math.min(1, 1 - this._timer / this.cooldown);
+  }
 
   cast(enemies) {
     if (!this.isReady()) return false;
+
     for (const e of enemies) {
       if (e.isDead?.() || !e.mesh) continue;
       const d = this.player.position.distanceTo(e.mesh.position);
       if (d <= RANGE) e.takeDamage(DAMAGE);
     }
+
     this._spawnEffect();
     this._timer = this.cooldown;
     if (this.onCooldownUpdate) this.onCooldownUpdate(0);
@@ -36,6 +44,7 @@ export class BladeDance {
       if (this._timer < 0) this._timer = 0;
       if (this.onCooldownUpdate) this.onCooldownUpdate(this.getCooldownProgress());
     }
+
     for (let i = this._active.length - 1; i >= 0; i--) {
       const fx = this._active[i];
       fx.timer -= delta * 1000;
@@ -54,7 +63,11 @@ export class BladeDance {
 
   _spawnEffect() {
     const geo = new THREE.TorusGeometry(RANGE * 0.5, 0.08, 6, 20);
-    const mat = new THREE.MeshBasicMaterial({ color: 0xaaddff, transparent: true, opacity: 0.6 });
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0xaaddff,
+      transparent: true,
+      opacity: 0.6,
+    });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.copy(this.player.position).add(new THREE.Vector3(0, 0.8, 0));
     this.scene.add(mesh);
