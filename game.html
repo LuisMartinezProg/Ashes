@@ -31,7 +31,9 @@ window.onerror = function(msg, src, line) {
   document.body.innerHTML = '<pre style="color:red;padding:20px;white-space:pre-wrap">' + msg + '\n' + src + '\nLine: ' + line + '</pre>';
 };
 </script>
-
+<div id="debug-early" style="position:fixed;top:0;left:0;width:100%;background:red;color:white;font-size:16px;z-index:99999;padding:10px;">
+  HTML cargó OK
+</div>
 <body>
 
 <div id="loading">
