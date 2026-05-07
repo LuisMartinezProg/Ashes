@@ -125,14 +125,15 @@ export class CombatSystem {
         }
        target.takeDamage(dmg);
         this._triggerShake(1.0);
-
-        // Efectos de fusión
+// Efectos de fusión
         if (this._progression) {
-          const school = this._progression.getActiveFusion(this._weaponType)
-                      ?? this._progression.getActiveSchool?.(this._weaponType);
+          const school = this._progression.getActiveSchool(this._weaponType)
+                      ?? this._progression.getActiveFusion(this._weaponType);
+          console.log(`[Combat] Fusión: ${school} | arma: ${this._weaponType}`);
           if (school === 'fire'  || school === 'fuego') target.applyBurn?.(5, 3);
           if (school === 'ice'   || school === 'hielo') target.applySlow?.(0.4, 2);
-        } 
+        }
+        
       }
     }
 
