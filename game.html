@@ -111,6 +111,7 @@ async function boot() {
 
     const skills      = new SkillSystem(scene, player.root);
     const progression = new Progression();
+    combat.setProgression(progression);
     console.log('[Progression] Desbloqueados:', JSON.stringify(progression._unlockedSubtypes));
     const hud         = new HUD(combat, skills);
 
