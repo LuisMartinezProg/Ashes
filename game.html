@@ -45,7 +45,7 @@ window.onerror = function(msg, src, line) {
 
 <div id="hud">
   <div id="fps">-- FPS</div>
-  <div id="phase-label">FASE 6 — HABILIDADES</div>
+  <div id="phase-label">FASE 7 — FUSIÓN</div>
   <div id="status">AELTHERION</div>
 </div>
 
@@ -76,6 +76,8 @@ import { inventory }                                                          fr
 import { Progression }                                                        from './core/progression.js';
 import { SkillBar }                                                           from './ui/skillBar.js';
 import { SubtypeMenu }                                                        from './ui/subtypeMenu.js';
+import { PauseMenu }                                                          from './ui/pauseMenu.js';
+import { FusionMenu }                                                         from './ui/fusionMenu.js';
 
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -158,12 +160,11 @@ async function boot() {
 
     // ── XP al matar enemigo ───────────────────────────────────────────────
     enemies.forEach(e => {
-e.onDeath = () => {
-  const weapon = combat._weaponType ?? weaponType;
-  progression.addXP(weapon, 25);
-  console.log(`[XP] +25 → ${weapon}: ${progression.getXP(weapon)}`);
-};
-      
+      e.onDeath = () => {
+        const weapon = combat._weaponType ?? weaponType;
+        progression.addXP(weapon, 25);
+        console.log(`[XP] +25 → ${weapon}: ${progression.getXP(weapon)}`);
+      };
     });
 
     setProgress(100, 'LISTO');
@@ -179,19 +180,27 @@ e.onDeath = () => {
     hud.show();
 
     // ── Skill Bar + Subtype Menu ──────────────────────────────────────────
-    const skillBar     = new SkillBar(skills, progression);
-    const subtypeMenu  = new SubtypeMenu(progression, skillBar);
+    const skillBar    = new SkillBar(skills, progression);
+    const subtypeMenu = new SubtypeMenu(progression, skillBar);
+    const fusionMenu  = new FusionMenu(progression, skillBar, skills);
+    const pauseMenu   = new PauseMenu({
+      onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
+      onFusion  : () => { pauseMenu.close(); fusionMenu.open(combat._weaponType); },
+      onResume  : () => pauseMenu.close(),
+      getFusionUnlocked: () => progression.fusionUnlocked,
+    });
 
     skillBar.setWeapon(weaponType);
     skillBar.show();
     subtypeMenu.setWeapon(weaponType);
+    fusionMenu.setWeapon(weaponType);
 
-    // Botón para abrir el menú de subtipo (esquina superior izquierda)
-    const subtypeBtn = document.createElement('button');
-    subtypeBtn.textContent = '⚗';
-    Object.assign(subtypeBtn.style, {
+    // Botón pausa — esquina superior izquierda
+    const pauseBtn = document.createElement('button');
+    pauseBtn.textContent = '☰';
+    Object.assign(pauseBtn.style, {
       position        : 'fixed',
-      top             : '48px',
+      top             : '8px',
       left            : '14px',
       width           : '36px',
       height          : '36px',
@@ -199,7 +208,7 @@ e.onDeath = () => {
       border          : '1px solid rgba(201,168,76,0.4)',
       background      : 'rgba(10,8,20,0.8)',
       color           : '#C9A84C',
-      fontSize        : '16px',
+      fontSize        : '18px',
       cursor          : 'pointer',
       pointerEvents   : 'all',
       zIndex          : '150',
@@ -208,12 +217,13 @@ e.onDeath = () => {
       justifyContent  : 'center',
       WebkitTapHighlightColor: 'transparent',
     });
-    subtypeBtn.addEventListener('click', () => subtypeMenu.open(combat._weaponType));
-    subtypeBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      subtypeMenu.open(combat._weaponType);
-    }, { passive: false });
-    document.body.appendChild(subtypeBtn);
+    const openPause = (e) => { e.preventDefault(); pauseMenu.open(); };
+    pauseBtn.addEventListener('click', openPause);
+    pauseBtn.addEventListener('touchstart', openPause, { passive: false });
+    document.body.appendChild(pauseBtn);
+
+    // DEBUG — desbloquear fusión para probar (quitar cuando haya evento de historia)
+    progression.fusionUnlocked = true;
 
     // ── Loop barra enemigo ────────────────────────────────────────────────
     setInterval(() => hud.updateEnemyBar(player.root.position), 300);
