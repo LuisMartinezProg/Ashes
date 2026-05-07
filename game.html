@@ -102,7 +102,7 @@ async function boot() {
 
     const skills      = new SkillSystem(scene, player.root);
     const progression = new Progression();
-
+     localStorage.removeItem('ashes_progression');
     const savedData = localStorage.getItem('ashes_progression');
     if (savedData) {
       try {
