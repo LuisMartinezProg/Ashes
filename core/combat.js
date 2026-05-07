@@ -125,7 +125,7 @@ export class CombatSystem {
         }
         target.takeDamage(dmg);
         this._triggerShake(1.0);
-      }
+      
     }}
 
     setTimeout(() => { this.attacking = false; }, this.weapon.getAnimDuration(hitIndex));
