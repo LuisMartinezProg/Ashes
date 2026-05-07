@@ -45,6 +45,10 @@ export class SkillSystem {
       };
     }
   }
+  applyFusion(weapon, school) {
+  this._activeFusion = { weapon, school };
+  console.log(`[SkillSystem] Fusión activa: ${weapon} + ${school}`);
+  }
 
   // ── API pública ───────────────────────────────────────────────────────────
 
