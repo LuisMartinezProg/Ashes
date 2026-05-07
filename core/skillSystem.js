@@ -1,10 +1,14 @@
 // core/skillSystem.js — Ashes of the Reborn | Valiant Gaming
 // Fase 6: gestiona todas las habilidades, energía mágica, cooldowns
-
-import { Fireball   } from '../skills/fireball.js';
-import { IceShard   } from '../skills/iceShard.js';
-import { WindGust   } from '../skills/windGust.js';
-import { ThornShot  } from '../skills/thornShot.js';
+import { Fireball      } from '../skills/fireball.js';
+import { IceShard      } from '../skills/iceShard.js';
+import { WindGust      } from '../skills/windGust.js';
+import { ThornShot     } from '../skills/thornShot.js';
+import { QuickSlash    } from '../skills/katana/quickSlash.js';
+import { FlashStep     } from '../skills/katana/flashStep.js';
+import { BladeDance    } from '../skills/katana/bladeDance.js';
+import { ThousandCuts  } from '../skills/katana/thousandCuts.js';
+ { ThornShot  } from '../skills/thornShot.js';
 
 const MAX_ENERGY   = 100;
 const ENERGY_REGEN = 3;
@@ -31,11 +35,15 @@ export class SkillSystem {
     this.onSkillCooldown = null;
 
     // Instancias de habilidades
-    this._skills = {
-      fireball : new Fireball (scene, playerGroup),
-      ice_shard: new IceShard (scene, playerGroup),
-      gust     : new WindGust (scene, playerGroup),
-      thorn    : new ThornShot(scene, playerGroup),
+this._skills = {
+      fireball      : new Fireball     (scene, playerGroup),
+      ice_shard     : new IceShard     (scene, playerGroup),
+      gust          : new WindGust     (scene, playerGroup),
+      thorn         : new ThornShot    (scene, playerGroup),
+      quick_slash   : new QuickSlash   (scene, playerGroup),
+      flash_step    : new FlashStep    (scene, playerGroup),
+      blade_dance   : new BladeDance   (scene, playerGroup),
+      thousand_cuts : new ThousandCuts (scene, playerGroup),
     };
 
     // Conectar callbacks de cooldown
