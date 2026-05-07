@@ -1,8 +1,7 @@
-// ui/fusionMenu.js — Versión con logs de depuración
+// ui/fusionMenu.js — Menú de fusión con emojis y grid 2x2
 
 export class FusionMenu {
   constructor(progression, skillBar, skillSystem) {
-    console.log("[FusionMenu] Constructor llamado");
     this.progression = progression;
     this.skillBar = skillBar;
     this.skillSystem = skillSystem;
@@ -12,16 +11,12 @@ export class FusionMenu {
   }
 
   setWeapon(weapon) {
-    console.log("[FusionMenu] setWeapon:", weapon);
     this._weapon = weapon;
   }
 
   open(weaponType) {
-    console.log("[FusionMenu] open llamado con:", weaponType);
     this._weapon = weaponType;
     this._selectedSchool = this.progression.getActiveSchool?.(weaponType) || 'planta';
-    
-    console.log("[FusionMenu] Escuela seleccionada:", this._selectedSchool);
     
     this._overlay = document.createElement('div');
     this._overlay.id = 'fusion-menu-overlay';
@@ -43,7 +38,7 @@ export class FusionMenu {
           ARMA ACTIVA: ${weaponType.toUpperCase()} • +25% DAÑO BASE EN FUSIÓN
         </p>
         
-        <div id="fusion-schools" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+        <div id="fusion-schools" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px;">
           ${this._renderSchools()}
         </div>
         
@@ -77,27 +72,24 @@ export class FusionMenu {
 
     document.body.appendChild(this._overlay);
 
+    // Eventos para seleccionar escuela
     const items = this._overlay.querySelectorAll('.fusion-school-item');
     items.forEach(item => {
       const onSelect = (e) => {
         e.preventDefault();
         const school = item.dataset.school;
-        console.log("[FusionMenu] Escuela seleccionada:", school);
         this._selectSchool(school);
       };
       item.addEventListener('click', onSelect);
       item.addEventListener('touchstart', onSelect, { passive: false });
     });
 
+    // Botón APLICAR
     const applyBtn = this._overlay.querySelector('#fusion-apply');
-    console.log("[FusionMenu] Botón APLICAR encontrado:", applyBtn);
-    
     const onApply = (e) => {
-      console.log("[FusionMenu] Botón APLICAR presionado");
       e.preventDefault();
       e.stopPropagation();
       if (this._selectedSchool) {
-        console.log("[FusionMenu] Aplicando fusión:", this._weapon, this._selectedSchool);
         if (this.progression.setActiveSchool) {
           this.progression.setActiveSchool(this._weapon, this._selectedSchool);
         }
@@ -107,17 +99,14 @@ export class FusionMenu {
         if (this.skillBar) this.skillBar.refresh();
         console.log(`[FusionMenu] Aplicada fusión: ${this._weapon} + ${this._selectedSchool}`);
         this.close();
-      } else {
-        console.log("[FusionMenu] No hay escuela seleccionada");
       }
     };
-    
     applyBtn.addEventListener('click', onApply);
     applyBtn.addEventListener('touchstart', onApply, { passive: false });
 
+    // Botón CERRAR
     const closeBtn = this._overlay.querySelector('#fusion-close');
     const onClose = (e) => {
-      console.log("[FusionMenu] Botón CERRAR presionado");
       e.preventDefault();
       this.close();
     };
@@ -127,10 +116,10 @@ export class FusionMenu {
 
   _renderSchools() {
     const schools = [
-      { id: 'fuego', name: 'Fuego', desc: 'QUEMADURA — Daño por segundo al impactar' },
-      { id: 'hielo', name: 'Hielo', desc: 'RALENTIZAR — Reduce velocidad del enemigo' },
-      { id: 'planta', name: 'Planta', desc: '+25% daño base' },
-      { id: 'viento', name: 'Viento', desc: '+25% daño base' }
+      { id: 'fuego', emoji: '🔥', name: 'Fuego', desc: 'QUEMADURA — Daño por segundo al impactar' },
+      { id: 'hielo', emoji: '❄️', name: 'Hielo', desc: 'RALENTIZAR — Reduce velocidad del enemigo' },
+      { id: 'planta', emoji: '🌿', name: 'Planta', desc: '+25% daño base' },
+      { id: 'viento', emoji: '💨', name: 'Viento', desc: '+25% daño base' }
     ];
     
     return schools.map(school => `
@@ -143,7 +132,10 @@ export class FusionMenu {
         background: ${this._selectedSchool === school.id ? 'rgba(201,168,76,0.15)' : 'transparent'};
       ">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <strong style="color: #C9A84C;">${school.name}</strong>
+          <div>
+            <span style="font-size: 1.4rem; margin-right: 8px;">${school.emoji}</span>
+            <strong style="color: #C9A84C;">${school.name}</strong>
+          </div>
           <span style="color: ${this._selectedSchool === school.id ? '#C9A84C' : 'transparent'};">✓</span>
         </div>
         <div style="font-size: 11px; color: rgba(201,168,76,0.6); margin-top: 4px;">${school.desc}</div>
@@ -153,18 +145,16 @@ export class FusionMenu {
 
   _selectSchool(school) {
     this._selectedSchool = school;
-    console.log("[FusionMenu] _selectSchool:", school);
     const items = this._overlay.querySelectorAll('.fusion-school-item');
     items.forEach(item => {
       const bg = item.dataset.school === school ? 'rgba(201,168,76,0.15)' : 'transparent';
       item.style.background = bg;
-      const check = item.querySelector('span');
+      const check = item.querySelector('span:last-child');
       if (check) check.style.color = item.dataset.school === school ? '#C9A84C' : 'transparent';
     });
   }
 
   close() {
-    console.log("[FusionMenu] close llamado");
     if (this._overlay) {
       this._overlay.remove();
       this._overlay = null;
