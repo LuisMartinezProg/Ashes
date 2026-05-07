@@ -49,6 +49,17 @@ export class Progression {
     this.onUnlock       = null; // (weapon, subtypeId)
     this.onTrialPassed  = null; // (skillId)
   }
+  // ── Fusión ────────────────────────────────────────────────────────────────
+
+setActiveFusion(weapon, school) {
+  if (!this._activeFusion) this._activeFusion = {};
+  this._activeFusion[weapon] = school;
+}
+
+getActiveFusion(weapon) {
+  if (!this._activeFusion) return null;
+  return this._activeFusion[weapon] ?? null;
+}
 
   // ── XP ───────────────────────────────────────────────────────────────────
 
