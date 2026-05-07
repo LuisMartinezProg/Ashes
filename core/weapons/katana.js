@@ -1,84 +1,74 @@
-// core/weapons/katana.js — Arma: Katana
-// Combo de 2 golpes. Corte rápido + tajo descendente.
-
+// skills/katana/quickSlash.js — Tajo Rápido (Común)
 import * as THREE from 'three';
 
-const DAMAGE      = [12, 28];
-const ANIM_DUR    = [200, 350];
-const FLASH_COLOR = [0xffffff, 0xff4422];
+const DAMAGE   = 35;
+const RANGE    = 2.8;
+const DURATION = 300;
 
-export class KatanaWeapon {
-  constructor(playerGroup) {
-    this.player   = playerGroup;
-    this.comboMax = 2;
-
-    this._flashTimeout = null;
-    this._katanaMesh   = this._buildKatanaMesh();
-    this.player.add(this._katanaMesh);
+export class QuickSlash {
+  constructor(scene, player) {
+    this.scene    = scene;
+    this.player   = player;
+    this.cooldown = 3;
+    this._timer   = 0;
+    this._active  = [];
+    this.onCooldownUpdate = null;
   }
 
-  execute(hitIndex) {
-    this._playSwingAnim(hitIndex);
+  isReady() { return this._timer <= 0; }
+
+  getCooldownProgress() {
+    return Math.min(1, 1 - this._timer / this.cooldown);
+  }
+
+  cast(enemies) {
+    if (!this.isReady()) return false;
+
+    // Daño inmediato en área
+    let hit = false;
+    for (const e of enemies) {
+      if (e.isDead() || !e.mesh) continue;
+      const d = this.player.position.distanceTo(e.mesh.position);
+      if (d <= RANGE) { e.takeDamage(DAMAGE); hit = true; }
+    }
+
+    this._spawnEffect();
+    this._timer = this.cooldown;
+    if (this.onCooldownUpdate) this.onCooldownUpdate(0);
     return true;
   }
 
-  getDamage(hitIndex)       { return DAMAGE[hitIndex]   ?? DAMAGE[0]; }
-  getAnimDuration(hitIndex) { return ANIM_DUR[hitIndex] ?? ANIM_DUR[0]; }
-
-  update(delta, enemies) {}
-
-  destroy() {
-    clearTimeout(this._flashTimeout);
-    this.player.remove(this._katanaMesh);
-  }
-
-  // ── Visual ──────────────────────────────────────────────────────────────
-
-  _buildKatanaMesh() {
-    const g = new THREE.Group();
-
-    // Hoja larga y delgada
-    const bladeGeo = new THREE.BoxGeometry(0.04, 1.1, 0.015);
-    const bladeMat = new THREE.MeshBasicMaterial({ color: 0xDDEEFF });
-    const blade    = new THREE.Mesh(bladeGeo, bladeMat);
-    blade.position.set(0, 0.55, 0);
-    g.add(blade);
-
-    // Guardia
-    const guardGeo = new THREE.BoxGeometry(0.18, 0.04, 0.04);
-    const guardMat = new THREE.MeshBasicMaterial({ color: 0x886633 });
-    const guard    = new THREE.Mesh(guardGeo, guardMat);
-    guard.position.set(0, 0.02, 0);
-    g.add(guard);
-
-    // Mango
-    const handleGeo = new THREE.BoxGeometry(0.04, 0.28, 0.04);
-    const handleMat = new THREE.MeshBasicMaterial({ color: 0x553311 });
-    const handle    = new THREE.Mesh(handleGeo, handleMat);
-    handle.position.set(0, -0.16, 0);
-    g.add(handle);
-
-    g.position.set(0.3, 0.15, 0.1);
-    return g;
-  }
-
-  _playSwingAnim(hitIndex) {
-    clearTimeout(this._flashTimeout);
-
-    const blade = this._katanaMesh.children[0];
-    blade.material.color.setHex(FLASH_COLOR[hitIndex]);
-
-    if (hitIndex === 0) {
-      // Corte horizontal rápido
-      this._katanaMesh.rotation.z = -Math.PI * 0.5;
-    } else {
-      // Tajo descendente
-      this._katanaMesh.rotation.x = -Math.PI * 0.6;
+  update(delta) {
+    if (this._timer > 0) {
+      this._timer -= delta;
+      if (this._timer < 0) this._timer = 0;
+      if (this.onCooldownUpdate) this.onCooldownUpdate(this.getCooldownProgress());
     }
 
-    this._flashTimeout = setTimeout(() => {
-      blade.material.color.setHex(0xDDEEFF);
-      this._katanaMesh.rotation.set(0, 0, 0);
-    }, ANIM_DUR[hitIndex] * 0.6);
+    for (let i = this._active.length - 1; i >= 0; i--) {
+      const fx = this._active[i];
+      fx.timer -= delta * 1000;
+      const t = Math.max(0, fx.timer / DURATION);
+      fx.mesh.scale.setScalar(1 + (1 - t) * 1.5);
+      fx.mesh.material.opacity = t * 0.7;
+      if (fx.timer <= 0) {
+        this.scene.remove(fx.mesh);
+        fx.mesh.geometry.dispose();
+        fx.mesh.material.dispose();
+        this._active.splice(i, 1);
+      }
+    }
   }
-}
+
+  _spawnEffect() {
+    const geo  = new THREE.RingGeometry(0.3, RANGE, 16);
+    const mat  = new THREE.MeshBasicMaterial({
+      color: 0xffffff, transparent: true, opacity: 0.7, side: THREE.DoubleSide,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(this.player.position).add(new THREE.Vector3(0, 0.5, 0));
+    mesh.rotation.x = -Math.PI / 2;
+    this.scene.add(mesh);
+    this._active.push({ mesh, timer: DURATION });
+  }
+        }
