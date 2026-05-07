@@ -68,4 +68,4 @@ export class BladeDance {
     this.scene.add(mesh);
     this._active.push({ mesh, timer: DURATION });
   }
-        }
+        
