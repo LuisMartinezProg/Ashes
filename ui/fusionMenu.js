@@ -1,7 +1,8 @@
-// ui/fusionMenu.js — Menú de fusión corregido
+// ui/fusionMenu.js — Versión con logs de depuración
 
 export class FusionMenu {
   constructor(progression, skillBar, skillSystem) {
+    console.log("[FusionMenu] Constructor llamado");
     this.progression = progression;
     this.skillBar = skillBar;
     this.skillSystem = skillSystem;
@@ -11,12 +12,16 @@ export class FusionMenu {
   }
 
   setWeapon(weapon) {
+    console.log("[FusionMenu] setWeapon:", weapon);
     this._weapon = weapon;
   }
 
   open(weaponType) {
+    console.log("[FusionMenu] open llamado con:", weaponType);
     this._weapon = weaponType;
     this._selectedSchool = this.progression.getActiveSchool?.(weaponType) || 'planta';
+    
+    console.log("[FusionMenu] Escuela seleccionada:", this._selectedSchool);
     
     this._overlay = document.createElement('div');
     this._overlay.id = 'fusion-menu-overlay';
@@ -72,37 +77,47 @@ export class FusionMenu {
 
     document.body.appendChild(this._overlay);
 
-    // Eventos para seleccionar escuela
     const items = this._overlay.querySelectorAll('.fusion-school-item');
     items.forEach(item => {
       const onSelect = (e) => {
         e.preventDefault();
         const school = item.dataset.school;
+        console.log("[FusionMenu] Escuela seleccionada:", school);
         this._selectSchool(school);
       };
       item.addEventListener('click', onSelect);
       item.addEventListener('touchstart', onSelect, { passive: false });
     });
 
-    // Botón APLICAR (CORREGIDO - ahora sí funciona)
     const applyBtn = this._overlay.querySelector('#fusion-apply');
+    console.log("[FusionMenu] Botón APLICAR encontrado:", applyBtn);
+    
     const onApply = (e) => {
+      console.log("[FusionMenu] Botón APLICAR presionado");
       e.preventDefault();
       e.stopPropagation();
       if (this._selectedSchool) {
-        this.progression.setActiveSchool?.(this._weapon, this._selectedSchool);
-        if (this.skillSystem) this.skillSystem.applyFusion?.(this._weapon, this._selectedSchool);
+        console.log("[FusionMenu] Aplicando fusión:", this._weapon, this._selectedSchool);
+        if (this.progression.setActiveSchool) {
+          this.progression.setActiveSchool(this._weapon, this._selectedSchool);
+        }
+        if (this.skillSystem && this.skillSystem.applyFusion) {
+          this.skillSystem.applyFusion(this._weapon, this._selectedSchool);
+        }
         if (this.skillBar) this.skillBar.refresh();
         console.log(`[FusionMenu] Aplicada fusión: ${this._weapon} + ${this._selectedSchool}`);
         this.close();
+      } else {
+        console.log("[FusionMenu] No hay escuela seleccionada");
       }
     };
+    
     applyBtn.addEventListener('click', onApply);
     applyBtn.addEventListener('touchstart', onApply, { passive: false });
 
-    // Botón CERRAR
     const closeBtn = this._overlay.querySelector('#fusion-close');
     const onClose = (e) => {
+      console.log("[FusionMenu] Botón CERRAR presionado");
       e.preventDefault();
       this.close();
     };
@@ -138,6 +153,7 @@ export class FusionMenu {
 
   _selectSchool(school) {
     this._selectedSchool = school;
+    console.log("[FusionMenu] _selectSchool:", school);
     const items = this._overlay.querySelectorAll('.fusion-school-item');
     items.forEach(item => {
       const bg = item.dataset.school === school ? 'rgba(201,168,76,0.15)' : 'transparent';
@@ -148,6 +164,7 @@ export class FusionMenu {
   }
 
   close() {
+    console.log("[FusionMenu] close llamado");
     if (this._overlay) {
       this._overlay.remove();
       this._overlay = null;
