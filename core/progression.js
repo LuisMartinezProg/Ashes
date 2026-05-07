@@ -21,6 +21,12 @@ const TRIAL_LEVEL = {
 
 export class Progression {
   constructor() {
+    
+    // Callbacks
+    this.onXPGain       = null; // (weapon, xp, total)
+    this.onUnlock       = null; // (weapon, subtypeId)
+    this.onTrialPassed  = null; // (skillId)
+  }
     // Subtipos desbloqueados por arma
     this._unlockedSubtypes = structuredClone(DEFAULT_UNLOCKED);
 
@@ -44,11 +50,6 @@ export class Progression {
       bow   : 'precision',
     };
 
-    // Callbacks
-    this.onXPGain       = null; // (weapon, xp, total)
-    this.onUnlock       = null; // (weapon, subtypeId)
-    this.onTrialPassed  = null; // (skillId)
-  }
   // ── Fusión ────────────────────────────────────────────────────────────────
 
 setActiveFusion(weapon, school) {
