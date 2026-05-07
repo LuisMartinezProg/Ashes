@@ -111,6 +111,16 @@ async function boot() {
 
     const skills      = new SkillSystem(scene, player.root);
     const progression = new Progression();
+// Cargar progreso guardado
+const savedData = localStorage.getItem('ashes_progression');
+if (savedData) {
+  try {
+    progression.load(JSON.parse(savedData));
+    console.log('[Save] Progreso cargado');
+  } catch(e) {
+    console.warn('[Save] Error al cargar:', e);
+  }
+}
     combat.setProgression(progression);
     console.log('[Progression] Desbloqueados:', JSON.stringify(progression._unlockedSubtypes));
     const hud         = new HUD(combat, skills);
@@ -231,7 +241,11 @@ async function boot() {
 
     console.log('[Boot] Arma: ' + weaponType);
     console.log('[Boot] Enemigos: ' + enemies.length);
-
+// Guardar progreso cada 30 segundos
+setInterval(() => {
+  localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
+  console.log('[Save] Progreso guardado');
+}, 30000);
   } catch (err) {
     txt.textContent = 'ERROR: ' + (err.message || err.toString());
     console.error('[BOOT ERROR]', err.message, err.stack);
