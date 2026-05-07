@@ -55,6 +55,15 @@ export class Progression {
     return this._activeFusion[weapon] ?? null;
   }
 
+  // Alias para fusionMenu.js
+  setActiveSchool(weapon, school) {
+    this._activeFusion[weapon] = school;
+  }
+
+  getActiveSchool(weapon) {
+    return this._activeFusion[weapon] ?? null;
+  }
+
   // ── XP ───────────────────────────────────────────────────────────────────
 
   addXP(weapon, amount) {
@@ -158,6 +167,7 @@ export class Progression {
       trialsPassed    : this._trialsPassed,
       activeSubtype   : this._activeSubtype,
       activeFusion    : this._activeFusion,
+      fusionUnlocked  : this.fusionUnlocked,
     };
   }
 
@@ -168,5 +178,6 @@ export class Progression {
     if (data.trialsPassed)     this._trialsPassed      = data.trialsPassed;
     if (data.activeSubtype)    this._activeSubtype     = data.activeSubtype;
     if (data.activeFusion)     this._activeFusion      = data.activeFusion;
+    if (data.fusionUnlocked !== undefined) this.fusionUnlocked = data.fusionUnlocked;
   }
-}
+      }
