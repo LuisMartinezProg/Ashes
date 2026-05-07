@@ -37,7 +37,10 @@ export class Enemy {
     this.dead     = false;
     this.hudBar   = null;
     this.onDeath  = null;
-
+    this._burnDPS    = 0;
+    this._burnTimer  = 0;
+    this._slowFactor = 1;
+    this._slowTimer  = 0;
     this._spawnPos    = { x: position.x, z: position.z };
     this._state       = STATE.PATROL;
     this._attackTimer = 0;
@@ -86,7 +89,17 @@ export class Enemy {
   // ── API pública ──────────────────────────────────────────────────────────
 
   isDead() { return this.dead; }
+// ── Efectos de fusión ─────────────────────────────────────────────────────
 
+  applyBurn(dps, duration) {
+    this._burnDPS      = dps;
+    this._burnTimer    = duration;
+  }
+
+  applySlow(factor, duration) {
+    this._slowFactor   = factor;
+    this._slowTimer    = duration;
+  }
   takeDamage(amount) {
     if (this.dead) return;
     this.hp = Math.max(0, this.hp - amount);
@@ -104,6 +117,26 @@ export class Enemy {
     if (!this.mesh)  return;
     if (this._dying) { this._updateDeathAnim(delta); return; }
     if (this.dead)   return;
+
+    // Quemadura
+    if (this._burnTimer > 0) {
+      this._burnTimer -= delta;
+      this.takeDamage(this._burnDPS * delta);
+      for (const mat of this._materials) mat.color.setHex(0xff6600);
+      setTimeout(() => {
+        if (!this.dead) {
+          this._materials[0]?.color.setHex(0xcc2222);
+          this._materials[1]?.color.setHex(0xdd3333);
+        }
+      }, 100);
+      if (this._burnTimer <= 0) this._burnDPS = 0;
+    }
+
+    // Ralentizar
+    if (this._slowTimer > 0) {
+      this._slowTimer -= delta;
+      if (this._slowTimer <= 0) this._slowFactor = 1;
+    }
 
     switch (this._state) {
       case STATE.PATROL:  this._updatePatrol(delta);  break;
@@ -205,7 +238,7 @@ export class Enemy {
     const dz   = target.z - pos.z;
     const dist = Math.sqrt(dx*dx + dz*dz);
     if (dist < 0.01) return;
-    const step = Math.min(speed * delta, dist);
+    const step = Math.min(speed * this._slowFactor * delta, dist);
     pos.x += (dx / dist) * step;
     pos.z += (dz / dist) * step;
     this._lookAt(target);
