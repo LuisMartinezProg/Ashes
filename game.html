@@ -171,11 +171,12 @@ if (savedData) {
 
     // ── XP al matar enemigo ───────────────────────────────────────────────
     enemies.forEach(e => {
-      e.onDeath = () => {
-        const weapon = combat._weaponType ?? weaponType;
-        progression.addXP(weapon, 25);
-        console.log(`[XP] +25 → ${weapon}: ${progression.getXP(weapon)}`);
-      };
+     e.onDeath = () => {
+  const weapon = combat._weaponType ?? weaponType;
+  progression.addXP(weapon, 25);
+  console.log(`[XP] +25 → ${weapon}: ${progression.getXP(weapon)}`);
+  localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
+}; 
     });
 
     setProgress(100, 'LISTO');
