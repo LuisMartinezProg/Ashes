@@ -1,4 +1,3 @@
-
 // core/combat.js
 // Ashes of the Reborn | Valiant Gaming
 
@@ -20,8 +19,9 @@ export class CombatSystem {
     this.camera  = camera;
     this.enemies = [];
 
-    this._scene      = null;
-    this._weaponType = 'katana';
+    this._scene       = null;
+    this._weaponType  = 'katana';
+    this._progression = null;
 
     this.weapon   = new KatanaWeapon(playerGroup);
     this.comboMax = this.weapon.comboMax;
@@ -39,6 +39,10 @@ export class CombatSystem {
   setScene(scene) {
     this._scene = scene;
     if (this.weapon.setScene) this.weapon.setScene(scene);
+  }
+
+  setProgression(progression) {
+    this._progression = progression;
   }
 
   setWeapon(type) {
@@ -70,9 +74,7 @@ export class CombatSystem {
 
     console.log(`[Combat] Arma equipada: ${type}`);
   }
-setProgression(progression) {
-    this._progression = progression;
-}
+
   registerEnemy(enemy)   { this.enemies.push(enemy); }
   unregisterEnemy(enemy) { this.enemies = this.enemies.filter(e => e !== enemy); }
 
@@ -94,7 +96,6 @@ setProgression(progression) {
     if (this._shakeActive) this._updateShake(delta);
   }
 
-  // Público — usado también por hud.js
   closestEnemyInRange() {
     let closest = null, minDist = Infinity;
     for (const e of this.enemies) {
@@ -115,17 +116,7 @@ setProgression(progression) {
       this._triggerShake(0.5);
     } else {
       this.weapon.execute(hitIndex);
-      
-    }
-
-    setTimeout(() => { this.attacking = false; }, this.weapon.getAnimDuration(hitIndex));
-  }
-
-  _triggerShake(intensity = 1.0) {
-    this._shakeTime   = SHAKE_DURATION * intensity;
-    this._shakeActive = true;
-  }
-const target = this.closestEnemyInRange();
+      const target = this.closestEnemyInRange();
       if (target) {
         let dmg = this.weapon.getDamage(hitIndex);
         if (this._progression) {
@@ -135,6 +126,16 @@ const target = this.closestEnemyInRange();
         target.takeDamage(dmg);
         this._triggerShake(1.0);
       }
+    }
+
+    setTimeout(() => { this.attacking = false; }, this.weapon.getAnimDuration(hitIndex));
+  }
+
+  _triggerShake(intensity = 1.0) {
+    this._shakeTime   = SHAKE_DURATION * intensity;
+    this._shakeActive = true;
+  }
+
   _updateShake(delta) {
     this._shakeTime -= delta * 1000;
 
@@ -155,4 +156,4 @@ const target = this.closestEnemyInRange();
     this.camera.position.x += this._shakeOffsetX;
     this.camera.position.y += this._shakeOffsetY;
   }
-}
+  }
