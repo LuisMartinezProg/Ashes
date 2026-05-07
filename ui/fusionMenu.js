@@ -1,4 +1,4 @@
-// ui/fusionMenu.js — Menú de fusión con emojis y grid 2x2
+// ui/fusionMenu.js — Estilo igual al de habilidades
 
 export class FusionMenu {
   constructor(progression, skillBar, skillSystem) {
@@ -33,9 +33,9 @@ export class FusionMenu {
 
     this._overlay.innerHTML = `
       <div style="background: rgba(10,8,20,0.9); border: 1px solid rgba(201,168,76,0.3); border-radius: 16px; padding: 24px; max-width: 400px; width: 90%;">
-        <h2 style="color: #C9A84C; text-align: center; margin: 0 0 8px 0;">FUSIÓN — ELIGE ESCUELA MÁGICA</h2>
-        <p style="color: rgba(201,168,76,0.6); text-align: center; font-size: 12px; margin-bottom: 20px;">
-          ARMA ACTIVA: ${weaponType.toUpperCase()} • +25% DAÑO BASE EN FUSIÓN
+        <h2 style="color: #C9A84C; text-align: center; margin: 0 0 8px 0; font-size: 1.2rem;">✦ FUSIÓN DE HABILIDADES ✦</h2>
+        <p style="color: rgba(201,168,76,0.6); text-align: center; font-size: 10px; margin-bottom: 20px; letter-spacing: 0.1em;">
+          ARMA: ${weaponType.toUpperCase()} • DAÑO +25%
         </p>
         
         <div id="fusion-schools" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px;">
@@ -53,26 +53,25 @@ export class FusionMenu {
           font-weight: bold;
           letter-spacing: 0.2em;
           cursor: pointer;
-          transition: transform 0.1s, opacity 0.2s;
-        ">APLICAR FUSIÓN</button>
+          transition: all 0.1s;
+        ">⚡ FUSIONAR ⚡</button>
         
         <button id="fusion-close" style="
           width: 100%;
           margin-top: 10px;
           padding: 8px;
-          background: transparent;
+          background: rgba(10,8,20,0.5);
           border: 1px solid rgba(201,168,76,0.3);
           border-radius: 8px;
-          color: rgba(201,168,76,0.7);
+          color: rgba(201,168,76,0.6);
           font-family: monospace;
           cursor: pointer;
-        ">CERRAR</button>
+        ">✖ CERRAR</button>
       </div>
     `;
 
     document.body.appendChild(this._overlay);
 
-    // Eventos para seleccionar escuela
     const items = this._overlay.querySelectorAll('.fusion-school-item');
     items.forEach(item => {
       const onSelect = (e) => {
@@ -84,7 +83,6 @@ export class FusionMenu {
       item.addEventListener('touchstart', onSelect, { passive: false });
     });
 
-    // Botón APLICAR
     const applyBtn = this._overlay.querySelector('#fusion-apply');
     const onApply = (e) => {
       e.preventDefault();
@@ -97,14 +95,12 @@ export class FusionMenu {
           this.skillSystem.applyFusion(this._weapon, this._selectedSchool);
         }
         if (this.skillBar) this.skillBar.refresh();
-        console.log(`[FusionMenu] Aplicada fusión: ${this._weapon} + ${this._selectedSchool}`);
         this.close();
       }
     };
     applyBtn.addEventListener('click', onApply);
     applyBtn.addEventListener('touchstart', onApply, { passive: false });
 
-    // Botón CERRAR
     const closeBtn = this._overlay.querySelector('#fusion-close');
     const onClose = (e) => {
       e.preventDefault();
@@ -116,29 +112,31 @@ export class FusionMenu {
 
   _renderSchools() {
     const schools = [
-      { id: 'fuego', emoji: '🔥', name: 'Fuego', desc: 'QUEMADURA — Daño por segundo al impactar' },
-      { id: 'hielo', emoji: '❄️', name: 'Hielo', desc: 'RALENTIZAR — Reduce velocidad del enemigo' },
-      { id: 'planta', emoji: '🌿', name: 'Planta', desc: '+25% daño base' },
-      { id: 'viento', emoji: '💨', name: 'Viento', desc: '+25% daño base' }
+      { id: 'fuego', emoji: '🔥', name: 'Fuego', desc: 'QUEMADURA', effect: 'Daño por segundo', color: '#ff6633' },
+      { id: 'hielo', emoji: '❄️', name: 'Hielo', desc: 'RALENTIZAR', effect: 'Reduce velocidad', color: '#66ccff' },
+      { id: 'planta', emoji: '🌿', name: 'Planta', desc: 'VITALIDAD', effect: '+25% daño base', color: '#66ff66' },
+      { id: 'viento', emoji: '💨', name: 'Viento', desc: 'CORTANTE', effect: '+25% daño base', color: '#ccaa88' }
     ];
     
     return schools.map(school => `
       <div class="fusion-school-item" data-school="${school.id}" style="
-        padding: 12px;
-        border: 1px solid rgba(201,168,76,0.2);
-        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 16px 8px;
+        border: 2px solid ${this._selectedSchool === school.id ? school.color : 'rgba(201,168,76,0.2)'};
+        border-radius: 12px;
         cursor: pointer;
         transition: all 0.1s;
-        background: ${this._selectedSchool === school.id ? 'rgba(201,168,76,0.15)' : 'transparent'};
+        background: ${this._selectedSchool === school.id ? `${school.color}10` : 'rgba(10,8,20,0.5)'};
+        transform: ${this._selectedSchool === school.id ? 'scale(1.02)' : 'scale(1)'};
       ">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <span style="font-size: 1.4rem; margin-right: 8px;">${school.emoji}</span>
-            <strong style="color: #C9A84C;">${school.name}</strong>
-          </div>
-          <span style="color: ${this._selectedSchool === school.id ? '#C9A84C' : 'transparent'};">✓</span>
-        </div>
-        <div style="font-size: 11px; color: rgba(201,168,76,0.6); margin-top: 4px;">${school.desc}</div>
+        <div style="font-size: 2.2rem; margin-bottom: 6px;">${school.emoji}</div>
+        <div style="font-weight: bold; color: ${school.color}; font-size: 0.9rem; letter-spacing: 0.1em;">${school.name}</div>
+        <div style="font-size: 8px; font-family: monospace; color: ${school.color}80; margin-top: 4px;">${school.desc}</div>
+        <div style="font-size: 9px; color: rgba(201,168,76,0.5); margin-top: 6px;">${school.effect}</div>
+        ${this._selectedSchool === school.id ? '<div style="margin-top: 6px; color: #C9A84C;">✓ SELECCIONADO</div>' : ''}
       </div>
     `).join('');
   }
@@ -146,11 +144,31 @@ export class FusionMenu {
   _selectSchool(school) {
     this._selectedSchool = school;
     const items = this._overlay.querySelectorAll('.fusion-school-item');
+    const schoolsData = [
+      { id: 'fuego', color: '#ff6633' },
+      { id: 'hielo', color: '#66ccff' },
+      { id: 'planta', color: '#66ff66' },
+      { id: 'viento', color: '#ccaa88' }
+    ];
+    
     items.forEach(item => {
-      const bg = item.dataset.school === school ? 'rgba(201,168,76,0.15)' : 'transparent';
-      item.style.background = bg;
-      const check = item.querySelector('span:last-child');
-      if (check) check.style.color = item.dataset.school === school ? '#C9A84C' : 'transparent';
+      const schoolId = item.dataset.school;
+      const schoolColor = schoolsData.find(s => s.id === schoolId)?.color || '#C9A84C';
+      const isSelected = schoolId === school;
+      
+      item.style.border = `2px solid ${isSelected ? schoolColor : 'rgba(201,168,76,0.2)'}`;
+      item.style.background = isSelected ? `${schoolColor}10` : 'rgba(10,8,20,0.5)';
+      item.style.transform = isSelected ? 'scale(1.02)' : 'scale(1)';
+      
+      const checkDiv = item.querySelector('div:last-child');
+      if (checkDiv && checkDiv.innerHTML.includes('SELECCIONADO')) {
+        if (!isSelected) checkDiv.remove();
+      } else if (isSelected) {
+        const newCheck = document.createElement('div');
+        newCheck.style.cssText = 'margin-top: 6px; color: #C9A84C; font-size: 9px;';
+        newCheck.innerHTML = '✓ SELECCIONADO';
+        item.appendChild(newCheck);
+      }
     });
   }
 
