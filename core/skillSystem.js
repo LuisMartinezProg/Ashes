@@ -1,3 +1,4 @@
+// core/skillSystem.js — Ashes of the Reborn | Valiant Gaming
 import { Fireball } from '../skills/fireball.js';
 import { IceShard } from '../skills/iceShard.js';
 import { WindGust } from '../skills/windGust.js';
@@ -11,7 +12,10 @@ const MAX_ENERGY = 100;
 const ENERGY_REGEN = 3;
 
 const SKILL_COST = {
-  fireball: 30, ice_shard: 30, gust: 25, thorn: 30
+  fireball: 30,
+  ice_shard: 30,
+  gust: 25,
+  thorn: 30,
 };
 
 export class SkillSystem {
@@ -32,11 +36,13 @@ export class SkillSystem {
       quick_slash: new QuickSlash(scene, playerGroup),
       flash_step: new FlashStep(scene, playerGroup),
       blade_dance: new BladeDance(scene, playerGroup),
-      thousand_cuts: new ThousandCuts(scene, playerGroup)
+      thousand_cuts: new ThousandCuts(scene, playerGroup),
     };
   }
 
-  registerEnemies(list) { this.enemies = list; }
+  registerEnemies(list) {
+    this.enemies = list;
+  }
 
   castSkill(skillId) {
     const skill = this._skills[skillId];
