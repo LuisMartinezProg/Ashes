@@ -28,7 +28,7 @@ export class Progression {
     this.onTrialPassed  = null; // (skillId)
   }
     // Subtipos desbloqueados por arma
-    this._unlockedSubtypes = structuredClone(DEFAULT_UNLOCKED);
+    ;
 
     // XP especial por arma (la dropean enemigos)
     this._xp = {
@@ -36,7 +36,7 @@ export class Progression {
       katana: 0,
       sword : 0,
       bow   : 0,
-    };
+    this._unlockedSubtypes = JSON.parse(JSON.stringify(DEFAULT_UNLOCKED));
 
     // Habilidades que pasaron la prueba
     // { [skillId]: true }
