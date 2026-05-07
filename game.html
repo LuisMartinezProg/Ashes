@@ -102,16 +102,21 @@ async function boot() {
 
     const skills      = new SkillSystem(scene, player.root);
     const progression = new Progression();
-     localStorage.removeItem('ashes_progression');
+
+    // Cargar progreso guardado
     const savedData = localStorage.getItem('ashes_progression');
     if (savedData) {
       try {
         progression.load(JSON.parse(savedData));
         console.log('[Save] Progreso cargado');
+        console.log('[Save] Fusión activa:', JSON.stringify(progression._activeFusion));
       } catch(e) {
         console.warn('[Save] Error al cargar:', e);
       }
     }
+
+    // Exponer progression globalmente para debug
+    window._prog = progression;
 
     combat.setProgression(progression);
     const hud = new HUD(combat, skills);
@@ -209,6 +214,7 @@ async function boot() {
     document.body.appendChild(pauseBtn);
 
     progression.fusionUnlocked = true;
+
     setInterval(() => hud.updateEnemyBar(player.root.position), 300);
     setInterval(() => {
       localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
