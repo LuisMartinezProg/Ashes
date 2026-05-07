@@ -2,60 +2,227 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Ashes of the Reborn</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    #canvas-container { position: fixed; inset: 0; }
+    #canvas-container canvas { display: block; width: 100% !important; height: 100% !important; }
+    #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+    #fps { position: absolute; top: 12px; left: 14px; font-family: monospace; font-size: 11px; color: rgba(201,168,76,0.6); letter-spacing: 0.1em; }
+    #phase-label { position: absolute; top: 12px; right: 14px; font-family: monospace; font-size: 10px; color: rgba(201,168,76,0.4); letter-spacing: 0.15em; }
+    #status { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-family: monospace; font-size: 11px; color: rgba(201,168,76,0.5); letter-spacing: 0.2em; text-align: center; }
+    #loading { position: fixed; inset: 0; background: #04040A; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.8s ease; }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    .load-title { font-family: 'Georgia', serif; font-size: clamp(1rem, 3vw, 1.4rem); letter-spacing: 0.4em; color: #C9A84C; margin-bottom: 32px; text-transform: uppercase; }
+    .load-bar-wrap { width: 200px; height: 2px; background: rgba(201,168,76,0.15); position: relative; overflow: hidden; }
+    .load-bar { height: 100%; background: linear-gradient(90deg, #7A6030, #C9A84C, #E8C97A); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 8px rgba(201,168,76,0.5); }
+    .load-text { margin-top: 16px; font-family: monospace; font-size: 10px; letter-spacing: 0.3em; color: rgba(201,168,76,0.4); }
+  </style>
 </head>
 <body>
 
 <script src="//cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init(); eruda.show();</script>
 
+<div id="loading">
+  <div class="load-title">Aeltherion</div>
+  <div class="load-bar-wrap">
+    <div class="load-bar" id="load-bar"></div>
+  </div>
+  <div class="load-text" id="load-text">INICIANDO...</div>
+</div>
+
+<div id="canvas-container"></div>
+
+<div id="hud">
+  <div id="fps">-- FPS</div>
+  <div id="phase-label">FASE 7 — FUSIÓN</div>
+  <div id="status">AELTHERION</div>
+</div>
+
 <script type="importmap">
 {
   "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
   }
 }
 </script>
 
 <script type="module">
-  document.body.innerHTML += '<div style="color:lime;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;z-index:9999">MODULE OK</div>';
+import { initScene }        from './core/scene.js';
+import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies,
+         setNPCs, setDialogueUI }                from './core/loop.js';
+import { initResize }       from './core/resize.js';
+import { CombatSystem }     from './core/combat.js';
+import { spawnEnemies }     from './core/enemy.js';
+import { HUD }              from './ui/hud.js';
+import { SkillSystem }      from './core/skillSystem.js';
+import { showWeaponSelect } from './ui/weaponSelect.js';
+import { spawnNPCs }        from './core/npc.js';
+import { DialogueUI }       from './ui/dialogue.js';
+import { ShopUI }           from './ui/shop.js';
+import { inventory }        from './core/inventory.js';
+import { Progression }      from './core/progression.js';
+import { SkillBar }         from './ui/skillBar.js';
+import { SubtypeMenu }      from './ui/subtypeMenu.js';
+import { PauseMenu }        from './ui/pauseMenu.js';
+import { FusionMenu }       from './ui/fusionMenu.js';
+
+const bar = document.getElementById('load-bar');
+const txt = document.getElementById('load-text');
+
+function setProgress(pct, label) {
+  bar.style.width = pct + '%';
+  txt.textContent = label;
+}
+
+async function boot() {
   try {
-    const { initScene } = await import('./core/scene.js');
-    document.body.innerHTML += '<div style="color:lime;position:fixed;top:65%;left:50%;transform:translate(-50%,-50%);font-size:16px;z-index:9999">SCENE OK</div>';
-  } catch(e) {
-    document.body.innerHTML += '<div style="color:red;position:fixed;top:65%;left:50%;transform:translate(-50%,-50%);font-size:14px;z-index:9999;text-align:center;width:90%">ERROR: ' + e.message + '</div>';
+    setProgress(20, 'CARGANDO THREE.JS...');
+    await new Promise(r => setTimeout(r, 300));
+
+    setProgress(50, 'CONSTRUYENDO ESCENA...');
+    const { scene, camera, renderer } = await initScene();
+    await new Promise(r => setTimeout(r, 200));
+
+    setProgress(75, 'CONFIGURANDO CÁMARA...');
+    initResize(camera, renderer);
+    await new Promise(r => setTimeout(r, 200));
+
+    setProgress(95, 'INICIANDO LOOP...');
+    startLoop(scene, camera, renderer);
+
+    const player = getPlayer();
+    const combat = new CombatSystem(player.root, camera);
+    combat.setScene(scene);
+    setCombatSystem(combat);
+
+    const skills      = new SkillSystem(scene, player.root);
+    const progression = new Progression();
+
+    const savedData = localStorage.getItem('ashes_progression');
+    if (savedData) {
+      try {
+        progression.load(JSON.parse(savedData));
+        console.log('[Save] Progreso cargado');
+      } catch(e) {
+        console.warn('[Save] Error al cargar:', e);
+      }
+    }
+
+    combat.setProgression(progression);
+    const hud = new HUD(combat, skills);
+
+    const enemies = spawnEnemies(scene, player);
+    enemies.forEach(e => combat.registerEnemy(e));
+    skills.registerEnemies(enemies);
+    setSkillSystem(skills);
+    setEnemies(enemies);
+    hud.setEnemies(enemies);
+
+    const dialogueUI = new DialogueUI();
+    const shopUI     = new ShopUI();
+    const npcs       = spawnNPCs(scene);
+    setNPCs(npcs);
+    setDialogueUI(dialogueUI);
+
+    let _nearNPC = null;
+    function _checkNPCProximity() {
+      if (dialogueUI.isActive() || shopUI.isActive()) return;
+      const playerPos = player.root.position;
+      let found = null;
+      for (const npc of npcs) {
+        if (npc.isPlayerInRange(playerPos)) { found = npc; break; }
+      }
+      if (found && found !== _nearNPC) {
+        _nearNPC = found;
+        dialogueUI.showTalkBtn(() => {
+          dialogueUI.openDialogue(
+            found.dialogue.name,
+            found.dialogue.lines,
+            () => { _nearNPC = null; },
+            found.isShop() ? () => shopUI.open(found.dialogue.shop) : null
+          );
+        });
+      } else if (!found && _nearNPC) {
+        _nearNPC = null;
+        dialogueUI.hideTalkBtn();
+      }
+    }
+    setInterval(_checkNPCProximity, 200);
+
+    player.onDamage = (hp, max) => hud.updatePlayerHp(hp, max);
+    hud.updatePlayerHp(player.hp, player.maxHp);
+
+    enemies.forEach(e => {
+      e.onDeath = () => {
+        const weapon = combat._weaponType;
+        progression.addXP(weapon, 25);
+        localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
+      };
+    });
+
+    setProgress(100, 'LISTO');
+    await new Promise(r => setTimeout(r, 300));
+
+    const loading = document.getElementById('loading');
+    loading.classList.add('hidden');
+    setTimeout(() => loading.remove(), 900);
+
+    const weaponType = await showWeaponSelect();
+    combat.setWeapon(weaponType);
+    hud.setWeaponIcon(weaponType);
+    hud.show();
+
+    const skillBar    = new SkillBar(skills, progression);
+    const subtypeMenu = new SubtypeMenu(progression, skillBar);
+    const fusionMenu  = new FusionMenu(progression, skillBar, skills);
+    const pauseMenu   = new PauseMenu({
+      onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
+      onFusion  : () => { pauseMenu.close(); fusionMenu.open(combat._weaponType); },
+      onResume  : () => pauseMenu.close(),
+      getFusionUnlocked: () => progression.fusionUnlocked,
+    });
+
+    skillBar.setWeapon(weaponType);
+    skillBar.show();
+    subtypeMenu.setWeapon(weaponType);
+    fusionMenu.setWeapon(weaponType);
+
+    const pauseBtn = document.createElement('button');
+    pauseBtn.textContent = '☰';
+    Object.assign(pauseBtn.style, {
+      position: 'fixed', top: '8px', left: '14px',
+      width: '36px', height: '36px', borderRadius: '8px',
+      border: '1px solid rgba(201,168,76,0.4)',
+      background: 'rgba(10,8,20,0.8)', color: '#C9A84C',
+      fontSize: '18px', cursor: 'pointer', pointerEvents: 'all',
+      zIndex: '150', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', WebkitTapHighlightColor: 'transparent',
+    });
+    const openPause = (e) => { e.preventDefault(); pauseMenu.open(); };
+    pauseBtn.addEventListener('click', openPause);
+    pauseBtn.addEventListener('touchstart', openPause, { passive: false });
+    document.body.appendChild(pauseBtn);
+
+    progression.fusionUnlocked = true;
+    setInterval(() => hud.updateEnemyBar(player.root.position), 300);
+    setInterval(() => {
+      localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
+    }, 30000);
+
+  } catch (err) {
+    txt.textContent = 'ERROR: ' + (err.message || err.toString());
+    console.error('[BOOT ERROR]', err.message, err.stack);
+    bar.style.background = '#8B2A0A';
   }
+}
+
+window.addEventListener('load', boot);
 </script>
 
 </body>
 </html>
-<script type="module">
-  const imports = [
-    './core/loop.js',
-    './core/resize.js',
-    './core/combat.js',
-    './core/enemy.js',
-    './core/skillSystem.js',
-    './core/progression.js',
-    './core/npc.js',
-    './core/inventory.js',
-    './ui/hud.js',
-    './ui/weaponSelect.js',
-    './ui/dialogue.js',
-    './ui/shop.js',
-    './ui/skillBar.js',
-    './ui/subtypeMenu.js',
-    './ui/pauseMenu.js',
-    './ui/fusionMenu.js',
-  ];
-
-  for (const path of imports) {
-    try {
-      await import(path);
-      document.body.innerHTML += `<div style="color:lime;font-family:monospace;font-size:12px;padding:2px 8px">✓ ${path}</div>`;
-    } catch(e) {
-      document.body.innerHTML += `<div style="color:red;font-family:monospace;font-size:12px;padding:2px 8px">✗ ${path}: ${e.message}</div>`;
-    }
-  }
-</script>
