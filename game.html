@@ -1,3 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test</title>
+</head>
+<body>
+
+<script src="//cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init(); eruda.show();</script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+  document.body.innerHTML += '<div style="color:lime;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;z-index:9999">MODULE OK</div>';
+  try {
+    const { initScene } = await import('./core/scene.js');
+    document.body.innerHTML += '<div style="color:lime;position:fixed;top:65%;left:50%;transform:translate(-50%,-50%);font-size:16px;z-index:9999">SCENE OK</div>';
+  } catch(e) {
+    document.body.innerHTML += '<div style="color:red;position:fixed;top:65%;left:50%;transform:translate(-50%,-50%);font-size:14px;z-index:9999;text-align:center;width:90%">ERROR: ' + e.message + '</div>';
+  }
+</script>
+
+</body>
+</html>
 <script type="module">
   const imports = [
     './core/loop.js',
