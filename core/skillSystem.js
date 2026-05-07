@@ -56,21 +56,23 @@ export class SkillSystem {
   castSkill(skillId) {
     const skill = this._skills[skillId];
     if (!skill) {
-      console.warn(`[SkillSystem] Habilidad no implementada: ${skillId}`);
+      console.warn(`[SkillSystem] No implementada: ${skillId}`);
       return false;
     }
-
     const cost = SKILL_COST[skillId] ?? 30;
-    if (!skill.isReady())        return false;
-    if (this.energy < cost)      return false;
-
+    const alive = this.enemies.filter(e => !e.isDead()).length;
+    console.log(`[SkillSystem] ${skillId} | ready:${skill.isReady()} | energy:${Math.floor(this.energy)}/${cost} | enemies vivos:${alive}`);
+    if (!skill.isReady())   return false;
+    if (this.energy < cost) return false;
     const success = skill.cast(this.enemies);
+    console.log(`[SkillSystem] resultado: ${success}`);
     if (success) {
       this.energy -= cost;
       if (this.onEnergyUpdate) this.onEnergyUpdate(this.energy, this.maxEnergy);
     }
     return success;
   }
+  
 
   /** Mantener compatibilidad con código anterior */
   castFireball() {
