@@ -70,7 +70,9 @@ export class CombatSystem {
 
     console.log(`[Combat] Arma equipada: ${type}`);
   }
-
+setProgression(progression) {
+    this._progression = progression;
+}
   registerEnemy(enemy)   { this.enemies.push(enemy); }
   unregisterEnemy(enemy) { this.enemies = this.enemies.filter(e => e !== enemy); }
 
@@ -113,11 +115,7 @@ export class CombatSystem {
       this._triggerShake(0.5);
     } else {
       this.weapon.execute(hitIndex);
-      const target = this.closestEnemyInRange();
-      if (target) {
-        target.takeDamage(this.weapon.getDamage(hitIndex));
-        this._triggerShake(1.0);
-      }
+      
     }
 
     setTimeout(() => { this.attacking = false; }, this.weapon.getAnimDuration(hitIndex));
@@ -127,7 +125,16 @@ export class CombatSystem {
     this._shakeTime   = SHAKE_DURATION * intensity;
     this._shakeActive = true;
   }
-
+const target = this.closestEnemyInRange();
+      if (target) {
+        let dmg = this.weapon.getDamage(hitIndex);
+        if (this._progression) {
+          const fusion = this._progression.getActiveFusion(this._weaponType);
+          if (fusion) dmg = Math.floor(dmg * 1.25);
+        }
+        target.takeDamage(dmg);
+        this._triggerShake(1.0);
+      }
   _updateShake(delta) {
     this._shakeTime -= delta * 1000;
 
