@@ -28,7 +28,7 @@ export class Progression {
     this.onTrialPassed  = null; // (skillId)
   }
     // Subtipos desbloqueados por arma
-    ;
+    
 
     // XP especial por arma (la dropean enemigos)
     this._xp = {
