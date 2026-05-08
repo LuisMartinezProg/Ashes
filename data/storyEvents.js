@@ -265,3 +265,153 @@ export const STORY_EVENTS = {
     { type: 'title', text: 'Escena 09', sub: 'Días 3–5 — La planicie' },
     { type: 'narration', text: 'Días pasan. El protagonista trabaja sin apuro. Lo que antes era una planicie vacía empieza a tener forma — pequeña, imperfecta, pero suya.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(mirando lo que ha
+{ type: 'dialogue', speaker: 'protagonist', stage: '(mirando lo que ha construido, manos sucias)', text: 'No está mal. Para ser improvisado.' },
+    { type: 'narration', text: 'En algún momento mientras trabaja, algo sale de sus manos que no debería salir. Un destello breve. Medio segundo. El protagonista para. Mira su mano. El efecto ya desapareció.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(mirando la mano, frunce el ceño)', text: '¿Qué fue eso?' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(mira hacia el bosque, vuelve al trabajo)', text: '...Nada.' },
+    { type: 'narration', text: 'Sigue trabajando. Pero algo quedó en el fondo de su cabeza.' },
+    { type: 'action', fn: (nar) => nar.setFlag('magia_espontanea', true) },
+  ],
+
+  escena10_descubrimiento_ironfell: [
+    { type: 'title', text: 'Escena 10', sub: 'Día 5 — El sendero' },
+    { type: 'narration', text: 'Explorando más allá del bosque, el protagonista encuentra el sendero que lleva a Ironfell.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(en voz muy baja)', text: '...Hay gente aquí.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(pausa)', text: 'Sor definitivamente se olvidó de mencionar esto también.' },
+  ],
+
+  escena11_guardia_idioma: [
+    { type: 'title', text: 'Escena 11', sub: 'Día 5 — La puerta norte' },
+    { type: 'dialogue', speaker: 'guardia', stage: '(mano en la empuñadura, sin sacarla)', text: 'Alto. ¿De dónde vienes? No te he visto por aquí.' },
+    { type: 'narration', text: 'El protagonista lo entiende. Perfectamente. Como si el guardia hubiera hablado en español toda la vida.' },
+    { type: 'narration', text: '"Espera. ¿Lo estoy entendiendo? ¿Cómo lo estoy entendiendo?"' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(un segundo de pausa)', text: 'Del bosque. Llegué hace unos días.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(en voz muy baja, casi para sí mismo)', text: 'Y aparentemente entiendo lo que dices. Interesante.' },
+    { type: 'dialogue', speaker: 'guardia', stage: '(frunce el ceño)', text: '¿Estás bien?' },
+    { type: 'dialogue', speaker: 'protagonist', text: 'Sí. Perdón. ¿Puedo entrar?' },
+    { type: 'narration', text: '"Sor te dio la traducción pero se le olvidó mencionártelo. Típico."' },
+    {
+      type: 'choice',
+      prompt: '¿Qué responde el protagonista?',
+      options: [
+        {
+          label: '"Si. Algo tengo."',
+          value: 'A',
+          flag: { key: 'admitted_magic', value: true },
+          then: [
+            { type: 'dialogue', speaker: 'guardia', stage: '(levanta una mano hacia adentro)', text: '¡Maren! Ven un momento. Trae el medidor.' },
+            { type: 'dialogue', speaker: 'guardia', stage: '(con mas respeto pero tambien mas precaucion)', text: 'Si de verdad tienes magia y sobreviviste al bosque norte... eso no es comun. Espera aqui.' },
+          ]
+        },
+        {
+          label: '"No lo se. Nunca lo habia probado."',
+          value: 'B',
+          flag: { key: 'admitted_magic', value: false },
+          then: [
+            { type: 'dialogue', speaker: 'guardia', stage: '(suspira, se hace a un lado)', text: 'Sin magia, sin armas visibles. Puedes entrar. Pero te presento con Theron primero.' },
+            { type: 'dialogue', speaker: 'guardia', stage: '(casi amistoso)', text: 'Y come algo. Pareces recien caido del cielo.' },
+          ]
+        },
+      ]
+    },
+    { type: 'action', fn: (nar) => nar.setFlag('escena11_done', true) },
+  ],
+
+  escena12_mercado: [
+    { type: 'title', text: 'Escena 12', sub: 'Ironfell — El mercado' },
+    { type: 'narration', text: 'El mercado de Ironfell huele a cuero y especias y algo que el protagonista no puede identificar pero que le da hambre.' },
+    { type: 'dialogue', speaker: 'narrador', stage: '(al ver que el protagonista se acerca con carne del bosque)', text: '¿Conejo verde? No es facil de atrapar. ¿Cuanto quieres por el?' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(mira la carne, mira al carnicero)', text: 'Honestamente no se cuanto vale aqui.' },
+    { type: 'dialogue', speaker: 'narrador', stage: '(una sonrisa)', text: 'Justo entonces. Te doy precio justo. Aqui no estafamos a los que no conocen.' },
+    { type: 'narration', text: 'Con algo de moneda encima, el mercado se abre de otra forma.' },
+    { type: 'action', fn: (nar) => nar.setFlag('mercado_visitado', true) },
+  ],
+
+  escena13_planicie_herramientas: [
+    { type: 'title', text: 'Escena 13', sub: 'Dias 5-7 — De vuelta a la planicie' },
+    { type: 'narration', text: 'El protagonista vuelve a su planicie con las herramientas nuevas. La diferencia es inmediata.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(mirando el pueblo al final del dia, desde afuera)', text: 'Esto ya parece algo.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(pausa — se sienta en una roca, cansado)', text: 'No se como se llama todavia. Pero es algo.' },
+  ],
+
+  escena14_academia: [
+    { type: 'title', text: 'Escena 14', sub: 'Dia 7 — Academia Veldris' },
+    { type: 'narration', text: 'Al volver a Ironfell, algo que no habia notado antes llama su atencion — un edificio mediano, mas iluminado que los demas.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(leyendo el letrero)', text: '¿Academia? ¿Aqui?' },
+    { type: 'dialogue', speaker: 'narrador', text: 'Bienvenido a la Academia Veldris. ¿Primera vez?' },
+    { type: 'dialogue', speaker: 'protagonist', text: 'Si. ¿Que ensenan aqui exactamente?' },
+    { type: 'dialogue', speaker: 'narrador', text: 'Tres areas principales. Magia. Oficios. Historia. Las inscripciones estan abiertas. Son gratuitas.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(una pausa)', text: '¿Gratis?' },
+    { type: 'dialogue', speaker: 'narrador', text: 'Gratis.' },
+    {
+      type: 'choice',
+      prompt: '¿En que area te inscribes primero?',
+      options: [
+        {
+          label: 'Magia',
+          value: 'magia',
+          flag: { key: 'academia_primera_area', value: 'magia' },
+          then: [
+            { type: 'dialogue', speaker: 'protagonist', text: 'Me inscribo. En magia primero. Tengo mis razones.' },
+          ]
+        },
+        {
+          label: 'Oficios',
+          value: 'oficios',
+          flag: { key: 'academia_primera_area', value: 'oficios' },
+          then: [
+            { type: 'dialogue', speaker: 'protagonist', text: 'Oficios. Necesito construir mejor.' },
+          ]
+        },
+        {
+          label: 'Historia',
+          value: 'historia',
+          flag: { key: 'academia_primera_area', value: 'historia' },
+          then: [
+            { type: 'dialogue', speaker: 'protagonist', text: 'Historia. Necesito entender donde estoy.' },
+          ]
+        },
+      ]
+    },
+    { type: 'action', fn: (nar) => nar.setFlag('academia_desbloqueada', true) },
+  ],
+
+  escena15_aelith_mercado: [
+    { type: 'title', text: 'Escena 15', sub: 'Dia 8 — Aelith en el mercado' },
+    { type: 'dialogue', speaker: 'aelith', stage: '(desde un puesto cercano, sin acercarse, revisando flechas)', text: 'Tu. El del bosque norte.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(se voltea)', text: 'Aelith.' },
+    { type: 'dialogue', speaker: 'aelith', stage: '(sin apartar los ojos de las flechas)', text: '¿Como vas?' },
+    { type: 'dialogue', speaker: 'protagonist', text: 'Bien. Construyendo. Aprendiendo como funciona esto.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(pausa)', text: '¿Y tu que haces aqui?' },
+    { type: 'dialogue', speaker: 'aelith', text: 'Comprar flechas. Lo mismo que tu — lo que necesito.' },
+    { type: 'dialogue', speaker: 'aelith', stage: '(por fin lo mira directamente)', text: 'Si necesitas saber donde estan las cosas del pueblo, preguntale a Theron.' },
+    { type: 'dialogue', speaker: 'aelith', stage: '(vuelve a las flechas)', text: 'O preguntame a mi. Si no estoy ocupada.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(con una leve sonrisa)', text: '¿Eso fue una oferta de ayuda?' },
+    { type: 'dialogue', speaker: 'aelith', stage: '(paga las flechas, se da la vuelta para irse)', text: 'Fue informacion. Haz lo que quieras con ella.' },
+    { type: 'narration', text: 'Se va sin mirar atras.' },
+    { type: 'action', fn: (nar) => nar.setFlag('aelith_desbloqueada', true) },
+    { type: 'title', text: 'Fin de Fase 2', sub: 'El pueblo existe. La Academia espera.' },
+  ],
+
+};
+
+export function getNPCReaction(narrative, npcKey) {
+  const conMagia = narrative.getFlag('admitted_magic');
+  const variantes = {
+    vendedora_elfa: {
+      true:  [{ type: 'dialogue', speaker: 'narrador', text: 'Dicen que tienes magia. Interesante.' }],
+      false: [{ type: 'dialogue', speaker: 'narrador', text: 'Ropa rara. ¿Eres de las tierras del este?' }],
+    },
+    enano_herrero: {
+      true:  [{ type: 'dialogue', speaker: 'narrador', text: 'Un mago. Hace tiempo no veia uno por aqui.' }],
+      false: [{ type: 'dialogue', speaker: 'narrador', text: 'Nuevo en el pueblo. Suerte que llegaste antes del invierno.' }],
+    },
+    nino_humano: {
+      true:  [{ type: 'dialogue', speaker: 'narrador', text: '¡Muestrame un hechizo! ¡Anda!' }],
+      false: [{ type: 'dialogue', speaker: 'narrador', text: '¿Tu tienes magia? ¿Puedes hacer fuego? ¡Hazlo!' }],
+    },
+  };
+  const set = variantes[npcKey];
+  if (!set) return null;
+  return set[String(conMagia)] ?? set['false'];
+              }
