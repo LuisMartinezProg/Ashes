@@ -4,7 +4,7 @@ import { VirtualJoystick } from './joystick.js';
 import { ThirdPersonCamera } from './camera.js';
 
 const FRAME_CAP = 1 / 20;
-
+let _triggers = null;
 let _scene, _camera, _renderer;
 let _player, _joystick, _thirdCam, _skillSystem, _combatSystem, _enemies = [];
 let _lastTime = 0;
@@ -43,6 +43,7 @@ function _tick(timestamp) {
 
   const input = _joystick.getInput();
   _player.update(delta, input, _camera);
+  if (_triggers) _triggers.update(_player.root.position);
   _thirdCam.update(delta);
   if (_skillSystem) _skillSystem.update(delta);
   for (const e of _enemies) {
@@ -96,3 +97,4 @@ export function setCombatSystem(c) { _combatSystem = c; }
 export function setEnemies(list)   { _enemies = list; }
 export function setNPCs(list)        { _npcs = list; }
 export function setDialogueUI(ui)    { _dialogueUI = ui; }
+export function setTriggers(t) { _triggers = t; }
