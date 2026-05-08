@@ -38,7 +38,7 @@
 
 <div id="hud">
   <div id="fps">-- FPS</div>
-  <div id="phase-label">FASE 7 — FUSIÓN</div>
+  <div id="phase-label">FASE 8 — NARRATIVA</div>
   <div id="status">AELTHERION</div>
 </div>
 
@@ -54,7 +54,7 @@
 <script type="module">
 import { initScene }        from './core/scene.js';
 import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies,
-         setNPCs, setDialogueUI }                from './core/loop.js';
+         setNPCs, setDialogueUI, setTriggers }   from './core/loop.js';
 import { initResize }       from './core/resize.js';
 import { CombatSystem }     from './core/combat.js';
 import { spawnEnemies }     from './core/enemy.js';
@@ -70,12 +70,13 @@ import { SkillBar }         from './ui/skillBar.js';
 import { SubtypeMenu }      from './ui/subtypeMenu.js';
 import { PauseMenu }        from './ui/pauseMenu.js';
 import { FusionMenu }       from './ui/fusionMenu.js';
-  import { NarrativeSystem } from './core/narrative.js';
-import { STORY_EVENTS } from './data/storyEvents.js'; 
-import { WorldTriggers } from './core/triggers.js';
+import { NarrativeSystem }  from './core/narrative.js';
+import { STORY_EVENTS }     from './data/storyEvents.js';
+import { WorldTriggers }    from './core/triggers.js';
+
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
-import { NarrativeSystem } from './core/narrative.js'; pi
+
 function setProgress(pct, label) {
   bar.style.width = pct + '%';
   txt.textContent = label;
@@ -104,17 +105,16 @@ async function boot() {
 
     const skills      = new SkillSystem(scene, player.root);
     const progression = new Progression();
-const narrative = new NarrativeSystem();
-narrative.setScene(scene);
-narrative.onPause  = () => { /* pausa loop si tienes flag */ };
-narrative.onResume = () => { /* reanuda loop */ };
-window._narrative  = narrative;
-const triggers = new WorldTriggers(narrative, player);
-setTriggers(triggers);
-// Lanzar prólogo al arrancar
-narrative.play(STORY_EVENTS.prologo, () => {
-  narrative.play(STORY_EVENTS.escena01_despertar);
-});
+
+    // ── Narrativa ──
+    const narrative = new NarrativeSystem();
+    narrative.setScene(scene);
+    narrative.onPause  = () => {};
+    narrative.onResume = () => {};
+    window._narrative  = narrative;
+
+    const triggers = new WorldTriggers(narrative, player);
+    setTriggers(triggers);
 
     // Cargar progreso guardado
     const savedData = localStorage.getItem('ashes_progression');
@@ -128,7 +128,6 @@ narrative.play(STORY_EVENTS.prologo, () => {
       }
     }
 
-    // Exponer progression globalmente para debug
     window._prog = progression;
 
     combat.setProgression(progression);
@@ -232,6 +231,11 @@ narrative.play(STORY_EVENTS.prologo, () => {
     setInterval(() => {
       localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
     }, 30000);
+
+    // ── Lanzar prólogo ──
+    narrative.play(STORY_EVENTS.prologo, () => {
+      narrative.play(STORY_EVENTS.escena01_despertar);
+    });
 
   } catch (err) {
     txt.textContent = 'ERROR: ' + (err.message || err.toString());
