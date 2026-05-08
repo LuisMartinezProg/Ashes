@@ -6,21 +6,35 @@
   <title>Diagnóstico - Ashes</title>
   <style>
     body { background: #0a0a14; color: #c9a84c; font-family: monospace; padding: 20px; margin: 0; }
-    .ok { color: #2ecc71; }
-    .error { color: #e74c3c; }
-    .warn { color: #f39c12; }
+    .ok      { color: #2ecc71; }
+    .error   { color: #e74c3c; }
+    .warn    { color: #f39c12; }
+    .info    { color: #4a9edd; }
     pre { background: #1a1a2a; padding: 10px; overflow-x: auto; font-size: 12px; margin: 5px 0; border-radius: 4px; }
-    .file { margin: 3px 0; }
-    h3 { margin: 20px 0 8px; color: #c9a84c; }
-    hr { border-color: rgba(201,168,76,0.2); margin: 16px 0; }
-    .section { margin-bottom: 6px; }
-    .badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-left: 8px; vertical-align: middle; }
-    .badge-pending { background: rgba(243,156,18,0.2); color: #f39c12; }
-    .badge-done    { background: rgba(46,204,113,0.2); color: #2ecc71; }
+    .file { margin: 3px 0; font-size: 13px; }
+    .err-detail { margin-left: 20px; color: #e74c3c; font-size: 11px; opacity: 0.8; }
+    h3 { margin: 20px 0 6px; color: #c9a84c; font-size: 13px; letter-spacing: 2px; }
+    hr { border-color: rgba(201,168,76,0.15); margin: 12px 0; }
+    .badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
+    .badge-ok      { background: rgba(46,204,113,0.15);  color: #2ecc71; }
+    .badge-error   { background: rgba(231,76,60,0.15);   color: #e74c3c; }
+    .badge-pending { background: rgba(243,156,18,0.15);  color: #f39c12; }
+    .badge-future  { background: rgba(74,158,221,0.15);  color: #4a9edd; }
+    .summary-box { background: #1a1a2a; border: 1px solid rgba(201,168,76,0.2); border-radius: 6px; padding: 16px; margin: 16px 0; }
+    .summary-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
+    .summary-row:last-child { border-bottom: none; }
+    .progress-bar { height: 3px; background: #1a1a2a; border-radius: 2px; margin: 12px 0 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #2ecc71, #c9a84c); border-radius: 2px; transition: width .5s ease; }
+    .error-log { background: rgba(231,76,60,0.06); border: 1px solid rgba(231,76,60,0.2); border-radius: 6px; padding: 12px; margin-top: 16px; display: none; }
+    .error-log h4 { color: #e74c3c; font-size: 11px; letter-spacing: 2px; margin-bottom: 8px; }
+    .error-entry { font-size: 11px; color: #e8c0b8; margin: 4px 0; padding: 4px 0; border-bottom: 1px solid rgba(231,76,60,0.1); }
+    .error-entry:last-child { border-bottom: none; }
+    .timestamp { color: rgba(201,168,76,0.4); font-size: 10px; margin-bottom: 16px; }
   </style>
 </head>
 <body>
-<h2>🔍 Diagnóstico — Ashes of the Reborn</h2>
+<h2 style="letter-spacing:3px; margin-bottom:4px;">🔍 Diagnóstico — Ashes of the Reborn</h2>
+<div class="timestamp" id="ts"></div>
 <div id="results">Cargando...</div>
 
 <script src="//cdn.jsdelivr.net/npm/eruda"></script>
@@ -35,201 +49,229 @@
 </script>
 
 <script type="module">
-  const resultsDiv = document.getElementById('results');
-  let html = '';
+document.getElementById('ts').textContent =
+  'Ejecutado: ' + new Date().toLocaleString('es-CO');
 
-  const sections = [
-    {
-      title: 'Core — Fases 0–5',
-      files: [
-        { path: './core/scene.js',       name: 'initScene' },
-        { path: './core/loop.js',        name: 'startLoop' },
-        { path: './core/resize.js',      name: 'initResize' },
-        { path: './core/player.js',      name: 'Player' },
-        { path: './core/joystick.js',    name: 'VirtualJoystick' },
-        { path: './core/camera.js',      name: 'ThirdPersonCamera' },
-        { path: './core/combat.js',      name: 'CombatSystem' },
-        { path: './core/enemy.js',       name: 'spawnEnemies' },
-        { path: './core/npc.js',         name: 'spawnNPCs' },
-        { path: './core/inventory.js',   name: 'inventory' },
-      ]
-    },
-    {
-      title: 'Core — Fases 6–7',
-      files: [
-        { path: './core/skillSystem.js', name: 'SkillSystem' },
-        { path: './core/skillData.js',   name: 'SKILL_DATA' },
-        { path: './core/progression.js', name: 'Progression' },
-        { path: './core/weapons/katana.js', name: 'KatanaWeapon' },
-        { path: './core/weapons/sword.js',  name: 'SwordWeapon' },
-        { path: './core/weapons/magic.js',  name: 'MagicWeapon' },
-        { path: './core/weapons/bow.js',    name: 'BowWeapon' },
-      ]
-    },
-    {
-      title: 'Core — Fase 8 (Narrativa)',
-      files: [
-        { path: './core/narrative.js',   name: 'NarrativeSystem', pending: false },
-        { path: './core/storyEvents.js', name: 'STORY_EVENTS',    pending: true  },
-        { path: './data/dialogues.js',   name: 'DIALOGUES' },
-      ]
-    },
-    {
-      title: 'UI',
-      files: [
-        { path: './ui/hud.js',          name: 'HUD' },
-        { path: './ui/weaponSelect.js', name: 'showWeaponSelect' },
-        { path: './ui/dialogue.js',     name: 'DialogueUI' },
-        { path: './ui/shop.js',         name: 'ShopUI' },
-        { path: './ui/skillBar.js',     name: 'SkillBar' },
-        { path: './ui/subtypeMenu.js',  name: 'SubtypeMenu' },
-        { path: './ui/pauseMenu.js',    name: 'PauseMenu' },
-        { path: './ui/fusionMenu.js',   name: 'FusionMenu' },
-      ]
-    },
-    {
-      title: 'Skills — Magia base',
-      files: [
-        { path: './skills/fireball.js',  name: 'Fireball' },
-        { path: './skills/iceShard.js',  name: 'IceShard' },
-        { path: './skills/windGust.js',  name: 'WindGust' },
-        { path: './skills/thornShot.js', name: 'ThornShot' },
-      ]
-    },
-    {
-      title: 'Skills — Katana',
-      files: [
-        { path: './skills/katana/quickSlash.js',   name: 'QuickSlash' },
-        { path: './skills/katana/flashStep.js',    name: 'FlashStep' },
-        { path: './skills/katana/bladeDance.js',   name: 'BladeDance' },
-        { path: './skills/katana/thousandCuts.js', name: 'ThousandCuts' },
-      ]
-    },
-    {
-      title: 'Skills — Espada (Fase 6 pendiente)',
-      files: [
-        { path: './skills/sword/heavyStrike.js',  name: 'HeavyStrike',  pending: true },
-        { path: './skills/sword/shieldBash.js',   name: 'ShieldBash',   pending: true },
-        { path: './skills/sword/whirlwind.js',    name: 'Whirlwind',    pending: true },
-        { path: './skills/sword/lastStand.js',    name: 'LastStand',    pending: true },
-      ]
-    },
-    {
-      title: 'Skills — Arco (Fase 6 pendiente)',
-      files: [
-        { path: './skills/bow/precisionShot.js',  name: 'PrecisionShot', pending: true },
-        { path: './skills/bow/multiShot.js',      name: 'MultiShot',     pending: true },
-        { path: './skills/bow/smokeTrap.js',      name: 'SmokeTrap',     pending: true },
-        { path: './skills/bow/eagleEye.js',       name: 'EagleEye',      pending: true },
-      ]
-    },
-  ];
+const resultsDiv = document.getElementById('results');
 
-  let totalOk = 0, totalError = 0, totalPending = 0;
+const sections = [
+  {
+    title: '📦 Core — Fases 0–5',
+    files: [
+      { path: './core/scene.js',     name: 'initScene' },
+      { path: './core/loop.js',      name: 'startLoop' },
+      { path: './core/resize.js',    name: 'initResize' },
+      { path: './core/player.js',    name: 'Player' },
+      { path: './core/joystick.js',  name: 'VirtualJoystick' },
+      { path: './core/camera.js',    name: 'ThirdPersonCamera' },
+      { path: './core/combat.js',    name: 'CombatSystem' },
+      { path: './core/enemy.js',     name: 'spawnEnemies' },
+      { path: './core/npc.js',       name: 'spawnNPCs' },
+      { path: './core/inventory.js', name: 'inventory' },
+    ]
+  },
+  {
+    title: '⚔️ Core — Fases 6–7',
+    files: [
+      { path: './core/skillSystem.js',    name: 'SkillSystem' },
+      { path: './core/skillData.js',      name: 'SKILL_DATA' },
+      { path: './core/progression.js',    name: 'Progression' },
+      { path: './core/weapons/katana.js', name: 'KatanaWeapon' },
+      { path: './core/weapons/sword.js',  name: 'SwordWeapon' },
+      { path: './core/weapons/magic.js',  name: 'MagicWeapon' },
+      { path: './core/weapons/bow.js',    name: 'BowWeapon' },
+    ]
+  },
+  {
+    title: '📖 Core — Fase 8 (Narrativa)',
+    files: [
+      { path: './core/narrative.js',  name: 'NarrativeSystem' },
+      { path: './core/triggers.js',   name: 'WorldTriggers' },
+      { path: './data/storyEvents.js',name: 'STORY_EVENTS' },
+      { path: './data/dialogues.js',  name: 'DIALOGUES' },
+    ]
+  },
+  {
+    title: '🗺️ Core — Fase 9 (Mundo)',
+    future: true,
+    files: [
+      { path: './core/worldMap.js',     name: 'WorldMap',      pending: true },
+      { path: './core/fogOfWar.js',     name: 'FogOfWar',      pending: true },
+      { path: './core/dayNight.js',     name: 'DayNightCycle', pending: true },
+      { path: './core/weather.js',      name: 'WeatherSystem', pending: true },
+    ]
+  },
+  {
+    title: '👥 Core — Fase 10 (Relaciones)',
+    future: true,
+    files: [
+      { path: './core/relations.js',    name: 'RelationSystem', pending: true },
+      { path: './core/reputation.js',   name: 'Reputation',     pending: true },
+      { path: './data/characters.js',   name: 'CHARACTERS',     pending: true },
+    ]
+  },
+  {
+    title: '🏰 Core — Fase 11 (Construcción avanzada)',
+    future: true,
+    files: [
+      { path: './core/building.js',     name: 'BuildingSystem', pending: true },
+      { path: './core/crafting.js',     name: 'CraftingSystem', pending: true },
+      { path: './data/recipes.js',      name: 'RECIPES',        pending: true },
+      { path: './data/structures.js',   name: 'STRUCTURES',     pending: true },
+    ]
+  },
+  {
+    title: '🎮 UI',
+    files: [
+      { path: './ui/hud.js',          name: 'HUD' },
+      { path: './ui/weaponSelect.js', name: 'showWeaponSelect' },
+      { path: './ui/dialogue.js',     name: 'DialogueUI' },
+      { path: './ui/shop.js',         name: 'ShopUI' },
+      { path: './ui/skillBar.js',     name: 'SkillBar' },
+      { path: './ui/subtypeMenu.js',  name: 'SubtypeMenu' },
+      { path: './ui/pauseMenu.js',    name: 'PauseMenu' },
+      { path: './ui/fusionMenu.js',   name: 'FusionMenu' },
+    ]
+  },
+  {
+    title: '🎮 UI — Fase 8+',
+    files: [
+      { path: './ui/choiceMenu.js',   name: 'ChoiceMenu',    pending: true },
+      { path: './ui/relationBar.js',  name: 'RelationBar',   pending: true },
+      { path: './ui/mapUI.js',        name: 'MapUI',         pending: true },
+      { path: './ui/buildMenu.js',    name: 'BuildMenu',     pending: true },
+      { path: './ui/craftMenu.js',    name: 'CraftMenu',     pending: true },
+    ]
+  },
+  {
+    title: '✨ Skills — Magia base',
+    files: [
+      { path: './skills/fireball.js',  name: 'Fireball' },
+      { path: './skills/iceShard.js',  name: 'IceShard' },
+      { path: './skills/windGust.js',  name: 'WindGust' },
+      { path: './skills/thornShot.js', name: 'ThornShot' },
+    ]
+  },
+  {
+    title: '⚔️ Skills — Katana',
+    files: [
+      { path: './skills/katana/quickSlash.js',   name: 'QuickSlash' },
+      { path: './skills/katana/flashStep.js',    name: 'FlashStep' },
+      { path: './skills/katana/bladeDance.js',   name: 'BladeDance' },
+      { path: './skills/katana/thousandCuts.js', name: 'ThousandCuts' },
+    ]
+  },
+  {
+    title: '🗡️ Skills — Espada (Fase 6 pendiente)',
+    files: [
+      { path: './skills/sword/heavyStrike.js', name: 'HeavyStrike', pending: true },
+      { path: './skills/sword/shieldBash.js',  name: 'ShieldBash',  pending: true },
+      { path: './skills/sword/whirlwind.js',   name: 'Whirlwind',   pending: true },
+      { path: './skills/sword/lastStand.js',   name: 'LastStand',   pending: true },
+    ]
+  },
+  {
+    title: '🏹 Skills — Arco (Fase 6 pendiente)',
+    files: [
+      { path: './skills/bow/precisionShot.js', name: 'PrecisionShot', pending: true },
+      { path: './skills/bow/multiShot.js',     name: 'MultiShot',     pending: true },
+      { path: './skills/bow/smokeTrap.js',     name: 'SmokeTrap',     pending: true },
+      { path: './skills/bow/eagleEye.js',      name: 'EagleEye',      pending: true },
+    ]
+  },
+  {
+    title: '🌿 Skills — Magia fusión (Fase 7 pendiente)',
+    files: [
+      { path: './skills/fusion/fireKatana.js',  name: 'FireKatana',  pending: true },
+      { path: './skills/fusion/iceArrow.js',    name: 'IceArrow',    pending: true },
+      { path: './skills/fusion/windSword.js',   name: 'WindSword',   pending: true },
+      { path: './skills/fusion/thornBlade.js',  name: 'ThornBlade',  pending: true },
+    ]
+  },
+  {
+    title: '💀 Enemies — Fase 9+ (pendiente)',
+    files: [
+      { path: './core/enemies/bossSystem.js',   name: 'BossSystem',  pending: true },
+      { path: './core/enemies/forestPack.js',   name: 'ForestPack',  pending: true },
+      { path: './core/enemies/eliteEnemy.js',   name: 'EliteEnemy',  pending: true },
+    ]
+  },
+  {
+    title: '🎬 Cinemáticas (Fase 9+ pendiente)',
+    files: [
+      { path: './core/cinematic.js',    name: 'CinematicSystem', pending: true },
+      { path: './core/cameraPath.js',   name: 'CameraPath',      pending: true },
+    ]
+  },
+];
 
-  for (const section of sections) {
-    html += `<hr><h3 class="section">📂 ${section.title}</h3>`;
-    for (const file of section.files) {
-      if (file.pending) {
-        html += `<div class="file">
-          <span class="warn">○</span> ${file.path}
-          <span class="badge badge-pending">PENDIENTE</span>
-        </div>`;
-        totalPending++;
-        continue;
-      }
-      try {
-        const mod = await import(file.path);
-        const hasExport = mod[file.name] !== undefined || Object.keys(mod).length > 0;
-        if (hasExport) {
-          html += `<div class="file"><span class="ok">✓</span> ${file.path} <span class="badge badge-done">${file.name}</span></div>`;
-          totalOk++;
-        } else {
-          html += `<div class="file"><span class="error">✗</span> ${file.path} — no exporta <b>${file.name}</b></div>`;
-          totalError++;
-        }
-      } catch(e) {
-        html += `<div class="file"><span class="error">✗</span> ${file.path} — ${e.message}</div>`;
+let totalOk = 0, totalError = 0, totalPending = 0, totalFuture = 0;
+const errors = [];
+let html = '';
+
+for (const section of sections) {
+  html += `<hr><h3>${section.title}</h3>`;
+
+  for (const file of section.files) {
+    if (file.pending) {
+      html += `<div class="file"><span class="warn">○</span> ${file.path} <span class="badge badge-pending">PENDIENTE</span></div>`;
+      totalPending++;
+      continue;
+    }
+    try {
+      const mod = await import(file.path);
+      const hasExport = mod[file.name] !== undefined || Object.keys(mod).length > 0;
+      if (hasExport) {
+        html += `<div class="file"><span class="ok">✓</span> ${file.path} <span class="badge badge-ok">${file.name}</span></div>`;
+        totalOk++;
+      } else {
+        html += `<div class="file"><span class="error">✗</span> ${file.path} <span class="badge badge-error">sin export '${file.name}'</span></div>`;
+        errors.push({ path: file.path, msg: `No exporta '${file.name}'` });
         totalError++;
       }
+    } catch(e) {
+      const short = e.message.length > 80 ? e.message.slice(0, 80) + '…' : e.message;
+      html += `<div class="file"><span class="error">✗</span> ${file.path} <span class="badge badge-error">ERROR</span></div>`;
+      html += `<div class="err-detail">↳ ${short}</div>`;
+      errors.push({ path: file.path, msg: e.message });
+      totalError++;
     }
   }
+}
 
-  // Resumen
+// Barra de progreso
+const total = totalOk + totalError + totalPending;
+const pct   = total > 0 ? Math.round((totalOk / (totalOk + totalError)) * 100) : 0;
+
+html += `
+  <hr>
+  <h3>📊 Resumen</h3>
+  <div class="summary-box">
+    <div class="summary-row"><span>✓ OK</span><span class="ok">${totalOk}</span></div>
+    <div class="summary-row"><span>✗ Con error</span><span class="error">${totalError}</span></div>
+    <div class="summary-row"><span>○ Pendiente</span><span class="warn">${totalPending}</span></div>
+    <div class="summary-row"><span>Total archivos</span><span>${total}</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div style="font-size:11px; color:rgba(201,168,76,0.5);">${pct}% de archivos activos sin error</div>
+  </div>
+`;
+
+// Log de errores agrupado
+if (errors.length > 0) {
   html += `
-    <hr>
-    <h3>📊 Resumen</h3>
-    <pre>
-✓ OK        : ${totalOk}
-✗ Error     : ${totalError}
-○ Pendiente : ${totalPending}
-    </pre>
+    <div class="error-log" style="display:block;">
+      <h4>⚠ LOG DE ERRORES (${errors.length})</h4>
+      ${errors.map(e => `
+        <div class="error-entry">
+          <span style="color:#c9a84c;">${e.path}</span><br>
+          ${e.msg}
+        </div>
+      `).join('')}
+    </div>
   `;
+}
 
-  // Árbol de estructura
-  html += `
-    <hr>
-    <h3>📁 Estructura esperada</h3>
-    <pre>
-core/
-├── scene.js
-├── loop.js
-├── resize.js
-├── player.js
-├── joystick.js
-├── camera.js
-├── combat.js
-├── enemy.js
-├── skillSystem.js
-├── skillData.js
-├── progression.js
-├── inventory.js
-├── npc.js
-├── narrative.js         ← Fase 8
-├── storyEvents.js       ← Fase 8 (pendiente)
-└── weapons/
-    ├── katana.js
-    ├── sword.js
-    ├── magic.js
-    └── bow.js
-
-ui/
-├── hud.js
-├── weaponSelect.js
-├── dialogue.js
-├── shop.js
-├── skillBar.js
-├── subtypeMenu.js
-├── pauseMenu.js
-└── fusionMenu.js
-
-skills/
-├── fireball.js
-├── iceShard.js
-├── windGust.js
-├── thornShot.js
-├── katana/
-│   ├── quickSlash.js
-│   ├── flashStep.js
-│   ├── bladeDance.js
-│   └── thousandCuts.js
-├── sword/               ← Fase 6 pendiente
-│   ├── heavyStrike.js
-│   ├── shieldBash.js
-│   ├── whirlwind.js
-│   └── lastStand.js
-└── bow/                 ← Fase 6 pendiente
-    ├── precisionShot.js
-    ├── multiShot.js
-    ├── smokeTrap.js
-    └── eagleEye.js
-
-data/
-└── dialogues.js
-    </pre>
-  `;
-
-  resultsDiv.innerHTML = html;
+resultsDiv.innerHTML = html;
 </script>
 </body>
 </html>
