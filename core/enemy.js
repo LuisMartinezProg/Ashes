@@ -120,9 +120,19 @@ export class Enemy {
 
     // Quemadura
     if (this._burnTimer > 0) {
-      this._burnTimer -= delta;
-      this.takeDamage(this._burnDPS * delta);
-      for (const mat of this._materials) mat.color.setHex(0xff6600);
+  this._burnTimer -= delta;
+  this._burnAccum = (this._burnAccum ?? 0) + this._burnDPS * delta;
+  if (this._burnAccum >= 1) {
+    this.takeDamage(Math.floor(this._burnAccum));
+    this._burnAccum = 0;
+  }
+      
+    // Ralentizar
+    if (this._slowTimer > 0) {
+      this._slowTimer -= delta;
+      if (this._slowTimer <= 0) this._slowFactor = 1;
+    }
+for (const mat of this._materials) mat.color.setHex(0xff6600);
       setTimeout(() => {
         if (!this.dead) {
           this._materials[0]?.color.setHex(0xcc2222);
@@ -131,13 +141,7 @@ export class Enemy {
       }, 100);
       if (this._burnTimer <= 0) this._burnDPS = 0;
     }
-
-    // Ralentizar
-    if (this._slowTimer > 0) {
-      this._slowTimer -= delta;
-      if (this._slowTimer <= 0) this._slowFactor = 1;
-    }
-
+    
     switch (this._state) {
       case STATE.PATROL:  this._updatePatrol(delta);  break;
       case STATE.WAITING: this._updateWaiting(delta); break;
