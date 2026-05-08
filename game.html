@@ -72,7 +72,7 @@ import { PauseMenu }        from './ui/pauseMenu.js';
 import { FusionMenu }       from './ui/fusionMenu.js';
   import { NarrativeSystem } from './core/narrative.js';
 import { STORY_EVENTS } from './data/storyEvents.js'; 
-
+import { WorldTriggers } from './core/triggers.js';
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 import { NarrativeSystem } from './core/narrative.js'; pi
@@ -109,7 +109,8 @@ narrative.setScene(scene);
 narrative.onPause  = () => { /* pausa loop si tienes flag */ };
 narrative.onResume = () => { /* reanuda loop */ };
 window._narrative  = narrative;
-
+const triggers = new WorldTriggers(narrative, player);
+setTriggers(triggers);
 // Lanzar prólogo al arrancar
 narrative.play(STORY_EVENTS.prologo, () => {
   narrative.play(STORY_EVENTS.escena01_despertar);
