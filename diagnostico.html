@@ -8,13 +8,19 @@
     body { background: #0a0a14; color: #c9a84c; font-family: monospace; padding: 20px; margin: 0; }
     .ok { color: #2ecc71; }
     .error { color: #e74c3c; }
-    .pending { color: #f39c12; }
-    pre { background: #1a1a2a; padding: 10px; overflow-x: auto; font-size: 12px; margin: 5px 0; }
+    .warn { color: #f39c12; }
+    pre { background: #1a1a2a; padding: 10px; overflow-x: auto; font-size: 12px; margin: 5px 0; border-radius: 4px; }
     .file { margin: 3px 0; }
+    h3 { margin: 20px 0 8px; color: #c9a84c; }
+    hr { border-color: rgba(201,168,76,0.2); margin: 16px 0; }
+    .section { margin-bottom: 6px; }
+    .badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-left: 8px; vertical-align: middle; }
+    .badge-pending { background: rgba(243,156,18,0.2); color: #f39c12; }
+    .badge-done    { background: rgba(46,204,113,0.2); color: #2ecc71; }
   </style>
 </head>
 <body>
-<h2>🔍 Diagnóstico - Ashes of the Reborn</h2>
+<h2>🔍 Diagnóstico — Ashes of the Reborn</h2>
 <div id="results">Cargando...</div>
 
 <script src="//cdn.jsdelivr.net/npm/eruda"></script>
@@ -32,74 +38,196 @@
   const resultsDiv = document.getElementById('results');
   let html = '';
 
-  // Lista de archivos a verificar
-  const filesToCheck = [
-    // Core
-    { path: './core/player.js', name: 'Player' },
-    { path: './core/joystick.js', name: 'VirtualJoystick' },
-    { path: './core/camera.js', name: 'ThirdPersonCamera' },
-    { path: './core/scene.js', name: 'initScene' },
-    { path: './core/loop.js', name: 'loop.js' },
-    { path: './core/combat.js', name: 'CombatSystem' },
-    { path: './core/enemy.js', name: 'Enemy' },
-    { path: './core/skillSystem.js', name: 'SkillSystem' },
-    { path: './core/npc.js', name: 'NPC' },
-    { path: './core/inventory.js', name: 'inventory' },
-    { path: './core/progression.js', name: 'Progression' },
-    // UI
-    { path: './ui/hud.js', name: 'HUD' },
-    { path: './ui/weaponSelect.js', name: 'showWeaponSelect' },
-    { path: './ui/dialogue.js', name: 'DialogueUI' },
-    { path: './ui/shop.js', name: 'ShopUI' },
-    { path: './ui/skillBar.js', name: 'SkillBar' },
-    { path: './ui/subtypeMenu.js', name: 'SubtypeMenu' },
-    { path: './ui/pauseMenu.js', name: 'PauseMenu' },
-    { path: './ui/fusionMenu.js', name: 'FusionMenu' },
-    // Skills base
-    { path: './skills/fireball.js', name: 'Fireball' },
-    { path: './skills/iceShard.js', name: 'IceShard' },
-    { path: './skills/windGust.js', name: 'WindGust' },
-    { path: './skills/thornShot.js', name: 'ThornShot' },
-    // Skills katana (los que fallan)
-    { path: './skills/katana/quickSlash.js', name: 'QuickSlash' },
-    { path: './skills/katana/flashStep.js', name: 'FlashStep' },
-    { path: './skills/katana/bladeDance.js', name: 'BladeDance' },
-    { path: './skills/katana/thousandCuts.js', name: 'ThousandCuts' },
-    // Data
-    { path: './data/dialogues.js', name: 'DIALOGUES' }
+  const sections = [
+    {
+      title: 'Core — Fases 0–5',
+      files: [
+        { path: './core/scene.js',       name: 'initScene' },
+        { path: './core/loop.js',        name: 'startLoop' },
+        { path: './core/resize.js',      name: 'initResize' },
+        { path: './core/player.js',      name: 'Player' },
+        { path: './core/joystick.js',    name: 'VirtualJoystick' },
+        { path: './core/camera.js',      name: 'ThirdPersonCamera' },
+        { path: './core/combat.js',      name: 'CombatSystem' },
+        { path: './core/enemy.js',       name: 'spawnEnemies' },
+        { path: './core/npc.js',         name: 'spawnNPCs' },
+        { path: './core/inventory.js',   name: 'inventory' },
+      ]
+    },
+    {
+      title: 'Core — Fases 6–7',
+      files: [
+        { path: './core/skillSystem.js', name: 'SkillSystem' },
+        { path: './core/skillData.js',   name: 'SKILL_DATA' },
+        { path: './core/progression.js', name: 'Progression' },
+        { path: './core/weapons/katana.js', name: 'KatanaWeapon' },
+        { path: './core/weapons/sword.js',  name: 'SwordWeapon' },
+        { path: './core/weapons/magic.js',  name: 'MagicWeapon' },
+        { path: './core/weapons/bow.js',    name: 'BowWeapon' },
+      ]
+    },
+    {
+      title: 'Core — Fase 8 (Narrativa)',
+      files: [
+        { path: './core/narrative.js',   name: 'NarrativeSystem', pending: false },
+        { path: './core/storyEvents.js', name: 'STORY_EVENTS',    pending: true  },
+        { path: './data/dialogues.js',   name: 'DIALOGUES' },
+      ]
+    },
+    {
+      title: 'UI',
+      files: [
+        { path: './ui/hud.js',          name: 'HUD' },
+        { path: './ui/weaponSelect.js', name: 'showWeaponSelect' },
+        { path: './ui/dialogue.js',     name: 'DialogueUI' },
+        { path: './ui/shop.js',         name: 'ShopUI' },
+        { path: './ui/skillBar.js',     name: 'SkillBar' },
+        { path: './ui/subtypeMenu.js',  name: 'SubtypeMenu' },
+        { path: './ui/pauseMenu.js',    name: 'PauseMenu' },
+        { path: './ui/fusionMenu.js',   name: 'FusionMenu' },
+      ]
+    },
+    {
+      title: 'Skills — Magia base',
+      files: [
+        { path: './skills/fireball.js',  name: 'Fireball' },
+        { path: './skills/iceShard.js',  name: 'IceShard' },
+        { path: './skills/windGust.js',  name: 'WindGust' },
+        { path: './skills/thornShot.js', name: 'ThornShot' },
+      ]
+    },
+    {
+      title: 'Skills — Katana',
+      files: [
+        { path: './skills/katana/quickSlash.js',   name: 'QuickSlash' },
+        { path: './skills/katana/flashStep.js',    name: 'FlashStep' },
+        { path: './skills/katana/bladeDance.js',   name: 'BladeDance' },
+        { path: './skills/katana/thousandCuts.js', name: 'ThousandCuts' },
+      ]
+    },
+    {
+      title: 'Skills — Espada (Fase 6 pendiente)',
+      files: [
+        { path: './skills/sword/heavyStrike.js',  name: 'HeavyStrike',  pending: true },
+        { path: './skills/sword/shieldBash.js',   name: 'ShieldBash',   pending: true },
+        { path: './skills/sword/whirlwind.js',    name: 'Whirlwind',    pending: true },
+        { path: './skills/sword/lastStand.js',    name: 'LastStand',    pending: true },
+      ]
+    },
+    {
+      title: 'Skills — Arco (Fase 6 pendiente)',
+      files: [
+        { path: './skills/bow/precisionShot.js',  name: 'PrecisionShot', pending: true },
+        { path: './skills/bow/multiShot.js',      name: 'MultiShot',     pending: true },
+        { path: './skills/bow/smokeTrap.js',      name: 'SmokeTrap',     pending: true },
+        { path: './skills/bow/eagleEye.js',       name: 'EagleEye',      pending: true },
+      ]
+    },
   ];
 
-  for (const file of filesToCheck) {
-    try {
-      const module = await import(file.path);
-      const hasExport = module[file.name] !== undefined || Object.keys(module).length > 0;
-      if (hasExport) {
-        html += `<div class="file"><span class="ok">✓</span> ${file.path}</div>`;
-      } else {
-        html += `<div class="file"><span class="error">✗</span> ${file.path} - No exporta '${file.name}'</div>`;
+  let totalOk = 0, totalError = 0, totalPending = 0;
+
+  for (const section of sections) {
+    html += `<hr><h3 class="section">📂 ${section.title}</h3>`;
+    for (const file of section.files) {
+      if (file.pending) {
+        html += `<div class="file">
+          <span class="warn">○</span> ${file.path}
+          <span class="badge badge-pending">PENDIENTE</span>
+        </div>`;
+        totalPending++;
+        continue;
       }
-    } catch(e) {
-      html += `<div class="file"><span class="error">✗</span> ${file.path} - ${e.message}</div>`;
-      // Si falla un archivo de katana, mostrar sugerencia
-      if (file.path.includes('katana')) {
-        html += `<pre style="color:#f39c12; margin-left:20px">→ Sugerencia: Crea ${file.path}</pre>`;
+      try {
+        const mod = await import(file.path);
+        const hasExport = mod[file.name] !== undefined || Object.keys(mod).length > 0;
+        if (hasExport) {
+          html += `<div class="file"><span class="ok">✓</span> ${file.path} <span class="badge badge-done">${file.name}</span></div>`;
+          totalOk++;
+        } else {
+          html += `<div class="file"><span class="error">✗</span> ${file.path} — no exporta <b>${file.name}</b></div>`;
+          totalError++;
+        }
+      } catch(e) {
+        html += `<div class="file"><span class="error">✗</span> ${file.path} — ${e.message}</div>`;
+        totalError++;
       }
     }
   }
 
-  // Verificar estructura de carpetas
-  html += '<br><hr><h3>📁 Estructura necesaria:</h3><pre>';
-  html += 'skills/\n';
-  html += '├── fireball.js ✓\n';
-  html += '├── iceShard.js ✓\n';
-  html += '├── windGust.js ✓\n';
-  html += '├── thornShot.js ✓\n';
-  html += '└── katana/\n';
-  html += '    ├── quickSlash.js ' + (filesToCheck.find(f => f.path === './skills/katana/quickSlash.js')?.ok ? '✓' : '❌') + '\n';
-  html += '    ├── flashStep.js ' + (filesToCheck.find(f => f.path === './skills/katana/flashStep.js')?.ok ? '✓' : '❌') + '\n';
-  html += '    ├── bladeDance.js ' + (filesToCheck.find(f => f.path === './skills/katana/bladeDance.js')?.ok ? '✓' : '❌') + '\n';
-  html += '    └── thousandCuts.js ' + (filesToCheck.find(f => f.path === './skills/katana/thousandCuts.js')?.ok ? '✓' : '❌') + '\n';
-  html += '</pre>';
+  // Resumen
+  html += `
+    <hr>
+    <h3>📊 Resumen</h3>
+    <pre>
+✓ OK        : ${totalOk}
+✗ Error     : ${totalError}
+○ Pendiente : ${totalPending}
+    </pre>
+  `;
+
+  // Árbol de estructura
+  html += `
+    <hr>
+    <h3>📁 Estructura esperada</h3>
+    <pre>
+core/
+├── scene.js
+├── loop.js
+├── resize.js
+├── player.js
+├── joystick.js
+├── camera.js
+├── combat.js
+├── enemy.js
+├── skillSystem.js
+├── skillData.js
+├── progression.js
+├── inventory.js
+├── npc.js
+├── narrative.js         ← Fase 8
+├── storyEvents.js       ← Fase 8 (pendiente)
+└── weapons/
+    ├── katana.js
+    ├── sword.js
+    ├── magic.js
+    └── bow.js
+
+ui/
+├── hud.js
+├── weaponSelect.js
+├── dialogue.js
+├── shop.js
+├── skillBar.js
+├── subtypeMenu.js
+├── pauseMenu.js
+└── fusionMenu.js
+
+skills/
+├── fireball.js
+├── iceShard.js
+├── windGust.js
+├── thornShot.js
+├── katana/
+│   ├── quickSlash.js
+│   ├── flashStep.js
+│   ├── bladeDance.js
+│   └── thousandCuts.js
+├── sword/               ← Fase 6 pendiente
+│   ├── heavyStrike.js
+│   ├── shieldBash.js
+│   ├── whirlwind.js
+│   └── lastStand.js
+└── bow/                 ← Fase 6 pendiente
+    ├── precisionShot.js
+    ├── multiShot.js
+    ├── smokeTrap.js
+    └── eagleEye.js
+
+data/
+└── dialogues.js
+    </pre>
+  `;
 
   resultsDiv.innerHTML = html;
 </script>
