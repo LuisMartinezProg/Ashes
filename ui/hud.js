@@ -204,7 +204,7 @@ export class HUD {
       borderRadius: '4px',
       transition  : 'width 0.15s ease',
     });
-
+      this._hpTextEl = document.createElement('div');
     Object.assign(this._hpTextEl.style, {
       color      : '#aaa',
       fontSize   : '10px',
