@@ -70,6 +70,8 @@ import { SkillBar }         from './ui/skillBar.js';
 import { SubtypeMenu }      from './ui/subtypeMenu.js';
 import { PauseMenu }        from './ui/pauseMenu.js';
 import { FusionMenu }       from './ui/fusionMenu.js';
+  import { NarrativeSystem } from './core/narrative.js';
+import { STORY_EVENTS } from './data/storyEvents.js'; 
 
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -102,11 +104,16 @@ async function boot() {
 
     const skills      = new SkillSystem(scene, player.root);
     const progression = new Progression();
-    const narrative = new NarrativeSystem();
+const narrative = new NarrativeSystem();
 narrative.setScene(scene);
-narrative.onPause  = () => { /* pausa el loop si tienes flag */ };
-narrative.onResume = () => { /* reanuda */ };
-window._narrative = narrative; // debug
+narrative.onPause  = () => { /* pausa loop si tienes flag */ };
+narrative.onResume = () => { /* reanuda loop */ };
+window._narrative  = narrative;
+
+// Lanzar prólogo al arrancar
+narrative.play(STORY_EVENTS.prologo, () => {
+  narrative.play(STORY_EVENTS.escena01_despertar);
+});
 
     // Cargar progreso guardado
     const savedData = localStorage.getItem('ashes_progression');
