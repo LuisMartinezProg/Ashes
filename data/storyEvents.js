@@ -264,9 +264,8 @@ export const STORY_EVENTS = {
   escena09_planicie: [
     { type: 'title', text: 'Escena 09', sub: 'Días 3–5 — La planicie' },
     { type: 'narration', text: 'Días pasan. El protagonista trabaja sin apuro. Lo que antes era una planicie vacía empieza a tener forma — pequeña, imperfecta, pero suya.' },
-    { type: 'dialogue', speaker: 'protagonist', stage: '(mirando lo que ha
-{ type: 'dialogue', speaker: 'protagonist', stage: '(mirando lo que ha construido, manos sucias)', text: 'No está mal. Para ser improvisado.' },
-    { type: 'narration', text: 'En algún momento mientras trabaja, algo sale de sus manos que no debería salir. Un destello breve. Medio segundo. El protagonista para. Mira su mano. El efecto ya desapareció.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(mirando lo que ha construido, manos sucias)', text: 'No está mal. Para ser improvisado.' },
+    { type: 'narration', text: 'En algún momento mientras trabaja — algo sale de sus manos que no debería salir. Un destello breve. Medio segundo. El protagonista para. Mira su mano. El efecto ya desapareció.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(mirando la mano, frunce el ceño)', text: '¿Qué fue eso?' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(mira hacia el bosque, vuelve al trabajo)', text: '...Nada.' },
     { type: 'narration', text: 'Sigue trabajando. Pero algo quedó en el fondo de su cabeza.' },
@@ -275,7 +274,7 @@ export const STORY_EVENTS = {
 
   escena10_descubrimiento_ironfell: [
     { type: 'title', text: 'Escena 10', sub: 'Día 5 — El sendero' },
-    { type: 'narration', text: 'Explorando más allá del bosque, el protagonista encuentra el sendero que lleva a Ironfell.' },
+    { type: 'narration', text: 'Explorando más allá del bosque, el protagonista encuentra el sendero que lleva a Ironfell. El sendero baja de la montaña y abre a la ciudad.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(en voz muy baja)', text: '...Hay gente aquí.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(pausa)', text: 'Sor definitivamente se olvidó de mencionar esto también.' },
   ],
@@ -285,7 +284,7 @@ export const STORY_EVENTS = {
     { type: 'dialogue', speaker: 'guardia', stage: '(mano en la empuñadura, sin sacarla)', text: 'Alto. ¿De dónde vienes? No te he visto por aquí.' },
     { type: 'narration', text: 'El protagonista lo entiende. Perfectamente. Como si el guardia hubiera hablado en español toda la vida.' },
     { type: 'narration', text: '"Espera. ¿Lo estoy entendiendo? ¿Cómo lo estoy entendiendo?"' },
-    { type: 'dialogue', speaker: 'protagonist', stage: '(un segundo de pausa)', text: 'Del bosque. Llegué hace unos días.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(un segundo de pausa — procesando)', text: 'Del bosque. Llegué hace unos días.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(en voz muy baja, casi para sí mismo)', text: 'Y aparentemente entiendo lo que dices. Interesante.' },
     { type: 'dialogue', speaker: 'guardia', stage: '(frunce el ceño)', text: '¿Estás bien?' },
     { type: 'dialogue', speaker: 'protagonist', text: 'Sí. Perdón. ¿Puedo entrar?' },
@@ -295,21 +294,21 @@ export const STORY_EVENTS = {
       prompt: '¿Qué responde el protagonista?',
       options: [
         {
-          label: '"Si. Algo tengo."',
+          label: '"Sí. Algo tengo."',
           value: 'A',
           flag: { key: 'admitted_magic', value: true },
           then: [
             { type: 'dialogue', speaker: 'guardia', stage: '(levanta una mano hacia adentro)', text: '¡Maren! Ven un momento. Trae el medidor.' },
-            { type: 'dialogue', speaker: 'guardia', stage: '(con mas respeto pero tambien mas precaucion)', text: 'Si de verdad tienes magia y sobreviviste al bosque norte... eso no es comun. Espera aqui.' },
+            { type: 'dialogue', speaker: 'guardia', stage: '(con más respeto pero también más precaución)', text: 'Si de verdad tienes magia y sobreviviste al bosque norte... eso no es común. Espera aquí.' },
           ]
         },
         {
-          label: '"No lo se. Nunca lo habia probado."',
+          label: '"No lo sé. Nunca lo había probado."',
           value: 'B',
           flag: { key: 'admitted_magic', value: false },
           then: [
             { type: 'dialogue', speaker: 'guardia', stage: '(suspira, se hace a un lado)', text: 'Sin magia, sin armas visibles. Puedes entrar. Pero te presento con Theron primero.' },
-            { type: 'dialogue', speaker: 'guardia', stage: '(casi amistoso)', text: 'Y come algo. Pareces recien caido del cielo.' },
+            { type: 'dialogue', speaker: 'guardia', stage: '(casi amistoso)', text: 'Y come algo. Pareces recién caído del cielo.' },
           ]
         },
       ]
@@ -320,39 +319,43 @@ export const STORY_EVENTS = {
   escena12_mercado: [
     { type: 'title', text: 'Escena 12', sub: 'Ironfell — El mercado' },
     { type: 'narration', text: 'El mercado de Ironfell huele a cuero y especias y algo que el protagonista no puede identificar pero que le da hambre.' },
-    { type: 'dialogue', speaker: 'narrador', stage: '(al ver que el protagonista se acerca con carne del bosque)', text: '¿Conejo verde? No es facil de atrapar. ¿Cuanto quieres por el?' },
-    { type: 'dialogue', speaker: 'protagonist', stage: '(mira la carne, mira al carnicero)', text: 'Honestamente no se cuanto vale aqui.' },
-    { type: 'dialogue', speaker: 'narrador', stage: '(una sonrisa)', text: 'Justo entonces. Te doy precio justo. Aqui no estafamos a los que no conocen.' },
-    { type: 'narration', text: 'Con algo de moneda encima, el mercado se abre de otra forma.' },
+    { type: 'dialogue', speaker: 'narrador', stage: '(al ver que el protagonista se acerca con carne del bosque)', text: '¿Conejo verde? No es fácil de atrapar. ¿Cuánto quieres por él?' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(mira la carne, mira al carnicero)', text: 'Honestamente no sé cuánto vale aquí.' },
+    { type: 'dialogue', speaker: 'narrador', stage: '(una sonrisa — sabe que puede aprovecharse, pero no lo hace)', text: 'Justo entonces. Te doy precio justo. Aquí no estafamos a los que no conocen.' },
+    { type: 'narration', text: 'Con algo de moneda encima, el mercado se abre de otra forma. El protagonista recorre los puestos. Elige según lo que necesita.' },
     { type: 'action', fn: (nar) => nar.setFlag('mercado_visitado', true) },
   ],
 
   escena13_planicie_herramientas: [
-    { type: 'title', text: 'Escena 13', sub: 'Dias 5-7 — De vuelta a la planicie' },
-    { type: 'narration', text: 'El protagonista vuelve a su planicie con las herramientas nuevas. La diferencia es inmediata.' },
-    { type: 'dialogue', speaker: 'protagonist', stage: '(mirando el pueblo al final del dia, desde afuera)', text: 'Esto ya parece algo.' },
-    { type: 'dialogue', speaker: 'protagonist', stage: '(pausa — se sienta en una roca, cansado)', text: 'No se como se llama todavia. Pero es algo.' },
+    { type: 'title', text: 'Escena 13', sub: 'Días 5–7 — De vuelta a la planicie' },
+    { type: 'narration', text: 'El protagonista vuelve a su planicie con las herramientas nuevas. La diferencia es inmediata — lo que antes tardaba horas tarda minutos.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(mirando el pueblo al final del día, desde afuera)', text: 'Esto ya parece algo.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(pausa — se sienta en una roca, cansado)', text: 'No sé cómo se llama todavía. Pero es algo.' },
   ],
 
   escena14_academia: [
-    { type: 'title', text: 'Escena 14', sub: 'Dia 7 — Academia Veldris' },
-    { type: 'narration', text: 'Al volver a Ironfell, algo que no habia notado antes llama su atencion — un edificio mediano, mas iluminado que los demas.' },
-    { type: 'dialogue', speaker: 'protagonist', stage: '(leyendo el letrero)', text: '¿Academia? ¿Aqui?' },
+    { type: 'title', text: 'Escena 14', sub: 'Día 7 — Academia Veldris' },
+    { type: 'narration', text: 'Al volver a Ironfell, algo que no había notado antes llama su atención — un edificio mediano, más iluminado que los demás.' },
+    { type: 'narration', text: '"Academia Veldris."' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(leyendo el letrero)', text: '¿Academia? ¿Aquí?' },
+    { type: 'narration', text: 'Entra. La recepcionista lo ve llegar con la misma calma con la que ve llegar a todo el mundo.' },
     { type: 'dialogue', speaker: 'narrador', text: 'Bienvenido a la Academia Veldris. ¿Primera vez?' },
-    { type: 'dialogue', speaker: 'protagonist', text: 'Si. ¿Que ensenan aqui exactamente?' },
-    { type: 'dialogue', speaker: 'narrador', text: 'Tres areas principales. Magia. Oficios. Historia. Las inscripciones estan abiertas. Son gratuitas.' },
-    { type: 'dialogue', speaker: 'protagonist', stage: '(una pausa)', text: '¿Gratis?' },
+    { type: 'dialogue', speaker: 'protagonist', text: 'Sí. ¿Qué enseñan aquí exactamente?' },
+    { type: 'dialogue', speaker: 'narrador', text: 'Tres áreas principales. Magia — teoría y práctica. Oficios — construcción, herrería, alquimia. Historia — el mundo, los conflictos, los pueblos.' },
+    { type: 'dialogue', speaker: 'narrador', stage: '(pausa, lo mira)', text: 'Las inscripciones están abiertas. Son gratuitas.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(una pausa. La mira.)', text: '¿Gratis?' },
     { type: 'dialogue', speaker: 'narrador', text: 'Gratis.' },
     {
       type: 'choice',
-      prompt: '¿En que area te inscribes primero?',
+      prompt: '¿En qué área te inscribes primero?',
       options: [
         {
           label: 'Magia',
           value: 'magia',
           flag: { key: 'academia_primera_area', value: 'magia' },
           then: [
-            { type: 'dialogue', speaker: 'protagonist', text: 'Me inscribo. En magia primero. Tengo mis razones.' },
+            { type: 'dialogue', speaker: 'protagonist', stage: '(sin dudarlo más)', text: 'Me inscribo. En magia primero.' },
+            { type: 'dialogue', speaker: 'protagonist', stage: '(casi como reflexión)', text: 'Tengo mis razones.' },
           ]
         },
         {
@@ -368,7 +371,7 @@ export const STORY_EVENTS = {
           value: 'historia',
           flag: { key: 'academia_primera_area', value: 'historia' },
           then: [
-            { type: 'dialogue', speaker: 'protagonist', text: 'Historia. Necesito entender donde estoy.' },
+            { type: 'dialogue', speaker: 'protagonist', text: 'Historia. Necesito entender dónde estoy.' },
           ]
         },
       ]
@@ -377,24 +380,27 @@ export const STORY_EVENTS = {
   ],
 
   escena15_aelith_mercado: [
-    { type: 'title', text: 'Escena 15', sub: 'Dia 8 — Aelith en el mercado' },
-    { type: 'dialogue', speaker: 'aelith', stage: '(desde un puesto cercano, sin acercarse, revisando flechas)', text: 'Tu. El del bosque norte.' },
+    { type: 'title', text: 'Escena 15', sub: 'Día 8 — Aelith en el mercado' },
+    { type: 'dialogue', speaker: 'aelith', stage: '(desde un puesto cercano, sin acercarse, revisando flechas)', text: 'Tú. El del bosque norte.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(se voltea)', text: 'Aelith.' },
-    { type: 'dialogue', speaker: 'aelith', stage: '(sin apartar los ojos de las flechas)', text: '¿Como vas?' },
-    { type: 'dialogue', speaker: 'protagonist', text: 'Bien. Construyendo. Aprendiendo como funciona esto.' },
-    { type: 'dialogue', speaker: 'protagonist', stage: '(pausa)', text: '¿Y tu que haces aqui?' },
-    { type: 'dialogue', speaker: 'aelith', text: 'Comprar flechas. Lo mismo que tu — lo que necesito.' },
-    { type: 'dialogue', speaker: 'aelith', stage: '(por fin lo mira directamente)', text: 'Si necesitas saber donde estan las cosas del pueblo, preguntale a Theron.' },
-    { type: 'dialogue', speaker: 'aelith', stage: '(vuelve a las flechas)', text: 'O preguntame a mi. Si no estoy ocupada.' },
+    { type: 'dialogue', speaker: 'aelith', stage: '(sin apartar los ojos de las flechas)', text: '¿Cómo vas?' },
+    { type: 'dialogue', speaker: 'protagonist', text: 'Bien. Construyendo. Aprendiendo cómo funciona esto.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(pausa)', text: '¿Y tú qué haces aquí?' },
+    { type: 'dialogue', speaker: 'aelith', text: 'Comprar flechas. Lo mismo que tú — lo que necesito.' },
+    { type: 'dialogue', speaker: 'aelith', stage: '(por fin lo mira directamente)', text: 'Si necesitas saber dónde están las cosas del pueblo, pregúntale a Theron. Él sabe dónde hay todo.' },
+    { type: 'dialogue', speaker: 'aelith', stage: '(vuelve a las flechas)', text: 'O pregúntame a mí. Si no estoy ocupada.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(con una leve sonrisa)', text: '¿Eso fue una oferta de ayuda?' },
-    { type: 'dialogue', speaker: 'aelith', stage: '(paga las flechas, se da la vuelta para irse)', text: 'Fue informacion. Haz lo que quieras con ella.' },
-    { type: 'narration', text: 'Se va sin mirar atras.' },
+    { type: 'dialogue', speaker: 'aelith', stage: '(paga las flechas, se da la vuelta para irse)', text: 'Fue información. Haz lo que quieras con ella.' },
+    { type: 'narration', text: 'Se va sin mirar atrás. El protagonista la ve alejarse. Luego vuelve a sus compras.' },
     { type: 'action', fn: (nar) => nar.setFlag('aelith_desbloqueada', true) },
     { type: 'title', text: 'Fin de Fase 2', sub: 'El pueblo existe. La Academia espera.' },
   ],
 
 };
 
+// ─────────────────────────────────────────────
+// HELPER — reacción NPC según flag de magia
+// ─────────────────────────────────────────────
 export function getNPCReaction(narrative, npcKey) {
   const conMagia = narrative.getFlag('admitted_magic');
   const variantes = {
@@ -403,15 +409,15 @@ export function getNPCReaction(narrative, npcKey) {
       false: [{ type: 'dialogue', speaker: 'narrador', text: 'Ropa rara. ¿Eres de las tierras del este?' }],
     },
     enano_herrero: {
-      true:  [{ type: 'dialogue', speaker: 'narrador', text: 'Un mago. Hace tiempo no veia uno por aqui.' }],
+      true:  [{ type: 'dialogue', speaker: 'narrador', text: 'Un mago. Hace tiempo no veía uno por aquí.' }],
       false: [{ type: 'dialogue', speaker: 'narrador', text: 'Nuevo en el pueblo. Suerte que llegaste antes del invierno.' }],
     },
     nino_humano: {
-      true:  [{ type: 'dialogue', speaker: 'narrador', text: '¡Muestrame un hechizo! ¡Anda!' }],
-      false: [{ type: 'dialogue', speaker: 'narrador', text: '¿Tu tienes magia? ¿Puedes hacer fuego? ¡Hazlo!' }],
+      true:  [{ type: 'dialogue', speaker: 'narrador', text: '¡Muéstrame un hechizo! ¡Anda!' }],
+      false: [{ type: 'dialogue', speaker: 'narrador', text: '¿Tú tienes magia? ¿Puedes hacer fuego? ¡Hazlo!' }],
     },
   };
   const set = variantes[npcKey];
   if (!set) return null;
   return set[String(conMagia)] ?? set['false'];
-              }
+}
