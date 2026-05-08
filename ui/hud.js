@@ -205,7 +205,6 @@ export class HUD {
       transition  : 'width 0.15s ease',
     });
 
-this._hpTextEl.textContent = `${Math.ceil(hp)} / ${maxHp}`;
     Object.assign(this._hpTextEl.style, {
       color      : '#aaa',
       fontSize   : '10px',
@@ -378,7 +377,7 @@ this._hpTextEl.textContent = `${Math.ceil(hp)} / ${maxHp}`;
   _updateBar(hp, maxHp) {
     const pct = Math.max(0, hp / maxHp) * 100;
     this._fillEl.style.width = `${pct}%`;
-    this._hpTextEl.textContent = `${hp} / ${maxHp}`;
+    this._hpTextEl.textContent = `${Math.ceil(hp)} / ${maxHp}`;
 
     if (pct > 50) {
       this._fillEl.style.background = 'linear-gradient(90deg, #cc2222, #ff4444)';
