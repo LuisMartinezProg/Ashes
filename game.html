@@ -73,7 +73,7 @@ import { FusionMenu }       from './ui/fusionMenu.js';
 
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
-
+import { NarrativeSystem } from './core/narrative.js'; pi
 function setProgress(pct, label) {
   bar.style.width = pct + '%';
   txt.textContent = label;
@@ -102,6 +102,11 @@ async function boot() {
 
     const skills      = new SkillSystem(scene, player.root);
     const progression = new Progression();
+    const narrative = new NarrativeSystem();
+narrative.setScene(scene);
+narrative.onPause  = () => { /* pausa el loop si tienes flag */ };
+narrative.onResume = () => { /* reanuda */ };
+window._narrative = narrative; // debug
 
     // Cargar progreso guardado
     const savedData = localStorage.getItem('ashes_progression');
