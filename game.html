@@ -107,7 +107,7 @@ async function boot() {
 
     const skills      = new SkillSystem(scene, player.root);
     const progression = new Progression();
-applyHudLayout(hud, skillBar, buildMenu);
+
     // ── Narrativa ──
     const narrative = new NarrativeSystem();
     narrative.setScene(scene);
@@ -268,7 +268,7 @@ applyHudLayout(hud, skillBar, buildMenu);
     setInterval(() => {
       localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
     }, 30000);
-
+applyHudLayout(hud, skillBar, buildMenu);
     // ── Lanzar escena 1 si es partida nueva ──
     if (!progression.getFlag?.('escena01_done')) {
       narrative.play(STORY_EVENTS.escena01_despertar);
