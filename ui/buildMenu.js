@@ -299,4 +299,4 @@ export class BuildMenu {
   }
 
   isOpen() { return this._open; }
-}
+  }
