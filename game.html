@@ -35,7 +35,7 @@
 
 <div id="hud">
   <div id="fps">-- FPS</div>
-  <div id="phase-label">FASE 8 — NARRATIVA</div>
+  <div id="phase-label">FASE 9</div>
   <div id="status">AELTHERION</div>
 </div>
 
@@ -74,8 +74,7 @@ import { BuildingSystem }   from './core/building.js';
 import { BuildMenu }        from './ui/buildMenu.js';
 import { SkillTree }        from './ui/skillTree.js';
 import { RadialMenu }       from './ui/radialMenu.js';
-import { applyHudLayout } from './ui/hudLayout.js';//
-  
+
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -86,57 +85,62 @@ function setProgress(pct, label) {
 
 async function boot() {
   try {
-    setProgress(20, 'CARGANDO THREE.JS...');
-    await new Promise(r => setTimeout(r, 300));
+    setProgress(10, 'THREE.JS...');
+    await new Promise(r => setTimeout(r, 100));
 
-    setProgress(50, 'CONSTRUYENDO ESCENA...');
+    setProgress(20, 'initScene...');
     const { scene, camera, renderer } = await initScene();
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 100));
 
-    setProgress(75, 'CONFIGURANDO CÁMARA...');
+    setProgress(30, 'initResize...');
     initResize(camera, renderer);
-    await new Promise(r => setTimeout(r, 200));
 
-    setProgress(95, 'INICIANDO LOOP...');
+    setProgress(40, 'startLoop...');
     startLoop(scene, camera, renderer);
 
-    
-
+    setProgress(45, 'getPlayer...');
     const player = getPlayer();
+
+    setProgress(50, 'CombatSystem...');
     const combat = new CombatSystem(player.root, camera);
     combat.setScene(scene);
     setCombatSystem(combat);
     window._combat = combat;
-    const skills      = new SkillSystem(scene, player.root);
+
+    setProgress(55, 'SkillSystem...');
+    const skills = new SkillSystem(scene, player.root);
+
+    setProgress(57, 'Progression...');
     const progression = new Progression();
 
-    // ── Narrativa ──
+    setProgress(60, 'NarrativeSystem...');
     const narrative = new NarrativeSystem();
     narrative.setScene(scene);
     narrative.onPause  = () => {};
     narrative.onResume = () => {};
     window._narrative  = narrative;
 
+    setProgress(63, 'WorldTriggers...');
     const triggers = new WorldTriggers(narrative, player);
     setTriggers(triggers);
 
-    // ── Cargar progreso guardado ──
+    setProgress(65, 'localStorage...');
     const savedData = localStorage.getItem('ashes_progression');
     if (savedData) {
       try {
         progression.load(JSON.parse(savedData));
         console.log('[Save] Progreso cargado');
-        console.log('[Save] Fusión activa:', JSON.stringify(progression._activeFusion));
       } catch(e) {
         console.warn('[Save] Error al cargar:', e);
       }
     }
-
     window._prog = progression;
     combat.setProgression(progression);
 
+    setProgress(68, 'HUD...');
     const hud = new HUD(combat, skills);
 
+    setProgress(70, 'spawnEnemies...');
     const enemies = spawnEnemies(scene, player);
     enemies.forEach(e => combat.registerEnemy(e));
     skills.registerEnemies(enemies);
@@ -144,13 +148,16 @@ async function boot() {
     setEnemies(enemies);
     hud.setEnemies(enemies);
 
+    setProgress(74, 'DialogueUI...');
     const dialogueUI = new DialogueUI();
     const shopUI     = new ShopUI();
-    const npcs       = spawnNPCs(scene);
+
+    setProgress(77, 'spawnNPCs...');
+    const npcs = spawnNPCs(scene);
     setNPCs(npcs);
     setDialogueUI(dialogueUI);
 
-    // ── Proximidad NPCs ──
+    setProgress(80, 'proximidad NPCs...');
     let _nearNPC = null;
     function _checkNPCProximity() {
       if (dialogueUI.isActive() || shopUI.isActive()) return;
@@ -176,6 +183,7 @@ async function boot() {
     }
     setInterval(_checkNPCProximity, 200);
 
+    setProgress(83, 'callbacks...');
     player.onDamage = (hp, max) => hud.updatePlayerHp(hp, max);
     hud.updatePlayerHp(player.hp, player.maxHp);
 
@@ -189,50 +197,33 @@ async function boot() {
 
     setProgress(100, 'LISTO');
     await new Promise(r => setTimeout(r, 300));
-
     const loading = document.getElementById('loading');
     loading.classList.add('hidden');
     setTimeout(() => loading.remove(), 900);
 
-    // ── Selección de arma (esperar antes de crear UI dependiente) ──
+    // ── Selección de arma ──
     const weaponType = await showWeaponSelect();
     combat.setWeapon(weaponType);
     hud.setWeaponIcon(weaponType);
     hud.show();
 
-    // ── UI que depende de weaponType ──
-    const building    = new BuildingSystem(scene, player);
+    // ── UI post-arma ──
+    const building   = new BuildingSystem(scene, player);
     building.setProgression(progression);
-    const buildMenu   = new BuildMenu(building);
-    window._building  = building;
+    const buildMenu  = new BuildMenu(building);
+    window._building = building;
 
     const skillTree   = new SkillTree(progression);
     const skillBar    = new SkillBar(skills, progression);
-    window._skillBar = skillBar;
+    window._skillBar  = skillBar;
     const subtypeMenu = new SubtypeMenu(progression, skillBar);
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
 
-    const radialMenu  = new RadialMenu([
-      {
-        icon: '⚔️', label: 'Habilidades',
-        action: () => skillTree.open(),
-        locked: false,
-      },
-      {
-        icon: '🏗', label: 'Construcción',
-        action: () => buildMenu.open(),
-        locked: false,
-      },
-      {
-        icon: '📋', label: 'Árbol Build',
-        action: () => console.log('próximamente'),
-        locked: true,
-      },
-      {
-        icon: '📖', label: 'Guías',
-        action: () => console.log('próximamente'),
-        locked: true,
-      },
+    const radialMenu = new RadialMenu([
+      { icon: '⚔️', label: 'Habilidades', action: () => skillTree.open(), locked: false },
+      { icon: '🏗',  label: 'Construcción', action: () => buildMenu.open(), locked: false },
+      { icon: '📋', label: 'Árbol Build',  action: () => console.log('próximamente'), locked: true },
+      { icon: '📖', label: 'Guías',        action: () => console.log('próximamente'), locked: true },
     ]);
 
     const pauseMenu = new PauseMenu({
@@ -266,23 +257,23 @@ async function boot() {
 
     progression.fusionUnlocked = true;
 
-    // ── Intervalos de actualización ──
+    // ── Intervalos ──
     setInterval(() => hud.updateEnemyBar(player.root.position), 300);
     setInterval(() => {
       localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
     }, 30000);
-if (buildMenu?._buildBtn) {
-  buildMenu._buildBtn.style.display = 'none';
-}
-    // ── Lanzar escena 1 si es partida nueva ──
+
+    if (buildMenu?._buildBtn) buildMenu._buildBtn.style.display = 'none';
+
+    // ── Escena 1 si partida nueva ──
     if (!progression.getFlag?.('escena01_done')) {
       narrative.play(STORY_EVENTS.escena01_despertar);
     }
 
   } catch (err) {
     txt.textContent = 'ERROR: ' + (err.message || err.toString());
-    console.error('[BOOT ERROR]', err.message, err.stack);
     bar.style.background = '#8B2A0A';
+    console.error('[BOOT ERROR]', err.message, err.stack);
   }
 }
 
