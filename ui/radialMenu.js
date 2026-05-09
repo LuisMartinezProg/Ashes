@@ -1,11 +1,11 @@
 /**
  * ui/radialMenu.js — Menú radial tipo reloj
- * Botón central estrella de 4 puntas, despliega iconos alrededor
+ * Botón central estrella de 4 puntas, despliega iconos hacia la izquierda
  */
 
 export class RadialMenu {
   constructor(items) {
-    this._items  = items; // [{icon, label, action, locked}]
+    this._items  = items;
     this._open   = false;
     this._btn    = null;
     this._rays   = [];
@@ -13,7 +13,6 @@ export class RadialMenu {
   }
 
   _buildUI() {
-    // Botón central — estrella de 4 puntas
     this._btn = document.createElement('button');
     this._btn.innerHTML = `
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -22,12 +21,19 @@ export class RadialMenu {
       </svg>
     `;
     Object.assign(this._btn.style, {
-      position : 'fixed', top: '12px', right: '14px',
-      width: '44px', height: '44px', borderRadius: '50%',
-      border: '1px solid rgba(201,168,76,0.4)',
+      position : 'fixed',
+      bottom   : '248px',  // justo encima de la rueda de skills
+      right    : '14px',
+      width    : '44px',
+      height   : '44px',
+      borderRadius: '50%',
+      border   : '1px solid rgba(201,168,76,0.4)',
       background: 'rgba(10,8,20,0.88)',
-      cursor: 'pointer', zIndex: '160',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      cursor   : 'pointer',
+      zIndex   : '160',
+      display  : 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       WebkitTapHighlightColor: 'transparent',
       boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
       transition: 'transform .2s, box-shadow .2s',
@@ -37,7 +43,6 @@ export class RadialMenu {
     this._btn.addEventListener('touchstart', (e) => { e.preventDefault(); this.toggle(); }, { passive: false });
     document.body.appendChild(this._btn);
 
-    // Overlay para cerrar al tocar fuera
     this._overlay = document.createElement('div');
     Object.assign(this._overlay.style, {
       position: 'fixed', inset: '0',
@@ -51,44 +56,57 @@ export class RadialMenu {
     this._rays.forEach(r => r.remove());
     this._rays = [];
 
-    // Posiciones en arco alrededor del botón (esquina superior derecha)
-    const cx = window.innerWidth  - 22;  // centro X del botón
-    const cy = 34;                        // centro Y del botón
+    // Centro del botón ⭐ en viewport
+    const btnRect = this._btn.getBoundingClientRect();
+    const cx = btnRect.left + btnRect.width  / 2;
+    const cy = btnRect.top  + btnRect.height / 2;
+
     const count  = this._items.length;
-    // Arco desde 180° hasta 270° (abajo-izquierda del botón)
-     const startA = Math.PI * 0.7
-    const endA   = Math.PI * 1.5;
-    const radius = 70;
+    // Arco hacia la izquierda: de 120° a 240° (izquierda-arriba hasta izquierda-abajo)
+    const startA = Math.PI * 0.65;
+    const endA   = Math.PI * 1.35;
+    const radius = 75;
 
     this._items.forEach((item, i) => {
-      const angle = startA + (endA - startA) * (i / (count - 1 || 1));
+      const angle = count > 1
+        ? startA + (endA - startA) * (i / (count - 1))
+        : Math.PI; // solo uno → directo a la izquierda
+
       const x = cx + Math.cos(angle) * radius;
       const y = cy + Math.sin(angle) * radius;
 
       const btn = document.createElement('button');
       btn.innerHTML = `
-        <div style="font-size:20px;line-height:1;">${item.icon}</div>
-        <div style="font-family:'Cinzel',serif;font-size:7px;letter-spacing:1px;
-             color:${item.locked?'#3a3028':'#c9a84c'};margin-top:3px;white-space:nowrap;">
-          ${item.label}
-        </div>
+        <div style="font-size:22px;line-height:1;">${item.icon}</div>
+        <div style="
+          font-family: system-ui, sans-serif;
+          font-size: 8px;
+          letter-spacing: 0.5px;
+          color: ${item.locked ? '#555' : '#c9a84c'};
+          margin-top: 4px;
+          white-space: nowrap;
+        ">${item.label}</div>
       `;
       Object.assign(btn.style, {
-        position : 'fixed',
-        left     : `${x - 28}px`,
-        top      : `${y - 28}px`,
-        width    : '56px', height: '56px',
-        borderRadius: '12px',
-        border   : `1px solid rgba(201,168,76,${item.locked?'0.1':'0.35'})`,
-        background: `rgba(10,8,20,${item.locked?'0.6':'0.92'})`,
-        cursor   : item.locked ? 'not-allowed' : 'pointer',
-        zIndex   : '160',
-        display  : 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        opacity  : item.locked ? '0.5' : '1',
+        position     : 'fixed',
+        left         : `${x - 28}px`,
+        top          : `${y - 28}px`,
+        width        : '56px',
+        height       : '56px',
+        borderRadius : '12px',
+        border       : `1px solid rgba(201,168,76,${item.locked ? '0.1' : '0.35'})`,
+        background   : `rgba(10,8,20,${item.locked ? '0.6' : '0.92'})`,
+        cursor       : item.locked ? 'not-allowed' : 'pointer',
+        zIndex       : '160',
+        display      : 'flex',
+        flexDirection: 'column',
+        alignItems   : 'center',
+        justifyContent: 'center',
+        opacity      : item.locked ? '0.45' : '1',
         WebkitTapHighlightColor: 'transparent',
-        animation: `radialIn .2s ease ${i * 0.05}s both`,
-        boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
+        animation    : `radialIn .18s ease ${i * 0.05}s both`,
+        boxShadow    : '0 2px 12px rgba(0,0,0,0.6)',
+        pointerEvents: 'all',
       });
 
       if (!item.locked) {
@@ -109,13 +127,12 @@ export class RadialMenu {
       this._rays.push(btn);
     });
 
-    // Inyectar animación
     if (!document.getElementById('radial-styles')) {
       const s = document.createElement('style');
       s.id = 'radial-styles';
       s.textContent = `
         @keyframes radialIn {
-          from { opacity:0; transform:scale(0.5); }
+          from { opacity:0; transform:scale(0.4); }
           to   { opacity:1; transform:scale(1); }
         }
       `;
@@ -129,7 +146,7 @@ export class RadialMenu {
     this._open = true;
     this._overlay.style.display = 'block';
     this._btn.style.transform   = 'rotate(45deg)';
-    this._btn.style.boxShadow   = '0 0 20px rgba(201,168,76,0.3)';
+    this._btn.style.boxShadow   = '0 0 20px rgba(201,168,76,0.4)';
     this._renderRays();
   }
 
@@ -142,7 +159,6 @@ export class RadialMenu {
     this._rays = [];
   }
 
-  // Actualizar items en runtime
   setItems(items) {
     this._items = items;
     if (this._open) { this.close(); this.open(); }
