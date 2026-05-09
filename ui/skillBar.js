@@ -43,9 +43,9 @@ export class SkillBar {
   _sizes() {
   const short = Math.min(window.innerWidth, window.innerHeight);
   return {
-    attackSize : Math.round(short * 0.17),   // era 0.13
-    skillSize  : Math.round(short * 0.12),   // era 0.09
-    radius     : Math.round(short * 0.26),   // era 0.22
+    attackSize : Math.round(short * 0.20),   // era 0.13
+    skillSize  : Math.round(short * 0.14),   // era 0.09
+    radius     : Math.round(short * 0.28),   // era 0.22
     marginR    : Math.round(short * 0.04),
     marginB    : Math.round(short * 0.04),
   };
