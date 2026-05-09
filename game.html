@@ -208,6 +208,7 @@ async function boot() {
 
     const skillTree   = new SkillTree(progression);
     const skillBar    = new SkillBar(skills, progression);
+    window._skillBar = skillBar;
     const subtypeMenu = new SubtypeMenu(progression, skillBar);
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
 
