@@ -1,10 +1,9 @@
-// ui/skillBar.js — Layout circular con labels externos al contenedor
+// ui/skillBar.js
 import { RARITY_COLORS } from '../core/skillData.js';
 
 const RARITY_LABELS = { common:'C', rare:'R', epic:'E', legendary:'L' };
 
-// Ángulos de las 4 habilidades (en grados, sentido matemático)
-// 90=arriba, 0=derecha, 270=abajo, 180=izquierda
+// Arriba, derecha, abajo, izquierda
 const SKILL_ANGLES = [90, 0, 270, 180];
 const SKILL_RADIUS = 88;
 
@@ -14,7 +13,7 @@ export class SkillBar {
     this.progression = progression;
     this._weapon    = null;
     this._buttons   = [];
-    this._labels    = [];   // labels en el body, separados
+    this._labels    = [];
     this._attackBtn = null;
     this._container = null;
     this._cooldowns = {};
@@ -43,6 +42,7 @@ export class SkillBar {
   show() {
     this._container.style.display = 'block';
     this._labels.forEach(l => l.style.display = 'block');
+    this._repositionLabels();
   }
   hide() {
     this._container.style.display = 'none';
@@ -64,7 +64,6 @@ export class SkillBar {
       zIndex       : '120',
     });
 
-    // Fondo circular oscuro
     const bg = document.createElement('div');
     Object.assign(bg.style, {
       position    : 'absolute',
@@ -76,7 +75,7 @@ export class SkillBar {
     });
     this._container.appendChild(bg);
 
-    // Botón de ataque central
+    // Botón central de ataque
     this._attackBtn = document.createElement('button');
     this._attackBtn.textContent = '⚔️';
     Object.assign(this._attackBtn.style, {
@@ -111,35 +110,46 @@ export class SkillBar {
     this._attackBtn.addEventListener('mousedown', onAtk);
     this._container.appendChild(this._attackBtn);
 
-    // 4 habilidades en círculo
+    // 4 botones de habilidad
     SKILL_ANGLES.forEach((angleDeg, i) => {
       const rad = (angleDeg * Math.PI) / 180;
       const x   = CENTER + Math.cos(rad) * SKILL_RADIUS - 24;
       const y   = CENTER - Math.sin(rad) * SKILL_RADIUS - 24;
-
-      const btn   = this._buildSkillBtn(i, x, y);
-      const label = this._buildLabel(angleDeg, rad);
-
+      const btn = this._buildSkillBtn(i, x, y);
       this._buttons.push(btn);
-      this._labels.push(label);
-
       this._container.appendChild(btn);
-      document.body.appendChild(label); // label va al body para no ser cortado
+
+      // Label en el body para que no sea cortado por el contenedor
+      const label = document.createElement('div');
+      Object.assign(label.style, {
+        position    : 'fixed',
+        color       : 'rgba(255,255,255,0.95)',
+        fontSize    : '10px',
+        fontFamily  : 'system-ui, sans-serif',
+        fontWeight  : '600',
+        whiteSpace  : 'nowrap',
+        pointerEvents: 'none',
+        textShadow  : '0 1px 4px #000, 0 0 8px #000',
+        zIndex      : '125',
+        lineHeight  : '1.3',
+        textAlign   : 'center',
+      });
+      document.body.appendChild(label);
+      this._labels.push(label);
     });
 
     document.body.appendChild(this._container);
 
-    // Posicionar labels tras insertar el contenedor (necesita offsetLeft/Top)
-    requestAnimationFrame(() => this._repositionLabels());
-
-    // Reposicionar si cambia el tamaño de ventana
+    // Reposicionar labels tras render y en resize
+    // Usamos un pequeño delay para garantizar que el contenedor
+    // ya tiene su posición final en pantalla
+    setTimeout(() => this._repositionLabels(), 50);
     window.addEventListener('resize', () => this._repositionLabels());
   }
 
-  // Calcula la posición absoluta de cada label en el body
   _repositionLabels() {
     const rect   = this._container.getBoundingClientRect();
-    const CENTER = 110; // SIZE/2
+    const CENTER = 110; // SIZE / 2
 
     SKILL_ANGLES.forEach((angleDeg, i) => {
       const label = this._labels[i];
@@ -147,64 +157,49 @@ export class SkillBar {
 
       const rad = (angleDeg * Math.PI) / 180;
 
-      // Centro del botón en coordenadas de viewport
+      // Centro del botón en viewport
       const btnCX = rect.left + CENTER + Math.cos(rad) * SKILL_RADIUS;
       const btnCY = rect.top  + CENTER - Math.sin(rad) * SKILL_RADIUS;
 
-      // Offset del label según el ángulo:
-      // Arriba (90°)       → label a la izquierda del botón
-      // Derecha (0°)       → label a la izquierda del botón
-      // Abajo (270°)       → label debajo del botón (centrado)
-      // Izquierda (180°)   → label a la derecha del botón
-      const { lx, ly, anchor } = this._labelOffset(angleDeg, btnCX, btnCY);
+      // Dirección del label según ángulo
+      // La rueda está en el borde derecho, así que:
+      // Arriba (90°)   → label a la izquierda
+      // Derecha (0°)   → label a la izquierda  
+      // Abajo (270°)   → label debajo centrado
+      // Izquierda(180°)→ label a la izquierda también (borde izquierdo del botón)
+      const GAP = 30;
+      let lx, ly, transform;
+
+      const a = ((angleDeg % 360) + 360) % 360;
+
+      if (a === 90) {
+        // Arriba → label a la izquierda del botón
+        lx = btnCX - GAP;
+        ly = btnCY;
+        transform = 'translate(-100%, -50%)';
+      } else if (a === 0) {
+        // Derecha → label a la izquierda (pantalla lo corta a la derecha)
+        lx = btnCX - GAP;
+        ly = btnCY;
+        transform = 'translate(-100%, -50%)';
+      } else if (a === 270) {
+        // Abajo → label debajo, centrado
+        lx = btnCX;
+        ly = btnCY + GAP;
+        transform = 'translate(-50%, 0%)';
+      } else {
+        // Izquierda (180°) → label a la izquierda del botón
+        lx = btnCX - GAP;
+        ly = btnCY;
+        transform = 'translate(-100%, -50%)';
+      }
 
       Object.assign(label.style, {
         left     : `${lx}px`,
         top      : `${ly}px`,
-        transform: anchor,
+        transform: transform,
       });
     });
-  }
-
-  _labelOffset(angleDeg, cx, cy) {
-    const GAP = 34; // distancia desde el centro del botón al label
-
-    // Normalizar ángulo a 0-360
-    const a = ((angleDeg % 360) + 360) % 360;
-
-    // Arriba (60°–120°): label a la izquierda
-    if (a > 60 && a <= 120) {
-      return { lx: cx - GAP, ly: cy, anchor: 'translate(-100%, -50%)' };
-    }
-    // Derecha (0°–60° y 300°–360°): label a la izquierda también
-    // (porque el contenedor está en el borde derecho de pantalla)
-    if (a <= 60 || a > 300) {
-      return { lx: cx - GAP, ly: cy, anchor: 'translate(-100%, -50%)' };
-    }
-    // Abajo (240°–300°): label debajo, centrado
-    if (a > 240 && a <= 300) {
-      return { lx: cx, ly: cy + GAP, anchor: 'translate(-50%, 0%)' };
-    }
-    // Izquierda (120°–240°): label a la derecha
-    return { lx: cx + GAP, ly: cy, anchor: 'translate(0%, -50%)' };
-  }
-
-  _buildLabel(angleDeg, rad) {
-    const label = document.createElement('div');
-    Object.assign(label.style, {
-      position    : 'fixed',
-      color       : 'rgba(255,255,255,0.92)',
-      fontSize    : '10px',
-      fontFamily  : 'system-ui, sans-serif',
-      fontWeight  : '500',
-      whiteSpace  : 'nowrap',
-      pointerEvents: 'none',
-      textShadow  : '0 1px 5px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.8)',
-      zIndex      : '121',
-      lineHeight  : '1.3',
-      textAlign   : 'center',
-    });
-    return label;
   }
 
   _buildSkillBtn(index, x, y) {
@@ -273,6 +268,7 @@ export class SkillBar {
     btn.dataset.skillId = skill.id;
     btn.dataset.locked  = skill.available ? 'false' : 'true';
 
+    // ✅ Usar skill.label (no skill.name — ese campo no existe en skillData.js)
     btn.querySelector('.skill-icon').textContent = skill.icon;
 
     const r = btn.querySelector('.skill-rarity');
@@ -285,10 +281,10 @@ export class SkillBar {
 
     btn.querySelector('.skill-lock').style.opacity = skill.available ? '0' : '1';
 
-    // Actualizar label
+    // ✅ skill.label es el campo correcto
     if (label) {
-      label.textContent = skill.name ?? skill.id;
-      label.style.opacity = skill.available ? '1' : '0.45';
+      label.textContent = skill.label;
+      label.style.opacity = skill.available ? '1' : '0.5';
     }
 
     this._applyCooldown(btn, this._cooldowns[skill.id] ?? 1);
