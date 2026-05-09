@@ -41,13 +41,14 @@ export class SkillBar {
   hide() { this._container.style.display = 'none'; }
 
   _sizes() {
-  const short = Math.min(window.innerWidth, window.innerHeight);
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
   return {
-    attackSize : Math.round(short * 0.20),   // era 0.13
-    skillSize  : Math.round(short * 0.14),   // era 0.09
-    radius     : Math.round(short * 0.28),   // era 0.22
-    marginR    : Math.round(short * 0.04),
-    marginB    : Math.round(short * 0.04),
+    attackSize : Math.round(vw * 0.18),
+    skillSize  : Math.round(vw * 0.13),
+    radius     : Math.round(vw * 0.30),
+    marginR    : Math.round(vw * 0.03),
+    marginB    : Math.round(vh * 0.03),
   };
   }
     
