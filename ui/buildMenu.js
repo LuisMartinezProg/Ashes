@@ -82,13 +82,13 @@ _renderPanel() {
   this._renderInventory();
   this._renderList('basico');
       }
-      <!-- Inventario -->
+      //Inventario//
       <div id="build-inventory" style="display:flex;gap:12px;padding:0 20px 12px;flex-wrap:wrap;"></div>
 
-      <!-- Tabs de categoría -->
+     //Tabs de categoría//
       <div id="build-tabs" style="display:flex;gap:0;border-bottom:1px solid rgba(201,168,76,0.15);padding:0 20px;overflow-x:auto;"></div>
 
-      <!-- Lista de estructuras -->
+      //Lista de estructuras//
       <div id="build-list" style="overflow-y:auto;padding:8px 16px 24px;display:flex;flex-direction:column;gap:8px;"></div>
     `;
 
