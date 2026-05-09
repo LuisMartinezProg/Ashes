@@ -34,6 +34,7 @@ export function startLoop(scene, camera, renderer) {
 function _tick(timestamp) {
   if (!_running) return;
   requestAnimationFrame(_tick);
+  if (_building && _building.isPlacing()) _building.updateGhostPosition();
 
   const delta = Math.min((timestamp - _lastTime) * 0.001, FRAME_CAP);
   _lastTime = timestamp;
