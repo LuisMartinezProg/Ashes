@@ -74,7 +74,8 @@ import { BuildingSystem }   from './core/building.js';
 import { BuildMenu }        from './ui/buildMenu.js';
 import { SkillTree }        from './ui/skillTree.js';
 import { RadialMenu }       from './ui/radialMenu.js';
-
+import { applyHudLayout } from './ui/hudLayout.js';
+  
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -106,7 +107,7 @@ async function boot() {
 
     const skills      = new SkillSystem(scene, player.root);
     const progression = new Progression();
-
+applyHudLayout(hud, skillBar, buildMenu);
     // ── Narrativa ──
     const narrative = new NarrativeSystem();
     narrative.setScene(scene);
