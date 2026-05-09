@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { background: #04040A; color: #C9A84C; font-family: monospace; padding: 20px; }
+    .ok { color: #2ecc71; }
+    .err { color: #e74c3c; }
+  </style>
+</head>
+<body>
+<div id="out">Probando imports...</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+
+<script type="module">
+const out = document.getElementById('out');
+const modules = [
+  ['./core/scene.js',       'initScene'],
+  ['./core/loop.js',        'startLoop'],
+  ['./core/resize.js',      'initResize'],
+  ['./core/combat.js',      'CombatSystem'],
+  ['./core/enemy.js',       'spawnEnemies'],
+  ['./ui/hud.js',           'HUD'],
+  ['./core/skillSystem.js', 'SkillSystem'],
+  ['./ui/weaponSelect.js',  'showWeaponSelect'],
+  ['./core/npc.js',         'spawnNPCs'],
+  ['./ui/dialogue.js',      'DialogueUI'],
+  ['./ui/shop.js',          'ShopUI'],
+  ['./core/inventory.js',   'inventory'],
+  ['./core/progression.js', 'Progression'],
+  ['./ui/skillBar.js',      'SkillBar'],
+  ['./ui/subtypeMenu.js',   'SubtypeMenu'],
+  ['./ui/pauseMenu.js',     'PauseMenu'],
+  ['./ui/fusionMenu.js',    'FusionMenu'],
+  ['./core/narrative.js',   'NarrativeSystem'],
+  ['./data/storyEvents.js', 'STORY_EVENTS'],
+  ['./core/triggers.js',    'WorldTriggers'],
+  ['./core/building.js',    'BuildingSystem'],
+  ['./ui/buildMenu.js',     'BuildMenu'],
+  ['./ui/skillTree.js',     'SkillTree'],
+  ['./ui/radialMenu.js',    'RadialMenu'],
+];
+
+let html = '';
+for (const [path, name] of modules) {
+  try {
+    const mod = await import(path);
+    const ok = mod[name] !== undefined;
+    html += `<div class="${ok?'ok':'err'}">${ok?'✓':'✗'} ${path} → ${name}</div>`;
+  } catch(e) {
+    html += `<div class="err">✗ ${path}<br>&nbsp;&nbsp;${e.message}</div>`;
+  }
+}
+out.innerHTML = html;
+</script>
+</body>
+</html>
