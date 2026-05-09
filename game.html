@@ -231,11 +231,11 @@ async function boot() {
     setInterval(() => {
       localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
     }, 30000);
-
-    // ── Lanzar prólogo ──
-    narrative.play(STORY_EVENTS.prologo, () => {
-      narrative.play(STORY_EVENTS.escena01_despertar);
-    });
+// ── Lanzar escena 1 si es partida nueva ──
+if (!progression.getFlag?.('escena01_done')) {
+  narrative.play(STORY_EVENTS.escena01_despertar);
+}
+    
 
   } catch (err) {
     txt.textContent = 'ERROR: ' + (err.message || err.toString());
