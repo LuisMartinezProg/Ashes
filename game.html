@@ -105,7 +105,7 @@ async function boot() {
     const combat = new CombatSystem(player.root, camera);
     combat.setScene(scene);
     setCombatSystem(combat);
-
+    window._combat = combat;
     const skills      = new SkillSystem(scene, player.root);
     const progression = new Progression();
 
