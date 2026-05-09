@@ -342,16 +342,16 @@ export class HUD {
   }
 
   _bindButtons() {
-    const pressAtk = (e) => {
-      e.preventDefault();
+   // const pressAtk = (e) => {
+    //  e.preventDefault();
       // Pasar el enemigo golpeado al HUD para enfocar su barra
-      const target = this.combat.closestEnemyInRange();
-      if (target) this.attachEnemyBar(target);
-      this.combat.triggerAttack();
-      this._animateBtn(this._attackBtnEl, 'rgba(220,80,40,0.9)');
-    };
-    this._attackBtnEl.addEventListener('touchstart', pressAtk, { passive: false });
-    this._attackBtnEl.addEventListener('mousedown',  pressAtk);
+     // const target = this.combat.closestEnemyInRange();
+     // if (target) this.attachEnemyBar(target);
+     // this.combat.triggerAttack();
+    //  this._animateBtn(this._attackBtnEl, 'rgba(220,80,40,0.9)');
+   // };
+ //   this._attackBtnEl.addEventListener('touchstart', pressAtk, { passive: false });
+//   this._attackBtnEl.addEventListener('mousedown',  pressAtk);//
 
     if (this._skillBtnEl && this.skills) {
       const pressSkill = (e) => {
