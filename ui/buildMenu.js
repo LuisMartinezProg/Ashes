@@ -1,4 +1,4 @@
-   }/**
+/**
  * ui/buildMenu.js — Menú de construcción
  */
 
