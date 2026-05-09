@@ -49,10 +49,10 @@ export class SkillBar {
     this._container = document.createElement('div');
     Object.assign(this._container.style, {
       position     : 'fixed',
-      bottom       : '20px',
+      bottom       : '10px',
       right        : '10px',
-      width        : `${SIZE}px`,
-      height       : `${SIZE}px`,
+      width        : `$320px`,
+      height       : `$320px`,
       pointerEvents: 'none',
       zIndex       : '120',
     });
