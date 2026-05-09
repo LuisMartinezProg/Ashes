@@ -86,10 +86,12 @@ export class HUD {
   show() { this._container.style.display = 'block'; }
   hide() { this._container.style.display = 'none'; }
 
-  setWeaponIcon(type) {
-    const icons = { katana: '🗡️', sword: '⚔️', magic: '🔮', bow: '🏹' };
-    this._attackBtnEl.textContent = icons[type] ?? '🗡️';
-  }
+setWeaponIcon(type) {
+  const icons = { katana: '🗡️', sword: '⚔️', magic: '🔮', bow: '🏹' };
+  if (this._attackBtnEl) this._attackBtnEl.textContent = icons[type] ?? '🗡️';
+  // También actualizar el botón del skillBar
+  if (window._skillBar) window._skillBar.setWeaponIcon(type);
+}
 
   // ── Build ────────────────────────────────────────────────────────────────
 
