@@ -100,12 +100,9 @@
     }
 
     /* ══ SCREEN 1: VALIANT GAMING LOGO ══ */
-    /* Fondo igual al azul marino de la imagen */
-    #screen-logo {
-      background: radial-gradient(ellipse 80% 70% at 50% 50%,
-        #1E3050 0%, #142038 40%, #0A1420 100%);
-    }
-
+#screen-logo {
+  background: #0d1e35;
+}
     .studio-logo {
       display: flex; flex-direction: column;
       align-items: center; gap: 0;
@@ -121,12 +118,11 @@
       100% { opacity: 0; transform: scale(1.02); }
     }
     .logo-emblem {
-      /* Ocupa casi toda la pantalla en landscape — la imagen ya incluye texto */
-      width: min(480px, 88vw);
+     width: min(480px, 88vw);
       height: auto;
       display: block;
-      /* Sin drop-shadow extra — la imagen ya tiene su propio glow */
-    }
+      border-radius: 12px;
+   }
     @media (orientation: portrait) {
       .logo-emblem { width: min(320px, 85vw); }
     }
