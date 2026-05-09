@@ -56,8 +56,8 @@ export class RadialMenu {
     const cy = 34;                        // centro Y del botón
     const count  = this._items.length;
     // Arco desde 180° hasta 270° (abajo-izquierda del botón)
-    const startA = Math.PI;
-    const endA   = Math.PI * 1.75;
+     const startA = Math.PI * 0.7
+    const endA   = Math.PI * 1.5;
     const radius = 70;
 
     this._items.forEach((item, i) => {
