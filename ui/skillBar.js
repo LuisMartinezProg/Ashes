@@ -13,10 +13,10 @@ const RARITY_LABELS = {
 // Posiciones de los 4 botones alrededor del centro
 // En arco semicircular hacia arriba-izquierda
 const SKILL_POSITIONS = [
-  { angle: 180, radius: 75  }, // habilidad 1 — más a la izquierda
-  { angle: 200, radius: 140 }, // habilidad 2
-  { angle: 215, radius: 205 }, // habilidad 3
-  { angle: 225, radius: 270 }, // habilidad 4 — más arriba
+  { angle: 185, radius: 65  }, // habilidad 1
+  { angle: 200, radius: 120 }, // habilidad 2
+  { angle: 210, radius: 175 }, // habilidad 3
+  { angle: 218, radius: 230 }, // habilidad 4
 ];
 
 export class SkillBar {
@@ -60,10 +60,10 @@ export class SkillBar {
     this._container = document.createElement('div');
     Object.assign(this._container.style, {
       position : 'fixed',
-      bottom   : '20px',
-      right    : '20px',
-      width    : '350px',
-      height   : '350px',
+      bottom   : '10px',
+      right    : '10px',
+      width    : '280px',
+      height   : '280px',
       pointerEvents: 'none',
       zIndex   : '120',
     });
