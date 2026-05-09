@@ -13,10 +13,10 @@ const RARITY_LABELS = {
 // Posiciones de los 4 botones alrededor del centro
 // En arco semicircular hacia arriba-izquierda
 const SKILL_POSITIONS = [
-  { angle: 185, radius: 65  }, // habilidad 1
-  { angle: 200, radius: 120 }, // habilidad 2
-  { angle: 210, radius: 175 }, // habilidad 3
-  { angle: 218, radius: 230 }, // habilidad 4
+  { angle: 180, radius: 60  }, // habilidad 1 — justo a la izquierda del ataque
+  { angle: 200, radius: 110 }, // habilidad 2
+  { angle: 215, radius: 160 }, // habilidad 3
+  { angle: 225, radius: 210 }, // habilidad 4
 ];
 
 export class SkillBar {
@@ -58,15 +58,16 @@ export class SkillBar {
   _build() {
     // Contenedor posicionado abajo derecha
     this._container = document.createElement('div');
-    Object.assign(this._container.style, {
-      position : 'fixed',
-      bottom   : '10px',
-      right    : '10px',
-      width    : '280px',
-      height   : '280px',
-      pointerEvents: 'none',
-      zIndex   : '120',
-    });
+    // Contenedor — más a la derecha
+Object.assign(this._container.style, {
+  position : 'fixed',
+  bottom   : '10px',
+  right    : '10px',
+  width    : '260px',
+  height   : '320px',
+  pointerEvents: 'none',
+  zIndex   : '120',
+});
 
     // ── Botón de ataque central ──
     this._attackBtn = document.createElement('button');
