@@ -99,7 +99,8 @@ async function boot() {
 
     setProgress(95, 'INICIANDO LOOP...');
     startLoop(scene, camera, renderer);
-    window._combat = combat;
+
+    
 
     const player = getPlayer();
     const combat = new CombatSystem(player.root, camera);
