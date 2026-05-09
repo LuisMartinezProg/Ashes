@@ -1,41 +1,26 @@
-// ui/skillBar.js — Layout circular de habilidades
-// Centro: ataque básico | Alrededor: 4 habilidades en arco
-
+// ui/skillBar.js — Layout circular tipo rueda
 import { RARITY_COLORS } from '../core/skillData.js';
 
-const RARITY_LABELS = {
-  common   : 'C',
-  rare     : 'R',
-  epic     : 'E',
-  legendary: 'L',
-};
+const RARITY_LABELS = { common:'C', rare:'R', epic:'E', legendary:'L' };
 
-// Posiciones de los 4 botones alrededor del centro
-// En arco semicircular hacia arriba-izquierda
-const SKILL_POSITIONS = [
-  { angle: 180, radius: 60  }, // habilidad 1 — justo a la izquierda del ataque
-  { angle: 200, radius: 110 }, // habilidad 2
-  { angle: 215, radius: 160 }, // habilidad 3
-  { angle: 225, radius: 210 }, // habilidad 4
-];
+// Posiciones de las 4 habilidades alrededor del centro
+// Ángulos: arriba-izquierda, arriba, arriba-derecha, abajo-derecha
+const SKILL_ANGLES = [135, 60, 0, 270]; // grados
+const SKILL_RADIUS = 88; // distancia del centro
 
 export class SkillBar {
   constructor(skillSystem, progression) {
     this.skillSystem = skillSystem;
     this.progression = progression;
-    this._weapon     = null;
-    this._buttons    = [];
-    this._attackBtn  = null;
-    this._container  = null;
-    this._cooldowns  = {};
-
+    this._weapon    = null;
+    this._buttons   = [];
+    this._attackBtn = null;
+    this._container = null;
+    this._cooldowns = {};
     this._build();
   }
 
-  setWeapon(weaponType) {
-    this._weapon = weaponType;
-    this.refresh();
-  }
+  setWeapon(weaponType) { this._weapon = weaponType; this.refresh(); }
 
   refresh() {
     if (!this._weapon) return;
@@ -49,64 +34,82 @@ export class SkillBar {
     if (btn) this._applyCooldown(btn, progress);
   }
 
+  setWeaponIcon(type) {
+    const icons = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
+    if (this._attackBtn) this._attackBtn.textContent = icons[type] ?? '⚔️';
+  }
+
   show() { this._container.style.display = 'block'; }
   hide() { this._container.style.display = 'none'; }
 
-  // ─────────────────────────────────────────────
-  // BUILD
-  // ─────────────────────────────────────────────
   _build() {
-    // Contenedor posicionado abajo derecha
-    this._container = document.createElement('div');
-    // Contenedor — más a la derecha
-Object.assign(this._container.style, {
-  position : 'fixed',
-  bottom   : '10px',
-  right    : '10px',
-  width    : '260px',
-  height   : '320px',
-  pointerEvents: 'none',
-  zIndex   : '120',
-});
+    const SIZE   = 220; // tamaño del contenedor
+    const CENTER = SIZE / 2;
 
-    // ── Botón de ataque central ──
-    this._attackBtn = document.createElement('button');
-    Object.assign(this._attackBtn.style, {
-      position  : 'absolute',
-      bottom    : '0',
-      right     : '0',
-      width     : '72px',
-      height    : '72px',
+    this._container = document.createElement('div');
+    Object.assign(this._container.style, {
+      position : 'fixed',
+      bottom   : '20px',
+      right    : '10px',
+      width    : `${SIZE}px`,
+      height   : `${SIZE}px`,
+      pointerEvents: 'none',
+      zIndex   : '120',
+    });
+
+    // Fondo oscuro circular
+    const bg = document.createElement('div');
+    Object.assign(bg.style, {
+      position : 'absolute',
+      inset    : '0',
       borderRadius: '50%',
-      border    : '2px solid rgba(255,200,100,0.6)',
-      background: 'rgba(180,60,30,0.85)',
-      color     : '#ffe',
-      fontSize  : '28px',
-      cursor    : 'pointer',
+      background: 'rgba(8,6,16,0.72)',
+      border   : '1px solid rgba(255,255,255,0.06)',
+    });
+    this._container.appendChild(bg);
+
+    // Botón de ataque — centro
+    this._attackBtn = document.createElement('button');
+    this._attackBtn.textContent = '⚔️';
+    Object.assign(this._attackBtn.style, {
+      position : 'absolute',
+      width    : '72px',
+      height   : '72px',
+      left     : `${CENTER - 36}px`,
+      top      : `${CENTER - 36}px`,
+      borderRadius: '50%',
+      border   : '2px solid rgba(255,200,100,0.7)',
+      background: 'rgba(160,50,20,0.9)',
+      color    : '#ffe',
+      fontSize : '26px',
+      cursor   : 'pointer',
       pointerEvents: 'all',
-      zIndex    : '121',
-      display   : 'flex',
+      display  : 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       WebkitTapHighlightColor: 'transparent',
-      boxShadow : '0 0 16px rgba(255,100,50,0.4)',
+      boxShadow: '0 0 18px rgba(255,100,50,0.5)',
       transition: 'transform 0.08s',
+      zIndex   : '2',
     });
-    this._attackBtn.textContent = '⚔️';
 
     const onAtk = (e) => {
       e.preventDefault();
-      // Importar combat desde window (se asigna en game.html)
       window._combat?.triggerAttack?.();
-      this._animateBtn(this._attackBtn);
+      this._attackBtn.style.transform = 'scale(0.88)';
+      setTimeout(() => this._attackBtn.style.transform = 'scale(1)', 140);
     };
     this._attackBtn.addEventListener('touchstart', onAtk, { passive: false });
     this._attackBtn.addEventListener('mousedown', onAtk);
     this._container.appendChild(this._attackBtn);
 
-    // ── 4 botones de habilidades en arco ──
-    SKILL_POSITIONS.forEach((pos, i) => {
-      const btn = this._buildSkillButton(i, pos);
+    // 4 habilidades en círculo
+    SKILL_ANGLES.forEach((angleDeg, i) => {
+      const rad = (angleDeg * Math.PI) / 180;
+      const x   = CENTER + Math.cos(rad) * SKILL_RADIUS - 24;
+      const y   = CENTER - Math.sin(rad) * SKILL_RADIUS - 24;
+
+      const btn = this._buildSkillBtn(i, x, y);
       this._buttons.push(btn);
       this._container.appendChild(btn);
     });
@@ -114,99 +117,57 @@ Object.assign(this._container.style, {
     document.body.appendChild(this._container);
   }
 
-  _buildSkillButton(index, pos) {
-    // Calcular posición relativa al centro del botón de ataque
-    // Centro del ataque: bottom=36, right=36 (radio del botón)
-    const rad = (pos.angle * Math.PI) / 180;
-    const x   = Math.cos(rad) * pos.radius; // positivo = derecha
-    const y   = Math.sin(rad) * pos.radius; // positivo = abajo
-
-    // En CSS: right y bottom desde esquina del contenedor
-    // El botón de ataque está en bottom:0, right:0
-    // Centro del ataque: bottom:36, right:36
-    const btnRight  = 36 - x - 24; // 24 = radio del skill btn
-    const btnBottom = 36 - y - 24;
-
+  _buildSkillBtn(index, x, y) {
     const wrap = document.createElement('div');
     Object.assign(wrap.style, {
       position : 'absolute',
-      right    : `${btnRight}px`,
-      bottom   : `${btnBottom}px`,
+      left     : `${x}px`,
+      top      : `${y}px`,
       width    : '48px',
       height   : '48px',
-      borderRadius: '12px',
-      border   : '2px solid rgba(255,255,255,0.15)',
-      background: 'rgba(10,8,20,0.88)',
+      borderRadius: '50%',
+      border   : '2px solid rgba(255,255,255,0.18)',
+      background: 'rgba(12,10,22,0.9)',
       cursor   : 'pointer',
       pointerEvents: 'all',
       overflow : 'hidden',
-      transition: 'transform 0.08s',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
       WebkitTapHighlightColor: 'transparent',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
+      transition: 'transform 0.08s',
+      display  : 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex   : '2',
     });
 
-    // Icono
     const icon = document.createElement('div');
     icon.className = 'skill-icon';
-    Object.assign(icon.style, {
-      position: 'absolute', inset: '0',
-      display: 'flex', alignItems: 'center',
-      justifyContent: 'center', fontSize: '20px',
-    });
+    icon.style.cssText = 'font-size:20px;line-height:1;position:absolute;';
 
-    // Rareza
     const rarity = document.createElement('div');
     rarity.className = 'skill-rarity';
-    Object.assign(rarity.style, {
-      position: 'absolute', top: '2px', left: '4px',
-      fontSize: '7px', fontFamily: 'monospace',
-      fontWeight: 'bold', opacity: '0.9',
-    });
+    rarity.style.cssText = 'position:absolute;top:2px;left:4px;font-size:7px;font-family:monospace;font-weight:bold;';
 
-    // Número slot
-    const slot = document.createElement('div');
-    Object.assign(slot.style, {
-      position: 'absolute', bottom: '2px', right: '4px',
-      fontSize: '7px', fontFamily: 'monospace',
-      color: 'rgba(255,255,255,0.3)',
-    });
-    slot.textContent = index + 1;
-
-    // Cooldown overlay
     const cooldown = document.createElement('div');
     cooldown.className = 'skill-cooldown';
-    Object.assign(cooldown.style, {
-      position: 'absolute', bottom: '0', left: '0',
-      width: '100%', height: '0%',
-      background: 'rgba(0,0,0,0.65)',
-      transition: 'height 0.1s linear',
-      pointerEvents: 'none',
-    });
+    cooldown.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:0%;background:rgba(0,0,0,0.65);transition:height 0.1s linear;pointer-events:none;';
 
-    // Lock overlay
     const lock = document.createElement('div');
     lock.className = 'skill-lock';
-    Object.assign(lock.style, {
-      position: 'absolute', inset: '0',
-      display: 'flex', alignItems: 'center',
-      justifyContent: 'center',
-      background: 'rgba(0,0,0,0.6)',
-      fontSize: '14px', opacity: '0',
-      transition: 'opacity 0.2s',
-      pointerEvents: 'none',
-    });
+    lock.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);font-size:14px;opacity:0;pointer-events:none;';
     lock.textContent = '🔒';
 
     wrap.appendChild(icon);
     wrap.appendChild(rarity);
-    wrap.appendChild(slot);
     wrap.appendChild(cooldown);
     wrap.appendChild(lock);
 
     const onPress = (e) => {
       e.preventDefault();
       if (!wrap.dataset.skillId || wrap.dataset.locked === 'true') return;
-      this._castSkill(wrap.dataset.skillId, wrap);
+      this.skillSystem.castSkill(wrap.dataset.skillId);
+      wrap.style.transform = 'scale(0.88)';
+      setTimeout(() => wrap.style.transform = 'scale(1)', 140);
     };
     wrap.addEventListener('touchstart', onPress, { passive: false });
     wrap.addEventListener('mousedown', onPress);
@@ -214,51 +175,23 @@ Object.assign(this._container.style, {
     return wrap;
   }
 
-  // ─────────────────────────────────────────────
-  // UPDATE
-  // ─────────────────────────────────────────────
   _updateButton(index, skill) {
     const btn = this._buttons[index];
     if (!btn) return;
-
     btn.dataset.skillId = skill.id;
     btn.dataset.locked  = skill.available ? 'false' : 'true';
-
     btn.querySelector('.skill-icon').textContent   = skill.icon;
-
-    const rarityEl = btn.querySelector('.skill-rarity');
-    rarityEl.textContent = RARITY_LABELS[skill.rarity];
-    rarityEl.style.color = RARITY_COLORS[skill.rarity];
-
-    btn.style.borderColor = skill.available
-      ? RARITY_COLORS[skill.rarity]
-      : 'rgba(255,255,255,0.1)';
-
+    const r = btn.querySelector('.skill-rarity');
+    r.textContent = RARITY_LABELS[skill.rarity];
+    r.style.color = RARITY_COLORS[skill.rarity];
+    btn.style.borderColor = skill.available ? RARITY_COLORS[skill.rarity] : 'rgba(255,255,255,0.1)';
     btn.querySelector('.skill-lock').style.opacity = skill.available ? '0' : '1';
-
-    const progress = this._cooldowns[skill.id] ?? 1;
-    this._applyCooldown(btn, progress);
-  }
-
-  setWeaponIcon(type) {
-    const icons = { katana: '🗡️', sword: '⚔️', magic: '🔮', bow: '🏹' };
-    if (this._attackBtn) this._attackBtn.textContent = icons[type] ?? '⚔️';
+    this._applyCooldown(btn, this._cooldowns[skill.id] ?? 1);
   }
 
   _applyCooldown(btn, progress) {
-    const cooldownEl = btn.querySelector('.skill-cooldown');
-    if (!cooldownEl) return;
-    cooldownEl.style.height = `${(1 - progress) * 100}%`;
+    const el = btn.querySelector('.skill-cooldown');
+    if (el) el.style.height = `${(1 - progress) * 100}%`;
     btn.style.opacity = progress < 1 ? '0.55' : '1';
-  }
-
-  _castSkill(skillId, btn) {
-    const ok = this.skillSystem.castSkill(skillId);
-    if (ok) this._animateBtn(btn);
-  }
-
-  _animateBtn(btn) {
-    btn.style.transform = 'scale(0.88)';
-    setTimeout(() => { btn.style.transform = 'scale(1)'; }, 140);
   }
 }
