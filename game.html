@@ -75,7 +75,11 @@ import { STORY_EVENTS }     from './data/storyEvents.js';
 import { WorldTriggers }    from './core/triggers.js';
 import { BuildingSystem } from './core/building.js';
 import { BuildMenu }      from './ui/buildMenu.js';
-const bar = document.getElementById('load-bar');
+import { SkillTree }   from './ui/skillTree.js';
+import { RadialMenu }  from './ui/radialMenu.js';
+
+  
+  const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
 function setProgress(pct, label) {
@@ -106,10 +110,39 @@ async function boot() {
 
     const skills      = new SkillSystem(scene, player.root);
     const progression = new Progression();
-const building = new BuildingSystem(scene, player);
-building.setProgression(progression);
-const buildMenu = new BuildMenu(building);
-window._building = building; // debug
+    const building = new BuildingSystem(scene, player);
+    building.setProgression(progression);
+    const buildMenu = new BuildMenu(building);
+    window._building = building; // debug
+    // ya existían:
+const skillBar    = new SkillBar(skills, progression);
+const subtypeMenu = new SubtypeMenu(progression, skillBar);
+const fusionMenu  = new FusionMenu(progression, skillBar, skills);
+const building    = new BuildingSystem(scene, player);
+const buildMenu   = new BuildMenu(building);
+const skillTree  = new SkillTree(progression);
+const radialMenu = new RadialMenu([
+  {
+    icon: '⚔️', label: 'Habilidades',
+    action: () => skillTree.open(),
+    locked: false,
+  },
+  {
+    icon: '🏗', label: 'Construcción',
+    action: () => buildMenu.open(),
+    locked: false,
+  },
+  {
+    icon: '📋', label: 'Árbol Build',
+    action: () => console.log('próximamente'),
+    locked: true,
+  },
+  {
+    icon: '📖', label: 'Guías',
+    action: () => console.log('próximamente'),
+    locked: true,
+  },
+]);
     // ── Narrativa ──
     const narrative = new NarrativeSystem();
     narrative.setScene(scene);
