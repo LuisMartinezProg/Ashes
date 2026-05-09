@@ -28,15 +28,16 @@ export class BuildMenu {
     this._buildBtn = document.createElement('button');
     this._buildBtn.innerHTML = '🏗';
     Object.assign(this._buildBtn.style, {
-      position : 'fixed', bottom: '90px', right: '24px',
-      width: '52px', height: '52px', borderRadius: '12px',
-      border: '1px solid rgba(201,168,76,0.4)',
-      background: 'rgba(10,8,20,0.88)', color: '#C9A84C',
-      fontSize: '22px', cursor: 'pointer', zIndex: '150',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      WebkitTapHighlightColor: 'transparent',
-      boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
-    });
+    Object.assign(this._panel.style, {
+  position : 'fixed', bottom: '0', left: '0',  // ← left en vez de right
+  width    : '100%', maxWidth: '420px',
+  background: 'linear-gradient(180deg, rgba(13,11,9,0) 0%, rgba(13,11,9,0.98) 8%)',
+  zIndex   : '140',
+  display  : 'none',
+  flexDirection: 'column',
+  maxHeight: '70vh',
+  borderTop: '1px solid rgba(201,168,76,0.2)',
+});
     this._buildBtn.addEventListener('click',      () => this.toggle());
     this._buildBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.toggle(); }, { passive: false });
     document.body.appendChild(this._buildBtn);
