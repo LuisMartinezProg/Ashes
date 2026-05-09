@@ -6,10 +6,9 @@
   <title>Diagnóstico - Ashes</title>
   <style>
     body { background: #0a0a14; color: #c9a84c; font-family: monospace; padding: 20px; margin: 0; }
-    .ok      { color: #2ecc71; }
-    .error   { color: #e74c3c; }
-    .warn    { color: #f39c12; }
-    .info    { color: #4a9edd; }
+    .ok    { color: #2ecc71; }
+    .error { color: #e74c3c; }
+    .warn  { color: #f39c12; }
     pre { background: #1a1a2a; padding: 10px; overflow-x: auto; font-size: 12px; margin: 5px 0; border-radius: 4px; }
     .file { margin: 3px 0; font-size: 13px; }
     .err-detail { margin-left: 20px; color: #e74c3c; font-size: 11px; opacity: 0.8; }
@@ -19,14 +18,12 @@
     .badge-ok      { background: rgba(46,204,113,0.15);  color: #2ecc71; }
     .badge-error   { background: rgba(231,76,60,0.15);   color: #e74c3c; }
     .badge-pending { background: rgba(243,156,18,0.15);  color: #f39c12; }
-    .badge-future  { background: rgba(74,158,221,0.15);  color: #4a9edd; }
     .summary-box { background: #1a1a2a; border: 1px solid rgba(201,168,76,0.2); border-radius: 6px; padding: 16px; margin: 16px 0; }
     .summary-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
     .summary-row:last-child { border-bottom: none; }
     .progress-bar { height: 3px; background: #1a1a2a; border-radius: 2px; margin: 12px 0 4px; overflow: hidden; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, #2ecc71, #c9a84c); border-radius: 2px; transition: width .5s ease; }
-    .error-log { background: rgba(231,76,60,0.06); border: 1px solid rgba(231,76,60,0.2); border-radius: 6px; padding: 12px; margin-top: 16px; display: none; }
-    .error-log h4 { color: #e74c3c; font-size: 11px; letter-spacing: 2px; margin-bottom: 8px; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #2ecc71, #c9a84c); border-radius: 2px; }
+    .error-log { background: rgba(231,76,60,0.06); border: 1px solid rgba(231,76,60,0.2); border-radius: 6px; padding: 12px; margin-top: 16px; }
     .error-entry { font-size: 11px; color: #e8c0b8; margin: 4px 0; padding: 4px 0; border-bottom: 1px solid rgba(231,76,60,0.1); }
     .error-entry:last-child { border-bottom: none; }
     .timestamp { color: rgba(201,168,76,0.4); font-size: 10px; margin-bottom: 16px; }
@@ -36,9 +33,6 @@
 <h2 style="letter-spacing:3px; margin-bottom:4px;">🔍 Diagnóstico — Ashes of the Reborn</h2>
 <div class="timestamp" id="ts"></div>
 <div id="results">Cargando...</div>
-
-<script src="//cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init(); eruda.show();</script>
 
 <script type="importmap">
 {
@@ -85,43 +79,33 @@ const sections = [
   {
     title: '📖 Core — Fase 8 (Narrativa)',
     files: [
-      { path: './core/narrative.js',  name: 'NarrativeSystem' },
-      { path: './core/triggers.js',   name: 'WorldTriggers' },
-      { path: './data/storyEvents.js',name: 'STORY_EVENTS' },
-      { path: './data/dialogues.js',  name: 'DIALOGUES' },
+      { path: './core/narrative.js',   name: 'NarrativeSystem' },
+      { path: './core/triggers.js',    name: 'WorldTriggers' },
+      { path: './core/parry.js',       name: 'ParrySystem' },
+      { path: './data/storyEvents.js', name: 'STORY_EVENTS' },
+      { path: './data/dialogues.js',   name: 'DIALOGUES' },
     ]
   },
   {
-    title: '🗺️ Core — Fase 9 (Mundo)',
-    future: true,
+    title: '🏗 Core — Construcción',
     files: [
-      { path: './core/worldMap.js',     name: 'WorldMap',      pending: true },
-      { path: './core/fogOfWar.js',     name: 'FogOfWar',      pending: true },
-      { path: './core/dayNight.js',     name: 'DayNightCycle', pending: true },
-      { path: './core/weather.js',      name: 'WeatherSystem', pending: true },
+      { path: './core/building.js',    name: 'BuildingSystem' },
+      { path: './data/structures.js',  name: 'STRUCTURES' },
+      { path: './data/skills.js',      name: 'SKILLS' },
     ]
   },
   {
-    title: '👥 Core — Fase 10 (Relaciones)',
-    future: true,
+    title: '🗺️ Core — Futuro',
     files: [
-      { path: './core/relations.js',    name: 'RelationSystem', pending: true },
-      { path: './core/reputation.js',   name: 'Reputation',     pending: true },
-      { path: './data/characters.js',   name: 'CHARACTERS',     pending: true },
+      { path: './core/worldMap.js',    name: 'WorldMap',      pending: true },
+      { path: './core/dayNight.js',    name: 'DayNightCycle', pending: true },
+      { path: './core/weather.js',     name: 'WeatherSystem', pending: true },
+      { path: './core/relations.js',   name: 'RelationSystem',pending: true },
+      { path: './core/cinematic.js',   name: 'CinematicSystem',pending: true },
     ]
   },
   {
-    title: '🏰 Core — Fase 11 (Construcción avanzada)',
-    future: true,
-    files: [
-      { path: './core/building.js',     name: 'BuildingSystem', pending: true },
-      { path: './core/crafting.js',     name: 'CraftingSystem', pending: true },
-      { path: './data/recipes.js',      name: 'RECIPES',        pending: true },
-      { path: './data/structures.js',   name: 'STRUCTURES',     pending: true },
-    ]
-  },
-  {
-    title: '🎮 UI',
+    title: '🎮 UI — Existente',
     files: [
       { path: './ui/hud.js',          name: 'HUD' },
       { path: './ui/weaponSelect.js', name: 'showWeaponSelect' },
@@ -136,11 +120,17 @@ const sections = [
   {
     title: '🎮 UI — Fase 8+',
     files: [
-      { path: './ui/choiceMenu.js',   name: 'ChoiceMenu',    pending: true },
-      { path: './ui/relationBar.js',  name: 'RelationBar',   pending: true },
-      { path: './ui/mapUI.js',        name: 'MapUI',         pending: true },
-      { path: './ui/buildMenu.js',    name: 'BuildMenu',     pending: true },
-      { path: './ui/craftMenu.js',    name: 'CraftMenu',     pending: true },
+      { path: './ui/buildMenu.js',    name: 'BuildMenu' },
+      { path: './ui/skillTree.js',    name: 'SkillTree' },
+      { path: './ui/radialMenu.js',   name: 'RadialMenu' },
+    ]
+  },
+  {
+    title: '🎮 UI — Futuro',
+    files: [
+      { path: './ui/mapUI.js',        name: 'MapUI',      pending: true },
+      { path: './ui/relationBar.js',  name: 'RelationBar',pending: true },
+      { path: './ui/craftMenu.js',    name: 'CraftMenu',  pending: true },
     ]
   },
   {
@@ -162,7 +152,7 @@ const sections = [
     ]
   },
   {
-    title: '🗡️ Skills — Espada (Fase 6 pendiente)',
+    title: '🗡️ Skills — Espada (pendiente)',
     files: [
       { path: './skills/sword/heavyStrike.js', name: 'HeavyStrike', pending: true },
       { path: './skills/sword/shieldBash.js',  name: 'ShieldBash',  pending: true },
@@ -171,7 +161,7 @@ const sections = [
     ]
   },
   {
-    title: '🏹 Skills — Arco (Fase 6 pendiente)',
+    title: '🏹 Skills — Arco (pendiente)',
     files: [
       { path: './skills/bow/precisionShot.js', name: 'PrecisionShot', pending: true },
       { path: './skills/bow/multiShot.js',     name: 'MultiShot',     pending: true },
@@ -180,38 +170,21 @@ const sections = [
     ]
   },
   {
-    title: '🌿 Skills — Magia fusión (Fase 7 pendiente)',
+    title: '💀 Enemies — Futuro',
     files: [
-      { path: './skills/fusion/fireKatana.js',  name: 'FireKatana',  pending: true },
-      { path: './skills/fusion/iceArrow.js',    name: 'IceArrow',    pending: true },
-      { path: './skills/fusion/windSword.js',   name: 'WindSword',   pending: true },
-      { path: './skills/fusion/thornBlade.js',  name: 'ThornBlade',  pending: true },
-    ]
-  },
-  {
-    title: '💀 Enemies — Fase 9+ (pendiente)',
-    files: [
-      { path: './core/enemies/bossSystem.js',   name: 'BossSystem',  pending: true },
-      { path: './core/enemies/forestPack.js',   name: 'ForestPack',  pending: true },
-      { path: './core/enemies/eliteEnemy.js',   name: 'EliteEnemy',  pending: true },
-    ]
-  },
-  {
-    title: '🎬 Cinemáticas (Fase 9+ pendiente)',
-    files: [
-      { path: './core/cinematic.js',    name: 'CinematicSystem', pending: true },
-      { path: './core/cameraPath.js',   name: 'CameraPath',      pending: true },
+      { path: './core/enemies/bossSystem.js',  name: 'BossSystem',  pending: true },
+      { path: './core/enemies/forestPack.js',  name: 'ForestPack',  pending: true },
+      { path: './core/enemies/eliteEnemy.js',  name: 'EliteEnemy',  pending: true },
     ]
   },
 ];
 
-let totalOk = 0, totalError = 0, totalPending = 0, totalFuture = 0;
+let totalOk = 0, totalError = 0, totalPending = 0;
 const errors = [];
 let html = '';
 
 for (const section of sections) {
   html += `<hr><h3>${section.title}</h3>`;
-
   for (const file of section.files) {
     if (file.pending) {
       html += `<div class="file"><span class="warn">○</span> ${file.path} <span class="badge badge-pending">PENDIENTE</span></div>`;
@@ -239,7 +212,6 @@ for (const section of sections) {
   }
 }
 
-// Barra de progreso
 const total = totalOk + totalError + totalPending;
 const pct   = total > 0 ? Math.round((totalOk / (totalOk + totalError)) * 100) : 0;
 
@@ -248,27 +220,20 @@ html += `
   <h3>📊 Resumen</h3>
   <div class="summary-box">
     <div class="summary-row"><span>✓ OK</span><span class="ok">${totalOk}</span></div>
-    <div class="summary-row"><span>✗ Con error</span><span class="error">${totalError}</span></div>
+    <div class="summary-row"><span>✗ Error</span><span class="error">${totalError}</span></div>
     <div class="summary-row"><span>○ Pendiente</span><span class="warn">${totalPending}</span></div>
-    <div class="summary-row"><span>Total archivos</span><span>${total}</span></div>
+    <div class="summary-row"><span>Total</span><span>${total}</span></div>
     <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-    <div style="font-size:11px; color:rgba(201,168,76,0.5);">${pct}% de archivos activos sin error</div>
+    <div style="font-size:11px;color:rgba(201,168,76,0.5);">${pct}% sin error</div>
   </div>
 `;
 
-// Log de errores agrupado
 if (errors.length > 0) {
-  html += `
-    <div class="error-log" style="display:block;">
-      <h4>⚠ LOG DE ERRORES (${errors.length})</h4>
-      ${errors.map(e => `
-        <div class="error-entry">
-          <span style="color:#c9a84c;">${e.path}</span><br>
-          ${e.msg}
-        </div>
-      `).join('')}
-    </div>
-  `;
+  html += `<div class="error-log"><h4 style="color:#e74c3c;font-size:11px;letter-spacing:2px;margin-bottom:8px;">⚠ ERRORES (${errors.length})</h4>`;
+  errors.forEach(e => {
+    html += `<div class="error-entry"><span style="color:#c9a84c;">${e.path}</span><br>${e.msg}</div>`;
+  });
+  html += '</div>';
 }
 
 resultsDiv.innerHTML = html;
