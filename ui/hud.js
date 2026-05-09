@@ -106,7 +106,7 @@ export class HUD {
     this._buildEnemyBar();
     this._buildPlayerHpBar();
     this._buildEnergyBar();
-    this._buildAttackButton();
+   // this._buildAttackButton();// 
     // SkillBar maneja los botones de habilidades desde Fase 6
 // if (this.skills) this._buildSkillButton();
 
