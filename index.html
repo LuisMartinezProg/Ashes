@@ -632,6 +632,11 @@
 <div id="audio-note">ACTIVA EL AUDIO PARA MEJOR EXPERIENCIA</div>
 
 <script>
+  window.onerror = (msg, src, line) => {
+  document.body.innerHTML = `<div style="color:red;padding:20px;font-family:monospace;font-size:14px;">
+    ERROR: ${msg}<br>Línea: ${line}
+  </div>`;
+};
 // ══════════════════════════════════════════════
 //  ASHES OF THE REBORN — INTRO ENGINE
 //  Valiant Gaming © 2026
