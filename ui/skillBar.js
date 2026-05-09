@@ -1,12 +1,11 @@
-// ui/skillBar.js — Layout circular tipo rueda
+// ui/skillBar.js — Layout circular con labels de texto bajo cada botón
 import { RARITY_COLORS } from '../core/skillData.js';
 
 const RARITY_LABELS = { common:'C', rare:'R', epic:'E', legendary:'L' };
 
-// Posiciones de las 4 habilidades alrededor del centro
-// Ángulos: arriba-izquierda, arriba, arriba-derecha, abajo-derecha
-const SKILL_ANGLES = [135, 60, 0, 270]; // grados
-const SKILL_RADIUS = 88; // distancia del centro
+const SKILL_ANGLES  = [90, 30, 210, 270]; // arriba, arriba-derecha, abajo-izquierda, abajo
+const SKILL_RADIUS  = 100;
+const LABEL_OFFSET  = 38; // distancia extra hacia afuera para el label
 
 export class SkillBar {
   constructor(skillSystem, progression) {
@@ -43,54 +42,57 @@ export class SkillBar {
   hide() { this._container.style.display = 'none'; }
 
   _build() {
-    const SIZE   = 220; // tamaño del contenedor
-    const CENTER = SIZE / 2;
+    // El contenedor necesita espacio extra para los labels que sobresalen
+    const SIZE    = 300;
+    const CENTER  = SIZE / 2;
 
     this._container = document.createElement('div');
     Object.assign(this._container.style, {
-      position : 'fixed',
-      bottom   : '20px',
-      right    : '10px',
-      width    : `${SIZE}px`,
-      height   : `${SIZE}px`,
+      position     : 'fixed',
+      bottom       : '10px',
+      right        : '0px',
+      width        : `${SIZE}px`,
+      height       : `${SIZE}px`,
       pointerEvents: 'none',
-      zIndex   : '120',
+      zIndex       : '120',
     });
 
-    // Fondo oscuro circular
+    // Fondo circular oscuro — igual que imagen 1
     const bg = document.createElement('div');
     Object.assign(bg.style, {
-      position : 'absolute',
-      inset    : '0',
-      borderRadius: '50%',
-      background: 'rgba(8,6,16,0.72)',
-      border   : '1px solid rgba(255,255,255,0.06)',
+      position     : 'absolute',
+      // El círculo visible es más pequeño que el contenedor (dejar espacio a labels)
+      inset        : '30px',
+      borderRadius : '50%',
+      background   : 'rgba(8,6,16,0.82)',
+      border       : '1px solid rgba(255,255,255,0.10)',
+      boxShadow    : '0 0 40px rgba(0,0,0,0.7)',
     });
     this._container.appendChild(bg);
 
-    // Botón de ataque — centro
+    // Botón de ataque central
     this._attackBtn = document.createElement('button');
     this._attackBtn.textContent = '⚔️';
     Object.assign(this._attackBtn.style, {
-      position : 'absolute',
-      width    : '72px',
-      height   : '72px',
-      left     : `${CENTER - 36}px`,
-      top      : `${CENTER - 36}px`,
-      borderRadius: '50%',
-      border   : '2px solid rgba(255,200,100,0.7)',
-      background: 'rgba(160,50,20,0.9)',
-      color    : '#ffe',
-      fontSize : '26px',
-      cursor   : 'pointer',
+      position     : 'absolute',
+      width        : '76px',
+      height       : '76px',
+      left         : `${CENTER - 38}px`,
+      top          : `${CENTER - 38}px`,
+      borderRadius : '50%',
+      border       : '2.5px solid rgba(255,200,80,0.85)',
+      background   : 'rgba(160,50,20,0.95)',
+      color        : '#fff',
+      fontSize     : '28px',
+      cursor       : 'pointer',
       pointerEvents: 'all',
-      display  : 'flex',
-      alignItems: 'center',
+      display      : 'flex',
+      alignItems   : 'center',
       justifyContent: 'center',
       WebkitTapHighlightColor: 'transparent',
-      boxShadow: '0 0 18px rgba(255,100,50,0.5)',
-      transition: 'transform 0.08s',
-      zIndex   : '2',
+      boxShadow    : '0 0 22px rgba(255,100,50,0.55)',
+      transition   : 'transform 0.08s',
+      zIndex       : '3',
     });
 
     const onAtk = (e) => {
@@ -100,61 +102,68 @@ export class SkillBar {
       setTimeout(() => this._attackBtn.style.transform = 'scale(1)', 140);
     };
     this._attackBtn.addEventListener('touchstart', onAtk, { passive: false });
-    this._attackBtn.addEventListener('mousedown', onAtk);
+    this._attackBtn.addEventListener('mousedown',  onAtk);
     this._container.appendChild(this._attackBtn);
 
-    // 4 habilidades en círculo
+    // 4 habilidades en círculo con label
     SKILL_ANGLES.forEach((angleDeg, i) => {
       const rad = (angleDeg * Math.PI) / 180;
-      const x   = CENTER + Math.cos(rad) * SKILL_RADIUS - 24;
-      const y   = CENTER - Math.sin(rad) * SKILL_RADIUS - 24;
+      const bx  = CENTER + Math.cos(rad) * SKILL_RADIUS - 28; // -28 = mitad del botón (56px)
+      const by  = CENTER - Math.sin(rad) * SKILL_RADIUS - 28;
 
-      const btn = this._buildSkillBtn(i, x, y);
-      this._buttons.push(btn);
-      this._container.appendChild(btn);
+      const { wrap, label } = this._buildSkillBtn(i, bx, by, rad);
+      this._buttons.push(wrap);
+      this._container.appendChild(wrap);
+      this._container.appendChild(label); // label es hermano, posicionado aparte
+      wrap._label = label; // referencia para _updateButton
     });
 
     document.body.appendChild(this._container);
   }
 
-  _buildSkillBtn(index, x, y) {
+  _buildSkillBtn(index, x, y, angleRad) {
+    // Wrapper del botón
     const wrap = document.createElement('div');
     Object.assign(wrap.style, {
-      position : 'absolute',
-      left     : `${x}px`,
-      top      : `${y}px`,
-      width    : '48px',
-      height   : '48px',
-      borderRadius: '50%',
-      border   : '2px solid rgba(255,255,255,0.18)',
-      background: 'rgba(12,10,22,0.9)',
-      cursor   : 'pointer',
+      position     : 'absolute',
+      left         : `${x}px`,
+      top          : `${y}px`,
+      width        : '56px',
+      height       : '56px',
+      borderRadius : '50%',
+      border       : '2px solid rgba(255,255,255,0.22)',
+      background   : 'rgba(18,14,32,0.95)',
+      cursor       : 'pointer',
       pointerEvents: 'all',
-      overflow : 'hidden',
+      overflow     : 'hidden',
       WebkitTapHighlightColor: 'transparent',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.6)',
-      transition: 'transform 0.08s',
-      display  : 'flex',
-      alignItems: 'center',
+      boxShadow    : '0 2px 12px rgba(0,0,0,0.7)',
+      transition   : 'transform 0.08s',
+      display      : 'flex',
+      alignItems   : 'center',
       justifyContent: 'center',
-      zIndex   : '2',
+      zIndex       : '3',
     });
 
+    // Icono de la habilidad
     const icon = document.createElement('div');
     icon.className = 'skill-icon';
-    icon.style.cssText = 'font-size:20px;line-height:1;position:absolute;';
+    icon.style.cssText = 'font-size:22px;line-height:1;position:absolute;filter:brightness(0) invert(1);';
 
+    // Badge de rareza (esquina)
     const rarity = document.createElement('div');
     rarity.className = 'skill-rarity';
-    rarity.style.cssText = 'position:absolute;top:2px;left:4px;font-size:7px;font-family:monospace;font-weight:bold;';
+    rarity.style.cssText = 'position:absolute;top:3px;left:5px;font-size:7px;font-family:monospace;font-weight:bold;';
 
+    // Overlay de cooldown
     const cooldown = document.createElement('div');
     cooldown.className = 'skill-cooldown';
     cooldown.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:0%;background:rgba(0,0,0,0.65);transition:height 0.1s linear;pointer-events:none;';
 
+    // Candado para habilidades bloqueadas
     const lock = document.createElement('div');
     lock.className = 'skill-lock';
-    lock.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);font-size:14px;opacity:0;pointer-events:none;';
+    lock.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);font-size:16px;opacity:0;pointer-events:none;';
     lock.textContent = '🔒';
 
     wrap.appendChild(icon);
@@ -162,6 +171,33 @@ export class SkillBar {
     wrap.appendChild(cooldown);
     wrap.appendChild(lock);
 
+    // ── Label de texto (fuera del botón, como en imagen 1) ──
+    // Posicionar el label empujándolo hacia afuera desde el centro
+    const CENTER = 150; // SIZE/2
+    const lx = CENTER + Math.cos(angleRad) * (SKILL_RADIUS + LABEL_OFFSET);
+    const ly = CENTER - Math.sin(angleRad) * (SKILL_RADIUS + LABEL_OFFSET);
+
+    const label = document.createElement('div');
+    label.className = 'skill-label';
+    Object.assign(label.style, {
+      position    : 'absolute',
+      left        : `${lx}px`,
+      top         : `${ly}px`,
+      transform   : 'translate(-50%, -50%)',
+      color       : 'rgba(255,255,255,0.90)',
+      fontSize    : '10px',
+      fontFamily  : 'system-ui, sans-serif',
+      fontWeight  : '500',
+      textAlign   : 'center',
+      whiteSpace  : 'nowrap',
+      pointerEvents: 'none',
+      textShadow  : '0 1px 4px rgba(0,0,0,0.9)',
+      zIndex      : '4',
+      maxWidth    : '70px',
+      lineHeight  : '1.2',
+    });
+
+    // Eventos
     const onPress = (e) => {
       e.preventDefault();
       if (!wrap.dataset.skillId || wrap.dataset.locked === 'true') return;
@@ -170,22 +206,35 @@ export class SkillBar {
       setTimeout(() => wrap.style.transform = 'scale(1)', 140);
     };
     wrap.addEventListener('touchstart', onPress, { passive: false });
-    wrap.addEventListener('mousedown', onPress);
+    wrap.addEventListener('mousedown',  onPress);
 
-    return wrap;
+    return { wrap, label };
   }
 
   _updateButton(index, skill) {
     const btn = this._buttons[index];
     if (!btn) return;
+
     btn.dataset.skillId = skill.id;
     btn.dataset.locked  = skill.available ? 'false' : 'true';
+
     btn.querySelector('.skill-icon').textContent   = skill.icon;
     const r = btn.querySelector('.skill-rarity');
-    r.textContent = RARITY_LABELS[skill.rarity];
-    r.style.color = RARITY_COLORS[skill.rarity];
-    btn.style.borderColor = skill.available ? RARITY_COLORS[skill.rarity] : 'rgba(255,255,255,0.1)';
+    r.textContent  = RARITY_LABELS[skill.rarity];
+    r.style.color  = RARITY_COLORS[skill.rarity];
+
+    btn.style.borderColor = skill.available
+      ? RARITY_COLORS[skill.rarity]
+      : 'rgba(255,255,255,0.12)';
+
     btn.querySelector('.skill-lock').style.opacity = skill.available ? '0' : '1';
+
+    // Actualizar label con el nombre de la habilidad
+    if (btn._label) {
+      btn._label.textContent = skill.name ?? skill.id;
+      btn._label.style.opacity = skill.available ? '1' : '0.4';
+    }
+
     this._applyCooldown(btn, this._cooldowns[skill.id] ?? 1);
   }
 
