@@ -799,16 +799,13 @@ function advance() {
 // ── SEQUENCES ────────────────────────────────
 
 const SEQ_DEATH = [
-  {type:'dir',  box:'death', text:'Barranquilla, Colombia. Noche. Lluvia pesada.'},
-  {type:'dir',  box:'death', text:'Una tienda pequeña. Luz de neón blanca. El protagonista está en el mostrador.'},
-  {type:'line', box:'death', speaker:'Tendero',      text:'Ya está, son doce mil.'},
-  {type:'dir',  box:'death', text:'La puerta se abre de golpe. Un hombre encapuchado. Pistola en mano. Todo cambia en un segundo.'},
-  {type:'line', box:'death', speaker:'Asaltante',    text:'Quietos. Nadie se mueva.'},
-  {type:'line', box:'death', speaker:'Asaltante',    text:'La caja. Todo lo que hay. Ya.'},
-  {type:'dir',  box:'death', text:'El tendero saca los billetes. El asaltante los cuenta. No son suficientes. Vuelve a apuntar.'},
-  {type:'dir',  box:'death', text:'El protagonista ve sus ojos — ya no hay duda. Da un paso al frente.'},
-  {type:'line', box:'death', speaker:'Protagonista', text:'Ya tienes lo que querías.'},
-  {type:'dir',  box:'death', text:'El asaltante gira. Un segundo. Solo la lluvia.'},
+  {type:'dir',  box:'death', text:'Colombia. Mañana. El protagonista en la parte trasera del bus. Último día antes del vuelo.'},
+  {type:'dir',  box:'death', text:'Audífonos puestos. Tiquete de avión en la mano. Todo estaba bien.'},
+  {type:'dir',  box:'death', text:'El bus frena de golpe. Dos hombres encapuchados. Armas visibles. Los pasajeros se congelan.'},
+  {type:'line', box:'death', speaker:'Asaltante', text:'¡Todo el mundo quieto! ¡Manos donde las vea! ¡Esto es un atraco!'},
+  {type:'dir',  box:'death', text:'El protagonista mira el tiquete. La mochila. El reloj de su padre en la muñeca. Años de trabajo. La fiesta de esta noche. El vuelo de mañana.'},
+  {type:'line', box:'death', speaker:'Asaltante', text:'Tú. La mochila. Ya.'},
+  {type:'dir',  box:'death', text:'El protagonista no la suelta. Un segundo de duda — uno solo. Suficiente.'},
   {type:'action', fn(next) {
     waiting = false;
     document.getElementById('death-dialogue').classList.remove('visible');
@@ -829,23 +826,34 @@ const SEQ_DEATH = [
 
 const SEQ_LIMBO = [
   {type:'dir',  box:'limbo', text:'Silencio absoluto. Luz blanca sin forma. Sin suelo. Sin horizonte. Sin dolor.'},
-  {type:'dir',  box:'limbo', text:'El protagonista está de pie. Mira sus manos. Las cierra. Las abre. Reales. Sólidas.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Qué...?'},
-  {type:'dir',  box:'limbo', text:'Una presencia aparece. No llega caminando. Simplemente — está. Su forma no es fija, cambia sutilmente.'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Curioso. Te resististe.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Dónde estoy?'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'En el espacio entre lo que fuiste y lo que podrías ser. No tiene nombre más útil que ese.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'Estoy muerto.'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Esa palabra implica un final. Lo que tienes frente a ti no lo es.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Quién eres?'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Soy quien te eligió. Antes de que nacieras. Antes de que murieras. Antes de que tuvieras un nombre que recordar.'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'He enviado almas antes que tú. Con voluntad. Con inteligencia. Con poder. Todas fallaron.'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Tú diste un paso al frente por un hombre que no conocías. Sin calcular. Sin dudar. Eso no se puede enseñar.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Qué me estás pidiendo?'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'No te pido nada. Te ofrezco una segunda vida en un mundo que no conoces, con un conflicto que lleva siglos sin resolverse. Puedes aceptar... o simplemente dejar de ser.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Y si acepto y fallo también?'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Entonces esta conversación nunca habrá ocurrido.'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'¿Qué decides?'},
+  {type:'dir',  box:'limbo', text:'El protagonista está de pie. Mira sus manos. Las cierra. Las abre. No está soñando.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Qué...? ¿Dónde...?'},
+  {type:'dir',  box:'limbo', text:'Una presencia. No llega caminando — simplemente está ahí. Sor. Una figura de luz blanca sin forma fija.'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'Bienvenido. Llevas tiempo sin estar consciente de mí, pero yo sí he estado consciente de ti.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Perdón? ¿Quién eres? ¿Dónde estoy? ¿Qué fue lo que pasó en el bus?'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'Eso ya no importa.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'A mí sí me importa. Estaba en un bus. Había un robo. Y ahora estoy aquí, en... esto. ¿Qué es esto, exactamente?'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'Un espacio entre lo que eras y lo que serás. No tienes acceso a lo que pasó porque en este momento no es relevante para lo que viene.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Estoy muerto?'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'Sí.'},
+  {type:'dir',  box:'limbo', text:'Silencio. El protagonista lo procesa. No llora. No entra en pánico. Solo asiente despacio.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'Okay. ¿Y tú qué quieres de mí?'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'Enviarte a otro mundo. Uno que necesita alguien como tú.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Y por qué yo?'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'Porque observé a muchos. Y tú eres el tipo de persona que actúa con firmeza sin necesitar hacerle daño a nadie para lograrlo. Eso es más difícil de encontrar de lo que crees.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'Me estuviste observando.'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'Sí.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Cuánto tiempo?'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'El suficiente.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'Eso es raro. Pero bueno. ¿Y qué me das para ir a este otro mundo? ¿Poderes? ¿Una espada legendaria? ¿Algo?'},
+  {type:'dir',  box:'limbo', text:'Aparece una mochila en el suelo frente al protagonista. La levanta. La abre. Comida para tres días. Un cuchillo.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿En serio?'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'El resto depende de ti.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Hay algo más que deba saber antes de que me mandes?'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'Hay un conflicto. Otros antes que tú intentaron resolverlo. No pudieron.'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'Tú puedes.'},
+  {type:'line', box:'limbo', speaker:'Protagonista', text:'Qué motivador. Gracias.'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'¿Qué decides?'},
   {type:'choice', box:'limbo', branches:{
     accept: () => runSeq(SEQ_ACCEPT, goMenu),
     refuse: () => runSeq(SEQ_REFUSE1, null),
@@ -854,19 +862,18 @@ const SEQ_LIMBO = [
 
 const SEQ_ACCEPT = [
   {type:'line', box:'limbo', speaker:'Protagonista', text:'De acuerdo.'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Bien.'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Llegarás sin nada. Sin recuerdos de este lugar. Solo con lo que siempre fuiste.'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'Bien.'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'Llegarás sin nada. Sin recuerdos de este lugar. Solo con lo que siempre fuiste.'},
   {type:'line', box:'limbo', speaker:'Protagonista', text:'Espera — ¿cómo sabré qué hacer?'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Lo mismo que hiciste esta noche. Dar un paso al frente.'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'Lo mismo que hiciste esta noche. Dar un paso al frente.'},
   {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Volveré a verte?'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Al final de todo... puede que descubras que siempre estuve ahí.'},
-  {type:'dir',  box:'limbo', text:'Las palabras se vuelven eco. La luz lo consume todo.'},
+  {type:'line', box:'limbo', speaker:'Sor', text:'Al final de todo... puede que descubras que siempre estuve ahí.'},
+  {type:'dir',  box:'limbo', text:'Sor no responde. La luz del pasaje aumenta lentamente hasta cubrirlo todo.'},
   {type:'action', fn(next) {
     document.getElementById('limbo-dialogue').classList.remove('visible');
     fadeOut(() => next(), 2000);
   }}
 ];
-
 const SEQ_REFUSE1 = [
   {type:'line', box:'limbo', speaker:'Protagonista', text:'No.'},
   {type:'line', box:'limbo', speaker:'Aeondris',     text:'Entendible.'},
