@@ -58,17 +58,29 @@ export class BuildMenu {
     this._renderPanel();
   }
 
-  _renderPanel() {
-    this._panel.innerHTML = `
-      <div style="padding:16px 20px 8px; display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;color:#c9a84c;text-transform:uppercase;">
-          Construcción
-        </span>
-        <span id="build-town-name" style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:#8a6f2e;"></span>
-        <button onclick="this.closest('.build-panel-root')._close()" 
-          style="background:none;border:none;color:#5a4e3a;font-size:18px;cursor:pointer;">✕</button>
-      </div>
+_renderPanel() {
+  this._panel.innerHTML = `
+    <div style="padding:16px 20px 8px; display:flex; justify-content:space-between; align-items:center;">
+      <button id="build-close-btn"
+        style="background:none;border:none;color:#5a4e3a;font-size:18px;cursor:pointer;pointer-events:all;">✕</button>
+      <span style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;color:#c9a84c;text-transform:uppercase;">
+        Construcción
+      </span>
+      <span id="build-town-name" style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:#8a6f2e;"></span>
+    </div>
+    <div id="build-inventory" style="display:flex;gap:12px;padding:0 20px 12px;flex-wrap:wrap;"></div>
+    <div id="build-tabs" style="display:flex;gap:0;border-bottom:1px solid rgba(201,168,76,0.15);padding:0 20px;overflow-x:auto;"></div>
+    <div id="build-list" style="overflow-y:auto;padding:8px 16px 24px;display:flex;flex-direction:column;gap:8px;"></div>
+  `;
 
+  // botón ✕ funcional
+  this._panel.querySelector('#build-close-btn')
+    .addEventListener('click', () => this.close());
+
+  this._renderTabs();
+  this._renderInventory();
+  this._renderList('basico');
+      }
       <!-- Inventario -->
       <div id="build-inventory" style="display:flex;gap:12px;padding:0 20px 12px;flex-wrap:wrap;"></div>
 
