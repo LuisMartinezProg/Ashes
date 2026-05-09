@@ -933,21 +933,6 @@ function startGame() {
   }, 900);
 }
   
-    const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;inset:0;background:#04040A;display:flex;align-items:center;justify-content:center;z-index:300;opacity:0;transition:opacity 1.2s;';
-    el.innerHTML = `<div style="text-align:center;">
-      <p style="font-family:'Cinzel',serif;font-size:clamp(0.7rem,1.4vw,0.95rem);
-         letter-spacing:0.3em;color:#C9A84C;margin-bottom:16px;">IRONFELL — BETA v0.1</p>
-      <p style="font-family:'EB Garamond',serif;font-style:italic;
-         font-size:clamp(0.9rem,1.6vw,1.1rem);color:#7A7060;">
-         El mundo de Aeltherion está siendo construido...</p>
-      <p style="font-family:'Cinzel',serif;font-size:0.6rem;
-         letter-spacing:0.25em;color:#4A4030;margin-top:40px;">
-         Three.js • Próximamente</p>
-    </div>`;
-    document.body.appendChild(el);
-    fadeIn(() => requestAnimationFrame(()=>requestAnimationFrame(()=>el.style.opacity='1')), 1000);
-  }, 900);
 }
 
 function replayIntro() {
