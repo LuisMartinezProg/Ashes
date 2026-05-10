@@ -75,6 +75,9 @@ export class HUD {
   }
 
   _onCollect() {
+    const now = Date.now();
+    if (this._lastCollect && now - this._lastCollect < 800) return;
+    this._lastCollect = now;
     const res = this._currentResource;
     if (!res || res.depleted) return;
 
