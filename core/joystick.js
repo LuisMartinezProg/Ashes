@@ -1,26 +1,22 @@
-/**
- * joystick.js — Virtual joystick táctil para móvil
- * Ashes of the Reborn | Valiant Gaming
- */
+// core/joystick.js — Ashes of the Reborn | Valiant Gaming
 
 export class VirtualJoystick {
   constructor() {
-    this.active   = false;
-    this.touchId  = null;
-    this.baseX    = 0;
-    this.baseY    = 0;
-    this.stickX   = 0;
-    this.stickY   = 0;
-    this.radius   = 55;
-    this.dx       = 0;
-    this.dy       = 0;
+    this.active  = false;
+    this.touchId = null;
+    this.baseX   = 0;
+    this.baseY   = 0;
+    this.stickX  = 0;
+    this.stickY  = 0;
+    this.radius  = 70;
+    this.dx      = 0;
+    this.dy      = 0;
     this._createCanvas();
     this._bindEvents();
   }
 
   _createCanvas() {
     this.canvas = document.createElement('canvas');
-    this.canvas.id = 'joystick-canvas';
     Object.assign(this.canvas.style, {
       position     : 'fixed',
       bottom       : '0',
@@ -34,56 +30,51 @@ export class VirtualJoystick {
     document.body.appendChild(this.canvas);
     this.ctx = this.canvas.getContext('2d');
     this._resize();
+    window.addEventListener('resize', () => this._resize());
   }
 
   _resize() {
     const dpr = window.devicePixelRatio || 1;
-    this.canvas.width  = window.innerWidth  * 0.5 * dpr;
-    this.canvas.height = window.innerHeight * dpr;
-    this.canvas.style.width  = window.innerWidth * 0.5 + 'px';
-    this.canvas.style.height = window.innerHeight + 'px';
-
-    // Recalcular posición fija de la base
+    const w   = window.innerWidth  * 0.5;
+    const h   = window.innerHeight;
+    this.canvas.width  = w * dpr;
+    this.canvas.height = h * dpr;
+    this.canvas.style.width  = w + 'px';
+    this.canvas.style.height = h + 'px';
+    this.radius = Math.round(Math.min(w, h) * 0.18);
     this._updateBase();
     this._draw();
   }
 
   _updateBase() {
-    // Fijo en esquina inferior izquierda
-    this.baseX = 110;
-    this.baseY = (this.canvas.height / (window.devicePixelRatio || 1)) - 130;
-    if (!this.active) {
-      this.stickX = this.baseX;
-      this.stickY = this.baseY;
-    }
+    const w = this.canvas.width  / (window.devicePixelRatio || 1);
+    const h = this.canvas.height / (window.devicePixelRatio || 1);
+    this.baseX = this.radius + 24;
+    this.baseY = h - this.radius - 24;
+    if (!this.active) { this.stickX = this.baseX; this.stickY = this.baseY; }
   }
 
   _bindEvents() {
-    this.canvas.addEventListener('touchstart',  this._onStart.bind(this),  { passive: false });
-    this.canvas.addEventListener('touchmove',   this._onMove.bind(this),   { passive: false });
-    this.canvas.addEventListener('touchend',    this._onEnd.bind(this),    { passive: false });
-    this.canvas.addEventListener('touchcancel', this._onEnd.bind(this),    { passive: false });
-    window.addEventListener('resize', this._resize.bind(this));
+    this.canvas.addEventListener('touchstart',  this._onStart.bind(this), { passive: false });
+    this.canvas.addEventListener('touchmove',   this._onMove.bind(this),  { passive: false });
+    this.canvas.addEventListener('touchend',    this._onEnd.bind(this),   { passive: false });
+    this.canvas.addEventListener('touchcancel', this._onEnd.bind(this),   { passive: false });
   }
 
   _onStart(e) {
     e.preventDefault();
     if (this.active) return;
-
     const touch = e.changedTouches[0];
     this.active  = true;
     this.touchId = touch.identifier;
-
-    // Base FIJA — ignorar dónde tocó el jugador
-    this.stickX = this.baseX;
-    this.stickY = this.baseY;
+    this.stickX  = this.baseX;
+    this.stickY  = this.baseY;
     this._draw();
   }
 
   _onMove(e) {
     e.preventDefault();
     if (!this.active) return;
-
     let touch = null;
     for (const t of e.changedTouches) {
       if (t.identifier === this.touchId) { touch = t; break; }
@@ -93,19 +84,16 @@ export class VirtualJoystick {
     const rect = this.canvas.getBoundingClientRect();
     const rawX = touch.clientX - rect.left;
     const rawY = touch.clientY - rect.top;
-
     const ddx  = rawX - this.baseX;
     const ddy  = rawY - this.baseY;
     const dist = Math.sqrt(ddx * ddx + ddy * ddy);
-    const clamped = Math.min(dist, this.radius);
-    const angle   = Math.atan2(ddy, ddx);
+    const clamp = Math.min(dist, this.radius);
+    const angle = Math.atan2(ddy, ddx);
 
-    this.stickX = this.baseX + Math.cos(angle) * clamped;
-    this.stickY = this.baseY + Math.sin(angle) * clamped;
-
-    this.dx = (dist > 8) ? Math.cos(angle) * Math.min(dist / this.radius, 1) : 0;
-    this.dy = (dist > 8) ? Math.sin(angle) * Math.min(dist / this.radius, 1) : 0;
-
+    this.stickX = this.baseX + Math.cos(angle) * clamp;
+    this.stickY = this.baseY + Math.sin(angle) * clamp;
+    this.dx = dist > 8 ? Math.cos(angle) * Math.min(dist / this.radius, 1) : 0;
+    this.dy = dist > 8 ? Math.sin(angle) * Math.min(dist / this.radius, 1) : 0;
     this._draw();
   }
 
@@ -127,57 +115,63 @@ export class VirtualJoystick {
 
   _draw() {
     const dpr = window.devicePixelRatio || 1;
-    const ctx  = this.ctx;
-    const w    = this.canvas.width;
-    const h    = this.canvas.height;
-
-    ctx.clearRect(0, 0, w, h);
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     const bx = this.baseX * dpr;
     const by = this.baseY * dpr;
     const r  = this.radius * dpr;
 
-    // Base — siempre visible
+    // Anillo exterior
     ctx.beginPath();
     ctx.arc(bx, by, r, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-    ctx.lineWidth   = 2 * dpr;
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+    ctx.lineWidth   = 2.5 * dpr;
     ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.fill();
 
-    // Stick — siempre visible (en centro cuando inactivo)
-    const sx = this.stickX * dpr;
-    const sy = this.stickY * dpr;
-
-    if (this.active) {
-      // Línea base → stick
-      ctx.beginPath();
-      ctx.moveTo(bx, by);
-      ctx.lineTo(sx, sy);
-      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-      ctx.lineWidth   = 1.5 * dpr;
-      ctx.stroke();
-    }
+    // Flechas direccionales
+    this._drawArrow(ctx, bx, by - r * 0.65, 0,            dpr);
+    this._drawArrow(ctx, bx, by + r * 0.65, Math.PI,      dpr);
+    this._drawArrow(ctx, bx + r * 0.65, by, Math.PI * 0.5, dpr);
+    this._drawArrow(ctx, bx - r * 0.65, by, -Math.PI * 0.5, dpr);
 
     // Stick
-    const sr   = 22 * dpr;
+    const sx = this.stickX * dpr;
+    const sy = this.stickY * dpr;
+    const sr = this.radius * 0.38 * dpr;
+
     const grad = ctx.createRadialGradient(
-      sx - sr * 0.3, sy - sr * 0.3, sr * 0.1,
-      sx, sy, sr
+      sx - sr * 0.3, sy - sr * 0.3, sr * 0.1, sx, sy, sr
     );
-    grad.addColorStop(0, 'rgba(255,200,100,0.85)');
-    grad.addColorStop(1, 'rgba(200,100,30,0.55)');
+    grad.addColorStop(0, 'rgba(220,190,120,0.9)');
+    grad.addColorStop(1, 'rgba(120,80,30,0.7)');
 
     ctx.beginPath();
     ctx.arc(sx, sy, sr, 0, Math.PI * 2);
     ctx.fillStyle = grad;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,200,100,0.45)';
-    ctx.lineWidth   = 1.5 * dpr;
+    ctx.strokeStyle = 'rgba(255,200,100,0.5)';
+    ctx.lineWidth   = 2 * dpr;
     ctx.stroke();
+  }
+
+  _drawArrow(ctx, x, y, rotation, dpr) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    ctx.beginPath();
+    const s = 6 * dpr;
+    ctx.moveTo(0, -s);
+    ctx.lineTo(s * 0.7, s * 0.5);
+    ctx.lineTo(-s * 0.7, s * 0.5);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fill();
+    ctx.restore();
   }
 
   getInput() { return { dx: this.dx, dy: this.dy }; }
   destroy()  { this.canvas.remove(); }
-      }
+}
