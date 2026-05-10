@@ -145,6 +145,7 @@ async function boot() {
 
     setProgress(68, 'HUD...');
     const hud = new HUD(combat, skills);
+    setResourceCallback((resource) => hud.showCollectBtn(resource));
 
     setProgress(70, 'spawnEnemies...');
     const enemies = spawnEnemies(scene, player);
