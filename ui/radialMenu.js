@@ -22,8 +22,9 @@ export class RadialMenu {
     `;
     Object.assign(this._btn.style, {
       position : 'fixed',
-      bottom   : '248px',  // justo encima de la rueda de skills
-      right    : '14px',
+      top      : '10px',   // ← arriba
+      right    : '10px',   // ← derecha
+      bottom   : 'auto',
       width    : '44px',
       height   : '44px',
       borderRadius: '50%',
@@ -63,9 +64,9 @@ export class RadialMenu {
 
     const count  = this._items.length;
     // Arco hacia la izquierda: de 120° a 240° (izquierda-arriba hasta izquierda-abajo)
-    const startA = Math.PI * 0.65;
-    const endA   = Math.PI * 1.35;
-    const radius = 75;
+    const startA = Math.PI * 0.6;
+    const endA   = Math.PI * 1.4;
+    const radius = 90;
 
     this._items.forEach((item, i) => {
       const angle = count > 1
