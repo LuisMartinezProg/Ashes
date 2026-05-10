@@ -39,19 +39,19 @@ export class SkillBar {
 
   show() { this._container.style.display = 'block'; }
   hide() { this._container.style.display = 'none'; }
-
   _sizes() {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
+  const isLandscape = vw > vh;
+  const ref = isLandscape ? vh : vw;
   return {
-    attackSize : Math.round(vw * 0.18),
-    skillSize  : Math.round(vw * 0.13),
-    radius     : Math.round(vw * 0.30),
-    marginR    : Math.round(vw * 0.03),
-    marginB    : Math.round(vh * 0.03),
+    attackSize : Math.round(ref * 0.18),
+    skillSize  : Math.round(ref * 0.13),
+    radius     : Math.round(ref * 0.30),
+    marginR    : Math.round(ref * 0.04),
+    marginB    : Math.round(ref * 0.04),
   };
-  }
-    
+    }
 
   _rebuild() {
     if (this._container) this._container.remove();
