@@ -1,9 +1,7 @@
-// ui/skillBar.js
+// ui/skillBar.js — Ashes of the Reborn | Valiant Gaming
 import { RARITY_COLORS } from '../core/skillData.js';
 
 const RARITY_LABELS = { common:'C', rare:'R', epic:'E', legendary:'L' };
-
-const SKILL_ANGLES = [140, 180, 220];
 
 export class SkillBar {
   constructor(skillSystem, progression) {
@@ -18,12 +16,19 @@ export class SkillBar {
     window.addEventListener('resize', () => this._rebuild());
   }
 
-  setWeapon(weaponType) { this._weapon = weaponType; this.refresh(); }
+  setWeapon(type)  { this._weapon = type; this.refresh(); }
+  show()           { this._container.style.display = 'flex'; }
+  hide()           { this._container.style.display = 'none'; }
+
+  setWeaponIcon(type) {
+    const icons = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
+    if (this._attackBtn) this._attackBtn.textContent = icons[type] ?? '⚔️';
+  }
 
   refresh() {
     if (!this._weapon) return;
     const skills = this.progression.getActiveSkills(this._weapon).slice(0, 3);
-    skills.forEach((skill, i) => this._updateButton(i, skill));
+    skills.forEach((sk, i) => this._updateButton(i, sk));
   }
 
   setCooldown(skillId, progress) {
@@ -32,80 +37,88 @@ export class SkillBar {
     if (btn) this._applyCooldown(btn, progress);
   }
 
-  setWeaponIcon(type) {
-    const icons = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
-    if (this._attackBtn) this._attackBtn.textContent = icons[type] ?? '⚔️';
-  }
-
-  show() { this._container.style.display = 'block'; }
-  hide() { this._container.style.display = 'none'; }
-  _sizes() {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const isLandscape = vw > vh;
-  const ref = isLandscape ? vh : vw;
-  return {
-    attackSize : Math.round(ref * 0.18),
-    skillSize  : Math.round(ref * 0.13),
-    radius     : Math.round(ref * 0.30),
-    marginR    : Math.round(ref * 0.04),
-    marginB    : Math.round(ref * 0.04),
-  };
-    }
-
   _rebuild() {
     if (this._container) this._container.remove();
-    this._buttons = [];
+    this._buttons   = [];
     this._attackBtn = null;
     this._build();
     if (this._weapon) this.refresh();
   }
 
+  _sizes() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const ref = Math.min(vw, vh);
+    return {
+      atk : Math.round(ref * 0.18),
+      sk  : Math.round(ref * 0.13),
+      gap : Math.round(ref * 0.025),
+      mb  : Math.round(ref * 0.04),
+      mr  : Math.round(ref * 0.03),
+    };
+  }
+
   _build() {
-    const { attackSize, skillSize, radius, marginR, marginB } = this._sizes();
-    const half = attackSize / 2;
+    const { atk, sk, gap, mb, mr } = this._sizes();
 
-    // Contenedor — lo hacemos grande para que el arco no se corte
-    const SIZE = radius * 2 + skillSize + 20;
-
+    // Contenedor — grid 2x2 + ataque abajo centro
     this._container = document.createElement('div');
     Object.assign(this._container.style, {
       position     : 'fixed',
-      bottom       : `${marginB}px`,
-      right        : `${marginR}px`,
-      width        : `${SIZE}px`,
-      height       : `${SIZE}px`,
+      bottom       : `${mb}px`,
+      right        : `${mr}px`,
+      display      : 'flex',
+      flexDirection: 'column',
+      alignItems   : 'flex-end',
+      gap          : `${gap}px`,
       pointerEvents: 'none',
       zIndex       : '120',
     });
 
-    // El botón de ataque va en la esquina inferior derecha del contenedor
-    const PIVOT_X = SIZE - half - 10;
-    const PIVOT_Y = SIZE - half - 10;
+    // Fila superior: skill 0 y skill 1
+    const row1 = document.createElement('div');
+    Object.assign(row1.style, {
+      display: 'flex', gap: `${gap}px`, alignItems: 'center',
+    });
 
-    // Botón central de ataque
+    // Fila inferior: skill 2 + ataque
+    const row2 = document.createElement('div');
+    Object.assign(row2.style, {
+      display: 'flex', gap: `${gap}px`, alignItems: 'center',
+    });
+
+    // Skill buttons 0, 1 → fila superior
+    for (let i = 0; i < 2; i++) {
+      const btn = this._buildSkillBtn(sk);
+      this._buttons.push(btn);
+      row1.appendChild(btn);
+    }
+
+    // Skill button 2 → fila inferior izquierda
+    const btn2 = this._buildSkillBtn(sk);
+    this._buttons.push(btn2);
+    row2.appendChild(btn2);
+
+    // Botón ataque → fila inferior derecha, más grande
     this._attackBtn = document.createElement('button');
     this._attackBtn.textContent = '⚔️';
     Object.assign(this._attackBtn.style, {
-      position     : 'absolute',
-      width        : `${attackSize}px`,
-      height       : `${attackSize}px`,
-      left         : `${PIVOT_X - half}px`,
-      top          : `${PIVOT_Y - half}px`,
+      width        : `${atk}px`,
+      height       : `${atk}px`,
       borderRadius : '50%',
-      border       : '2.5px solid rgba(255,200,80,0.85)',
-      background   : 'rgba(160,50,20,0.95)',
+      border       : '3px solid rgba(255,200,80,0.9)',
+      background   : 'radial-gradient(circle at 35% 35%, rgba(220,100,40,0.95), rgba(140,40,10,0.95))',
       color        : '#fff',
-      fontSize     : `${Math.round(attackSize * 0.4)}px`,
+      fontSize     : `${Math.round(atk * 0.38)}px`,
       cursor       : 'pointer',
       pointerEvents: 'all',
       display      : 'flex',
       alignItems   : 'center',
       justifyContent: 'center',
       WebkitTapHighlightColor: 'transparent',
-      boxShadow    : '0 0 24px rgba(255,100,50,0.6)',
+      boxShadow    : '0 0 20px rgba(255,120,40,0.6), inset 0 1px 0 rgba(255,255,255,0.2)',
       transition   : 'transform 0.08s',
-      zIndex       : '2',
+      flexShrink   : '0',
     });
 
     const onAtk = (e) => {
@@ -115,48 +128,39 @@ export class SkillBar {
       setTimeout(() => this._attackBtn.style.transform = 'scale(1)', 140);
     };
     this._attackBtn.addEventListener('touchstart', onAtk, { passive: false });
-    this._attackBtn.addEventListener('mousedown', onAtk);
-    this._container.appendChild(this._attackBtn);
+    this._attackBtn.addEventListener('mousedown',  onAtk);
 
-    // 3 botones en arco izquierdo
-    SKILL_ANGLES.forEach((angleDeg, i) => {
-      const rad = (angleDeg * Math.PI) / 180;
-      const x   = PIVOT_X + Math.cos(rad) * radius - skillSize / 2;
-      const y   = PIVOT_Y - Math.sin(rad) * radius - skillSize / 2;
-      const btn = this._buildSkillBtn(skillSize, x, y);
-      this._buttons.push(btn);
-      this._container.appendChild(btn);
-    });
+    row2.appendChild(this._attackBtn);
 
+    this._container.appendChild(row1);
+    this._container.appendChild(row2);
     document.body.appendChild(this._container);
   }
 
-  _buildSkillBtn(size, x, y) {
+  _buildSkillBtn(size) {
     const wrap = document.createElement('div');
     Object.assign(wrap.style, {
-      position     : 'absolute',
-      left         : `${x}px`,
-      top          : `${y}px`,
       width        : `${size}px`,
       height       : `${size}px`,
       borderRadius : '50%',
-      border       : '2px solid rgba(255,255,255,0.18)',
-      background   : 'rgba(12,10,22,0.92)',
+      border       : '2px solid rgba(255,255,255,0.15)',
+      background   : 'rgba(12,10,22,0.88)',
       cursor       : 'pointer',
       pointerEvents: 'all',
       overflow     : 'hidden',
       WebkitTapHighlightColor: 'transparent',
-      boxShadow    : '0 2px 10px rgba(0,0,0,0.7)',
+      boxShadow    : '0 2px 10px rgba(0,0,0,0.6)',
       transition   : 'transform 0.08s',
-      display      : 'none', // oculto hasta que se desbloquee
+      display      : 'none',
       alignItems   : 'center',
       justifyContent: 'center',
-      zIndex       : '2',
+      position     : 'relative',
+      flexShrink   : '0',
     });
 
     const icon = document.createElement('div');
     icon.className = 'skill-icon';
-    icon.style.cssText = `font-size:${Math.round(size * 0.45)}px;line-height:1;position:absolute;`;
+    icon.style.cssText = `font-size:${Math.round(size*0.45)}px;line-height:1;`;
 
     const rarity = document.createElement('div');
     rarity.className = 'skill-rarity';
@@ -179,21 +183,17 @@ export class SkillBar {
     };
     wrap.addEventListener('touchstart', onPress, { passive: false });
     wrap.addEventListener('mousedown',  onPress);
-
     return wrap;
   }
 
   _updateButton(index, skill) {
     const btn = this._buttons[index];
     if (!btn) return;
-
     btn.dataset.skillId = skill.id;
-    btn.querySelector('.skill-icon').textContent = skill.icon;
-
+    btn.querySelector('.skill-icon').textContent   = skill.icon;
     const r = btn.querySelector('.skill-rarity');
     r.textContent = RARITY_LABELS[skill.rarity];
     r.style.color = RARITY_COLORS[skill.rarity];
-
     if (skill.available) {
       btn.style.display     = 'flex';
       btn.style.borderColor = RARITY_COLORS[skill.rarity];
@@ -201,7 +201,6 @@ export class SkillBar {
     } else {
       btn.style.display = 'none';
     }
-
     this._applyCooldown(btn, this._cooldowns[skill.id] ?? 1);
   }
 
