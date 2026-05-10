@@ -1,6 +1,5 @@
 /**
- * ui/radialMenu.js — Menú radial tipo reloj
- * Botón central estrella de 4 puntas, despliega iconos hacia la izquierda
+ * ui/radialMenu.js — Menú radial, botones se deslizan hacia la izquierda
  */
 
 export class RadialMenu {
@@ -22,9 +21,8 @@ export class RadialMenu {
     `;
     Object.assign(this._btn.style, {
       position : 'fixed',
-      top      : '10px',   // ← arriba
-      right    : '10px',   // ← derecha
-      bottom   : 'auto',
+      top      : '10px',
+      right    : '10px',
       width    : '44px',
       height   : '44px',
       borderRadius: '50%',
@@ -57,43 +55,30 @@ export class RadialMenu {
     this._rays.forEach(r => r.remove());
     this._rays = [];
 
-    // Centro del botón ⭐ en viewport
     const btnRect = this._btn.getBoundingClientRect();
-    const cx = btnRect.left + btnRect.width  / 2;
-    const cy = btnRect.top  + btnRect.height / 2;
-
-    const count  = this._items.length;
-    // Arco hacia la izquierda: de 120° a 240° (izquierda-arriba hasta izquierda-abajo)
-    const startA = Math.PI * 0.6;
-    const endA   = Math.PI * 1.4;
-    const radius = 90;
+    const btnCX   = btnRect.left + btnRect.width  / 2;
+    const btnCY   = btnRect.top  + btnRect.height / 2;
+    const size    = 56;
+    const gap     = 8;
 
     this._items.forEach((item, i) => {
-      const angle = count > 1
-        ? startA + (endA - startA) * (i / (count - 1))
-        : Math.PI; // solo uno → directo a la izquierda
-
-      const x = cx + Math.cos(angle) * radius;
-      const y = cy + Math.sin(angle) * radius;
-
       const btn = document.createElement('button');
       btn.innerHTML = `
         <div style="font-size:22px;line-height:1;">${item.icon}</div>
-        <div style="
-          font-family: system-ui, sans-serif;
-          font-size: 8px;
-          letter-spacing: 0.5px;
-          color: ${item.locked ? '#555' : '#c9a84c'};
-          margin-top: 4px;
-          white-space: nowrap;
-        ">${item.label}</div>
+        <div style="font-family:system-ui,sans-serif;font-size:8px;
+             letter-spacing:0.5px;color:${item.locked ? '#555' : '#c9a84c'};
+             margin-top:3px;white-space:nowrap;">${item.label}</div>
       `;
+
+      const finalX = btnCX - (size + gap) * (i + 1) - size / 2;
+      const finalY = btnCY - size / 2;
+
       Object.assign(btn.style, {
         position     : 'fixed',
-        left         : `${x - 28}px`,
-        top          : `${y - 28}px`,
-        width        : '56px',
-        height       : '56px',
+        left         : `${btnCX - size / 2}px`,
+        top          : `${finalY}px`,
+        width        : `${size}px`,
+        height       : `${size}px`,
         borderRadius : '12px',
         border       : `1px solid rgba(201,168,76,${item.locked ? '0.1' : '0.35'})`,
         background   : `rgba(10,8,20,${item.locked ? '0.6' : '0.92'})`,
@@ -103,42 +88,34 @@ export class RadialMenu {
         flexDirection: 'column',
         alignItems   : 'center',
         justifyContent: 'center',
-        opacity      : item.locked ? '0.45' : '1',
+        opacity      : '0',
         WebkitTapHighlightColor: 'transparent',
-        animation    : `radialIn .18s ease ${i * 0.05}s both`,
         boxShadow    : '0 2px 12px rgba(0,0,0,0.6)',
         pointerEvents: 'all',
+        transition   : `left ${0.18 + i * 0.05}s ease, opacity ${0.15 + i * 0.05}s ease`,
       });
 
       if (!item.locked) {
         btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          item.action?.();
-          this.close();
+          e.stopPropagation(); item.action?.(); this.close();
         });
         btn.addEventListener('touchstart', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          item.action?.();
-          this.close();
+          e.preventDefault(); e.stopPropagation();
+          item.action?.(); this.close();
         }, { passive: false });
       }
 
       document.body.appendChild(btn);
       this._rays.push(btn);
-    });
 
-    if (!document.getElementById('radial-styles')) {
-      const s = document.createElement('style');
-      s.id = 'radial-styles';
-      s.textContent = `
-        @keyframes radialIn {
-          from { opacity:0; transform:scale(0.4); }
-          to   { opacity:1; transform:scale(1); }
-        }
-      `;
-      document.head.appendChild(s);
-    }
+      // Animar deslizamiento
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          btn.style.left    = `${finalX}px`;
+          btn.style.opacity = item.locked ? '0.45' : '1';
+        });
+      });
+    });
   }
 
   toggle() { this._open ? this.close() : this.open(); }
