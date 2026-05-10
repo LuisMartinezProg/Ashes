@@ -1,7 +1,8 @@
-// core/scene.js
-// Ashes of the Reborn | Valiant Gaming
-
+// core/scene.js — Ashes of the Reborn | Valiant Gaming
 import * as THREE from 'three';
+
+// Recursos del bosque accesibles globalmente para el sistema de recolección
+export const FOREST_RESOURCES = [];
 
 export async function initScene() {
 
@@ -10,383 +11,242 @@ export async function initScene() {
     antialias: true,
     powerPreference: 'high-performance',
   });
-
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled   = false;
   renderer.toneMapping         = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.6;
+  renderer.toneMappingExposure = 1.4;
   renderer.outputColorSpace    = THREE.SRGBColorSpace;
-
   document.getElementById('canvas-container').appendChild(renderer.domElement);
 
   // ── ESCENA ────────────────────────────────
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x87CEEB);
-  scene.fog = new THREE.FogExp2(0xB0D4F1, 0.008);
+  scene.background = new THREE.Color(0x6A8FA0);
+  scene.fog = new THREE.FogExp2(0x4A6A50, 0.018); // niebla densa del bosque
 
   // ── CÁMARA ────────────────────────────────
   const aspect = window.innerWidth / window.innerHeight;
-  const camera = new THREE.PerspectiveCamera(55, aspect, 0.1, 200);
+  const camera = new THREE.PerspectiveCamera(55, aspect, 0.1, 300);
   camera.position.set(0, 12, 16);
   camera.lookAt(0, 0, 0);
 
   // ── ILUMINACIÓN ───────────────────────────
-  const ambientLight = new THREE.AmbientLight(0xFFF5E0, 3.5);
+  // Luz ambiente fría del bosque
+  const ambientLight = new THREE.AmbientLight(0xB0C8D0, 2.0);
   scene.add(ambientLight);
 
-  const sunLight = new THREE.DirectionalLight(0xFFD580, 3.0);
-  sunLight.position.set(-10, 20, 10);
+  // Sol filtrado entre árboles
+  const sunLight = new THREE.DirectionalLight(0xFFE8A0, 2.0);
+  sunLight.position.set(-20, 40, -10);
   sunLight.castShadow = false;
   scene.add(sunLight);
 
-  const fillLight = new THREE.PointLight(0xFFAA44, 2.0, 30);
-  fillLight.position.set(0, 1, 0);
+  // Luz de relleno verde del bosque
+  const fillLight = new THREE.HemisphereLight(0x88AA66, 0x2A3A1A, 1.2);
   scene.add(fillLight);
 
-  // ── SUELO ─────────────────────────────────
-  const groundGeo = new THREE.PlaneGeometry(80, 80, 1, 1);
-  const groundMat = new THREE.MeshStandardMaterial({
-    color:     0x4A7A3A,
-    roughness: 0.95,
-    metalness: 0.0,
-  });
-  const ground = new THREE.Mesh(groundGeo, groundMat);
-  ground.rotation.x = -Math.PI / 2;
-  scene.add(ground);
+  // ── SUELO GRANDE ──────────────────────────
+  // Bosque (norte) — verde oscuro
+  const forestGround = new THREE.Mesh(
+    new THREE.PlaneGeometry(200, 150),
+    new THREE.MeshStandardMaterial({ color: 0x2A4A1E, roughness: 0.98 })
+  );
+  forestGround.rotation.x = -Math.PI / 2;
+  forestGround.position.set(0, 0, -50); // norte
+  scene.add(forestGround);
 
-  // ── CAMINOS ───────────────────────────────
-  buildPaths(scene);
+  // Planicie (sur) — verde claro
+  const plainsGround = new THREE.Mesh(
+    new THREE.PlaneGeometry(200, 150),
+    new THREE.MeshStandardMaterial({ color: 0x4A7A3A, roughness: 0.95 })
+  );
+  plainsGround.rotation.x = -Math.PI / 2;
+  plainsGround.position.set(0, 0, 80); // sur
+  scene.add(plainsGround);
 
-  // ── PLACEHOLDER JUGADOR (se quita en loop.js) ─
-  const playerGeo = new THREE.CapsuleGeometry(0.4, 1.2, 4, 8);
-  const playerMat = new THREE.MeshStandardMaterial({
-    color:             0xC9A84C,
-    roughness:         0.4,
-    metalness:         0.3,
-    emissive:          0x3A2A00,
-    emissiveIntensity: 0.3,
-  });
-  const playerMesh = new THREE.Mesh(playerGeo, playerMat);
-  playerMesh.position.set(0, 1.0, 0);
+  // Transición bosque → planicie
+  const transGround = new THREE.Mesh(
+    new THREE.PlaneGeometry(200, 40),
+    new THREE.MeshStandardMaterial({ color: 0x3A6028, roughness: 0.96 })
+  );
+  transGround.rotation.x = -Math.PI / 2;
+  transGround.position.set(0, 0, 15);
+  scene.add(transGround);
+
+  // ── PLACEHOLDER JUGADOR ───────────────────
+  const playerMesh = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.4, 1.2, 4, 8),
+    new THREE.MeshStandardMaterial({
+      color: 0xC9A84C, roughness: 0.4, metalness: 0.3,
+      emissive: 0x3A2A00, emissiveIntensity: 0.3,
+    })
+  );
+  playerMesh.position.set(0, 1.0, -30); // spawn en bosque
   playerMesh.name = 'player_placeholder';
   scene.add(playerMesh);
 
-  // ── PUEBLO DETALLADO ──────────────────────
-  buildDetailedTown(scene);
+  // ── BOSQUE ────────────────────────────────
+  buildForest(scene);
 
-  // ── PARTÍCULAS ────────────────────────────
-  buildAmbientParticles(scene);
+  // ── CAMINO SUR ────────────────────────────
+  buildSouthPath(scene);
 
-  console.log('[SCENE] Inicializada correctamente.');
+  // ── PARTÍCULAS BOSQUE ─────────────────────
+  buildForestParticles(scene);
+
+  console.log('[SCENE] Mapa nuevo inicializado — Bosque + Planicie');
   return { scene, camera, renderer };
 }
 
-// ── MATERIALES COMPARTIDOS ────────────────────────────────────────────────────
-
-const MAT = {
-  wall:      new THREE.MeshStandardMaterial({ color: 0xD4B896, roughness: 0.9 }),
-  wallDark:  new THREE.MeshStandardMaterial({ color: 0xA8896A, roughness: 0.9 }),
-  roof:      new THREE.MeshStandardMaterial({ color: 0x8B3A2A, roughness: 0.85 }),
-  roofDark:  new THREE.MeshStandardMaterial({ color: 0x6B2A1A, roughness: 0.85 }),
-  wood:      new THREE.MeshStandardMaterial({ color: 0x6B4423, roughness: 0.95 }),
-  window:    new THREE.MeshStandardMaterial({ color: 0x88AACC, roughness: 0.2, metalness: 0.3 }),
-  door:      new THREE.MeshStandardMaterial({ color: 0x4A2E10, roughness: 0.9 }),
-  stone:     new THREE.MeshStandardMaterial({ color: 0x888078, roughness: 0.95 }),
-  stoneDark: new THREE.MeshStandardMaterial({ color: 0x605850, roughness: 0.95 }),
-  path:      new THREE.MeshStandardMaterial({ color: 0xC8A87A, roughness: 0.98 }),
-  fire:      new THREE.MeshBasicMaterial({ color: 0xFF8833 }),
-  ember:     new THREE.MeshBasicMaterial({ color: 0xFF4400 }),
-};
-
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-
-function box(w, h, d, mat, x, y, z, parent) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-  m.position.set(x, y, z);
-  parent.add(m);
-  return m;
-}
-
-function addToScene(group, scene, x, z, rotY = 0) {
-  group.position.set(x, 0, z);
-  group.rotation.y = rotY;
-  scene.add(group);
-}
-
-// ── EDIFICIO: CASA ESTÁNDAR ───────────────────────────────────────────────────
-function buildHouse(w, h, d, wallMat, roofMat) {
+// ── ÁRBOL ────────────────────────────────────────────────────────────────────
+function buildTree(scene, x, z, scale = 1) {
   const g = new THREE.Group();
 
-  box(w, h, d, wallMat, 0, h/2, 0, g);
+  // Tronco
+  const trunkGeo = new THREE.CylinderGeometry(0.2 * scale, 0.3 * scale, 2.5 * scale, 7);
+  const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4A2E10, roughness: 0.95 });
+  const trunk    = new THREE.Mesh(trunkGeo, trunkMat);
+  trunk.position.y = 1.25 * scale;
+  g.add(trunk);
 
-  box(0.9,  h*0.55, 0.05, MAT.door,    0,       h*0.275, d/2+0.01, g);
-  box(0.6,  0.5,    0.05, MAT.window,  w*0.28,  h*0.6,   d/2+0.01, g);
-  box(0.6,  0.5,    0.05, MAT.window, -w*0.28,  h*0.6,   d/2+0.01, g);
+  // Copa — 3 capas
+  const foliageMat = new THREE.MeshStandardMaterial({ color: 0x1A4A1A, roughness: 0.9 });
+  const foliageMat2 = new THREE.MeshStandardMaterial({ color: 0x2A5A20, roughness: 0.9 });
 
-  box(0.7, 0.08, 0.06, MAT.wood,  w*0.28,  h*0.6+0.3, d/2+0.02, g);
-  box(0.7, 0.08, 0.06, MAT.wood, -w*0.28,  h*0.6+0.3, d/2+0.02, g);
-  box(0.7, 0.08, 0.06, MAT.wood,  w*0.28,  h*0.6-0.3, d/2+0.02, g);
-  box(0.7, 0.08, 0.06, MAT.wood, -w*0.28,  h*0.6-0.3, d/2+0.02, g);
-
-  box(w+0.1, 0.12, 0.12, MAT.wood, 0, h*0.35, d/2+0.04, g);
-  box(w+0.1, 0.12, 0.12, MAT.wood, 0, h*0.72, d/2+0.04, g);
-
-  const roofH = h * 0.55;
-  const roofW = w + 0.4;
-  const roofD = d + 0.4;
-
-  const r1 = new THREE.Mesh(new THREE.BoxGeometry(roofW, 0.12, roofD), roofMat);
-  r1.position.set(0, h + roofH * 0.5, 0);
-  r1.rotation.z = Math.atan2(roofH, roofW * 0.5);
-  g.add(r1);
-
-  const r2 = new THREE.Mesh(new THREE.BoxGeometry(roofW, 0.12, roofD), roofMat);
-  r2.position.set(0, h + roofH * 0.5, 0);
-  r2.rotation.z = -Math.atan2(roofH, roofW * 0.5);
-  g.add(r2);
-
-  box(0.2, 0.2, roofD, MAT.roofDark, 0, h + roofH, 0, g);
-
-  box(roofW, roofH, 0.15, roofMat, 0, h + roofH*0.5,  d/2+0.08, g);
-  box(roofW, roofH, 0.15, roofMat, 0, h + roofH*0.5, -d/2-0.08, g);
-
-  box(w+0.2, 0.3, d+0.2, MAT.stone, 0, 0.15, 0, g);
-
-  return g;
-}
-
-// ── EDIFICIO: TORRE ───────────────────────────────────────────────────────────
-function buildTower(r, h) {
-  const g = new THREE.Group();
-
-  const bodyGeo = new THREE.CylinderGeometry(r, r*1.1, h, 8);
-  const body    = new THREE.Mesh(bodyGeo, MAT.stoneDark);
-  body.position.y = h/2;
-  g.add(body);
-
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2;
-    const mx = Math.cos(angle) * r * 0.85;
-    const mz = Math.sin(angle) * r * 0.85;
-    box(0.3, 0.5, 0.3, MAT.stone, mx, h + 0.25, mz, g);
-  }
-
-  const coneGeo = new THREE.ConeGeometry(r+0.1, h*0.4, 8);
-  const cone    = new THREE.Mesh(coneGeo, MAT.roof);
-  cone.position.y = h + h*0.2;
-  g.add(cone);
-
-  for (let i = 0; i < 4; i++) {
-    const angle = (i / 4) * Math.PI * 2;
-    const wx = Math.cos(angle) * (r + 0.01);
-    const wz = Math.sin(angle) * (r + 0.01);
-    const win = new THREE.Mesh(
-      new THREE.BoxGeometry(0.25, 0.6, 0.05),
-      MAT.window
+  [[2.2, 1.8, 2.5], [1.8, 1.5, 4.0], [1.2, 1.2, 5.2]].forEach(([r, h, y], i) => {
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(r * scale, h * scale, 7),
+      i % 2 === 0 ? foliageMat : foliageMat2
     );
-    win.position.set(wx, h * 0.6, wz);
-    win.rotation.y = angle;
-    g.add(win);
-  }
+    cone.position.y = y * scale;
+    g.add(cone);
+  });
 
+  g.position.set(x, 0, z);
+
+  // Registrar como recurso recolectable
+  FOREST_RESOURCES.push({
+    type    : 'madera',
+    mesh    : g,
+    hp      : 5,
+    maxHp   : 5,
+    position: new THREE.Vector3(x, 0, z),
+    depleted: false,
+  });
+
+  scene.add(g);
   return g;
 }
 
-// ── EDIFICIO: HERRERÍA ────────────────────────────────────────────────────────
-function buildSmith(scene, x, z) {
+// ── ROCA ─────────────────────────────────────────────────────────────────────
+function buildRock(scene, x, z, scale = 1) {
   const g = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({ color: 0x6A6058, roughness: 0.95 });
 
-  box(5, 3.5, 4, MAT.wallDark, 0, 1.75, 0, g);
-  box(5.8, 0.2, 5, MAT.wood, 0, 3.6, 0.4, g);
+  // 2-3 esferas irregulares
+  [[0, 0.3, 0, 0.5], [-0.3, 0.2, 0.2, 0.35], [0.25, 0.15, -0.15, 0.3]].forEach(([rx, ry, rz, r]) => {
+    const rock = new THREE.Mesh(new THREE.SphereGeometry(r * scale, 6, 5), mat);
+    rock.position.set(rx * scale, ry * scale, rz * scale);
+    rock.scale.y = 0.7;
+    g.add(rock);
+  });
 
-  box(0.7, 2.5, 0.7, MAT.stoneDark, 1.5, 4.85, -1.2, g);
-  box(1.0, 0.3, 1.0, MAT.stone,     1.5, 6.1,  -1.2, g);
+  g.position.set(x, 0, z);
 
-  const smokeGeo = new THREE.SphereGeometry(0.3, 5, 5);
-  const smokeMat = new THREE.MeshBasicMaterial({ color: 0x666666, transparent: true, opacity: 0.4 });
-  for (let i = 0; i < 3; i++) {
-    const s = new THREE.Mesh(smokeGeo, smokeMat);
-    s.position.set(1.5, 6.5 + i*0.6, -1.2);
-    s.scale.setScalar(1 + i*0.3);
-    g.add(s);
-  }
+  FOREST_RESOURCES.push({
+    type    : 'piedra',
+    mesh    : g,
+    hp      : 8,
+    maxHp   : 8,
+    position: new THREE.Vector3(x, 0, z),
+    depleted: false,
+  });
 
-  box(0.8, 0.6, 0.05, MAT.window,   -1.5, 2.2, 2.01, g);
-  box(1.4, 2.2, 0.05, MAT.door,      0.8, 1.1, 2.01, g);
-
-  box(0.5, 0.4,  0.3, MAT.stoneDark, -1.5, 0.2,  1.5, g);
-  box(0.8, 0.15, 0.5, MAT.stoneDark, -1.5, 0.45, 1.5, g);
-
-  addToScene(g, scene, x, z);
+  scene.add(g);
+  return g;
 }
 
-// ── EDIFICIO: POZO ────────────────────────────────────────────────────────────
-function buildWell(scene, x, z) {
-  const g = new THREE.Group();
-
-  const baseGeo = new THREE.CylinderGeometry(0.9, 1.0, 0.6, 12);
-  const base    = new THREE.Mesh(baseGeo, MAT.stone);
-  base.position.set(0, 0.3, 0);
-  g.add(base);
-
-  const rimGeo = new THREE.TorusGeometry(0.9, 0.1, 6, 12);
-  const rim    = new THREE.Mesh(rimGeo, MAT.stoneDark);
-  rim.rotation.x = Math.PI / 2;
-  rim.position.y = 0.65;
-  g.add(rim);
-
-  box(0.12, 1.4, 0.12, MAT.wood, -0.75, 1.3, 0, g);
-  box(0.12, 1.4, 0.12, MAT.wood,  0.75, 1.3, 0, g);
-  box(1.62, 0.12, 0.12, MAT.wood,  0,   2.05, 0, g);
-  box(2.0,  0.08, 1.2,  MAT.roof,  0,   2.2,  0, g);
-
-  addToScene(g, scene, x, z);
-}
-
-// ── MURO PERIMETRAL ───────────────────────────────────────────────────────────
-function buildWalls(scene) {
-  const wallH = 2.2;
-  const wallT = 0.5;
-  const size  = 18;
-
-  const segs = [
-    [ size*2+wallT, wallH, wallT,  0,     wallH/2,  size ],
-    [ size*2+wallT, wallH, wallT,  0,     wallH/2, -size ],
-    [ wallT, wallH, size*2,  size, wallH/2,  0 ],
-    [ wallT, wallH, size*2, -size, wallH/2,  0 ],
+// ── BOSQUE COMPLETO ───────────────────────────────────────────────────────────
+function buildForest(scene) {
+  // Árboles densos — zona norte (z negativo)
+  const treePositions = [
+    // Claro de spawn — sin árboles cerca del jugador (radio 8)
+    [-12, -20], [10, -18], [-8, -35], [15, -30], [-18, -28],
+    [5, -45], [-5, -42], [20, -40], [-22, -38], [12, -50],
+    [-15, -50], [0, -55], [25, -25], [-25, -22], [18, -15],
+    [-20, -15], [8, -12], [-10, -12], [22, -55], [-20, -55],
+    [30, -35], [-30, -32], [28, -20], [-28, -18], [5, -60],
+    [-5, -62], [15, -65], [-15, -63], [25, -60], [-25, -58],
   ];
 
-  segs.forEach(([w, h, d, x, y, z]) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), MAT.stone);
-    m.position.set(x, y, z);
-    scene.add(m);
+  treePositions.forEach(([x, z]) => {
+    const scale = 0.8 + Math.random() * 0.6;
+    buildTree(scene, x, z, scale);
   });
 
-  [-size, size].forEach(cx => {
-    [-size, size].forEach(cz => {
-      const t = buildTower(1.2, 5);
-      addToScene(t, scene, cx, cz);
-    });
+  // Rocas dispersas en el bosque
+  const rockPositions = [
+    [-6, -25], [8, -32], [-14, -40], [18, -22], [-3, -48],
+    [22, -45], [-20, -43], [10, -58], [-10, -20], [16, -38],
+  ];
+
+  rockPositions.forEach(([x, z]) => {
+    const scale = 0.7 + Math.random() * 0.5;
+    buildRock(scene, x, z, scale);
   });
 
-  const gateL = new THREE.Mesh(new THREE.BoxGeometry(wallT, wallH, 3.5), MAT.stoneDark);
-  gateL.position.set(size, wallH/2, -2.5);
-  scene.add(gateL);
-
-  const gateR = new THREE.Mesh(new THREE.BoxGeometry(wallT, wallH, 3.5), MAT.stoneDark);
-  gateR.position.set(size, wallH/2, 2.5);
-  scene.add(gateR);
-
-  const gateTop = new THREE.Mesh(new THREE.BoxGeometry(wallT, 0.6, 7), MAT.stone);
-  gateTop.position.set(size, wallH+0.3, 0);
-  scene.add(gateTop);
+  // Árboles dispersos en borde de planicie
+  const edgeTrees = [
+    [-30, 0], [30, 5], [-25, 8], [28, -5], [-35, -10], [35, -8],
+  ];
+  edgeTrees.forEach(([x, z]) => {
+    buildTree(scene, x, z, 1.0 + Math.random() * 0.3);
+  });
 }
 
-// ── CAMINOS ───────────────────────────────────────────────────────────────────
-function buildPaths(scene) {
-  const p1 = new THREE.Mesh(new THREE.PlaneGeometry(3, 36), MAT.path);
-  p1.rotation.x = -Math.PI / 2;
-  p1.position.set(0, 0.01, 0);
-  scene.add(p1);
+// ── CAMINO HACIA EL SUR ───────────────────────────────────────────────────────
+function buildSouthPath(scene) {
+  const pathMat = new THREE.MeshStandardMaterial({ color: 0xC8A87A, roughness: 0.98 });
 
-  const p2 = new THREE.Mesh(new THREE.PlaneGeometry(36, 3), MAT.path);
-  p2.rotation.x = -Math.PI / 2;
-  p2.position.set(0, 0.01, 0);
-  scene.add(p2);
+  // Camino desde spawn hasta planicie
+  const path = new THREE.Mesh(new THREE.PlaneGeometry(4, 120), pathMat);
+  path.rotation.x = -Math.PI / 2;
+  path.position.set(0, 0.01, 20); // del bosque a la planicie
+  scene.add(path);
 
-  const plaza = new THREE.Mesh(new THREE.CircleGeometry(5, 16), MAT.path);
-  plaza.rotation.x = -Math.PI / 2;
-  plaza.position.set(0, 0.02, 0);
-  scene.add(plaza);
-}
+  // Señal de dirección (palo simple)
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x6B4423, roughness: 0.9 });
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 2, 6), postMat);
+  post.position.set(3, 1, -5);
+  scene.add(post);
 
-// ── FOGATA CENTRAL ────────────────────────────────────────────────────────────
-function buildCampfire(scene) {
-  for (let i = 0; i < 8; i++) {
-    const angle = (i/8) * Math.PI * 2;
-    const stone = new THREE.Mesh(
-      new THREE.SphereGeometry(0.18, 5, 4),
-      MAT.stone
-    );
-    stone.position.set(Math.cos(angle)*0.55, 0.1, Math.sin(angle)*0.55);
-    stone.scale.y = 0.6;
-    scene.add(stone);
-  }
-
-  for (let i = 0; i < 3; i++) {
-    const angle = (i/3) * Math.PI * 2;
-    const log = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.06, 0.08, 0.7, 6),
-      MAT.wood
-    );
-    log.position.set(Math.cos(angle)*0.2, 0.12, Math.sin(angle)*0.2);
-    log.rotation.z = Math.PI * 0.3;
-    log.rotation.y = angle;
-    scene.add(log);
-  }
-
-  const fire = new THREE.Mesh(new THREE.SphereGeometry(0.15, 6, 6), MAT.fire);
-  fire.position.set(0, 0.4, 0);
-  fire.name = 'campfire';
-  scene.add(fire);
-
-  const halo = new THREE.Mesh(
-    new THREE.SphereGeometry(0.22, 6, 6),
-    new THREE.MeshBasicMaterial({ color: 0xFF2200, transparent: true, opacity: 0.35 })
+  const sign = new THREE.Mesh(
+    new THREE.BoxGeometry(1.2, 0.4, 0.08),
+    new THREE.MeshStandardMaterial({ color: 0x8B6340, roughness: 0.9 })
   );
-  halo.position.set(0, 0.4, 0);
-  scene.add(halo);
-
-  const fireLight = new THREE.PointLight(0xFF6622, 2.5, 10);
-  fireLight.position.set(0, 0.8, 0);
-  scene.add(fireLight);
-
-  scene.userData.fireLight = fireLight;
-  scene.userData.fireMesh  = fire;
+  sign.position.set(3, 1.8, -5);
+  scene.add(sign);
 }
 
-// ── PUEBLO DETALLADO ──────────────────────────────────────────────────────────
-function buildDetailedTown(scene) {
-
-  buildCampfire(scene);
-
-  addToScene(buildHouse(4,   3,   3.5, MAT.wall,     MAT.roof),     scene,  8,   8);
-  addToScene(buildHouse(3,   2.8, 3,   MAT.wallDark, MAT.roofDark), scene, -9,   7, Math.PI*0.05);
-  addToScene(buildHouse(5,   3.2, 4,   MAT.wall,     MAT.roof),     scene,  9,  -8, Math.PI);
-  addToScene(buildHouse(3.5, 3,   3,   MAT.wallDark, MAT.roofDark), scene, -8,  -9, -Math.PI*0.05);
-  addToScene(buildHouse(4,   2.6, 3,   MAT.wall,     MAT.roof),     scene,  0,  12, Math.PI*0.5);
-  addToScene(buildHouse(3,   3,   3,   MAT.wallDark, MAT.roof),     scene, 14,   2, -Math.PI*0.3);
-  addToScene(buildHouse(4,   2.8, 3,   MAT.wall,     MAT.roofDark), scene,-13,   1, Math.PI*0.2);
-
-  buildSmith(scene, -10, -14);
-  buildWell(scene, 3, -3);
-  buildWalls(scene);
-}
-
-// ── PARTÍCULAS AMBIENTE ───────────────────────────────────────────────────────
-function buildAmbientParticles(scene) {
-  const count = 120;
+// ── PARTÍCULAS BOSQUE ─────────────────────────────────────────────────────────
+function buildForestParticles(scene) {
+  const count = 200;
   const geo   = new THREE.BufferGeometry();
   const pos   = new Float32Array(count * 3);
 
   for (let i = 0; i < count; i++) {
-    pos[i*3]   = (Math.random() - 0.5) * 40;
-    pos[i*3+1] = Math.random() * 8;
-    pos[i*3+2] = (Math.random() - 0.5) * 40;
+    pos[i*3]   = (Math.random() - 0.5) * 60;
+    pos[i*3+1] = Math.random() * 10;
+    pos[i*3+2] = -Math.random() * 70 - 5;
   }
 
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
 
-  const mat = new THREE.PointsMaterial({
-    color:           0xFFE566,
-    size:            0.06,
-    transparent:     true,
-    opacity:         0.5,
+  const particles = new THREE.Points(geo, new THREE.PointsMaterial({
+    color: 0xAAFF88, size: 0.05,
+    transparent: true, opacity: 0.4,
     sizeAttenuation: true,
-  });
-
-  const particles = new THREE.Points(geo, mat);
-  particles.name  = 'ambient_particles';
+  }));
+  particles.name = 'ambient_particles';
   scene.add(particles);
-    }
+  }
