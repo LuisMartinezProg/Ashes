@@ -74,6 +74,7 @@ import { BuildingSystem }   from './core/building.js';
 import { BuildMenu }        from './ui/buildMenu.js';
 import { SkillTree }        from './ui/skillTree.js';
 import { RadialMenu }       from './ui/radialMenu.js';
+import { ParrySystem }      from './core/parry.js';
 
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -100,6 +101,7 @@ async function boot() {
 
     setProgress(45, 'getPlayer...');
     const player = getPlayer();
+    window._player = player;
 
     setProgress(50, 'CombatSystem...');
     const combat = new CombatSystem(player.root, camera);
@@ -136,6 +138,10 @@ async function boot() {
     }
     window._prog = progression;
     combat.setProgression(progression);
+
+    setProgress(66, 'ParrySystem...');
+    const parry = new ParrySystem(player, combat);
+    window._parry = parry;
 
     setProgress(68, 'HUD...');
     const hud = new HUD(combat, skills);
@@ -201,13 +207,11 @@ async function boot() {
     loading.classList.add('hidden');
     setTimeout(() => loading.remove(), 900);
 
-    // ── Selección de arma ──
     const weaponType = await showWeaponSelect();
     combat.setWeapon(weaponType);
     hud.setWeaponIcon(weaponType);
     hud.show();
 
-    // ── UI post-arma ──
     const building   = new BuildingSystem(scene, player);
     building.setProgression(progression);
     const buildMenu  = new BuildMenu(building);
@@ -238,7 +242,6 @@ async function boot() {
     subtypeMenu.setWeapon(weaponType);
     fusionMenu.setWeapon(weaponType);
 
-    // ── Botón pausa ──
     const pauseBtn = document.createElement('button');
     pauseBtn.textContent = '☰';
     Object.assign(pauseBtn.style, {
@@ -257,7 +260,6 @@ async function boot() {
 
     progression.fusionUnlocked = true;
 
-    // ── Intervalos ──
     setInterval(() => hud.updateEnemyBar(player.root.position), 300);
     setInterval(() => {
       localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
@@ -265,7 +267,6 @@ async function boot() {
 
     if (buildMenu?._buildBtn) buildMenu._buildBtn.style.display = 'none';
 
-    // ── Escena 1 si partida nueva ──
     if (!progression.getFlag?.('escena01_done')) {
       narrative.play(STORY_EVENTS.escena01_despertar);
     }
