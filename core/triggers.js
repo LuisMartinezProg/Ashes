@@ -16,6 +16,15 @@ export class WorldTriggers {
 
   _check(pos) {
     const nar = this._narrative;
+    // ── Oso del bosque ──
+if (!this._fired.has('bear_encounter')
+  && !nar.getFlag('bear_encountered')
+  && this._near(pos, 0, 0, -45, 12)) {
+  this._fire('bear_encounter', () => {
+    window._bear?.activate?.();
+    nar.setFlag('bear_encountered', true);
+  });
+}
 
     // ── Puerta norte de Ironfell (sur del mapa) ──
     if (!this._fired.has('escena05')
