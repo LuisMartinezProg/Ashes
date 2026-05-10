@@ -214,6 +214,34 @@ async function boot() {
     combat.setWeapon(weaponType);
     hud.setWeaponIcon(weaponType);
     hud.show();
+    // ── Lobos y oso del bosque ──
+const wolves = [
+  new Wolf(scene, { x: -12, z: -38 }, player),
+  new Wolf(scene, { x:  -8, z: -42 }, player),
+  new Wolf(scene, { x:   5, z: -45 }, player),
+  new Wolf(scene, { x:  10, z: -40 }, player),
+  new Wolf(scene, { x:  -3, z: -50 }, player),
+  new Wolf(scene, { x:  15, z: -44 }, player),
+];
+
+const bear = new Bear(scene, { x: 0, z: -55 }, player, () => {
+  // Cuando el oso se activa — lobos huyen
+  wolves.forEach(w => w.flee(bear.mesh.position));
+});
+
+bear.onDeath = () => {
+  // Lobos vuelven a merodear
+  setTimeout(() => wolves.forEach(w => w.startRoaming()), 3000);
+};
+
+// Registrar todos en el loop
+const allEnemies = [...enemies, ...wolves, bear];
+allEnemies.forEach(e => combat.registerEnemy(e));
+wolves.forEach(e => combat.registerEnemy(e));
+setEnemies(allEnemies);
+hud.setEnemies(allEnemies);
+window._bear   = bear;
+window._wolves = wolves;
 
     const building   = new BuildingSystem(scene, player);
     building.setProgression(progression);
