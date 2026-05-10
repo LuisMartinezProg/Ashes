@@ -23,7 +23,8 @@ export class Player {
     this._sprinting  = false;
 
     this.root = new THREE.Group();
-    this.root.position.set(0, GROUND_Y, -30); // spawn en bosque
+    
+    this.root.position.set(0, GROUND_Y, -20);// spawn en bosque
     scene.add(this.root);
 
     this._buildMesh();
