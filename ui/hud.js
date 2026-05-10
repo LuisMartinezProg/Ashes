@@ -59,22 +59,65 @@ export class HUD {
   }
 
   // ── Build ────────────────────────────────────────────────────────────────
+_buildPlayerBlock() {
+  const block = document.createElement('div');
+  Object.assign(block.style, {
+    position : 'absolute',
+    bottom   : '12px',
+    left     : '50%',
+    transform: 'translateX(-50%)',
+    display  : 'flex',
+    flexDirection: 'column',
+    gap      : '6px',
+    width    : '52vw',
+    maxWidth : '280px',
+  });
 
-  _build() {
-    this._container = document.createElement('div');
-    this._container.id = 'hud-combat';
-    Object.assign(this._container.style, {
-      position     : 'fixed',
-      inset        : '0',
-      pointerEvents: 'none',
-      zIndex       : '100',
-      display      : 'none',
-    });
+  // HP
+  const hpWrap = this._makeBarWrap('rgba(255,50,50,0.15)', 'rgba(255,80,80,0.3)');
+  const hpTrack = this._makeTrack('12px', '#220000');
+  this._playerHpFill = this._makeFill('linear-gradient(90deg,#aa0000,#ff4444)');
+  hpTrack.appendChild(this._playerHpFill);
 
-    this._buildPlayerBlock();
-    this._buildEnemyBar();
-    document.body.appendChild(this._container);
-  }
+  this._playerHpText = document.createElement('div');
+  Object.assign(this._playerHpText.style, {
+    color        : 'rgba(255,180,180,0.9)',
+    fontSize     : '9px',
+    fontFamily   : 'monospace',
+    textAlign    : 'center',
+    marginTop    : '2px',
+    letterSpacing: '0.5px',
+  });
+  this._playerHpText.textContent = '100/100';
+
+  hpWrap.appendChild(hpTrack);
+  hpWrap.appendChild(this._playerHpText);
+
+  // Energía
+  const enWrap  = this._makeBarWrap('rgba(50,100,255,0.1)', 'rgba(80,130,255,0.25)');
+  const enTrack = this._makeTrack('8px', '#1a1a2e');
+  this._energyFill = this._makeFill('linear-gradient(90deg,#2244cc,#66aaff)');
+  enTrack.appendChild(this._energyFill);
+
+  this._energyText = document.createElement('div');
+  Object.assign(this._energyText.style, {
+    color        : 'rgba(150,180,255,0.7)',
+    fontSize     : '8px',
+    fontFamily   : 'monospace',
+    textAlign    : 'center',
+    marginTop    : '2px',
+    letterSpacing: '0.5px',
+  });
+  this._energyText.textContent = 'ENERGÍA';
+
+  enWrap.appendChild(enTrack);
+  enWrap.appendChild(this._energyText);
+
+  block.appendChild(hpWrap);
+  block.appendChild(enWrap);
+  this._container.appendChild(block);
+}
+
 
   _buildPlayerBlock() {
     // Bloque arriba izquierda: avatar + barras
