@@ -50,7 +50,7 @@ export class SkillBar {
     const vh = window.innerHeight;
     const ref = Math.min(vw, vh);
     return {
-      atk : Math.round(ref * 0.18),
+      atk : Math.round(ref * 0.24),
       sk  : Math.round(ref * 0.13),
       gap : Math.round(ref * 0.025),
       mb  : Math.round(ref * 0.04),
