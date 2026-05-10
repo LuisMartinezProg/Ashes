@@ -4,15 +4,17 @@ export class HUD {
   constructor(combatSystem, skillSystem = null) {
     this.combat = combatSystem;
     this.skills = skillSystem;
-    this._currentEnemy = null;
-    this._enemies      = [];
-    this._enemyBarEl   = null;
-    this._fillEl       = null;
-    this._hpTextEl     = null;
-    this._playerHpFill = null;
-    this._playerHpText = null;
-    this._energyFill   = null;
-    this._container    = null;
+    this._currentEnemy  = null;
+    this._enemies       = [];
+    this._enemyBarEl    = null;
+    this._fillEl        = null;
+    this._hpTextEl      = null;
+    this._playerHpFill  = null;
+    this._playerHpText  = null;
+    this._energyFill    = null;
+    this._container     = null;
+    this._collectBtn    = null;
+    this._collectTimer  = null;
 
     this._build();
 
@@ -55,6 +57,97 @@ export class HUD {
     }
   }
 
+  // ── Recolección ──────────────────────────────────────────────────────────
+  showCollectBtn(resource) {
+    if (!resource) {
+      this._hideCollectBtn();
+      return;
+    }
+    const labels = { madera: '🪓 Talar', piedra: '⛏ Picar' };
+    this._collectBtn.textContent  = labels[resource.type] ?? '🖐 Recolectar';
+    this._collectBtn.style.display = 'flex';
+    this._currentResource = resource;
+  }
+
+  _hideCollectBtn() {
+    this._collectBtn.style.display = 'none';
+    this._currentResource = null;
+  }
+
+  _onCollect() {
+    const res = this._currentResource;
+    if (!res || res.depleted) return;
+
+    const tool    = window._building?.getTool?.() ?? 'punos';
+    const toolMap = { punos: 1, hacha_madera: 2, hacha_piedra: 4, pico_madera: 2, pico_piedra: 4 };
+    const power   = toolMap[tool] ?? 1;
+
+    // Solo herramienta correcta
+    const needsAxe  = res.type === 'madera';
+    const needsPick = res.type === 'piedra';
+    const hasAxe    = tool.includes('hacha');
+    const hasPick   = tool.includes('pico');
+
+    if (needsAxe && !hasAxe && tool !== 'punos') return;
+    if (needsPick && !hasPick && tool !== 'punos') return;
+
+    // Animar botón
+    this._collectBtn.style.transform = 'scale(0.88)';
+    setTimeout(() => this._collectBtn.style.transform = 'scale(1)', 140);
+
+    // Reducir HP del recurso
+    res.hp -= power;
+
+    // Dar material
+    const amount = power;
+    window._building?.addMaterial?.(res.type, amount);
+
+    // Feedback visual
+    this._showFloating(`+${amount} ${res.type}`, res.type === 'madera' ? '#8B6340' : '#888078');
+
+    // Agotar recurso
+    if (res.hp <= 0) {
+      res.depleted = true;
+      res.mesh.visible = false;
+      this._hideCollectBtn();
+
+      // Regenerar después de 30 segundos
+      setTimeout(() => {
+        res.hp       = res.maxHp;
+        res.depleted = false;
+        res.mesh.visible = true;
+      }, 30000);
+    }
+  }
+
+  _showFloating(text, color = '#c9a84c') {
+    const el = document.createElement('div');
+    Object.assign(el.style, {
+      position  : 'fixed',
+      left      : '50%',
+      bottom    : '220px',
+      transform : 'translateX(-50%)',
+      fontFamily: "'Cinzel',serif",
+      fontSize  : '13px',
+      letterSpacing: '2px',
+      color,
+      pointerEvents: 'none',
+      zIndex    : '300',
+      transition: 'bottom 0.8s ease, opacity 0.8s ease',
+      opacity   : '1',
+    });
+    el.textContent = text;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        el.style.bottom  = '280px';
+        el.style.opacity = '0';
+      });
+    });
+    setTimeout(() => el.remove(), 900);
+  }
+
+  // ── Build ────────────────────────────────────────────────────────────────
   _build() {
     this._container = document.createElement('div');
     this._container.id = 'hud-combat';
@@ -68,7 +161,43 @@ export class HUD {
 
     this._buildPlayerBlock();
     this._buildEnemyBar();
+    this._buildCollectBtn();
     document.body.appendChild(this._container);
+  }
+
+  _buildCollectBtn() {
+    this._collectBtn = document.createElement('button');
+    Object.assign(this._collectBtn.style, {
+      position     : 'fixed',
+      bottom       : '200px',
+      left         : '50%',
+      transform    : 'translateX(-50%)',
+      display      : 'none',
+      alignItems   : 'center',
+      justifyContent: 'center',
+      fontFamily   : "'Cinzel',serif",
+      fontSize     : '12px',
+      letterSpacing: '2px',
+      color        : '#c9a84c',
+      background   : 'rgba(10,8,20,0.92)',
+      border       : '1px solid rgba(201,168,76,0.4)',
+      borderRadius : '24px',
+      padding      : '10px 24px',
+      cursor       : 'pointer',
+      pointerEvents: 'all',
+      zIndex       : '150',
+      boxShadow    : '0 2px 12px rgba(0,0,0,0.5)',
+      transition   : 'transform 0.1s',
+      whiteSpace   : 'nowrap',
+    });
+
+    this._collectBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      this._onCollect();
+    }, { passive: false });
+    this._collectBtn.addEventListener('click', () => this._onCollect());
+
+    document.body.appendChild(this._collectBtn);
   }
 
   _buildPlayerBlock() {
@@ -237,4 +366,4 @@ export class HUD {
     const pct = Math.max(0, energy / maxEnergy) * 100;
     this._energyFill.style.width = `${pct}%`;
   }
-}
+                                          }
