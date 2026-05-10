@@ -10,6 +10,8 @@ export class SkillBar {
     this._weapon    = null;
     this._buttons   = [];
     this._attackBtn = null;
+    this._sprintBtn = null;
+    this._parryBtn  = null;
     this._container = null;
     this._cooldowns = {};
     this._build();
@@ -41,6 +43,8 @@ export class SkillBar {
     if (this._container) this._container.remove();
     this._buttons   = [];
     this._attackBtn = null;
+    this._sprintBtn = null;
+    this._parryBtn  = null;
     this._build();
     if (this._weapon) this.refresh();
   }
@@ -60,8 +64,8 @@ export class SkillBar {
 
   _build() {
     const { atk, sk, gap, mb, mr } = this._sizes();
+    const sbSize = Math.round(atk * 0.52);
 
-    // Contenedor — grid 2x2 + ataque abajo centro
     this._container = document.createElement('div');
     Object.assign(this._container.style, {
       position     : 'fixed',
@@ -77,29 +81,23 @@ export class SkillBar {
 
     // Fila superior: skill 0 y skill 1
     const row1 = document.createElement('div');
-    Object.assign(row1.style, {
-      display: 'flex', gap: `${gap}px`, alignItems: 'center',
-    });
+    Object.assign(row1.style, { display: 'flex', gap: `${gap}px`, alignItems: 'center' });
 
-    // Fila inferior: skill 2 + ataque
+    // Fila inferior: skill 2 + ataque + [sprint/parry]
     const row2 = document.createElement('div');
-    Object.assign(row2.style, {
-      display: 'flex', gap: `${gap}px`, alignItems: 'center',
-    });
+    Object.assign(row2.style, { display: 'flex', gap: `${gap}px`, alignItems: 'center' });
 
-    // Skill buttons 0, 1 → fila superior
     for (let i = 0; i < 2; i++) {
       const btn = this._buildSkillBtn(sk);
       this._buttons.push(btn);
       row1.appendChild(btn);
     }
 
-    // Skill button 2 → fila inferior izquierda
     const btn2 = this._buildSkillBtn(sk);
     this._buttons.push(btn2);
     row2.appendChild(btn2);
 
-    // Botón ataque → fila inferior derecha, más grande
+    // Botón ataque
     this._attackBtn = document.createElement('button');
     this._attackBtn.textContent = '⚔️';
     Object.assign(this._attackBtn.style, {
@@ -129,8 +127,81 @@ export class SkillBar {
     };
     this._attackBtn.addEventListener('touchstart', onAtk, { passive: false });
     this._attackBtn.addEventListener('mousedown',  onAtk);
-
     row2.appendChild(this._attackBtn);
+
+    // Columna sprint + parry a la derecha del ataque
+    const col = document.createElement('div');
+    Object.assign(col.style, {
+      display      : 'flex',
+      flexDirection: 'column',
+      gap          : `${Math.round(gap * 0.6)}px`,
+      pointerEvents: 'none',
+    });
+
+    // Sprint
+    this._sprintBtn = document.createElement('button');
+    this._sprintBtn.textContent = '🏃';
+    Object.assign(this._sprintBtn.style, {
+      width        : `${sbSize}px`,
+      height       : `${sbSize}px`,
+      borderRadius : '50%',
+      border       : '2px solid rgba(100,220,255,0.5)',
+      background   : 'rgba(10,8,20,0.88)',
+      color        : '#fff',
+      fontSize     : `${Math.round(sbSize * 0.4)}px`,
+      cursor       : 'pointer',
+      pointerEvents: 'all',
+      display      : 'flex',
+      alignItems   : 'center',
+      justifyContent: 'center',
+      WebkitTapHighlightColor: 'transparent',
+      boxShadow    : '0 2px 8px rgba(0,0,0,0.5)',
+      transition   : 'transform 0.08s, border-color 0.1s',
+    });
+
+    this._sprintBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      window._player?.setSprinting?.(true);
+      this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.9)';
+      this._sprintBtn.style.transform   = 'scale(0.92)';
+    }, { passive: false });
+    this._sprintBtn.addEventListener('touchend', () => {
+      window._player?.setSprinting?.(false);
+      this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
+      this._sprintBtn.style.transform   = 'scale(1)';
+    });
+
+    // Parry
+    this._parryBtn = document.createElement('button');
+    this._parryBtn.textContent = '🛡️';
+    Object.assign(this._parryBtn.style, {
+      width        : `${sbSize}px`,
+      height       : `${sbSize}px`,
+      borderRadius : '50%',
+      border       : '2px solid rgba(201,168,76,0.5)',
+      background   : 'rgba(10,8,20,0.88)',
+      color        : '#fff',
+      fontSize     : `${Math.round(sbSize * 0.4)}px`,
+      cursor       : 'pointer',
+      pointerEvents: 'all',
+      display      : 'flex',
+      alignItems   : 'center',
+      justifyContent: 'center',
+      WebkitTapHighlightColor: 'transparent',
+      boxShadow    : '0 2px 8px rgba(0,0,0,0.5)',
+      transition   : 'transform 0.08s',
+    });
+
+    this._parryBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      window._parry?.attemptParry?.();
+      this._parryBtn.style.transform = 'scale(0.88)';
+      setTimeout(() => this._parryBtn.style.transform = 'scale(1)', 180);
+    }, { passive: false });
+
+    col.appendChild(this._sprintBtn);
+    col.appendChild(this._parryBtn);
+    row2.appendChild(col);
 
     this._container.appendChild(row1);
     this._container.appendChild(row2);
@@ -190,7 +261,7 @@ export class SkillBar {
     const btn = this._buttons[index];
     if (!btn) return;
     btn.dataset.skillId = skill.id;
-    btn.querySelector('.skill-icon').textContent   = skill.icon;
+    btn.querySelector('.skill-icon').textContent = skill.icon;
     const r = btn.querySelector('.skill-rarity');
     r.textContent = RARITY_LABELS[skill.rarity];
     r.style.color = RARITY_COLORS[skill.rarity];
@@ -209,4 +280,4 @@ export class SkillBar {
     if (el) el.style.height = `${(1 - progress) * 100}%`;
     btn.style.opacity = progress < 1 ? '0.55' : '1';
   }
-}
+  }
