@@ -266,7 +266,11 @@ export class Bear {
     this._dying = true;
     this._dyingTimer = 1200;
     this._state = STATE.DEAD;
-
+    // Drops del oso
+window._building?.addMaterial?.('madera', 8);
+window._building?.addMaterial?.('piedra', 4);
+window._prog?.addMagicEnergy?.(50);
+window._prog?.addXP?.(window._combat?._weaponType ?? 'katana', 150);
     // Limpiar proyectiles
     for (const p of this._projectiles) this.scene.remove(p.mesh);
     this._projectiles = [];
