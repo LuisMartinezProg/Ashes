@@ -93,7 +93,8 @@ export class Bear {
   }
 
   takeDamage(amount) {
-    if (this.dead || !this._activated) return;
+  if (this.dead) return;
+  if (!this._activated) this.activate(); // auto-activar al recibir daño
     this.hp = Math.max(0, this.hp - amount);
 
     // Flash
