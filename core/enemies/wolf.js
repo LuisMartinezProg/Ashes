@@ -198,14 +198,20 @@ export class Wolf {
       }
     }, 100);
   }
+_startDeath() {
+  this.dead    = true;
+  this._dying  = true;
+  this._dyingTimer = 600;
+  this._state  = STATE.DEAD;
 
-  _startDeath() {
-    this.dead    = true;
-    this._dying  = true;
-    this._dyingTimer = 600;
-    this._state  = STATE.DEAD;
-    if (this.onDeath) this.onDeath();
-  }
+  // Drops
+  window._building?.addMaterial?.('madera', 2);   // carne → madera por ahora
+  window._prog?.addMagicEnergy?.(8);
+  window._prog?.addXP?.(window._combat?._weaponType ?? 'katana', 25);
+
+  if (this.onDeath) this.onDeath();
+}
+
 
   _updateDeathAnim(delta) {
     if (!this.mesh) return;
