@@ -1,13 +1,11 @@
+
 /**
- * data/storyEvents.js — Escenas Fase 1 y 2 con diálogos reales
+ * data/storyEvents.js — Escenas Arco 1
  * Requiere: core/narrative.js
  */
 
 export const STORY_EVENTS = {
 
-  // ─────────────────────────────────────────────
-  // PRÓLOGO — El bus, la muerte, el pasaje blanco
-  // ─────────────────────────────────────────────
   prologo: [
     { type: 'fade', color: '#000', duration: 1000 },
     { type: 'narration', text: 'El protagonista está en la parte trasera del bus. Último día antes del vuelo. Iba a festejar con sus amigos esa noche. Todo estaba bien.' },
@@ -19,43 +17,39 @@ export const STORY_EVENTS = {
     { type: 'narration', text: 'El protagonista no la suelta. Un segundo de duda — uno solo. Suficiente.' },
     { type: 'fade', color: '#000', duration: 2000 },
     { type: 'wait', ms: 2000 },
-    // Pasaje blanco
     { type: 'fade', color: '#ffffff', duration: 1500 },
     { type: 'dialogue', speaker: 'protagonist', stage: '(mirando alrededor, desorientado)', text: '¿Qué...? ¿Dónde...?' },
     { type: 'narration', text: 'Una presencia. No llega caminando — simplemente está ahí. Sor. Una figura de luz blanca sin forma fija.' },
-    { type: 'dialogue', speaker: 'aeondris', text: 'Bienvenido. Llevas tiempo sin estar consciente de mí, pero yo sí he estado consciente de ti.' },
+    { type: 'dialogue', speaker: 'sor', text: 'Bienvenido. Llevas tiempo sin estar consciente de mí, pero yo sí he estado consciente de ti.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(frunce el ceño)', text: '¿Perdón? ¿Quién eres? ¿Dónde estoy? ¿Qué fue lo que pasó en el bus?' },
-    { type: 'dialogue', speaker: 'aeondris', text: 'Eso ya no importa.' },
+    { type: 'dialogue', speaker: 'sor', text: 'Eso ya no importa.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(con calma tensa — no grita, pero no cede)', text: 'A mí sí me importa. Estaba en un bus. Había un robo. Y ahora estoy aquí, en... esto. ¿Qué es "esto", exactamente?' },
-    { type: 'dialogue', speaker: 'aeondris', stage: '(sin inmutarse)', text: 'Un espacio entre lo que eras y lo que serás. No tienes acceso a lo que pasó porque en este momento no es relevante para lo que viene.' },
+    { type: 'dialogue', speaker: 'sor', stage: '(sin inmutarse)', text: 'Un espacio entre lo que eras y lo que serás. No tienes acceso a lo que pasó porque en este momento no es relevante para lo que viene.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(larga pausa. La mira fijo.)', text: '¿Estoy muerto?' },
-    { type: 'dialogue', speaker: 'aeondris', text: 'Sí.' },
+    { type: 'dialogue', speaker: 'sor', text: 'Sí.' },
     { type: 'narration', text: 'Silencio. El protagonista lo procesa. No llora. No entra en pánico. Solo asiente despacio.' },
     { type: 'dialogue', speaker: 'protagonist', text: 'Okay.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(pausa)', text: '¿Y tú qué quieres de mí?' },
-    { type: 'dialogue', speaker: 'aeondris', text: 'Enviarte a otro mundo. Uno que necesita alguien como tú.' },
+    { type: 'dialogue', speaker: 'sor', text: 'Enviarte a otro mundo. Uno que necesita alguien como tú.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(sin cambiar la expresión)', text: '¿Y por qué yo?' },
-    { type: 'dialogue', speaker: 'aeondris', text: 'Porque observé a muchos. Y tú eres el tipo de persona que actúa con firmeza sin necesitar hacerle daño a nadie para lograrlo. Eso es más difícil de encontrar de lo que crees.' },
+    { type: 'dialogue', speaker: 'sor', text: 'Porque observé a muchos. Y tú eres el tipo de persona que actúa con firmeza sin necesitar hacerle daño a nadie para lograrlo. Eso es más difícil de encontrar de lo que crees.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(con un tono completamente plano)', text: 'Me estuviste observando.' },
-    { type: 'dialogue', speaker: 'aeondris', text: 'Sí.' },
+    { type: 'dialogue', speaker: 'sor', text: 'Sí.' },
     { type: 'dialogue', speaker: 'protagonist', text: '¿Cuánto tiempo?' },
-    { type: 'dialogue', speaker: 'aeondris', text: 'El suficiente.' },
+    { type: 'dialogue', speaker: 'sor', text: 'El suficiente.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(suspira)', text: 'Eso es raro. Pero bueno. ¿Y qué me das para ir a este otro mundo? ¿Poderes? ¿Una espada legendaria? ¿Algo?' },
     { type: 'narration', text: 'Aparece una mochila en el suelo frente al protagonista. La levanta. La abre. Comida para tres días. Un cuchillo.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(la mira. Mira a Sor. Vuelve a mirar la mochila.)', text: '¿En serio?' },
-    { type: 'dialogue', speaker: 'aeondris', text: 'El resto depende de ti.' },
+    { type: 'dialogue', speaker: 'sor', text: 'El resto depende de ti.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(se cuelga la mochila. Una pausa larga.)', text: '¿Hay algo más que deba saber antes de que me mandes?' },
-    { type: 'dialogue', speaker: 'aeondris', text: 'Hay un conflicto. Otros antes que tú intentaron resolverlo. No pudieron.' },
-    { type: 'dialogue', speaker: 'aeondris', stage: '(pausa)', text: 'Tú puedes.' },
+    { type: 'dialogue', speaker: 'sor', text: 'Hay un conflicto. Otros antes que tú intentaron resolverlo. No pudieron.' },
+    { type: 'dialogue', speaker: 'sor', stage: '(pausa)', text: 'Tú puedes.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(con total sequedad)', text: 'Qué motivador. Gracias.' },
     { type: 'narration', text: 'Sor no responde. La luz del pasaje aumenta lentamente hasta cubrirlo todo.' },
     { type: 'fade', color: '#ffffff', duration: 1500 },
     { type: 'action', fn: (nar) => nar.setFlag('prologo_done', true) },
   ],
 
-  // ─────────────────────────────────────────────
-  // ESCENA 01 — Despertar en el bosque
-  // ─────────────────────────────────────────────
   escena01_despertar: [
     { type: 'fade', color: '#000', duration: 1000 },
     { type: 'title', text: 'Escena 01', sub: 'Despertar' },
@@ -70,9 +64,6 @@ export const STORY_EVENTS = {
     { type: 'action', fn: (nar) => nar.setFlag('escena01_done', true) },
   ],
 
-  // ─────────────────────────────────────────────
-  // ESCENA 02 — Primeras horas, supervivencia
-  // ─────────────────────────────────────────────
   escena02_supervivencia: [
     { type: 'title', text: 'Escena 02', sub: 'Día 1 — Greymantle' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(al tocar el árbol caído)', text: 'Madera seca. Bien, algo es algo.' },
@@ -82,7 +73,7 @@ export const STORY_EVENTS = {
     { type: 'wait', ms: 500 },
     { type: 'title', text: 'Día 2', sub: 'Solmara' },
     { type: 'narration', text: 'El protagonista abre la mochila. Cuenta las raciones. Una. Le queda una.' },
-    { type: 'dialogue', speaker: 'protagonist', stage: '(mirando el bosque norte)', text: 'Necesito encontrar algo hoy.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(mirando el bosque)', text: 'Necesito encontrar algo hoy.' },
     { type: 'narration', text: 'En el borde del bosque, algo se mueve. El protagonista se detiene.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(mirando entre los árboles)', text: '¿Verde? ¿Qué clase de conejo es verde?' },
     { type: 'narration', text: 'El protagonista lo sigue. El bosque se hace más espeso, luego más escaso. El terreno sube. Los árboles se separan.' },
@@ -94,9 +85,6 @@ export const STORY_EVENTS = {
     { type: 'action', fn: (nar) => { nar.setFlag('vio_conejo_verde', true); nar.setFlag('planicie_descubierta', true); } },
   ],
 
-  // ─────────────────────────────────────────────
-  // ESCENA 03 — La primera noche
-  // ─────────────────────────────────────────────
   escena03_primera_noche: [
     { type: 'title', text: 'Escena 03', sub: 'Noche 1 — Greymantle' },
     { type: 'narration', text: 'El protagonista mira las dos lunas. Tarda varios segundos. Las procesa.' },
@@ -112,9 +100,6 @@ export const STORY_EVENTS = {
     { type: 'action', fn: (nar) => nar.setFlag('noche1_done', true) },
   ],
 
-  // ─────────────────────────────────────────────
-  // ESCENA 04 — El descubrimiento
-  // ─────────────────────────────────────────────
   escena04_descubrimiento: [
     { type: 'title', text: 'Escena 04', sub: 'Día 2 — Borde del bosque' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(al encontrar el sendero)', text: '¿Un camino? Alguien lo hizo. No apareció solo.' },
@@ -124,15 +109,12 @@ export const STORY_EVENTS = {
     { type: 'dialogue', speaker: 'protagonist', stage: '(pausa. Una pequeña sonrisa involuntaria.)', text: 'Sor no me dijo nada de esto.' },
   ],
 
-  // ─────────────────────────────────────────────
-  // ESCENA 05 — El guardia
-  // ─────────────────────────────────────────────
   escena05_guardia: [
     { type: 'title', text: 'Escena 05', sub: 'Puerta norte — Ironfell' },
-    { type: 'dialogue', speaker: 'guardia', stage: '(mano en la empuñadura, sin sacarla)', text: 'Alto. ¿De dónde vienes? No te he visto por aquí.' },
+    { type: 'dialogue', speaker: 'yuna', stage: '(mano en la empuñadura, sin sacarla)', text: 'Alto. ¿De dónde vienes? No te he visto por aquí.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(un segundo de pausa — procesando)', text: 'Del bosque. Llegué hace unos días.' },
-    { type: 'dialogue', speaker: 'guardia', text: '¿Solo? ¿Por el bosque norte?' },
-    { type: 'dialogue', speaker: 'guardia', stage: '(frunce el ceño)', text: 'La gente que cruza el bosque norte normalmente no llega entera. ¿Tienes magia?' },
+    { type: 'dialogue', speaker: 'yuna', text: '¿Solo? ¿Por el bosque norte?' },
+    { type: 'dialogue', speaker: 'yuna', stage: '(frunce el ceño)', text: 'La gente que cruza el bosque norte normalmente no llega entera. ¿Tienes magia?' },
     {
       type: 'choice',
       prompt: '¿Qué responde el protagonista?',
@@ -142,8 +124,8 @@ export const STORY_EVENTS = {
           value: 'A',
           flag: { key: 'admitted_magic', value: true },
           then: [
-            { type: 'dialogue', speaker: 'guardia', stage: '(levanta una mano hacia adentro sin apartar los ojos del protagonista)', text: '¡Maren! Ven un momento. Trae el medidor.' },
-            { type: 'dialogue', speaker: 'guardia', stage: '(al protagonista, con más respeto pero también más precaución)', text: 'Si de verdad tienes magia y sobreviviste al bosque norte... eso no es común. Espera aquí.' },
+            { type: 'dialogue', speaker: 'yuna', stage: '(levanta una mano hacia adentro sin apartar los ojos del protagonista)', text: '¡Maren! Ven un momento. Trae el medidor.' },
+            { type: 'dialogue', speaker: 'yuna', stage: '(al protagonista, con más respeto pero también más precaución)', text: 'Si de verdad tienes magia y sobreviviste al bosque norte... eso no es común. Espera aquí.' },
           ]
         },
         {
@@ -151,8 +133,8 @@ export const STORY_EVENTS = {
           value: 'B',
           flag: { key: 'admitted_magic', value: false },
           then: [
-            { type: 'dialogue', speaker: 'guardia', stage: '(suspira, se hace a un lado)', text: 'Sin magia, sin armas visibles, sin amenaza aparente. Puedes entrar. Pero te presento con Theron primero — él decide qué hacer contigo.' },
-            { type: 'dialogue', speaker: 'guardia', stage: '(en voz más baja, casi amistoso)', text: 'Y come algo. Pareces recién caído del cielo.' },
+            { type: 'dialogue', speaker: 'yuna', stage: '(suspira, se hace a un lado)', text: 'Sin magia, sin armas visibles, sin amenaza aparente. Puedes entrar. Pero te presento con Shin primero — él decide qué hacer contigo.' },
+            { type: 'dialogue', speaker: 'yuna', stage: '(en voz más baja, casi amistoso)', text: 'Y come algo. Pareces recién caído del cielo.' },
           ]
         },
       ]
@@ -160,16 +142,12 @@ export const STORY_EVENTS = {
     { type: 'action', fn: (nar) => nar.setFlag('escena05_done', true) },
   ],
 
-  // ─────────────────────────────────────────────
-  // ESCENA 06 — Entrada a Ironfell
-  // ─────────────────────────────────────────────
   escena06_entrada_ironfell: [
     { type: 'title', text: 'Escena 06', sub: 'Ironfell — Exploración libre' },
     { type: 'narration', text: 'El protagonista entra a Ironfell por primera vez. La ciudad es pequeña pero viva.' },
     { type: 'action', fn: (nar) => nar.setFlag('ironfell_desbloqueada', true) },
   ],
 
-  // NPCs de reacción — se llaman al acercarse
   npc_vendedora_elfa: [
     { type: 'dialogue', speaker: 'narrador', stage: '(al pasar cerca)', text: 'Ropa rara. ¿Eres de las tierras del este?' },
   ],
@@ -180,18 +158,15 @@ export const STORY_EVENTS = {
     { type: 'dialogue', speaker: 'narrador', stage: '(acercándose con curiosidad descarada)', text: '¿Tú tienes magia? ¿Puedes hacer fuego? ¡Hazlo!' },
   ],
 
-  // ─────────────────────────────────────────────
-  // ESCENA 07 — Los generales
-  // ─────────────────────────────────────────────
   escena07_generales: [
     { type: 'fade', color: '#000', duration: 600 },
-    { type: 'title', text: 'Escena 07', sub: 'Sala de generales — Ironfell' },
-    { type: 'narration', text: 'Theron ya está ahí cuando el protagonista entra. Aelith llega un minuto después, con cara de que preferiría estar en otra parte. Korrath casi no cabe por la puerta.' },
-    { type: 'dialogue', speaker: 'theron', stage: '(se levanta, extiende la mano, sonrisa genuina)', text: 'Theron. Me encargo de las relaciones con los otros pueblos — o intento hacerlo. Bienvenido a Ironfell.' },
-    { type: 'dialogue', speaker: 'theron', stage: '(pausa, más directo)', text: 'El guardia dijo que saliste del bosque norte sin un rasguño. ¿Cómo?' },
+    { type: 'title', text: 'Escena 07', sub: 'Sala de reunión — Ironfell' },
+    { type: 'narration', text: 'Shin ya está ahí cuando el protagonista entra. Mika llega un minuto después, con cara de que preferiría estar en otra parte. Korrath casi no cabe por la puerta.' },
+    { type: 'dialogue', speaker: 'shin', stage: '(se levanta, extiende la mano, sonrisa genuina)', text: 'Shin. Me encargo de las relaciones con los otros pueblos — o intento hacerlo. Bienvenido a Ironfell.' },
+    { type: 'dialogue', speaker: 'shin', stage: '(pausa, más directo)', text: 'El guardia dijo que saliste del bosque norte sin un rasguño. ¿Cómo?' },
     { type: 'dialogue', speaker: 'protagonist', text: 'Honestamente... no estoy seguro todavía.' },
-    { type: 'dialogue', speaker: 'aelith', stage: '(desde la esquina, sin acercarse, evaluándolo)', text: 'Magia latente. Se nota. No la ha usado, o no sabe cómo usarla todavía.' },
-    { type: 'dialogue', speaker: 'aelith', stage: '(al protagonista, fría pero no hostil)', text: 'Aelith. Francotiradora. Si en algún momento decides que sabes lo que haces, avísame.' },
+    { type: 'dialogue', speaker: 'mika', stage: '(desde la esquina, sin acercarse, evaluándolo)', text: 'Magia latente. Se nota. No la ha usado, o no sabe cómo usarla todavía.' },
+    { type: 'dialogue', speaker: 'mika', stage: '(al protagonista, fría pero no hostil)', text: 'Mika. Si en algún momento decides que sabes lo que haces, avísame.' },
     { type: 'dialogue', speaker: 'korrath', stage: '(entra al salón, llena el espacio, voz como piedras rodando)', text: 'Korrath.' },
     { type: 'dialogue', speaker: 'korrath', stage: '(mira al protagonista un segundo, asiente)', text: 'Sobreviviste el bosque. Eso ya dice algo.' },
     { type: 'dialogue', speaker: 'korrath', stage: '(se sienta, la silla cruje)', text: 'El resto lo veremos en el campo.' },
@@ -212,12 +187,12 @@ export const STORY_EVENTS = {
           value: 'apartar',
           flag: { key: 'korrath_respeto', value: false },
           then: [
-            { type: 'narration', text: 'Korrath no reacciona. Theron llena el silencio.' },
+            { type: 'narration', text: 'Korrath no reacciona. Shin llena el silencio.' },
           ]
         },
       ]
     },
-    { type: 'dialogue', speaker: 'theron', stage: '(con una sonrisa cómoda, rompiendo la tensión)', text: 'Bienvenido al equipo más raro de Solmara.' },
+    { type: 'dialogue', speaker: 'shin', stage: '(con una sonrisa cómoda, rompiendo la tensión)', text: 'Bienvenido al equipo más raro de Solmara.' },
     { type: 'fade', color: '#000', duration: 800 },
     { type: 'action', fn: (nar) => {
       nar.setFlag('escena07_done', true);
@@ -225,22 +200,19 @@ export const STORY_EVENTS = {
     }},
   ],
 
-  // ─────────────────────────────────────────────
-  // ESCENA 08 — El protagonista toma las riendas
-  // ─────────────────────────────────────────────
   escena08_mirador: [
     { type: 'fade', color: '#1a1200', duration: 1000 },
     { type: 'title', text: 'Escena 08', sub: 'Día 3 — El mirador' },
-    { type: 'dialogue', speaker: 'theron', text: '¿Dormiste?' },
+    { type: 'dialogue', speaker: 'shin', text: '¿Dormiste?' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(pausa, mirando el pueblo)', text: 'Algo. Este lugar... ¿cuánto tiempo lleva aquí?' },
-    { type: 'dialogue', speaker: 'theron', text: 'Generaciones. Pero nunca terminó de crecer. El jefe anterior... digamos que no tenía las mejores prioridades.' },
-    { type: 'dialogue', speaker: 'theron', stage: '(pausa)', text: 'La gente aquí tiene talento, recursos, voluntad. Solo faltaba alguien que supiera qué hacer con todo eso.' },
+    { type: 'dialogue', speaker: 'shin', text: 'Generaciones. Pero nunca terminó de crecer. El jefe anterior... digamos que no tenía las mejores prioridades.' },
+    { type: 'dialogue', speaker: 'shin', stage: '(pausa)', text: 'La gente aquí tiene talento, recursos, voluntad. Solo faltaba alguien que supiera qué hacer con todo eso.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(sin apartar la vista del horizonte)', text: '¿Y creen que ese alguien soy yo?' },
-    { type: 'dialogue', speaker: 'theron', stage: '(con honestidad tranquila)', text: 'No lo sé todavía. Pero apareciste del bosque norte con vida, sin magia entrenada, y tu primera pregunta fue sobre el pueblo — no sobre ti mismo.' },
-    { type: 'dialogue', speaker: 'theron', stage: '(leve sonrisa)', text: 'Eso ya es más de lo que esperaba.' },
+    { type: 'dialogue', speaker: 'shin', stage: '(con honestidad tranquila)', text: 'No lo sé todavía. Pero apareciste del bosque norte con vida, sin magia entrenada, y tu primera pregunta fue sobre el pueblo — no sobre ti mismo.' },
+    { type: 'dialogue', speaker: 'shin', stage: '(leve sonrisa)', text: 'Eso ya es más de lo que esperaba.' },
     { type: 'narration', text: 'El protagonista no responde. Sigue mirando Ironfell. Y algo en su expresión cambia, apenas perceptible.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(por fin, mirando la ciudad)', text: 'Necesito un lugar donde quedarme. Y algo que hacer mientras entiendo dónde estoy.' },
-    { type: 'dialogue', speaker: 'theron', stage: '(asiente, sin promesas grandes)', text: 'Eso lo podemos arreglar.' },
+    { type: 'dialogue', speaker: 'shin', stage: '(asiente, sin promesas grandes)', text: 'Eso lo podemos arreglar.' },
     { type: 'fade', color: '#000', duration: 1500 },
     { type: 'action', fn: (nar) => {
       nar.setFlag('fase1_completa', true);
@@ -257,10 +229,6 @@ export const STORY_EVENTS = {
     { type: 'title', text: 'Fin de Fase 1', sub: 'Lo que construye a partir de aquí es suyo.' },
   ],
 
-  // ─────────────────────────────────────────────
-  // FASE 2 — Escenas 9–15
-  // ─────────────────────────────────────────────
-
   escena09_planicie: [
     { type: 'title', text: 'Escena 09', sub: 'Días 3–5 — La planicie' },
     { type: 'narration', text: 'Días pasan. El protagonista trabaja sin apuro. Lo que antes era una planicie vacía empieza a tener forma — pequeña, imperfecta, pero suya.' },
@@ -274,19 +242,19 @@ export const STORY_EVENTS = {
 
   escena10_descubrimiento_ironfell: [
     { type: 'title', text: 'Escena 10', sub: 'Día 5 — El sendero' },
-    { type: 'narration', text: 'Explorando más allá del bosque, el protagonista encuentra el sendero que lleva a Ironfell. El sendero baja de la montaña y abre a la ciudad.' },
+    { type: 'narration', text: 'Explorando más allá del bosque, el protagonista encuentra el sendero que lleva a Ironfell.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(en voz muy baja)', text: '...Hay gente aquí.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(pausa)', text: 'Sor definitivamente se olvidó de mencionar esto también.' },
   ],
 
   escena11_guardia_idioma: [
     { type: 'title', text: 'Escena 11', sub: 'Día 5 — La puerta norte' },
-    { type: 'dialogue', speaker: 'guardia', stage: '(mano en la empuñadura, sin sacarla)', text: 'Alto. ¿De dónde vienes? No te he visto por aquí.' },
+    { type: 'dialogue', speaker: 'yuna', stage: '(mano en la empuñadura, sin sacarla)', text: 'Alto. ¿De dónde vienes? No te he visto por aquí.' },
     { type: 'narration', text: 'El protagonista lo entiende. Perfectamente. Como si el guardia hubiera hablado en español toda la vida.' },
     { type: 'narration', text: '"Espera. ¿Lo estoy entendiendo? ¿Cómo lo estoy entendiendo?"' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(un segundo de pausa — procesando)', text: 'Del bosque. Llegué hace unos días.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(en voz muy baja, casi para sí mismo)', text: 'Y aparentemente entiendo lo que dices. Interesante.' },
-    { type: 'dialogue', speaker: 'guardia', stage: '(frunce el ceño)', text: '¿Estás bien?' },
+    { type: 'dialogue', speaker: 'yuna', stage: '(frunce el ceño)', text: '¿Estás bien?' },
     { type: 'dialogue', speaker: 'protagonist', text: 'Sí. Perdón. ¿Puedo entrar?' },
     { type: 'narration', text: '"Sor te dio la traducción pero se le olvidó mencionártelo. Típico."' },
     {
@@ -298,8 +266,8 @@ export const STORY_EVENTS = {
           value: 'A',
           flag: { key: 'admitted_magic', value: true },
           then: [
-            { type: 'dialogue', speaker: 'guardia', stage: '(levanta una mano hacia adentro)', text: '¡Maren! Ven un momento. Trae el medidor.' },
-            { type: 'dialogue', speaker: 'guardia', stage: '(con más respeto pero también más precaución)', text: 'Si de verdad tienes magia y sobreviviste al bosque norte... eso no es común. Espera aquí.' },
+            { type: 'dialogue', speaker: 'yuna', stage: '(levanta una mano hacia adentro)', text: '¡Maren! Ven un momento. Trae el medidor.' },
+            { type: 'dialogue', speaker: 'yuna', stage: '(con más respeto pero también más precaución)', text: 'Si de verdad tienes magia y sobreviviste al bosque norte... eso no es común. Espera aquí.' },
           ]
         },
         {
@@ -307,8 +275,8 @@ export const STORY_EVENTS = {
           value: 'B',
           flag: { key: 'admitted_magic', value: false },
           then: [
-            { type: 'dialogue', speaker: 'guardia', stage: '(suspira, se hace a un lado)', text: 'Sin magia, sin armas visibles. Puedes entrar. Pero te presento con Theron primero.' },
-            { type: 'dialogue', speaker: 'guardia', stage: '(casi amistoso)', text: 'Y come algo. Pareces recién caído del cielo.' },
+            { type: 'dialogue', speaker: 'yuna', stage: '(suspira, se hace a un lado)', text: 'Sin magia, sin armas visibles. Puedes entrar. Pero te presento con Shin primero.' },
+            { type: 'dialogue', speaker: 'yuna', stage: '(casi amistoso)', text: 'Y come algo. Pareces recién caído del cielo.' },
           ]
         },
       ]
@@ -379,28 +347,25 @@ export const STORY_EVENTS = {
     { type: 'action', fn: (nar) => nar.setFlag('academia_desbloqueada', true) },
   ],
 
-  escena15_aelith_mercado: [
-    { type: 'title', text: 'Escena 15', sub: 'Día 8 — Aelith en el mercado' },
-    { type: 'dialogue', speaker: 'aelith', stage: '(desde un puesto cercano, sin acercarse, revisando flechas)', text: 'Tú. El del bosque norte.' },
-    { type: 'dialogue', speaker: 'protagonist', stage: '(se voltea)', text: 'Aelith.' },
-    { type: 'dialogue', speaker: 'aelith', stage: '(sin apartar los ojos de las flechas)', text: '¿Cómo vas?' },
+  escena15_mika_mercado: [
+    { type: 'title', text: 'Escena 15', sub: 'Día 8 — Mika en el mercado' },
+    { type: 'dialogue', speaker: 'mika', stage: '(desde un puesto cercano, sin acercarse)', text: 'Tú. El del bosque norte.' },
+    { type: 'dialogue', speaker: 'protagonist', stage: '(se voltea)', text: 'Mika.' },
+    { type: 'dialogue', speaker: 'mika', text: '¿Cómo vas?' },
     { type: 'dialogue', speaker: 'protagonist', text: 'Bien. Construyendo. Aprendiendo cómo funciona esto.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(pausa)', text: '¿Y tú qué haces aquí?' },
-    { type: 'dialogue', speaker: 'aelith', text: 'Comprar flechas. Lo mismo que tú — lo que necesito.' },
-    { type: 'dialogue', speaker: 'aelith', stage: '(por fin lo mira directamente)', text: 'Si necesitas saber dónde están las cosas del pueblo, pregúntale a Theron. Él sabe dónde hay todo.' },
-    { type: 'dialogue', speaker: 'aelith', stage: '(vuelve a las flechas)', text: 'O pregúntame a mí. Si no estoy ocupada.' },
+    { type: 'dialogue', speaker: 'mika', text: 'Lo mismo que tú — lo que necesito.' },
+    { type: 'dialogue', speaker: 'mika', stage: '(por fin lo mira directamente)', text: 'Si necesitas saber dónde están las cosas del pueblo, pregúntale a Shin. Él sabe dónde hay todo.' },
+    { type: 'dialogue', speaker: 'mika', text: 'O pregúntame a mí. Si no estoy ocupada.' },
     { type: 'dialogue', speaker: 'protagonist', stage: '(con una leve sonrisa)', text: '¿Eso fue una oferta de ayuda?' },
-    { type: 'dialogue', speaker: 'aelith', stage: '(paga las flechas, se da la vuelta para irse)', text: 'Fue información. Haz lo que quieras con ella.' },
+    { type: 'dialogue', speaker: 'mika', stage: '(se da la vuelta para irse)', text: 'Fue información. Haz lo que quieras con ella.' },
     { type: 'narration', text: 'Se va sin mirar atrás. El protagonista la ve alejarse. Luego vuelve a sus compras.' },
-    { type: 'action', fn: (nar) => nar.setFlag('aelith_desbloqueada', true) },
+    { type: 'action', fn: (nar) => nar.setFlag('mika_desbloqueada', true) },
     { type: 'title', text: 'Fin de Fase 2', sub: 'El pueblo existe. La Academia espera.' },
   ],
 
 };
 
-// ─────────────────────────────────────────────
-// HELPER — reacción NPC según flag de magia
-// ─────────────────────────────────────────────
 export function getNPCReaction(narrative, npcKey) {
   const conMagia = narrative.getFlag('admitted_magic');
   const variantes = {
