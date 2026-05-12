@@ -1,5 +1,5 @@
 /**
- * player.js — Cápsula jugador + lógica de movimiento
+ * player.js — Alma del protagonista
  * Ashes of the Reborn | Valiant Gaming
  */
 
@@ -8,8 +8,6 @@ import * as THREE from 'three';
 const MOVE_SPEED   = 5.0;
 const SPRINT_SPEED = 9.0;
 const TURN_SPEED   = 8.0;
-const CAPSULE_H    = 1.8;
-const CAPSULE_R    = 0.35;
 const GROUND_Y     = 0.0;
 
 export class Player {
@@ -23,72 +21,40 @@ export class Player {
     this._sprinting  = false;
 
     this.root = new THREE.Group();
-    
-    this.root.position.set(0, GROUND_Y, -20);// spawn en bosque
+    this.root.position.set(0, GROUND_Y, -20);
     scene.add(this.root);
 
     this._buildMesh();
-    this._buildDirectionArrow();
   }
 
   setSprinting(val) { this._sprinting = val; }
 
   _buildMesh() {
-  const mat = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    transparent: true,
-    opacity: 0.85,
-    emissive: 0xaaccff,
-    emissiveIntensity: 0.6,
-    roughness: 0.1,
-    metalness: 0.0,
-  });
+    // Esfera blanca — alma del protagonista
+    const mat = new THREE.MeshStandardMaterial({
+      color           : 0xffffff,
+      transparent     : true,
+      opacity         : 0.85,
+      emissive        : 0xaaccff,
+      emissiveIntensity: 0.6,
+      roughness       : 0.1,
+      metalness       : 0.0,
+    });
 
-  const geo = new THREE.SphereGeometry(0.35, 16, 16);
-  const sphere = new THREE.Mesh(geo, mat);
-  sphere.position.y = 0.6;
-  this.root.add(sphere);
+    const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), mat);
+    sphere.position.y = 0.6;
+    this.root.add(sphere);
 
-  // Halo de luz suave
-  const haloMat = new THREE.MeshBasicMaterial({
-    color: 0x88aaff,
-    transparent: true,
-    opacity: 0.15,
-  });
-  const halo = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 12), haloMat);
-  halo.position.y = 0.6;
-  this.root.add(halo);
+    // Halo suave
+    const halo = new THREE.Mesh(
+      new THREE.SphereGeometry(0.52, 12, 12),
+      new THREE.MeshBasicMaterial({ color: 0x88aaff, transparent: true, opacity: 0.12 })
+    );
+    halo.position.y = 0.6;
+    this.root.add(halo);
 
-  this.bodyMesh = sphere;
-  this.headMesh = sphere;
-  }
-    const bodyGeo = new THREE.CylinderGeometry(CAPSULE_R, CAPSULE_R, CAPSULE_H - CAPSULE_R * 2, 16);
-    const body    = new THREE.Mesh(bodyGeo, mat);
-    body.position.y = CAPSULE_H * 0.5;
-    body.castShadow = false;
-    this.root.add(body);
-
-    const headGeo = new THREE.SphereGeometry(CAPSULE_R, 16, 12);
-    const head    = new THREE.Mesh(headGeo, mat);
-    head.position.y = CAPSULE_H - CAPSULE_R;
-    head.castShadow = false;
-    this.root.add(head);
-
-    const footGeo = new THREE.SphereGeometry(CAPSULE_R, 16, 12);
-    const foot    = new THREE.Mesh(footGeo, mat);
-    foot.position.y = CAPSULE_R;
-    foot.castShadow = false;
-    this.root.add(foot);
-
-    this.bodyMesh = body;
-    this.headMesh = head;
-  }
-
-  
-    this.arrow = new THREE.Mesh(geo, mat);
-    this.arrow.rotation.x = Math.PI * 0.5;
-    this.arrow.position.set(0, 0.8, CAPSULE_R + 0.18);
-    this.root.add(this.arrow);
+    this.bodyMesh = sphere;
+    this.headMesh = sphere;
   }
 
   update(delta, joystickInput, camera) {
@@ -125,14 +91,13 @@ export class Player {
       }
     }
 
+    // Bob flotante del alma
     const t = performance.now() * 0.001;
-    const bobSpeed = this._sprinting ? 3.5 : 1.8;
-    const bobAmp   = this._sprinting ? 0.022 : 0.012;
-    this.bodyMesh.position.y = CAPSULE_H * 0.5 + Math.sin(t * bobSpeed) * bobAmp;
+    this.bodyMesh.position.y = 0.6 + Math.sin(t * 2.2) * 0.06;
   }
 
   get position()      { return this.root.position; }
-  get chestPosition() { return this.root.position.clone().add(new THREE.Vector3(0, CAPSULE_H * 0.65, 0)); }
+  get chestPosition() { return this.root.position.clone().add(new THREE.Vector3(0, 1.0, 0)); }
 
   takeDamage(amount) {
     this.hp = Math.max(0, this.hp - amount);
@@ -140,4 +105,4 @@ export class Player {
   }
 
   destroy() { this.scene.remove(this.root); }
-    }
+}
