@@ -34,10 +34,34 @@ export class Player {
   setSprinting(val) { this._sprinting = val; }
 
   _buildMesh() {
-    const mat = new THREE.MeshStandardMaterial({
-      color: 0xc8a87a, roughness: 0.6, metalness: 0.1,
-    });
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.85,
+    emissive: 0xaaccff,
+    emissiveIntensity: 0.6,
+    roughness: 0.1,
+    metalness: 0.0,
+  });
 
+  const geo = new THREE.SphereGeometry(0.35, 16, 16);
+  const sphere = new THREE.Mesh(geo, mat);
+  sphere.position.y = 0.6;
+  this.root.add(sphere);
+
+  // Halo de luz suave
+  const haloMat = new THREE.MeshBasicMaterial({
+    color: 0x88aaff,
+    transparent: true,
+    opacity: 0.15,
+  });
+  const halo = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 12), haloMat);
+  halo.position.y = 0.6;
+  this.root.add(halo);
+
+  this.bodyMesh = sphere;
+  this.headMesh = sphere;
+  }
     const bodyGeo = new THREE.CylinderGeometry(CAPSULE_R, CAPSULE_R, CAPSULE_H - CAPSULE_R * 2, 16);
     const body    = new THREE.Mesh(bodyGeo, mat);
     body.position.y = CAPSULE_H * 0.5;
@@ -60,12 +84,7 @@ export class Player {
     this.headMesh = head;
   }
 
-  _buildDirectionArrow() {
-    const geo = new THREE.ConeGeometry(0.12, 0.35, 8);
-    const mat = new THREE.MeshStandardMaterial({
-      color: 0xff9900, roughness: 0.4,
-      emissive: 0xff6600, emissiveIntensity: 0.3,
-    });
+  
     this.arrow = new THREE.Mesh(geo, mat);
     this.arrow.rotation.x = Math.PI * 0.5;
     this.arrow.position.set(0, 0.8, CAPSULE_R + 0.18);
