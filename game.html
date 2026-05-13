@@ -78,6 +78,12 @@ import { ParrySystem }      from './core/parry.js';
 import { Wolf } from './core/enemies/wolf.js';
 import { Bear } from './core/enemies/bear.js';
 import { MapUI } from './ui/mapUI.js';
+import { Mossling }       from './core/enemies/Mossling.js';
+import { Firefly }        from './core/enemies/Firefly.js';
+import { CrystalSpider }  from './core/enemies/CrystalSpider.js';
+import { Troll }          from './core/enemies/Troll.js';
+import { EarthGolem }     from './core/enemies/EarthGolem.js';
+import { WanderingSpirit }from './core/enemies/WanderingSpirit.js';  
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -231,6 +237,39 @@ const bear = new Bear(scene, { x: 0, z: -55 }, player, () => {
   // Cuando el oso se activa — lobos huyen
   wolves.forEach(w => w.flee(bear.mesh.position));
 });
+    // ── Monstruos del bosque denso (z: -40 a -80) ──
+const forestMonsters = [
+  new Mossling(scene, { x: -15, z: -50 }, player),
+  new Mossling(scene, { x:  12, z: -55 }, player),
+  new Mossling(scene, { x:  -5, z: -65 }, player),
+  new Mossling(scene, { x:  18, z: -48 }, player),
+  new Firefly(scene,  { x:  -8, z: -58 }, player),
+  new Firefly(scene,  { x:  10, z: -70 }, player),
+  new Firefly(scene,  { x: -20, z: -62 }, player),
+  new CrystalSpider(scene, { x:  5, z: -52 }, player),
+  new CrystalSpider(scene, { x: -12, z: -68 }, player),
+  new Troll(scene, { x: -22, z: -72 }, player),
+  new Troll(scene, { x:  20, z: -65 }, player),
+];
+
+// ── Monstruos de la planicie (z: -10 a 30) ──
+const plainsMonsters = [
+  new EarthGolem(scene,     { x: -18, z: 10 }, player),
+  new EarthGolem(scene,     { x:  20, z: 18 }, player),
+  new WanderingSpirit(scene, { x:  -8, z: 22 }, player),
+  new WanderingSpirit(scene, { x:  12, z:  5 }, player),
+  new WanderingSpirit(scene, { x: -22, z: 28 }, player),
+];
+
+// Registrar todos
+const allEnemies = [...enemies, ...wolves, bear, ...forestMonsters, ...plainsMonsters];
+allEnemies.forEach(e => combat.registerEnemy(e));
+setEnemies(allEnemies);
+hud.setEnemies(allEnemies);
+window._bear         = bear;
+window._wolves       = wolves;
+window._forestMonsters = forestMonsters;
+window._plainsMonsters = plainsMonsters;
 
 bear.onDeath = () => {
   // Lobos vuelven a merodear
