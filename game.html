@@ -256,13 +256,13 @@ window._wolves = wolves;
     window._skillBar  = skillBar;
     const subtypeMenu = new SubtypeMenu(progression, skillBar);
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
-
     const radialMenu = new RadialMenu([
-      { icon: '⚔️', label: 'Habilidades', action: () => skillTree.open(), locked: false },
-      { icon: '🏗',  label: 'Construcción', action: () => buildMenu.open(), locked: false },
-      { icon: '📋', label: 'Árbol Build',  action: () => console.log('próximamente'), locked: true },
-      { icon: '📖', label: 'Guías',        action: () => console.log('próximamente'), locked: true },
-    ]);
+  { icon: '⚔️', label: 'Habilidades', action: () => skillTree.open(), locked: false },
+  { icon: '🏗',  label: 'Construcción', action: () => buildMenu.open(), locked: false },
+  { icon: '🗺️', label: 'Mapa',        action: () => mapUI.toggle(), locked: false },
+  { icon: '📖', label: 'Guías',        action: () => console.log('próximamente'), locked: true },
+]);
+    
 
     const pauseMenu = new PauseMenu({
       onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
