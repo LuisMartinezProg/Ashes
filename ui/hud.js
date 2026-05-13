@@ -213,8 +213,8 @@ export class HUD {
       display      : 'flex',
       flexDirection: 'column',
       gap          : '6px',
-      width        : '52vw',
-      maxWidth     : '280px',
+      width        : '38vw',
+      maxWidth     : '320px',
     });
 
     const hpWrap  = this._makeBarWrap('rgba(255,50,50,0.15)', 'rgba(255,80,80,0.3)');
@@ -259,17 +259,16 @@ export class HUD {
     block.appendChild(enWrap);
     this._container.appendChild(block);
   }
-
-  _makeBarWrap(bg, border) {
-    const w = document.createElement('div');
-    Object.assign(w.style, {
-      background  : bg,
-      border      : `1px solid ${border}`,
-      borderRadius: '4px',
-      padding     : '4px 8px',
-    });
-    return w;
-  }
+_makeBarWrap(bg, border) {
+  const w = document.createElement('div');
+  Object.assign(w.style, {
+    background  : 'rgba(0,0,0,0.75)',
+    border      : `1px solid ${border}`,
+    borderRadius: '4px',
+    padding     : '4px 8px',
+  });
+  return w;
+}
 
   _makeTrack(height, bg) {
     const t = document.createElement('div');
