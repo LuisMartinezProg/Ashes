@@ -77,6 +77,7 @@ import { RadialMenu }       from './ui/radialMenu.js';
 import { ParrySystem }      from './core/parry.js';
 import { Wolf } from './core/enemies/wolf.js';
 import { Bear } from './core/enemies/bear.js';
+import { MapUI } from './ui/mapUI.js';
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -213,6 +214,9 @@ async function boot() {
     combat.setWeapon(weaponType);
     hud.setWeaponIcon(weaponType);
     hud.show();
+  const mapUI = new MapUI(player);
+  window._mapUI = mapUI;
+  setInterval(() => mapUI.update(), 500);
     // ── Lobos y oso del bosque ──
 const wolves = [
   new Wolf(scene, { x: -12, z: -38 }, player),
