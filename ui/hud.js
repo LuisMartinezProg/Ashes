@@ -4,17 +4,18 @@ export class HUD {
   constructor(combatSystem, skillSystem = null) {
     this.combat = combatSystem;
     this.skills = skillSystem;
-    this._currentEnemy  = null;
     this._enemies       = [];
-    this._enemyBarEl    = null;
-    this._fillEl        = null;
-    this._hpTextEl      = null;
+    this._enemyLabels   = new Map(); // enemy → div
+    this._bossBarEl     = null;
+    this._bossFillEl    = null;
+    this._bossTextEl    = null;
+    this._bossNameEl    = null;
     this._playerHpFill  = null;
     this._playerHpText  = null;
     this._energyFill    = null;
     this._container     = null;
     this._collectBtn    = null;
-    this._collectTimer  = null;
+    this._camera        = null;
 
     this._build();
 
@@ -23,9 +24,17 @@ export class HUD {
     }
   }
 
-  setEnemies(list) { this._enemies = list; }
-  show()           { this._container.style.display = 'block'; }
-  hide()           { this._container.style.display = 'none'; }
+  setEnemies(list) {
+    // Limpiar labels viejos
+    for (const el of this._enemyLabels.values()) el.remove();
+    this._enemyLabels.clear();
+    this._enemies = list;
+  }
+
+  setCamera(camera) { this._camera = camera; }
+
+  show() { this._container.style.display = 'block'; }
+  hide() { this._container.style.display = 'none'; }
 
   setWeaponIcon(type) {
     if (window._skillBar) window._skillBar.setWeaponIcon(type);
@@ -38,33 +47,168 @@ export class HUD {
     if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(hp)}/${max}`;
   }
 
+  // ── Barra de enemigos ────────────────────────────────────────────────────
+
   updateEnemyBar(playerPosition) {
-    if (this._currentEnemy && this._currentEnemy.isDead()) this._currentEnemy = null;
-    if (!this._currentEnemy) {
-      let closest = null, minDist = Infinity;
-      for (const e of this._enemies) {
-        if (e.isDead()) continue;
-        const d = playerPosition.distanceTo(e.mesh.position);
-        if (d < minDist) { minDist = d; closest = e; }
+    if (!this._camera) return;
+
+    let bossFound = false;
+
+    for (const e of this._enemies) {
+      if (!e.mesh) continue;
+
+      if (e._config?.isBoss) {
+        // Jefe — barra fija arriba
+        if (!e.isDead()) {
+          bossFound = true;
+          this._updateBossBar(e);
+        }
+        this._hideLabel(e);
+        continue;
       }
-      this._currentEnemy = minDist <= 8 ? closest : null;
+
+      if (e.isDead()) {
+        this._hideLabel(e);
+        continue;
+      }
+
+      const dist = playerPosition.distanceTo(e.mesh.position);
+      if (dist > 14) {
+        this._hideLabel(e);
+        continue;
+      }
+
+      this._updateFloatingLabel(e);
     }
-    if (this._currentEnemy && !this._currentEnemy.isDead()) {
-      this._updateBar(this._currentEnemy.hp, this._currentEnemy.maxHp);
-      this._enemyBarEl.style.display = 'block';
-    } else {
-      this._enemyBarEl.style.display = 'none';
+
+    if (!bossFound) this._bossBarEl.style.display = 'none';
+  }
+
+  _updateBossBar(e) {
+    const pct = Math.max(0, e.hp / e.maxHp) * 100;
+    this._bossFillEl.style.width = `${pct}%`;
+    this._bossTextEl.textContent = `${Math.ceil(e.hp)} / ${e.maxHp}`;
+    this._bossNameEl.textContent = e._config?.name ?? 'JEFE';
+    this._bossFillEl.style.background = pct > 50
+      ? 'linear-gradient(90deg,#7700cc,#cc44ff)'
+      : pct > 25
+        ? 'linear-gradient(90deg,#cc6600,#ff9900)'
+        : 'linear-gradient(90deg,#882200,#cc2200)';
+    this._bossBarEl.style.display = 'block';
+  }
+
+  _updateFloatingLabel(e) {
+    let el = this._enemyLabels.get(e);
+    if (!el) {
+      el = this._makeFloatingLabel();
+      this._enemyLabels.set(e, el);
+      document.body.appendChild(el);
     }
+
+    // Proyectar posición world → screen
+    const pos = e.mesh.position.clone();
+    pos.y += 2.2; // encima de la cabeza
+    pos.project(this._camera);
+
+    const x = (pos.x *  0.5 + 0.5) * window.innerWidth;
+    const y = (pos.y * -0.5 + 0.5) * window.innerHeight;
+
+    // Ocultar si está detrás de la cámara
+    if (pos.z > 1) {
+      el.style.display = 'none';
+      return;
+    }
+
+    const pct = Math.max(0, e.hp / e.maxHp) * 100;
+    const fill = el.querySelector('.ef');
+    const text = el.querySelector('.et');
+    const name = el.querySelector('.en');
+
+    fill.style.width = `${pct}%`;
+    fill.style.background = pct > 50
+      ? 'linear-gradient(90deg,#cc2222,#ff4444)'
+      : pct > 25
+        ? 'linear-gradient(90deg,#cc6600,#ff9900)'
+        : 'linear-gradient(90deg,#882200,#cc2200)';
+    text.textContent = `${Math.ceil(e.hp)}/${e.maxHp}`;
+    name.textContent = e._config?.name ?? 'Enemigo';
+
+    el.style.display = 'block';
+    el.style.left = `${x}px`;
+    el.style.top  = `${y}px`;
+  }
+
+  _hideLabel(e) {
+    const el = this._enemyLabels.get(e);
+    if (el) el.style.display = 'none';
+  }
+
+  _makeFloatingLabel() {
+    const wrap = document.createElement('div');
+    Object.assign(wrap.style, {
+      position      : 'fixed',
+      transform     : 'translateX(-50%)',
+      display       : 'none',
+      flexDirection : 'column',
+      alignItems    : 'center',
+      gap           : '2px',
+      pointerEvents : 'none',
+      zIndex        : '90',
+      minWidth      : '80px',
+    });
+
+    const name = document.createElement('div');
+    name.className = 'en';
+    Object.assign(name.style, {
+      color        : '#ffddaa',
+      fontSize     : '9px',
+      fontFamily   : 'monospace',
+      letterSpacing: '1px',
+      textShadow   : '0 1px 3px #000',
+      textAlign    : 'center',
+    });
+
+    const track = document.createElement('div');
+    Object.assign(track.style, {
+      width       : '80px',
+      height      : '6px',
+      background  : '#222',
+      borderRadius: '3px',
+      overflow    : 'hidden',
+      border      : '1px solid rgba(255,255,255,0.15)',
+    });
+
+    const fill = document.createElement('div');
+    fill.className = 'ef';
+    Object.assign(fill.style, {
+      height    : '100%',
+      width     : '100%',
+      background: 'linear-gradient(90deg,#cc2222,#ff4444)',
+      transition: 'width 0.15s ease',
+    });
+
+    const text = document.createElement('div');
+    text.className = 'et';
+    Object.assign(text.style, {
+      color     : '#aaa',
+      fontSize  : '8px',
+      fontFamily: 'monospace',
+      textAlign : 'center',
+    });
+
+    track.appendChild(fill);
+    wrap.appendChild(name);
+    wrap.appendChild(track);
+    wrap.appendChild(text);
+    return wrap;
   }
 
   // ── Recolección ──────────────────────────────────────────────────────────
+
   showCollectBtn(resource) {
-    if (!resource) {
-      this._hideCollectBtn();
-      return;
-    }
+    if (!resource) { this._hideCollectBtn(); return; }
     const labels = { madera: '🪓 Talar', piedra: '⛏ Picar' };
-    this._collectBtn.textContent  = labels[resource.type] ?? '🖐 Recolectar';
+    this._collectBtn.textContent   = labels[resource.type] ?? '🖐 Recolectar';
     this._collectBtn.style.display = 'flex';
     this._currentResource = resource;
   }
@@ -85,7 +229,6 @@ export class HUD {
     const toolMap = { punos: 1, hacha_madera: 2, hacha_piedra: 4, pico_madera: 2, pico_piedra: 4 };
     const power   = toolMap[tool] ?? 1;
 
-    // Solo herramienta correcta
     const needsAxe  = res.type === 'madera';
     const needsPick = res.type === 'piedra';
     const hasAxe    = tool.includes('hacha');
@@ -94,30 +237,20 @@ export class HUD {
     if (needsAxe && !hasAxe && tool !== 'punos') return;
     if (needsPick && !hasPick && tool !== 'punos') return;
 
-    // Animar botón
     this._collectBtn.style.transform = 'scale(0.88)';
     setTimeout(() => this._collectBtn.style.transform = 'scale(1)', 140);
 
-    // Reducir HP del recurso
     res.hp -= power;
+    window._building?.addMaterial?.(res.type, power);
+    this._showFloating(`+${power} ${res.type}`, res.type === 'madera' ? '#8B6340' : '#888078');
 
-    // Dar material
-    const amount = power;
-    window._building?.addMaterial?.(res.type, amount);
-
-    // Feedback visual
-    this._showFloating(`+${amount} ${res.type}`, res.type === 'madera' ? '#8B6340' : '#888078');
-
-    // Agotar recurso
     if (res.hp <= 0) {
-      res.depleted = true;
-      res.mesh.visible = false;
+      res.depleted      = true;
+      res.mesh.visible  = false;
       this._hideCollectBtn();
-
-      // Regenerar después de 30 segundos
       setTimeout(() => {
-        res.hp       = res.maxHp;
-        res.depleted = false;
+        res.hp           = res.maxHp;
+        res.depleted     = false;
         res.mesh.visible = true;
       }, 30000);
     }
@@ -126,31 +259,30 @@ export class HUD {
   _showFloating(text, color = '#c9a84c') {
     const el = document.createElement('div');
     Object.assign(el.style, {
-      position  : 'fixed',
-      left      : '50%',
-      bottom    : '220px',
-      transform : 'translateX(-50%)',
-      fontFamily: "'Cinzel',serif",
-      fontSize  : '13px',
+      position     : 'fixed',
+      left         : '50%',
+      bottom       : '220px',
+      transform    : 'translateX(-50%)',
+      fontFamily   : "'Cinzel',serif",
+      fontSize     : '13px',
       letterSpacing: '2px',
       color,
       pointerEvents: 'none',
-      zIndex    : '300',
-      transition: 'bottom 0.8s ease, opacity 0.8s ease',
-      opacity   : '1',
+      zIndex       : '300',
+      transition   : 'bottom 0.8s ease, opacity 0.8s ease',
+      opacity      : '1',
     });
     el.textContent = text;
     document.body.appendChild(el);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        el.style.bottom  = '280px';
-        el.style.opacity = '0';
-      });
-    });
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.bottom  = '280px';
+      el.style.opacity = '0';
+    }));
     setTimeout(() => el.remove(), 900);
   }
 
   // ── Build ────────────────────────────────────────────────────────────────
+
   _build() {
     this._container = document.createElement('div');
     this._container.id = 'hud-combat';
@@ -163,43 +295,98 @@ export class HUD {
     });
 
     this._buildPlayerBlock();
-    this._buildEnemyBar();
+    this._buildBossBar();
     this._buildCollectBtn();
     document.body.appendChild(this._container);
+  }
+
+  _buildBossBar() {
+    this._bossBarEl = document.createElement('div');
+    Object.assign(this._bossBarEl.style, {
+      position    : 'absolute',
+      top         : '12px',
+      left        : '50%',
+      transform   : 'translateX(-50%)',
+      width       : '50vw',
+      maxWidth    : '280px',
+      background  : 'rgba(0,0,0,0.7)',
+      border      : '1px solid rgba(180,100,255,0.3)',
+      borderRadius: '6px',
+      padding     : '6px 10px',
+      display     : 'none',
+    });
+
+    this._bossNameEl = document.createElement('div');
+    Object.assign(this._bossNameEl.style, {
+      color        : '#cc88ff',
+      fontSize     : '10px',
+      fontFamily   : 'monospace',
+      marginBottom : '4px',
+      letterSpacing: '2px',
+      textAlign    : 'center',
+    });
+    this._bossNameEl.textContent = 'JEFE';
+
+    const track = document.createElement('div');
+    Object.assign(track.style, {
+      width       : '100%',
+      height      : '10px',
+      background  : '#333',
+      borderRadius: '4px',
+      overflow    : 'hidden',
+    });
+
+    this._bossFillEl = document.createElement('div');
+    Object.assign(this._bossFillEl.style, {
+      height    : '100%',
+      width     : '100%',
+      background: 'linear-gradient(90deg,#7700cc,#cc44ff)',
+      transition: 'width 0.15s ease',
+    });
+
+    this._bossTextEl = document.createElement('div');
+    Object.assign(this._bossTextEl.style, {
+      color     : '#aaa',
+      fontSize  : '9px',
+      fontFamily: 'monospace',
+      marginTop : '3px',
+      textAlign : 'right',
+    });
+
+    track.appendChild(this._bossFillEl);
+    this._bossBarEl.appendChild(this._bossNameEl);
+    this._bossBarEl.appendChild(track);
+    this._bossBarEl.appendChild(this._bossTextEl);
+    this._container.appendChild(this._bossBarEl);
   }
 
   _buildCollectBtn() {
     this._collectBtn = document.createElement('button');
     Object.assign(this._collectBtn.style, {
-      position     : 'fixed',
-      bottom       : '200px',
-      left         : '50%',
-      transform    : 'translateX(-50%)',
-      display      : 'none',
-      alignItems   : 'center',
+      position      : 'fixed',
+      bottom        : '200px',
+      left          : '50%',
+      transform     : 'translateX(-50%)',
+      display       : 'none',
+      alignItems    : 'center',
       justifyContent: 'center',
-      fontFamily   : "'Cinzel',serif",
-      fontSize     : '12px',
-      letterSpacing: '2px',
-      color        : '#c9a84c',
-      background   : 'rgba(10,8,20,0.92)',
-      border       : '1px solid rgba(201,168,76,0.4)',
-      borderRadius : '24px',
-      padding      : '10px 24px',
-      cursor       : 'pointer',
-      pointerEvents: 'all',
-      zIndex       : '150',
-      boxShadow    : '0 2px 12px rgba(0,0,0,0.5)',
-      transition   : 'transform 0.1s',
-      whiteSpace   : 'nowrap',
+      fontFamily    : "'Cinzel',serif",
+      fontSize      : '12px',
+      letterSpacing : '2px',
+      color         : '#c9a84c',
+      background    : 'rgba(10,8,20,0.92)',
+      border        : '1px solid rgba(201,168,76,0.4)',
+      borderRadius  : '24px',
+      padding       : '10px 24px',
+      cursor        : 'pointer',
+      pointerEvents : 'all',
+      zIndex        : '150',
+      boxShadow     : '0 2px 12px rgba(0,0,0,0.5)',
+      transition    : 'transform 0.1s',
+      whiteSpace    : 'nowrap',
     });
-
-    this._collectBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      this._onCollect();
-    }, { passive: false });
+    this._collectBtn.addEventListener('touchstart', e => { e.preventDefault(); this._onCollect(); }, { passive: false });
     this._collectBtn.addEventListener('click', () => this._onCollect());
-
     document.body.appendChild(this._collectBtn);
   }
 
@@ -259,16 +446,17 @@ export class HUD {
     block.appendChild(enWrap);
     this._container.appendChild(block);
   }
-_makeBarWrap(bg, border) {
-  const w = document.createElement('div');
-  Object.assign(w.style, {
-    background  : 'rgba(0,0,0,0.75)',
-    border      : `1px solid ${border}`,
-    borderRadius: '4px',
-    padding     : '4px 8px',
-  });
-  return w;
-}
+
+  _makeBarWrap(bg, border) {
+    const w = document.createElement('div');
+    Object.assign(w.style, {
+      background  : 'rgba(0,0,0,0.75)',
+      border      : `1px solid ${border}`,
+      borderRadius: '4px',
+      padding     : '4px 8px',
+    });
+    return w;
+  }
 
   _makeTrack(height, bg) {
     const t = document.createElement('div');
@@ -293,79 +481,8 @@ _makeBarWrap(bg, border) {
     return f;
   }
 
-  _buildEnemyBar() {
-    this._enemyBarEl = document.createElement('div');
-    Object.assign(this._enemyBarEl.style, {
-      position    : 'absolute',
-      top         : '12px',
-      left        : '50%',
-      transform   : 'translateX(-50%)',
-      width       : '50vw',
-      maxWidth    : '280px',
-      background  : 'rgba(0,0,0,0.6)',
-      border      : '1px solid rgba(255,255,255,0.15)',
-      borderRadius: '6px',
-      padding     : '6px 10px',
-      display     : 'none',
-    });
-
-    const label = document.createElement('div');
-    Object.assign(label.style, {
-      color        : '#ccc',
-      fontSize     : '10px',
-      fontFamily   : 'monospace',
-      marginBottom : '4px',
-      letterSpacing: '1px',
-    });
-    label.textContent = 'ENEMIGO';
-
-    const track = document.createElement('div');
-    Object.assign(track.style, {
-      width       : '100%',
-      height      : '10px',
-      background  : '#333',
-      borderRadius: '4px',
-      overflow    : 'hidden',
-    });
-
-    this._fillEl = document.createElement('div');
-    Object.assign(this._fillEl.style, {
-      height      : '100%',
-      width       : '100%',
-      background  : 'linear-gradient(90deg,#cc2222,#ff4444)',
-      borderRadius: '4px',
-      transition  : 'width 0.15s ease',
-    });
-
-    this._hpTextEl = document.createElement('div');
-    Object.assign(this._hpTextEl.style, {
-      color     : '#aaa',
-      fontSize  : '9px',
-      fontFamily: 'monospace',
-      marginTop : '3px',
-      textAlign : 'right',
-    });
-
-    track.appendChild(this._fillEl);
-    this._enemyBarEl.appendChild(label);
-    this._enemyBarEl.appendChild(track);
-    this._enemyBarEl.appendChild(this._hpTextEl);
-    this._container.appendChild(this._enemyBarEl);
-  }
-
-  _updateBar(hp, maxHp) {
-    const pct = Math.max(0, hp / maxHp) * 100;
-    this._fillEl.style.width = `${pct}%`;
-    this._hpTextEl.textContent = `${Math.ceil(hp)} / ${maxHp}`;
-    this._fillEl.style.background = pct > 50
-      ? 'linear-gradient(90deg,#cc2222,#ff4444)'
-      : pct > 25
-        ? 'linear-gradient(90deg,#cc6600,#ff9900)'
-        : 'linear-gradient(90deg,#882200,#cc2200)';
-  }
-
   _updateEnergy(energy, maxEnergy) {
     const pct = Math.max(0, energy / maxEnergy) * 100;
     this._energyFill.style.width = `${pct}%`;
   }
-                                          }
+      }
