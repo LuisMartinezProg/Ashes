@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"/></head>
+<body>
+<pre id="out">Probando...</pre>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}
+</script>
+<script type="module">
+const out = document.getElementById('out');
+const results = [];
+
+async function test(name, fn) {
+  try {
+    await fn();
+    results.push(`✅ ${name}`);
+  } catch(e) {
+    results.push(`❌ ${name}: ${e.message}`);
+  }
+  out.textContent = results.join('\n');
+}
+
+await test('Cleave',        () => import('./skills/sword/cleave.js'));
+await test('ShieldBash',    () => import('./skills/sword/shieldBash.js'));
+await test('WarCry',        () => import('./skills/sword/warCry.js'));
+await test('Execute',       () => import('./skills/sword/execute.js'));
+await test('PiercingShot',  () => import('./skills/bow/piercingShot.js'));
+await test('RainOfArrows',  () => import('./skills/bow/rainOfArrows.js'));
+await test('PoisonArrow',   () => import('./skills/bow/poisonArrow.js'));
+await test('BackStep',      () => import('./skills/bow/backStep.js'));
+</script>
+</body>
+</html>
