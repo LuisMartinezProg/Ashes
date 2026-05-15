@@ -1,9 +1,11 @@
+// core/enemies/StoneSnake.js — Serpiente de Piedra
 import * as THREE from 'three';
 import { BaseEnemy } from './BaseEnemy.js';
 
 export class StoneSnake extends BaseEnemy {
   constructor(scene, position, player) {
     super(scene, position, player, {
+      name: 'StoneSnake',
       hp: 120,
       damage: 18,
       defense: 10,
@@ -15,15 +17,16 @@ export class StoneSnake extends BaseEnemy {
       respawnTime: 50,
       drops: { piedra: 2, xp: 45 }
     });
-    this._segments = [];
   }
 
   _buildMesh(pos) {
-    const group = new THREE.Group();
     this._segments = [];
+    this._materials = [];
+    const group = new THREE.Group();
 
     const mat = new THREE.MeshStandardMaterial({ color: 0x6b6b6b });
     const darkMat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a });
+    this._materials.push(mat, darkMat);
 
     for (let i = 0; i < 4; i++) {
       const geo = new THREE.SphereGeometry(0.35 - i * 0.05, 6, 6);
@@ -32,11 +35,9 @@ export class StoneSnake extends BaseEnemy {
       group.add(seg);
       this._segments.push(seg);
     }
-    this._materials.push(mat, darkMat);
 
     const headMat = new THREE.MeshStandardMaterial({ color: 0x4a4a4a });
-    const headGeo = new THREE.SphereGeometry(0.42, 6, 6);
-    const head = new THREE.Mesh(headGeo, headMat);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 6, 6), headMat);
     head.position.set(0, 0.42, 0.5);
     group.add(head);
     this._materials.push(headMat);
@@ -55,16 +56,16 @@ export class StoneSnake extends BaseEnemy {
   }
 
   _restoreColors() {
-    this._materials[0].color.setHex(0x6b6b6b);
-    this._materials[1].color.setHex(0x3a3a3a);
-    this._materials[2].color.setHex(0x4a4a4a);
+    if (this._materials[0]) this._materials[0].color.setHex(0x6b6b6b);
+    if (this._materials[1]) this._materials[1].color.setHex(0x3a3a3a);
+    if (this._materials[2]) this._materials[2].color.setHex(0x4a4a4a);
   }
 
   update(delta) {
     super.update(delta);
     if (!this.mesh || this.dead) return;
     const t = performance.now() * 0.002;
-    this._segments.forEach((s, i) => {
+    this._segments?.forEach((s, i) => {
       s.position.y = 0.35 + Math.sin(t + i * 0.8) * 0.08;
     });
   }
