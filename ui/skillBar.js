@@ -19,8 +19,8 @@ export class SkillBar {
   }
 
   setWeapon(type)  { this._weapon = type; this.refresh(); }
-  show()           { this._container.style.display = 'flex'; }
-  hide()           { this._container.style.display = 'none'; }
+  show()           { if (this._container) this._container.style.display = 'flex'; }
+  hide()           { if (this._container) this._container.style.display = 'none'; }
 
   setWeaponIcon(type) {
     const icons = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
@@ -31,6 +31,10 @@ export class SkillBar {
     if (!this._weapon) return;
     const skills = this.progression.getActiveSkills(this._weapon).slice(0, 3);
     skills.forEach((sk, i) => this._updateButton(i, sk));
+    // Ocultar botones sin habilidad asignada
+    for (let i = skills.length; i < this._buttons.length; i++) {
+      this._buttons[i].style.display = 'none';
+    }
   }
 
   setCooldown(skillId, progress) {
@@ -40,13 +44,18 @@ export class SkillBar {
   }
 
   _rebuild() {
-    if (this._container) this._container.remove();
-    this._buttons   = [];
-    this._attackBtn = null;
-    this._sprintBtn = null;
-    this._parryBtn  = null;
-    this._build();
-    if (this._weapon) this.refresh();
+    try {
+      if (this._container) this._container.remove();
+      this._buttons   = [];
+      this._attackBtn = null;
+      this._sprintBtn = null;
+      this._parryBtn  = null;
+      this._build();
+      if (this._weapon) this.refresh();
+      this.show();
+    } catch(e) {
+      console.error('[SkillBar._rebuild]', e);
+    }
   }
 
   _sizes() {
@@ -71,7 +80,7 @@ export class SkillBar {
       position     : 'fixed',
       bottom       : `${mb}px`,
       right        : `${mr}px`,
-      display      : 'flex',
+      display      : 'none',
       flexDirection: 'column',
       alignItems   : 'flex-end',
       gap          : `${gap}px`,
@@ -79,11 +88,9 @@ export class SkillBar {
       zIndex       : '120',
     });
 
-    // Fila superior: skill 0 y skill 1
     const row1 = document.createElement('div');
     Object.assign(row1.style, { display: 'flex', gap: `${gap}px`, alignItems: 'center' });
 
-    // Fila inferior: skill 2 + ataque + [sprint/parry]
     const row2 = document.createElement('div');
     Object.assign(row2.style, { display: 'flex', gap: `${gap}px`, alignItems: 'center' });
 
@@ -129,7 +136,7 @@ export class SkillBar {
     this._attackBtn.addEventListener('mousedown',  onAtk);
     row2.appendChild(this._attackBtn);
 
-    // Columna sprint + parry a la derecha del ataque
+    // Columna sprint + parry
     const col = document.createElement('div');
     Object.assign(col.style, {
       display      : 'flex',
@@ -138,7 +145,6 @@ export class SkillBar {
       pointerEvents: 'none',
     });
 
-    // Sprint
     this._sprintBtn = document.createElement('button');
     this._sprintBtn.textContent = '🏃';
     Object.assign(this._sprintBtn.style, {
@@ -171,7 +177,6 @@ export class SkillBar {
       this._sprintBtn.style.transform   = 'scale(1)';
     });
 
-    // Parry
     this._parryBtn = document.createElement('button');
     this._parryBtn.textContent = '🛡️';
     Object.assign(this._parryBtn.style, {
@@ -265,19 +270,18 @@ export class SkillBar {
     const r = btn.querySelector('.skill-rarity');
     r.textContent = RARITY_LABELS[skill.rarity];
     r.style.color = RARITY_COLORS[skill.rarity];
-    if (skill.available) {
-      btn.style.display     = 'flex';
-      btn.style.borderColor = RARITY_COLORS[skill.rarity];
-      btn.style.opacity     = '1';
-    } else {
-      btn.style.display = 'none';
-    }
+    // Siempre visible — bloqueadas se muestran en gris
+    btn.style.display     = 'flex';
+    btn.style.borderColor = skill.available ? RARITY_COLORS[skill.rarity] : 'rgba(255,255,255,0.1)';
+    btn.style.opacity     = skill.available ? '1' : '0.4';
     this._applyCooldown(btn, this._cooldowns[skill.id] ?? 1);
   }
 
   _applyCooldown(btn, progress) {
     const el = btn.querySelector('.skill-cooldown');
     if (el) el.style.height = `${(1 - progress) * 100}%`;
-    btn.style.opacity = progress < 1 ? '0.55' : '1';
+    if (btn.style.opacity !== '0.4') {
+      btn.style.opacity = progress < 1 ? '0.55' : '1';
+    }
   }
   }
