@@ -40,6 +40,22 @@ await test('SkillSystem',   () => import('./core/skillSystem.js'));
 await test('SkillData',     () => import('./core/skillData.js'));
 await test('Progression',   () => import('./core/progression.js'));
 await test('SkillBar',      () => import('./ui/skillBar.js'));
+await test('SkillBar instancia', async () => {
+  const { SkillSystem } = await import('./core/skillSystem.js');
+  const { Progression } = await import('./core/progression.js');
+  const { SkillBar }    = await import('./ui/skillBar.js');
+  const THREE           = await import('three');
+
+  const scene  = new THREE.Scene();
+  const player = new THREE.Group();
+  const skills = new SkillSystem(scene, player);
+  const prog   = new Progression();
+  const bar    = new SkillBar(skills, prog);
+  bar.setWeapon('katana');
+  bar.show();
+  results.push('  → botones: ' + bar._buttons.length);
+  results.push('  → skills: ' + JSON.stringify(prog.getActiveSkills('katana').map(s => s.id)));
+});
 </script>
 </body>
 </html>
