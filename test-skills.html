@@ -166,7 +166,15 @@ await test('Cast cleave', async () => {
   results.push(`  → cast cleave sin enemigos: ${ok}`);
   render();
 });
-
+await test('SkillSystem instancia', async () => {
+  const { Scene, Group } = await import('three');
+  const mod = await import('./core/skillSystem.js');
+  const scene  = new Scene();
+  const player = new Group();
+  const skills = new mod.SkillSystem(scene, player);
+  results.push('  → skills keys: ' + Object.keys(skills._skills).join(', '));
+  render();
+});
 results.push('');
 results.push('── DONE ──');
 render();
