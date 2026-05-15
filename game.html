@@ -221,7 +221,7 @@ async function boot() {
     combat.setWeapon(weaponType);
     hud.setWeaponIcon(weaponType);
     hud.show();
-
+    hud.setCamera(camera);
     const mapUI = new MapUI(player);
     window._mapUI = mapUI;
     setInterval(() => mapUI.update(), 500);
