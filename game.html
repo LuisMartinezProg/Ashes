@@ -84,7 +84,16 @@ import { CrystalSpider }    from './core/enemies/CrystalSpider.js';
 import { Troll }            from './core/enemies/Troll.js';
 import { EarthGolem }       from './core/enemies/EarthGolem.js';
 import { WanderingSpirit }  from './core/enemies/WanderingSpirit.js';
-
+import { ShadowForest }   from './core/enemies/ShadowForest.js';
+import { StoneSnake }     from './core/enemies/StoneSnake.js';
+import { WarriorGhost }   from './core/enemies/WarriorGhost.js';
+import { EliteMercenary } from './core/enemies/EliteMercenary.js';
+import { ShadowSoldier }  from './core/enemies/ShadowSoldier.js';
+import { DarkArcher }     from './core/enemies/DarkArcher.js';
+import { Berserker }      from './core/enemies/Berserker.js';
+import { YamiMage }       from './core/enemies/YamiMage.js';
+import { ShadowCaptain }  from './core/enemies/ShadowCaptain.js';
+  
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -267,9 +276,33 @@ async function boot() {
       new WanderingSpirit(scene, { x:  12, z:  5 }, player),
       new WanderingSpirit(scene, { x: -22, z: 28 }, player),
     ];
+     // ── Camino a Ironfell (z: 30 a 60) ──
+const roadMonsters = [
+  new ShadowForest(scene,   { x: -10, z: 35 }, player),
+  new ShadowForest(scene,   { x:  12, z: 42 }, player),
+  new StoneSnake(scene,     { x:   5, z: 38 }, player),
+  new StoneSnake(scene,     { x: -15, z: 50 }, player),
+  new WarriorGhost(scene,   { x:  18, z: 45 }, player),
+  new WarriorGhost(scene,   { x:  -8, z: 55 }, player),
+  new EliteMercenary(scene, { x:   0, z: 52 }, player),
+  new EliteMercenary(scene, { x:  14, z: 58 }, player),
+];
 
-    // ── Registrar todos ──
-    const allEnemies = [...enemies, ...wolves, bear, ...forestMonsters, ...plainsMonsters];
+// ── Ejército Yami (z: 60+, cerca de Ironfell) ──
+const yamiArmy = [
+  new ShadowSoldier(scene,  { x: -12, z: 65 }, player),
+  new ShadowSoldier(scene,  { x:   8, z: 68 }, player),
+  new ShadowSoldier(scene,  { x:  -2, z: 72 }, player),
+  new DarkArcher(scene,     { x:  20, z: 66 }, player),
+  new DarkArcher(scene,     { x: -20, z: 70 }, player),
+  new Berserker(scene,      { x:   5, z: 75 }, player),
+  new Berserker(scene,      { x: -10, z: 80 }, player),
+  new YamiMage(scene,       { x:  15, z: 78 }, player),
+  new YamiMage(scene,       { x:  -5, z: 85 }, player),
+  new ShadowCaptain(scene,  { x:   0, z: 90 }, player),
+];
+    // ── Registrar todos ──/
+   const allEnemies = [...enemies, ...wolves, bear, ...forestMonsters, ...plainsMonsters, ...roadMonsters, ...yamiArmy];
     allEnemies.forEach(e => combat.registerEnemy(e));
     setEnemies(allEnemies);
     hud.setEnemies(allEnemies);
@@ -277,7 +310,13 @@ async function boot() {
     window._wolves         = wolves;
     window._forestMonsters = forestMonsters;
     window._plainsMonsters = plainsMonsters;
-
+    window._bear           = bear;
+    window._wolves         = wolves;
+    window._forestMonsters = forestMonsters;
+    window._plainsMonsters = plainsMonsters;
+    window._roadMonsters   = roadMonsters;  // ← aquí
+    window._yamiArmy       = yamiArmy;      // ← aquí
+    
     const building   = new BuildingSystem(scene, player);
     building.setProgression(progression);
     const buildMenu  = new BuildMenu(building);
