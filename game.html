@@ -376,10 +376,30 @@ const yamiArmy = [
       narrative.play(STORY_EVENTS.escena01_despertar);
     }
 
-  } catch (err) {
-    txt.textContent = 'ERROR: ' + (err.message || err.toString());
-    bar.style.background = '#8B2A0A';
-    console.error('[BOOT ERROR]', err.message, err.stack);
+} catch (err) {
+  txt.textContent = 'ERROR: ' + (err.message || err.toString());
+  bar.style.background = '#8B2A0A';
+  console.error('[BOOT ERROR]', err.message, err.stack);
+
+  const errDiv = document.createElement('div');
+  Object.assign(errDiv.style, {
+    position  : 'fixed',
+    top       : '40%',
+    left      : '50%',
+    transform : 'translateX(-50%)',
+    background: 'rgba(0,0,0,0.95)',
+    color     : '#ff4444',
+    fontFamily: 'monospace',
+    fontSize  : '11px',
+    padding   : '16px',
+    zIndex    : '9999',
+    maxWidth  : '90vw',
+    wordBreak : 'break-all',
+    borderRadius: '8px',
+    border    : '1px solid #ff4444',
+  });
+  errDiv.textContent = (err.message || '') + '\n' + (err.stack || '');
+  document.body.appendChild(errDiv);
   }
 }
 
