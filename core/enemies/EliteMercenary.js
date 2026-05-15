@@ -1,9 +1,11 @@
+// core/enemies/EliteMercenary.js — Mercenario de Élite
 import * as THREE from 'three';
 import { BaseEnemy } from './BaseEnemy.js';
 
 export class EliteMercenary extends BaseEnemy {
   constructor(scene, position, player) {
     super(scene, position, player, {
+      name: 'EliteMercenary',
       hp: 200,
       damage: 28,
       defense: 15,
@@ -15,11 +17,12 @@ export class EliteMercenary extends BaseEnemy {
       respawnTime: 60,
       drops: { hierro: 3, magicEnergy: 20, xp: 80 }
     });
-    this._phase = 'normal';
-    this._visorMat = null;
   }
 
   _buildMesh(pos) {
+    this._phase = 'normal';
+    this._visorMat = null;
+    this._materials = [];
     const group = new THREE.Group();
 
     const armorMat = new THREE.MeshStandardMaterial({ color: 0x2c2c3e });
@@ -47,14 +50,14 @@ export class EliteMercenary extends BaseEnemy {
     visor.position.set(0, 1.78, 0.25);
     group.add(visor);
 
-    const bladeMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.4, 0.07), bladeMat);
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.4, 0.07),
+      new THREE.MeshStandardMaterial({ color: 0xaaaaaa }));
     blade.position.set(0.6, 1.0, 0);
     blade.rotation.z = -0.2;
     group.add(blade);
 
-    const shieldMat = new THREE.MeshStandardMaterial({ color: 0x8b0000 });
-    const shield = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.7, 0.5), shieldMat);
+    const shield = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.7, 0.5),
+      new THREE.MeshStandardMaterial({ color: 0x8b0000 }));
     shield.position.set(-0.55, 1.0, 0);
     group.add(shield);
 
@@ -63,9 +66,9 @@ export class EliteMercenary extends BaseEnemy {
   }
 
   _restoreColors() {
-    this._materials[0].color.setHex(0x2c2c3e);
-    this._materials[1].color.setHex(0x8b0000);
-    this._materials[2].color.setHex(0x1a1a2e);
+    if (this._materials[0]) this._materials[0].color.setHex(0x2c2c3e);
+    if (this._materials[1]) this._materials[1].color.setHex(0x8b0000);
+    if (this._materials[2]) this._materials[2].color.setHex(0x1a1a2e);
   }
 
   _checkEnrage() {
