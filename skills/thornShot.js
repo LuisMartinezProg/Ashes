@@ -3,7 +3,7 @@ import * as THREE from 'three';
 
 const DAMAGE        = 50;
 const SPEED         = 4.0;  // más lento pero más daño
-const MAX_RANGE     = 15;
+const MAX_RANGE     = 12;
 const EXPLOSION_DUR = 500;  // más duración al impactar
 
 export class ThornShot {
@@ -73,7 +73,7 @@ export class ThornShot {
     for (const e of enemies) {
       if (e.isDead()) continue;
       const d = this.player.position.distanceTo(e.mesh.position);
-      if (d < minDist) { minDist = d; closest = e; }
+          if (d < minDist && d < MAX_CAST_RANGE) { minDist = d; closest = e; }
     }
     return closest;
   }
