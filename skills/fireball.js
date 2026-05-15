@@ -3,7 +3,7 @@ import * as THREE from 'three';
 
 const DAMAGE        = 55;
 const SPEED         = 4.5;
-const MAX_RANGE     = 20;
+const MAX_RANGE     = 16;
 const EXPLOSION_DUR = 400;
 
 export class Fireball {
@@ -76,7 +76,7 @@ if (p.mesh.position.distanceTo(enemyCenter) < 1.2) {
     for (const e of enemies) {
       if (e.isDead()) continue;
       const d = this.player.position.distanceTo(e.mesh.position);
-      if (d < minDist) { minDist = d; closest = e; }
+          if (d < minDist && d < MAX_CAST_RANGE) { minDist = d; closest = e; }
     }
     return closest;
   }
