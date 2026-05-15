@@ -175,6 +175,13 @@ await test('SkillSystem instancia', async () => {
   results.push('  → skills keys: ' + Object.keys(skills._skills).join(', '));
   render();
 });
+  await test('version check', async () => {
+  const res = await fetch('./core/skillSystem.js?bust=' + Date.now());
+  const text = await res.text();
+  results.push('  → tiene Cleave import: ' + text.includes("from '../skills/sword/cleave.js'"));
+  results.push('  → está comentado: ' + text.includes("//import { Cleave }"));
+  render();
+});
 results.push('');
 results.push('── DONE ──');
 render();
