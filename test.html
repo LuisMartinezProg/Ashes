@@ -62,6 +62,69 @@ for (const [path, name] of modules) {
     html += `<div class="err">✗ ${path}<br>&nbsp;&nbsp;${e.message}</div>`;
   }
 }
+  // Intento de boot mínimo
+try {
+  const { initScene } = await import('./core/scene.js');
+  const { scene, camera, renderer } = await initScene();
+
+  const { startLoop, getPlayer, setCombatSystem, setEnemies,
+          setSkillSystem, setNPCs, setDialogueUI, setTriggers,
+          setResourceCallback } = await import('./core/loop.js');
+  startLoop(scene, camera, renderer);
+
+  const player = getPlayer();
+  html += `<div class="ok">✓ getPlayer → ${player ? 'OK' : 'NULL'}</div>`;
+
+  const { CombatSystem } = await import('./core/combat.js');
+  const combat = new CombatSystem(player.root, camera);
+  combat.setScene(scene);
+  html += `<div class="ok">✓ CombatSystem instanciado</div>`;
+
+  const { SkillSystem } = await import('./core/skillSystem.js');
+  const skills = new SkillSystem(scene, player.root);
+  html += `<div class="ok">✓ SkillSystem instanciado</div>`;
+
+  const { Progression } = await import('./core/progression.js');
+  const progression = new Progression();
+  html += `<div class="ok">✓ Progression instanciado</div>`;
+
+  const { NarrativeSystem } = await import('./core/narrative.js');
+  const narrative = new NarrativeSystem();
+  narrative.setScene(scene);
+  html += `<div class="ok">✓ NarrativeSystem instanciado</div>`;
+
+  const { WorldTriggers } = await import('./core/triggers.js');
+  const triggers = new WorldTriggers(narrative, player);
+  html += `<div class="ok">✓ WorldTriggers instanciado</div>`;
+
+  const { ParrySystem } = await import('./core/parry.js');
+  const parry = new ParrySystem(player, combat);
+  html += `<div class="ok">✓ ParrySystem instanciado</div>`;
+
+  const { HUD } = await import('./ui/hud.js');
+  const hud = new HUD(combat, skills);
+  html += `<div class="ok">✓ HUD instanciado</div>`;
+
+  const { spawnEnemies } = await import('./core/enemy.js');
+  const enemies = spawnEnemies(scene, player);
+  html += `<div class="ok">✓ spawnEnemies → ${enemies.length} enemigos</div>`;
+
+  const { spawnNPCs } = await import('./core/npc.js');
+  const npcs = spawnNPCs(scene);
+  html += `<div class="ok">✓ spawnNPCs → ${npcs.length} NPCs</div>`;
+
+  const { MapUI } = await import('./ui/mapUI.js');
+  const mapUI = new MapUI(player);
+  html += `<div class="ok">✓ MapUI instanciado</div>`;
+
+  html += `<div class="ok" style="margin-top:12px;font-size:13px">✓ BOOT MÍNIMO COMPLETADO</div>`;
+
+} catch(bootErr) {
+  html += `<div class="err" style="margin-top:12px">
+    ✗ BOOT FALLÓ EN: ${bootErr.message}<br>
+    &nbsp;&nbsp;<small>${bootErr.stack?.split('\n')[1] ?? ''}</small>
+  </div>`;
+}
 out.innerHTML = html;
 </script>
 </body>
