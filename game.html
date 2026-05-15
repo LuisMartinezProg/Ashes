@@ -172,7 +172,7 @@ async function boot() {
     setSkillSystem(skills);
     setEnemies(enemies);
     hud.setEnemies(enemies);
-    skills.registerEnemies(allEnemies); // ← agregar esto
+  
     setProgress(74, 'DialogueUI...');
     const dialogueUI = new DialogueUI();
     const shopUI     = new ShopUI();
@@ -306,6 +306,7 @@ const yamiArmy = [
     allEnemies.forEach(e => combat.registerEnemy(e));
     setEnemies(allEnemies);
     hud.setEnemies(allEnemies);
+    skills.registerEnemies(allEnemies); // ← agregar esto
     window._bear           = bear;
     window._wolves         = wolves;
     window._forestMonsters = forestMonsters;
