@@ -205,6 +205,31 @@ await test('SkillSystem instancia', async () => {
   results.push('  → container zIndex: ' + bar._container.style.zIndex);
   render();
 });
+  await test('Boot simulation', async () => {
+  const { Progression } = await import('./core/progression.js');
+  const { SkillSystem } = await import('./core/skillSystem.js');
+  const { SkillBar }    = await import('./ui/skillBar.js');
+  const { RadialMenu }  = await import('./ui/radialMenu.js');
+  const { Scene, Group, PerspectiveCamera } = await import('three');
+
+  const scene  = new Scene();
+  const player = new Group();
+  const camera = new PerspectiveCamera();
+  const prog   = new Progression();
+  const skills = new SkillSystem(scene, player);
+  results.push('  → SkillSystem OK');
+
+  const bar = new SkillBar(skills, prog);
+  bar.setWeapon('katana');
+  bar.show();
+  results.push('  → SkillBar OK');
+
+  const radial = new RadialMenu([
+    { icon: '⚔️', label: 'Test', action: () => {}, locked: false },
+  ]);
+  results.push('  → RadialMenu OK');
+  render();
+});
 results.push('');
 results.push('── DONE ──');
 render();
