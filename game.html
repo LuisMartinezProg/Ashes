@@ -1,79 +1,390 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Ashes of the Reborn</title>
   <style>
-    body { background: #04040A; color: #C9A84C; font-family: monospace; padding: 20px; }
-    .ok { color: #2ecc71; }
-    .err { color: #e74c3c; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    #canvas-container { position: fixed; inset: 0; }
+    #canvas-container canvas { display: block; width: 100% !important; height: 100% !important; }
+    #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+    #fps { position: absolute; top: 12px; left: 14px; font-family: monospace; font-size: 11px; color: rgba(201,168,76,0.6); letter-spacing: 0.1em; }
+    #phase-label { position: absolute; top: 12px; right: 14px; font-family: monospace; font-size: 10px; color: rgba(201,168,76,0.4); letter-spacing: 0.15em; }
+    #status { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-family: monospace; font-size: 11px; color: rgba(201,168,76,0.5); letter-spacing: 0.2em; text-align: center; }
+    #loading { position: fixed; inset: 0; background: #04040A; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.8s ease; }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    .load-title { font-family: 'Georgia', serif; font-size: clamp(1rem, 3vw, 1.4rem); letter-spacing: 0.4em; color: #C9A84C; margin-bottom: 32px; text-transform: uppercase; }
+    .load-bar-wrap { width: 200px; height: 2px; background: rgba(201,168,76,0.15); position: relative; overflow: hidden; }
+    .load-bar { height: 100%; background: linear-gradient(90deg, #7A6030, #C9A84C, #E8C97A); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 8px rgba(201,168,76,0.5); }
+    .load-text { margin-top: 16px; font-family: monospace; font-size: 10px; letter-spacing: 0.3em; color: rgba(201,168,76,0.4); }
   </style>
 </head>
 <body>
-<div id="out">Probando imports...</div>
+
+<div id="loading">
+  <div class="load-title">Aeltherion</div>
+  <div class="load-bar-wrap">
+    <div class="load-bar" id="load-bar"></div>
+  </div>
+  <div class="load-text" id="load-text">INICIANDO...</div>
+</div>
+
+<div id="canvas-container"></div>
+
+<div id="hud">
+  <div id="fps">-- FPS</div>
+  <div id="phase-label">FASE 9</div>
+  <div id="status">AELTHERION</div>
+</div>
 
 <script type="importmap">
-{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
 </script>
 
 <script type="module">
-const out = document.getElementById('out');
-const modules = [
-  ['./core/scene.js',                    'initScene'],
-  ['./core/loop.js',                     'startLoop'],
-  ['./core/resize.js',                   'initResize'],
-  ['./core/combat.js',                   'CombatSystem'],
-  ['./core/enemy.js',                    'spawnEnemies'],
-  ['./ui/hud.js',                        'HUD'],
-  ['./core/skillSystem.js',              'SkillSystem'],
-  ['./ui/weaponSelect.js',               'showWeaponSelect'],
-  ['./core/npc.js',                      'spawnNPCs'],
-  ['./ui/dialogue.js',                   'DialogueUI'],
-  ['./ui/shop.js',                       'ShopUI'],
-  ['./core/inventory.js',                'inventory'],
-  ['./core/progression.js',              'Progression'],
-  ['./ui/skillBar.js',                   'SkillBar'],
-  ['./ui/subtypeMenu.js',                'SubtypeMenu'],
-  ['./ui/pauseMenu.js',                  'PauseMenu'],
-  ['./ui/fusionMenu.js',                 'FusionMenu'],
-  ['./core/narrative.js',                'NarrativeSystem'],
-  ['./data/storyEvents.js',              'STORY_EVENTS'],
-  ['./core/triggers.js',                 'WorldTriggers'],
-  ['./core/building.js',                 'BuildingSystem'],
-  ['./ui/buildMenu.js',                  'BuildMenu'],
-  ['./ui/skillTree.js',                  'SkillTree'],
-  ['./ui/radialMenu.js',                 'RadialMenu'],
-  ['./core/parry.js',                    'ParrySystem'],
-  ['./core/enemies/wolf.js',             'Wolf'],
-  ['./core/enemies/bear.js',             'Bear'],
-  ['./ui/mapUI.js',                      'MapUI'],
-  ['./core/enemies/Mossling.js',         'Mossling'],
-  ['./core/enemies/Firefly.js',          'Firefly'],
-  ['./core/enemies/CrystalSpider.js',    'CrystalSpider'],
-  ['./core/enemies/Troll.js',            'Troll'],
-  ['./core/enemies/EarthGolem.js',       'EarthGolem'],
-  ['./core/enemies/WanderingSpirit.js',  'WanderingSpirit'],
-  ['./core/enemies/ShadowForest.js',     'ShadowForest'],
-  ['./core/enemies/StoneSnake.js',       'StoneSnake'],
-  ['./core/enemies/WarriorGhost.js',     'WarriorGhost'],
-  ['./core/enemies/EliteMercenary.js',   'EliteMercenary'],
-  ['./core/enemies/ShadowSoldier.js',    'ShadowSoldier'],
-  ['./core/enemies/DarkArcher.js',       'DarkArcher'],
-  ['./core/enemies/Berserker.js',        'Berserker'],
-  ['./core/enemies/YamiMage.js',         'YamiMage'],
-  ['./core/enemies/ShadowCaptain.js',    'ShadowCaptain'],
+import { initScene }        from './core/scene.js';
+import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies,
+         setNPCs, setDialogueUI, setTriggers, setResourceCallback } from './core/loop.js';
+import { initResize }       from './core/resize.js';
+import { CombatSystem }     from './core/combat.js';
+import { spawnEnemies }     from './core/enemy.js';
+import { HUD }              from './ui/hud.js';
+import { SkillSystem }      from './core/skillSystem.js';
+import { showWeaponSelect } from './ui/weaponSelect.js';
+import { spawnNPCs }        from './core/npc.js';
+import { DialogueUI }       from './ui/dialogue.js';
+import { ShopUI }           from './ui/shop.js';
+import { inventory }        from './core/inventory.js';
+import { Progression }      from './core/progression.js';
+import { SkillBar }         from './ui/skillBar.js';
+import { SubtypeMenu }      from './ui/subtypeMenu.js';
+import { PauseMenu }        from './ui/pauseMenu.js';
+import { FusionMenu }       from './ui/fusionMenu.js';
+import { NarrativeSystem }  from './core/narrative.js';
+import { STORY_EVENTS }     from './data/storyEvents.js';
+import { WorldTriggers }    from './core/triggers.js';
+import { BuildingSystem }   from './core/building.js';
+import { BuildMenu }        from './ui/buildMenu.js';
+import { SkillTree }        from './ui/skillTree.js';
+import { RadialMenu }       from './ui/radialMenu.js';
+import { ParrySystem }      from './core/parry.js';
+import { Wolf }             from './core/enemies/wolf.js';
+import { Bear }             from './core/enemies/bear.js';
+import { MapUI }            from './ui/mapUI.js';
+import { Mossling }         from './core/enemies/Mossling.js';
+import { Firefly }          from './core/enemies/Firefly.js';
+import { CrystalSpider }    from './core/enemies/CrystalSpider.js';
+import { Troll }            from './core/enemies/Troll.js';
+import { EarthGolem }       from './core/enemies/EarthGolem.js';
+import { WanderingSpirit }  from './core/enemies/WanderingSpirit.js';
+import { ShadowForest }   from './core/enemies/ShadowForest.js';
+import { StoneSnake }     from './core/enemies/StoneSnake.js';
+import { WarriorGhost }   from './core/enemies/WarriorGhost.js';
+import { EliteMercenary } from './core/enemies/EliteMercenary.js';
+import { ShadowSoldier }  from './core/enemies/ShadowSoldier.js';
+import { DarkArcher }     from './core/enemies/DarkArcher.js';
+import { Berserker }      from './core/enemies/Berserker.js';
+import { YamiMage }       from './core/enemies/YamiMage.js';
+import { ShadowCaptain }  from './core/enemies/ShadowCaptain.js';
+  
+const bar = document.getElementById('load-bar');
+const txt = document.getElementById('load-text');
+
+function setProgress(pct, label) {
+  bar.style.width = pct + '%';
+  txt.textContent = label;
+}
+
+async function boot() {
+  try {
+    setProgress(10, 'THREE.JS...');
+    await new Promise(r => setTimeout(r, 100));
+
+    setProgress(20, 'initScene...');
+    const { scene, camera, renderer } = await initScene();
+    await new Promise(r => setTimeout(r, 100));
+
+    setProgress(30, 'initResize...');
+    initResize(camera, renderer);
+
+    setProgress(40, 'startLoop...');
+    startLoop(scene, camera, renderer);
+
+    setProgress(45, 'getPlayer...');
+    const player = getPlayer();
+    window._player = player;
+
+    setProgress(50, 'CombatSystem...');
+    const combat = new CombatSystem(player.root, camera);
+    combat.setScene(scene);
+    setCombatSystem(combat);
+    window._combat = combat;
+
+    setProgress(55, 'SkillSystem...');
+    const skills = new SkillSystem(scene, player.root);
+
+    setProgress(57, 'Progression...');
+    const progression = new Progression();
+
+    setProgress(60, 'NarrativeSystem...');
+    const narrative = new NarrativeSystem();
+    narrative.setScene(scene);
+    narrative.onPause  = () => {};
+    narrative.onResume = () => {};
+    window._narrative  = narrative;
+
+    setProgress(63, 'WorldTriggers...');
+    const triggers = new WorldTriggers(narrative, player);
+    setTriggers(triggers);
+
+    setProgress(65, 'localStorage...');
+    const savedData = localStorage.getItem('ashes_progression');
+    if (savedData) {
+      try {
+        progression.load(JSON.parse(savedData));
+        console.log('[Save] Progreso cargado');
+      } catch(e) {
+        console.warn('[Save] Error al cargar:', e);
+      }
+    }
+    window._prog = progression;
+    combat.setProgression(progression);
+
+    setProgress(66, 'ParrySystem...');
+    const parry = new ParrySystem(player, combat);
+    window._parry = parry;
+
+    setProgress(68, 'HUD...');
+    const hud = new HUD(combat, skills);
+    setResourceCallback((resource) => hud.showCollectBtn(resource));
+
+    setProgress(70, 'spawnEnemies...');
+    const enemies = spawnEnemies(scene, player);
+    enemies.forEach(e => combat.registerEnemy(e));
+    skills.registerEnemies(enemies);
+    setSkillSystem(skills);
+    setEnemies(enemies);
+    hud.setEnemies(enemies);
+
+    setProgress(74, 'DialogueUI...');
+    const dialogueUI = new DialogueUI();
+    const shopUI     = new ShopUI();
+
+    setProgress(77, 'spawnNPCs...');
+    const npcs = spawnNPCs(scene);
+    setNPCs(npcs);
+    setDialogueUI(dialogueUI);
+
+    setProgress(80, 'proximidad NPCs...');
+    let _nearNPC = null;
+    function _checkNPCProximity() {
+      if (dialogueUI.isActive() || shopUI.isActive()) return;
+      const playerPos = player.root.position;
+      let found = null;
+      for (const npc of npcs) {
+        if (npc.isPlayerInRange(playerPos)) { found = npc; break; }
+      }
+      if (found && found !== _nearNPC) {
+        _nearNPC = found;
+        dialogueUI.showTalkBtn(() => {
+          dialogueUI.openDialogue(
+            found.dialogue.name,
+            found.dialogue.lines,
+            () => { _nearNPC = null; },
+            found.isShop() ? () => shopUI.open(found.dialogue.shop) : null
+          );
+        });
+      } else if (!found && _nearNPC) {
+        _nearNPC = null;
+        dialogueUI.hideTalkBtn();
+      }
+    }
+    setInterval(_checkNPCProximity, 200);
+
+    setProgress(83, 'callbacks...');
+    player.onDamage = (hp, max) => hud.updatePlayerHp(hp, max);
+    hud.updatePlayerHp(player.hp, player.maxHp);
+
+    enemies.forEach(e => {
+      e.onDeath = () => {
+        const weapon = combat._weaponType;
+        progression.addXP(weapon, 25);
+        localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
+      };
+    });
+
+    setProgress(100, 'LISTO');
+    await new Promise(r => setTimeout(r, 300));
+    const loading = document.getElementById('loading');
+    loading.classList.add('hidden');
+    setTimeout(() => loading.remove(), 900);
+
+    const weaponType = await showWeaponSelect();
+    combat.setWeapon(weaponType);
+    hud.setWeaponIcon(weaponType);
+    hud.show();
+    hud.setCamera(camera);
+    const mapUI = new MapUI(player);
+    window._mapUI = mapUI;
+    setInterval(() => mapUI.update(), 500);
+
+    // ── Lobos y oso del bosque ──
+    const wolves = [
+      new Wolf(scene, { x: -12, z: -38 }, player),
+      new Wolf(scene, { x:  -8, z: -42 }, player),
+      new Wolf(scene, { x:   5, z: -45 }, player),
+      new Wolf(scene, { x:  10, z: -40 }, player),
+      new Wolf(scene, { x:  -3, z: -50 }, player),
+      new Wolf(scene, { x:  15, z: -44 }, player),
+    ];
+
+    const bear = new Bear(scene, { x: 0, z: -55 }, player, () => {
+      wolves.forEach(w => w.flee(bear.mesh.position));
+    });
+
+    bear.onDeath = () => {
+      setTimeout(() => wolves.forEach(w => w.startRoaming()), 3000);
+    };
+
+    // ── Monstruos del bosque denso (z: -40 a -80) ──
+    const forestMonsters = [
+      new Mossling(scene, { x: -15, z: -50 }, player),
+      new Mossling(scene, { x:  12, z: -55 }, player),
+      new Mossling(scene, { x:  -5, z: -65 }, player),
+      new Mossling(scene, { x:  18, z: -48 }, player),
+      new Firefly(scene,  { x:  -8, z: -58 }, player),
+      new Firefly(scene,  { x:  10, z: -70 }, player),
+      new Firefly(scene,  { x: -20, z: -62 }, player),
+      new CrystalSpider(scene, { x:   5, z: -52 }, player),
+      new CrystalSpider(scene, { x: -12, z: -68 }, player),
+      new Troll(scene, { x: -22, z: -72 }, player),
+      new Troll(scene, { x:  20, z: -65 }, player),
+    ];
+
+    // ── Monstruos de la planicie (z: -10 a 30) ──
+    const plainsMonsters = [
+      new EarthGolem(scene,      { x: -18, z: 10 }, player),
+      new EarthGolem(scene,      { x:  20, z: 18 }, player),
+      new WanderingSpirit(scene, { x:  -8, z: 22 }, player),
+      new WanderingSpirit(scene, { x:  12, z:  5 }, player),
+      new WanderingSpirit(scene, { x: -22, z: 28 }, player),
+    ];
+     // ── Camino a Ironfell (z: 30 a 60) ──
+const roadMonsters = [
+  new ShadowForest(scene,   { x: -10, z: 35 }, player),
+  new ShadowForest(scene,   { x:  12, z: 42 }, player),
+  new StoneSnake(scene,     { x:   5, z: 38 }, player),
+  new StoneSnake(scene,     { x: -15, z: 50 }, player),
+  new WarriorGhost(scene,   { x:  18, z: 45 }, player),
+  new WarriorGhost(scene,   { x:  -8, z: 55 }, player),
+  new EliteMercenary(scene, { x:   0, z: 52 }, player),
+  new EliteMercenary(scene, { x:  14, z: 58 }, player),
 ];
 
-let html = '';
-for (const [path, name] of modules) {
-  try {
-    const mod = await import(path);
-    const ok = mod[name] !== undefined;
-    html += `<div class="${ok?'ok':'err'}">${ok?'✓':'✗'} ${path} → ${name}</div>`;
-  } catch(e) {
-    html += `<div class="err">✗ ${path}<br>&nbsp;&nbsp;${e.message}</div>`;
+// ── Ejército Yami (z: 60+, cerca de Ironfell) ──
+const yamiArmy = [
+  new ShadowSoldier(scene,  { x: -12, z: 65 }, player),
+  new ShadowSoldier(scene,  { x:   8, z: 68 }, player),
+  new ShadowSoldier(scene,  { x:  -2, z: 72 }, player),
+  new DarkArcher(scene,     { x:  20, z: 66 }, player),
+  new DarkArcher(scene,     { x: -20, z: 70 }, player),
+  new Berserker(scene,      { x:   5, z: 75 }, player),
+  new Berserker(scene,      { x: -10, z: 80 }, player),
+  new YamiMage(scene,       { x:  15, z: 78 }, player),
+  new YamiMage(scene,       { x:  -5, z: 85 }, player),
+  new ShadowCaptain(scene,  { x:   0, z: 90 }, player),
+];
+    // ── Registrar todos ──/
+   const allEnemies = [...enemies, ...wolves, bear, ...forestMonsters, ...plainsMonsters, ...roadMonsters, ...yamiArmy];
+    allEnemies.forEach(e => combat.registerEnemy(e));
+    setEnemies(allEnemies);
+    hud.setEnemies(allEnemies);
+    window._bear           = bear;
+    window._wolves         = wolves;
+    window._forestMonsters = forestMonsters;
+    window._plainsMonsters = plainsMonsters;
+    window._bear           = bear;
+    window._wolves         = wolves;
+    window._forestMonsters = forestMonsters;
+    window._plainsMonsters = plainsMonsters;
+    window._roadMonsters   = roadMonsters;  // ← aquí
+    window._yamiArmy       = yamiArmy;      // ← aquí
+    
+    const building   = new BuildingSystem(scene, player);
+    building.setProgression(progression);
+    const buildMenu  = new BuildMenu(building);
+    window._building = building;
+
+    const skillTree   = new SkillTree(progression);
+    const skillBar    = new SkillBar(skills, progression);
+    window._skillBar  = skillBar;
+    const subtypeMenu = new SubtypeMenu(progression, skillBar);
+    const fusionMenu  = new FusionMenu(progression, skillBar, skills);
+
+    const radialMenu = new RadialMenu([
+      { icon: '⚔️', label: 'Habilidades',  action: () => skillTree.open(),      locked: false },
+      { icon: '🏗',  label: 'Construcción', action: () => buildMenu.open(),      locked: false },
+      { icon: '🗺️', label: 'Mapa',         action: () => mapUI.toggle(),        locked: false },
+      { icon: '📖', label: 'Guías',         action: () => console.log('próximamente'), locked: true },
+    ]);
+
+    const pauseMenu = new PauseMenu({
+      onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
+      onFusion  : () => { pauseMenu.close(); fusionMenu.open(combat._weaponType); },
+      onResume  : () => pauseMenu.close(),
+      getFusionUnlocked: () => progression.fusionUnlocked,
+    });
+
+    skillBar.setWeapon(weaponType);
+    skillBar.show();
+    subtypeMenu.setWeapon(weaponType);
+    fusionMenu.setWeapon(weaponType);
+
+    const pauseBtn = document.createElement('button');
+    pauseBtn.textContent = '☰';
+    Object.assign(pauseBtn.style, {
+      position: 'fixed', top: '8px', left: '14px',
+      width: '36px', height: '36px', borderRadius: '8px',
+      border: '1px solid rgba(201,168,76,0.4)',
+      background: 'rgba(10,8,20,0.8)', color: '#C9A84C',
+      fontSize: '18px', cursor: 'pointer', pointerEvents: 'all',
+      zIndex: '150', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', WebkitTapHighlightColor: 'transparent',
+    });
+    const openPause = (e) => { e.preventDefault(); pauseMenu.open(); };
+    pauseBtn.addEventListener('click', openPause);
+    pauseBtn.addEventListener('touchstart', openPause, { passive: false });
+    document.body.appendChild(pauseBtn);
+
+    progression.fusionUnlocked = true;
+
+    setInterval(() => hud.updateEnemyBar(player.root.position), 300);
+    setInterval(() => {
+      localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
+    }, 30000);
+
+    if (buildMenu?._buildBtn) buildMenu._buildBtn.style.display = 'none';
+
+    if (!progression.getFlag?.('escena01_done')) {
+      narrative.play(STORY_EVENTS.escena01_despertar);
+    }
+
+  } catch (err) {
+    txt.textContent = 'ERROR: ' + (err.message || err.toString());
+    bar.style.background = '#8B2A0A';
+    console.error('[BOOT ERROR]', err.message, err.stack);
   }
 }
-out.innerHTML = html;
+
+window.addEventListener('load', boot);
 </script>
+
 </body>
 </html>
