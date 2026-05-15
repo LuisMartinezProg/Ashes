@@ -41,6 +41,10 @@ await test('SkillData',     () => import('./core/skillData.js'));
 await test('Progression',   () => import('./core/progression.js'));
 await test('SkillBar',      () => import('./ui/skillBar.js'));
 await test('SkillBar instancia', async () => {
+await test('Ruta desde core', async () => {
+  const { Cleave } = await import('./core/../skills/sword/cleave.js');
+  if (!Cleave) throw new Error('Cleave undefined');
+});
   const { SkillSystem } = await import('./core/skillSystem.js');
   const { Progression } = await import('./core/progression.js');
   const { SkillBar }    = await import('./ui/skillBar.js');
