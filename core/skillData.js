@@ -1,5 +1,4 @@
 // core/skillData.js — Ashes of the Reborn | Valiant Gaming
-// Define armas, subtipos y habilidades por rareza
 
 export const SKILL_DATA = {
 
@@ -33,10 +32,10 @@ export const SKILL_DATA = {
         icon: '🌿',
         color: '#44cc44',
         skills: [
-          { id: 'thorn',         rarity: 'common',    label: 'Espina',           icon: '🌿', cost: 30, cooldown: 5  },
+          { id: 'thorn',         rarity: 'common',    label: 'Espina',               icon: '🌿', cost: 30, cooldown: 5  },
           { id: 'vine_whip',     rarity: 'rare',      label: 'Látigo de Enredadera', icon: '🍃', cost: 45, cooldown: 8  },
-          { id: 'spore_cloud',   rarity: 'epic',      label: 'Nube de Esporas',  icon: '🌸', cost: 60, cooldown: 12 },
-          { id: 'world_tree',    rarity: 'legendary', label: 'Árbol del Mundo',  icon: '🌳', cost: 80, cooldown: 20 },
+          { id: 'spore_cloud',   rarity: 'epic',      label: 'Nube de Esporas',      icon: '🌸', cost: 60, cooldown: 12 },
+          { id: 'world_tree',    rarity: 'legendary', label: 'Árbol del Mundo',      icon: '🌳', cost: 80, cooldown: 20 },
         ],
       },
       wind: {
@@ -44,10 +43,10 @@ export const SKILL_DATA = {
         icon: '🌪️',
         color: '#aaeeff',
         skills: [
-          { id: 'gust',          rarity: 'common',    label: 'Ráfaga',           icon: '💨', cost: 30, cooldown: 5  },
-          { id: 'wind_blade',    rarity: 'rare',      label: 'Cuchilla de Viento', icon: '🌀', cost: 45, cooldown: 8  },
-          { id: 'tornado',       rarity: 'epic',      label: 'Tornado',          icon: '🌪️', cost: 60, cooldown: 12 },
-          { id: 'storm_god',     rarity: 'legendary', label: 'Dios de la Tormenta', icon: '⚡', cost: 80, cooldown: 20 },
+          { id: 'gust',          rarity: 'common',    label: 'Ráfaga',                  icon: '💨', cost: 30, cooldown: 5  },
+          { id: 'wind_blade',    rarity: 'rare',      label: 'Cuchilla de Viento',      icon: '🌀', cost: 45, cooldown: 8  },
+          { id: 'tornado',       rarity: 'epic',      label: 'Tornado',                 icon: '🌪️', cost: 60, cooldown: 12 },
+          { id: 'storm_god',     rarity: 'legendary', label: 'Dios de la Tormenta',     icon: '⚡', cost: 80, cooldown: 20 },
         ],
       },
     },
@@ -61,10 +60,10 @@ export const SKILL_DATA = {
         icon: '⚡',
         color: '#e8c9a0',
         skills: [
-          { id: 'quick_slash',   rarity: 'common',    label: 'Tajo Rápido',      icon: '🗡️', cost: 20, cooldown: 3  },
-          { id: 'flash_step',    rarity: 'rare',      label: 'Paso Relámpago',   icon: '💫', cost: 35, cooldown: 6  },
-          { id: 'blade_dance',   rarity: 'epic',      label: 'Danza de Hojas',   icon: '✨', cost: 50, cooldown: 10 },
-          { id: 'thousand_cuts', rarity: 'legendary', label: 'Mil Cortes',       icon: '🌟', cost: 70, cooldown: 18 },
+          { id: 'quick_slash',   rarity: 'common',    label: 'Tajo Rápido',        icon: '🗡️', cost: 20, cooldown: 3  },
+          { id: 'flash_step',    rarity: 'rare',      label: 'Paso Relámpago',     icon: '💫', cost: 35, cooldown: 6  },
+          { id: 'blade_dance',   rarity: 'epic',      label: 'Danza de Hojas',     icon: '✨', cost: 50, cooldown: 10 },
+          { id: 'thousand_cuts', rarity: 'legendary', label: 'Mil Cortes',         icon: '🌟', cost: 70, cooldown: 18 },
         ],
       },
       shadow: {
@@ -72,10 +71,10 @@ export const SKILL_DATA = {
         icon: '🌑',
         color: '#8855cc',
         skills: [
-          { id: 'shadow_slash',  rarity: 'common',    label: 'Tajo Sombrío',     icon: '🌑', cost: 25, cooldown: 4  },
-          { id: 'vanish',        rarity: 'rare',      label: 'Desvanecerse',     icon: '👤', cost: 40, cooldown: 7  },
-          { id: 'death_mark',    rarity: 'epic',      label: 'Marca de Muerte',  icon: '💀', cost: 55, cooldown: 11 },
-          { id: 'void_blade',    rarity: 'legendary', label: 'Hoja del Vacío',   icon: '🕳️', cost: 75, cooldown: 19 },
+          { id: 'shadow_slash',  rarity: 'common',    label: 'Tajo Sombrío',       icon: '🌑', cost: 25, cooldown: 4  },
+          { id: 'vanish',        rarity: 'rare',      label: 'Desvanecerse',       icon: '👤', cost: 40, cooldown: 7  },
+          { id: 'death_mark',    rarity: 'epic',      label: 'Marca de Muerte',    icon: '💀', cost: 55, cooldown: 11 },
+          { id: 'void_blade',    rarity: 'legendary', label: 'Hoja del Vacío',     icon: '🕳️', cost: 75, cooldown: 19 },
         ],
       },
       storm: {
@@ -83,10 +82,10 @@ export const SKILL_DATA = {
         icon: '⛈️',
         color: '#6699ff',
         skills: [
-          { id: 'thunder_slash', rarity: 'common',    label: 'Tajo Trueno',      icon: '⚡', cost: 25, cooldown: 4  },
-          { id: 'lightning_arc', rarity: 'rare',      label: 'Arco Relámpago',   icon: '🌩️', cost: 40, cooldown: 7  },
+          { id: 'thunder_slash', rarity: 'common',    label: 'Tajo Trueno',        icon: '⚡', cost: 25, cooldown: 4  },
+          { id: 'lightning_arc', rarity: 'rare',      label: 'Arco Relámpago',     icon: '🌩️', cost: 40, cooldown: 7  },
           { id: 'storm_rush',    rarity: 'epic',      label: 'Embestida Tormenta', icon: '⛈️', cost: 55, cooldown: 11 },
-          { id: 'thunder_god',   rarity: 'legendary', label: 'Dios del Trueno',  icon: '🌪️', cost: 75, cooldown: 19 },
+          { id: 'thunder_god',   rarity: 'legendary', label: 'Dios del Trueno',    icon: '🌪️', cost: 75, cooldown: 19 },
         ],
       },
       honor: {
@@ -94,10 +93,10 @@ export const SKILL_DATA = {
         icon: '⚔️',
         color: '#ffdd88',
         skills: [
-          { id: 'parry',         rarity: 'common',    label: 'Parada',           icon: '🛡️', cost: 20, cooldown: 3  },
-          { id: 'counter',       rarity: 'rare',      label: 'Contraataque',     icon: '⚔️', cost: 35, cooldown: 6  },
-          { id: 'bushido',       rarity: 'epic',      label: 'Bushido',          icon: '🏯', cost: 50, cooldown: 10 },
-          { id: 'last_stand',    rarity: 'legendary', label: 'Último Bastión',   icon: '👑', cost: 70, cooldown: 18 },
+          { id: 'parry',         rarity: 'common',    label: 'Parada',             icon: '🛡️', cost: 20, cooldown: 3  },
+          { id: 'counter',       rarity: 'rare',      label: 'Contraataque',       icon: '⚔️', cost: 35, cooldown: 6  },
+          { id: 'bushido',       rarity: 'epic',      label: 'Bushido',            icon: '🏯', cost: 50, cooldown: 10 },
+          { id: 'last_stand',    rarity: 'legendary', label: 'Último Bastión',     icon: '👑', cost: 70, cooldown: 18 },
         ],
       },
     },
@@ -109,12 +108,12 @@ export const SKILL_DATA = {
       strength: {
         label: 'Fuerza',
         icon: '💪',
-        color: '#a8c8ff',
+        color: '#ffcc44',
         skills: [
-          { id: 'heavy_slash',   rarity: 'common',    label: 'Tajo Pesado',      icon: '⚔️', cost: 25, cooldown: 4  },
-          { id: 'shockwave',     rarity: 'rare',      label: 'Onda de Choque',   icon: '💥', cost: 40, cooldown: 7  },
-          { id: 'titan_strike',  rarity: 'epic',      label: 'Golpe Titán',      icon: '🗿', cost: 55, cooldown: 11 },
-          { id: 'earth_shatter', rarity: 'legendary', label: 'Rompe Tierra',     icon: '🌍', cost: 75, cooldown: 19 },
+          { id: 'cleave',        rarity: 'common',    label: 'Barrido',            icon: '⚔️', cost: 25, cooldown: 4  },
+          { id: 'shockwave',     rarity: 'rare',      label: 'Onda de Choque',     icon: '💥', cost: 40, cooldown: 7  },
+          { id: 'titan_strike',  rarity: 'epic',      label: 'Golpe Titán',        icon: '🗿', cost: 55, cooldown: 11 },
+          { id: 'earth_shatter', rarity: 'legendary', label: 'Rompe Tierra',       icon: '🌍', cost: 75, cooldown: 19 },
         ],
       },
       defense: {
@@ -122,32 +121,32 @@ export const SKILL_DATA = {
         icon: '🛡️',
         color: '#cccccc',
         skills: [
-          { id: 'shield_bash',   rarity: 'common',    label: 'Golpe de Escudo',  icon: '🛡️', cost: 20, cooldown: 3  },
-          { id: 'fortify',       rarity: 'rare',      label: 'Fortificar',       icon: '🏰', cost: 35, cooldown: 6  },
-          { id: 'iron_wall',     rarity: 'epic',      label: 'Muro de Hierro',   icon: '⚙️', cost: 50, cooldown: 10 },
-          { id: 'aegis',         rarity: 'legendary', label: 'Égida',            icon: '✨', cost: 70, cooldown: 18 },
+          { id: 'shield_bash',   rarity: 'common',    label: 'Golpe de Escudo',    icon: '🛡️', cost: 20, cooldown: 3  },
+          { id: 'fortify',       rarity: 'rare',      label: 'Fortificar',         icon: '🏰', cost: 35, cooldown: 6  },
+          { id: 'iron_wall',     rarity: 'epic',      label: 'Muro de Hierro',     icon: '⚙️', cost: 50, cooldown: 10 },
+          { id: 'aegis',         rarity: 'legendary', label: 'Égida',              icon: '✨', cost: 70, cooldown: 18 },
         ],
       },
-      fire: {
-        label: 'Fuego',
-        icon: '🔥',
-        color: '#ff8844',
+      battle: {
+        label: 'Batalla',
+        icon: '🔱',
+        color: '#ff6633',
         skills: [
-          { id: 'flame_slash',   rarity: 'common',    label: 'Tajo Llameante',   icon: '🔥', cost: 30, cooldown: 5  },
-          { id: 'fire_spin',     rarity: 'rare',      label: 'Giro de Fuego',    icon: '🌀', cost: 45, cooldown: 8  },
-          { id: 'molten_blade',  rarity: 'epic',      label: 'Hoja Fundida',     icon: '🌋', cost: 60, cooldown: 12 },
-          { id: 'phoenix_slash', rarity: 'legendary', label: 'Tajo Fénix',       icon: '🦅', cost: 80, cooldown: 20 },
+          { id: 'war_cry',       rarity: 'common',    label: 'Grito de Guerra',    icon: '📯', cost: 35, cooldown: 12 },
+          { id: 'rally',         rarity: 'rare',      label: 'Reunir Fuerzas',     icon: '🔱', cost: 45, cooldown: 14 },
+          { id: 'berserker_rage',rarity: 'epic',      label: 'Furia Berserker',    icon: '😤', cost: 60, cooldown: 18 },
+          { id: 'warlord',       rarity: 'legendary', label: 'Señor de la Guerra', icon: '👑', cost: 80, cooldown: 25 },
         ],
       },
-      chaos: {
-        label: 'Caos',
-        icon: '🌀',
-        color: '#cc44cc',
+      execution: {
+        label: 'Ejecución',
+        icon: '💀',
+        color: '#cc2222',
         skills: [
-          { id: 'wild_swing',    rarity: 'common',    label: 'Golpe Salvaje',    icon: '🌀', cost: 25, cooldown: 4  },
-          { id: 'chaos_wave',    rarity: 'rare',      label: 'Ola de Caos',      icon: '🌊', cost: 40, cooldown: 7  },
-          { id: 'entropy',       rarity: 'epic',      label: 'Entropía',         icon: '💫', cost: 55, cooldown: 11 },
-          { id: 'void_storm',    rarity: 'legendary', label: 'Tormenta del Vacío', icon: '🕳️', cost: 75, cooldown: 19 },
+          { id: 'execute',       rarity: 'common',    label: 'Ejecución',          icon: '💀', cost: 35, cooldown: 8  },
+          { id: 'decapitate',    rarity: 'rare',      label: 'Decapitar',          icon: '🗡️', cost: 50, cooldown: 12 },
+          { id: 'guillotine',    rarity: 'epic',      label: 'Guillotina',         icon: '⚰️', cost: 65, cooldown: 16 },
+          { id: 'death_blow',    rarity: 'legendary', label: 'Golpe Mortal',       icon: '☠️', cost: 85, cooldown: 22 },
         ],
       },
     },
@@ -161,10 +160,10 @@ export const SKILL_DATA = {
         icon: '🎯',
         color: '#6dcc8a',
         skills: [
-          { id: 'aimed_shot',    rarity: 'common',    label: 'Disparo Certero',  icon: '🏹', cost: 25, cooldown: 4  },
-          { id: 'piercing',      rarity: 'rare',      label: 'Flecha Perforante', icon: '🎯', cost: 40, cooldown: 7  },
-          { id: 'snipe',         rarity: 'epic',      label: 'Francotirador',    icon: '👁️', cost: 55, cooldown: 11 },
-          { id: 'divine_arrow',  rarity: 'legendary', label: 'Flecha Divina',    icon: '✨', cost: 75, cooldown: 19 },
+          { id: 'piercing_shot', rarity: 'common',    label: 'Flecha Perforante',  icon: '🏹', cost: 25, cooldown: 4  },
+          { id: 'snipe',         rarity: 'rare',      label: 'Francotirador',      icon: '🎯', cost: 40, cooldown: 7  },
+          { id: 'bullseye',      rarity: 'epic',      label: 'Diana',              icon: '👁️', cost: 55, cooldown: 11 },
+          { id: 'divine_arrow',  rarity: 'legendary', label: 'Flecha Divina',      icon: '✨', cost: 75, cooldown: 19 },
         ],
       },
       poison: {
@@ -172,32 +171,32 @@ export const SKILL_DATA = {
         icon: '☠️',
         color: '#88cc44',
         skills: [
-          { id: 'poison_arrow',  rarity: 'common',    label: 'Flecha Venenosa',  icon: '☠️', cost: 25, cooldown: 4  },
-          { id: 'plague_shot',   rarity: 'rare',      label: 'Disparo Plaga',    icon: '🤢', cost: 40, cooldown: 7  },
-          { id: 'toxic_cloud',   rarity: 'epic',      label: 'Nube Tóxica',      icon: '💀', cost: 55, cooldown: 11 },
-          { id: 'death_plague',  rarity: 'legendary', label: 'Plaga Mortal',     icon: '🦠', cost: 75, cooldown: 19 },
+          { id: 'poison_arrow',  rarity: 'common',    label: 'Flecha Venenosa',    icon: '☠️', cost: 25, cooldown: 4  },
+          { id: 'plague_shot',   rarity: 'rare',      label: 'Disparo Plaga',      icon: '🤢', cost: 40, cooldown: 7  },
+          { id: 'toxic_cloud',   rarity: 'epic',      label: 'Nube Tóxica',        icon: '💀', cost: 55, cooldown: 11 },
+          { id: 'death_plague',  rarity: 'legendary', label: 'Plaga Mortal',       icon: '🦠', cost: 75, cooldown: 19 },
         ],
       },
-      wind: {
-        label: 'Viento',
+      rain: {
+        label: 'Lluvia',
+        icon: '🌧️',
+        color: '#4488ff',
+        skills: [
+          { id: 'rain_of_arrows',rarity: 'common',    label: 'Lluvia de Flechas',  icon: '🌧️', cost: 40, cooldown: 8  },
+          { id: 'storm_volley',  rarity: 'rare',      label: 'Andanada Tormenta',  icon: '⛈️', cost: 55, cooldown: 12 },
+          { id: 'arrow_storm',   rarity: 'epic',      label: 'Tormenta de Flechas',icon: '🌪️', cost: 70, cooldown: 16 },
+          { id: 'sky_collapse',  rarity: 'legendary', label: 'Colapso del Cielo',  icon: '☄️', cost: 90, cooldown: 22 },
+        ],
+      },
+      agility: {
+        label: 'Agilidad',
         icon: '💨',
         color: '#aaeeff',
         skills: [
-          { id: 'wind_shot',     rarity: 'common',    label: 'Disparo de Viento', icon: '💨', cost: 25, cooldown: 4  },
-          { id: 'gale_arrow',    rarity: 'rare',      label: 'Flecha Vendaval',  icon: '🌀', cost: 40, cooldown: 7  },
-          { id: 'cyclone_shot',  rarity: 'epic',      label: 'Disparo Ciclón',   icon: '🌪️', cost: 55, cooldown: 11 },
-          { id: 'storm_arrow',   rarity: 'legendary', label: 'Flecha Tormenta',  icon: '⛈️', cost: 75, cooldown: 19 },
-        ],
-      },
-      shadow: {
-        label: 'Sombra',
-        icon: '🌑',
-        color: '#8855cc',
-        skills: [
-          { id: 'shadow_shot',   rarity: 'common',    label: 'Disparo Sombrío',  icon: '🌑', cost: 25, cooldown: 4  },
-          { id: 'blind_arrow',   rarity: 'rare',      label: 'Flecha Ciega',     icon: '👁️', cost: 40, cooldown: 7  },
-          { id: 'phantom_volley',rarity: 'epic',      label: 'Andanada Fantasma', icon: '👻', cost: 55, cooldown: 11 },
-          { id: 'void_arrow',    rarity: 'legendary', label: 'Flecha del Vacío', icon: '🕳️', cost: 75, cooldown: 19 },
+          { id: 'back_step',     rarity: 'common',    label: 'Paso Atrás',         icon: '💨', cost: 25, cooldown: 5  },
+          { id: 'roll_shot',     rarity: 'rare',      label: 'Disparo en Rodada',  icon: '🌀', cost: 40, cooldown: 8  },
+          { id: 'phantom_step',  rarity: 'epic',      label: 'Paso Fantasma',      icon: '👻', cost: 55, cooldown: 12 },
+          { id: 'void_dance',    rarity: 'legendary', label: 'Danza del Vacío',    icon: '🕳️', cost: 75, cooldown: 18 },
         ],
       },
     },
@@ -205,7 +204,6 @@ export const SKILL_DATA = {
 
 };
 
-// Rareza → color de borde en UI
 export const RARITY_COLORS = {
   common   : '#aaaaaa',
   rare     : '#4488ff',
@@ -213,12 +211,9 @@ export const RARITY_COLORS = {
   legendary: '#ffaa00',
 };
 
-// Subtipos desbloqueados por defecto al inicio
-// El resto se desbloquea por historia o XP especial
 export const DEFAULT_UNLOCKED = {
   magic : ['fire', 'ice', 'plant', 'wind'],
   katana: ['speed', 'shadow', 'storm', 'honor'],
-  sword : ['strength', 'defense', 'fire', 'chaos'],
-  bow   : ['precision', 'poison', 'wind', 'shadow'],
+  sword : ['strength', 'defense', 'battle', 'execution'],
+  bow   : ['precision', 'poison', 'rain', 'agility'],
 };
-  
