@@ -3,7 +3,7 @@ import * as THREE from 'three';
 
 const DAMAGE        = 45;
 const SPEED         = 5.5;
-const MAX_RANGE     = 18;
+const MAX_RANGE     = 14;
 const EXPLOSION_DUR = 300;
 
 export class IceShard {
@@ -74,7 +74,7 @@ export class IceShard {
     for (const e of enemies) {
       if (e.isDead()) continue;
       const d = this.player.position.distanceTo(e.mesh.position);
-      if (d < minDist) { minDist = d; closest = e; }
+          if (d < minDist && d < MAX_CAST_RANGE) { minDist = d; closest = e; }
     }
     return closest;
   }
