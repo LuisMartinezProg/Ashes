@@ -182,6 +182,29 @@ await test('SkillSystem instancia', async () => {
   results.push('  → está comentado: ' + text.includes("//import { Cleave }"));
   render();
 });
+  await test('SkillBar DOM', async () => {
+  const { SkillSystem }  = await import('./core/skillSystem.js');
+  const { Progression }  = await import('./core/progression.js');
+  const { SkillBar }     = await import('./ui/skillBar.js');
+  const { Scene, Group } = await import('three');
+
+  const scene  = new Scene();
+  const player = new Group();
+  const skills = new SkillSystem(scene, player);
+  const prog   = new Progression();
+  const bar    = new SkillBar(skills, prog);
+  bar.setWeapon('katana');
+  bar.show();
+
+  results.push('  → container en DOM: ' + !!document.body.contains(bar._container));
+  results.push('  → container display: ' + bar._container.style.display);
+  results.push('  → attackBtn existe: ' + !!bar._attackBtn);
+  results.push('  → attackBtn display: ' + bar._attackBtn?.style.display);
+  results.push('  → container bottom: ' + bar._container.style.bottom);
+  results.push('  → container right: ' + bar._container.style.right);
+  results.push('  → container zIndex: ' + bar._container.style.zIndex);
+  render();
+});
 results.push('');
 results.push('── DONE ──');
 render();
