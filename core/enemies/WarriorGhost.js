@@ -1,9 +1,11 @@
+// core/enemies/WarriorGhost.js — Guerrero Fantasma
 import * as THREE from 'three';
 import { BaseEnemy } from './BaseEnemy.js';
 
 export class WarriorGhost extends BaseEnemy {
   constructor(scene, position, player) {
     super(scene, position, player, {
+      name: 'WarriorGhost',
       hp: 100,
       damage: 22,
       defense: 6,
@@ -15,20 +17,17 @@ export class WarriorGhost extends BaseEnemy {
       respawnTime: 45,
       drops: { magicEnergy: 15, xp: 50 }
     });
-    this._ghostMats = [];
   }
 
   _buildMesh(pos) {
-    const group = new THREE.Group();
     this._ghostMats = [];
+    this._materials = [];
+    const group = new THREE.Group();
 
     const ghostMat = () => {
       const m = new THREE.MeshStandardMaterial({
-        color: 0x88aaff,
-        transparent: true,
-        opacity: 0.6,
-        emissive: 0x2244aa,
-        emissiveIntensity: 0.5
+        color: 0x88aaff, transparent: true, opacity: 0.6,
+        emissive: 0x2244aa, emissiveIntensity: 0.5
       });
       this._ghostMats.push(m);
       this._materials.push(m);
@@ -66,7 +65,7 @@ export class WarriorGhost extends BaseEnemy {
   }
 
   _restoreColors() {
-    this._ghostMats.forEach(m => m.color.setHex(0x88aaff));
+    this._ghostMats?.forEach(m => m.color.setHex(0x88aaff));
   }
 
   update(delta) {
@@ -75,7 +74,7 @@ export class WarriorGhost extends BaseEnemy {
     const t = performance.now() * 0.0015;
     this.mesh.position.y = Math.sin(t) * 0.15;
     const flicker = 0.6 + Math.sin(t * 3) * 0.1;
-    this._ghostMats.forEach(m => {
+    this._ghostMats?.forEach(m => {
       m.opacity = Math.max(0.3, Math.min(1, flicker));
     });
   }
