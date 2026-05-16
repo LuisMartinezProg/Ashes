@@ -20,39 +20,26 @@ export class ThousandCuts {
   getCooldownProgress() { return Math.min(1, 1 - this._timer / this.cooldown); }
 
   cast(enemies) {
-  if (!this.isReady()) return false;
+    if (!this.isReady()) return false;
 
-  let target = null, minDist = Infinity;
-  for (const e of enemies) {
-    if (e.isDead() || !e.mesh) continue;
-    const dx = this.player.position.x - e.mesh.position.x;
-    const dz = this.player.position.z - e.mesh.position.z;
-    const d  = Math.sqrt(dx*dx + dz*dz);
-    if (d <= RANGE && d < minDist) { minDist = d; target = e; }
-  }
+    // Verificar que haya al menos un enemigo en rango
+    const inRange = enemies.filter(e => {
+      if (e.isDead() || !e.mesh) return false;
+      const dx = this.player.position.x - e.mesh.position.x;
+      const dz = this.player.position.z - e.mesh.position.z;
+      return Math.sqrt(dx*dx + dz*dz) <= RANGE;
+    });
 
-  if (!target) return false; // ← no hay enemigo en rango, no castea
-
-  target.takeDamage(DAMAGE);
-  this._spawnEffect(target.mesh.position);
-  this._timer = this.cooldown;
-  if (this.onCooldownUpdate) this.onCooldownUpdate(0);
-  return true;
-  }
+    if (inRange.length === 0) return false;
 
     // 5 hits rápidos a todos en rango
-    let hitCount = 0;
     for (let h = 0; h < HITS; h++) {
       setTimeout(() => {
-        for (const e of enemies) {
+        for (const e of inRange) {
           if (e.isDead() || !e.mesh) continue;
-          const dx = this.player.position.x - e.mesh.position.x;
-const dz = this.player.position.z - e.mesh.position.z;
-const d  = Math.sqrt(dx*dx + dz*dz);
-if (d <= RANGE) e.takeDamage(DAMAGE_PER_HIT);
-           }
+          e.takeDamage(DAMAGE_PER_HIT);
+        }
       }, h * 120);
-      hitCount++;
     }
 
     this._spawnEffect();
@@ -67,7 +54,6 @@ if (d <= RANGE) e.takeDamage(DAMAGE_PER_HIT);
       if (this._timer < 0) this._timer = 0;
       if (this.onCooldownUpdate) this.onCooldownUpdate(this.getCooldownProgress());
     }
-
     for (let i = this._active.length - 1; i >= 0; i--) {
       const fx = this._active[i];
       fx.timer -= delta * 1000;
@@ -94,4 +80,4 @@ if (d <= RANGE) e.takeDamage(DAMAGE_PER_HIT);
     this.scene.add(mesh);
     this._active.push({ mesh, timer: DURATION });
   }
-        }
+}
