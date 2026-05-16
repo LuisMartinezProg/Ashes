@@ -1,10 +1,10 @@
 // skills/sword/cleave.js — Barrido Frontal (Espada)
 import * as THREE from 'three';
 
-const DAMAGE        = 55;
-const RANGE         = 3.5;
-const ARC           = Math.PI * 0.6;
-const DURATION      = 400;
+const DAMAGE   = 55;
+const RANGE    = 3.5;
+const ARC      = Math.PI * 0.6;
+const DURATION = 400;
 
 export class Cleave {
   constructor(scene, player) {
@@ -22,16 +22,17 @@ export class Cleave {
   cast(enemies) {
     if (!this.isReady()) return false;
     const forward = new THREE.Vector3(
-      -Math.sin(this.player.rotation.y), 0,
-      -Math.cos(this.player.rotation.y)
+      Math.sin(this.player.rotation.y), 0,
+      Math.cos(this.player.rotation.y)
     );
     for (const e of enemies) {
       if (e.isDead() || !e.mesh) continue;
-      const toEnemy = e.mesh.position.clone().sub(this.player.position).setY(0);
-      const dist = toEnemy.length();
+      const dx = e.mesh.position.x - this.player.position.x;
+      const dz = e.mesh.position.z - this.player.position.z;
+      const dist = Math.sqrt(dx*dx + dz*dz);
       if (dist > RANGE) continue;
-      const angle = forward.angleTo(toEnemy.normalize());
-      if (angle <= ARC / 2) e.takeDamage(DAMAGE);
+      const toEnemy = new THREE.Vector3(dx, 0, dz).normalize();
+      if (forward.angleTo(toEnemy) <= ARC / 2) e.takeDamage(DAMAGE);
     }
     this._spawnEffect(forward);
     this._timer = this.cooldown;
@@ -61,10 +62,8 @@ export class Cleave {
   }
 
   _spawnEffect(forward) {
-    const geo = new THREE.RingGeometry(0.2, RANGE, 16, 1, -ARC / 2, ARC);
-    const mat = new THREE.MeshBasicMaterial({
-      color: 0xffcc44, transparent: true, opacity: 0.6, side: THREE.DoubleSide,
-    });
+    const geo  = new THREE.RingGeometry(0.2, RANGE, 16, 1, -ARC / 2, ARC);
+    const mat  = new THREE.MeshBasicMaterial({ color: 0xffcc44, transparent: true, opacity: 0.6, side: THREE.DoubleSide });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.copy(this.player.position).add(new THREE.Vector3(0, 0.4, 0));
     mesh.rotation.x = -Math.PI / 2;
