@@ -16,22 +16,16 @@ export class QuickSlash {
   }
 
   isReady() { return this._timer <= 0; }
-
-  getCooldownProgress() {
-    return Math.min(1, 1 - this._timer / this.cooldown);
-  }
+  getCooldownProgress() { return Math.min(1, 1 - this._timer / this.cooldown); }
 
   cast(enemies) {
     if (!this.isReady()) return false;
-
-    // Daño inmediato en área
-    let hit = false;
     for (const e of enemies) {
       if (e.isDead() || !e.mesh) continue;
-      const d = this.player.position.distanceTo(e.mesh.position);
-      if (d <= RANGE) { e.takeDamage(DAMAGE); hit = true; }
+      const dx = this.player.position.x - e.mesh.position.x;
+      const dz = this.player.position.z - e.mesh.position.z;
+      if (Math.sqrt(dx*dx + dz*dz) <= RANGE) e.takeDamage(DAMAGE);
     }
-
     this._spawnEffect();
     this._timer = this.cooldown;
     if (this.onCooldownUpdate) this.onCooldownUpdate(0);
@@ -44,7 +38,6 @@ export class QuickSlash {
       if (this._timer < 0) this._timer = 0;
       if (this.onCooldownUpdate) this.onCooldownUpdate(this.getCooldownProgress());
     }
-
     for (let i = this._active.length - 1; i >= 0; i--) {
       const fx = this._active[i];
       fx.timer -= delta * 1000;
@@ -62,9 +55,7 @@ export class QuickSlash {
 
   _spawnEffect() {
     const geo  = new THREE.RingGeometry(0.3, RANGE, 16);
-    const mat  = new THREE.MeshBasicMaterial({
-      color: 0xffffff, transparent: true, opacity: 0.7, side: THREE.DoubleSide,
-    });
+    const mat  = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.copy(this.player.position).add(new THREE.Vector3(0, 0.5, 0));
     mesh.rotation.x = -Math.PI / 2;
