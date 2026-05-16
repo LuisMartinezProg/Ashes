@@ -1,13 +1,13 @@
 // skills/bow/poisonArrow.js — Flecha Envenenada (Arco)
 import * as THREE from 'three';
 
-const DAMAGE        = 20;
-const POISON_DPS    = 8;
-const POISON_DUR    = 5;
-const SPEED         = 8.0;
-const MAX_RANGE     = 25;
+const DAMAGE         = 20;
+const POISON_DPS     = 8;
+const POISON_DUR     = 5;
+const SPEED          = 8.0;
+const MAX_RANGE      = 25;
 const MAX_CAST_RANGE = 20;
-const EXPLOSION_DUR = 300;
+const EXPLOSION_DUR  = 300;
 
 export class PoisonArrow {
   constructor(scene, player) {
@@ -40,7 +40,6 @@ export class PoisonArrow {
     }
     for (let i = this._active.length - 1; i >= 0; i--) {
       const p = this._active[i];
-
       if (p.exploding) {
         p.explodeTimer -= delta * 1000;
         const t = Math.max(0, p.explodeTimer / EXPLOSION_DUR);
@@ -60,9 +59,10 @@ export class PoisonArrow {
 
       let hit = false;
       for (const e of p.enemies) {
-        if (e.isDead()) continue;
-        const dist = p.mesh.position.distanceTo(e.mesh.position);
-        if (dist < 1.2) {
+        if (e.isDead() || !e.mesh) continue;
+        const dx = p.mesh.position.x - e.mesh.position.x;
+        const dz = p.mesh.position.z - e.mesh.position.z;
+        if (Math.sqrt(dx*dx + dz*dz) < 1.2) {
           e.takeDamage(DAMAGE);
           e.applyBurn?.(POISON_DPS, POISON_DUR);
           hit = true;
@@ -71,8 +71,7 @@ export class PoisonArrow {
       }
 
       if (hit || p.traveled > MAX_RANGE) {
-        p.exploding    = true;
-        p.explodeTimer = EXPLOSION_DUR;
+        p.exploding = true; p.explodeTimer = EXPLOSION_DUR;
         p.mesh.scale.setScalar(2);
         p.mesh.material.color.setHex(0x00ff44);
       }
@@ -82,19 +81,24 @@ export class PoisonArrow {
   _findTarget(enemies) {
     let closest = null, minDist = Infinity;
     for (const e of enemies) {
-      if (e.isDead()) continue;
-      const d = this.player.position.distanceTo(e.mesh.position);
+      if (e.isDead() || !e.mesh) continue;
+      const dx = this.player.position.x - e.mesh.position.x;
+      const dz = this.player.position.z - e.mesh.position.z;
+      const d  = Math.sqrt(dx*dx + dz*dz);
       if (d < minDist && d < MAX_CAST_RANGE) { minDist = d; closest = e; }
     }
     return closest;
   }
 
   _spawnArrow(target, enemies) {
-    const geo = new THREE.CylinderGeometry(0.04, 0.04, 0.8, 5);
-    const mat = new THREE.MeshBasicMaterial({ color: 0x44ff44 });
+    const geo  = new THREE.CylinderGeometry(0.04, 0.04, 0.8, 5);
+    const mat  = new THREE.MeshBasicMaterial({ color: 0x44ff44 });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.copy(this.player.position).add(new THREE.Vector3(0, 1.2, 0));
-    const dir = target.mesh.position.clone().sub(mesh.position).setY(0).normalize();
+    const dir = new THREE.Vector3(
+      target.mesh.position.x - mesh.position.x, 0,
+      target.mesh.position.z - mesh.position.z
+    ).normalize();
     mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
     this.scene.add(mesh);
     this._active.push({ mesh, direction: dir, traveled: 0, enemies: [...enemies], exploding: false, explodeTimer: 0 });
