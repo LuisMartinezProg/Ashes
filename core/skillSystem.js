@@ -39,6 +39,9 @@ const SKILL_COST = {
   rain_of_arrows: 40,
   poison_arrow  : 30,
   back_step     : 25,
+  shadow_slash  : 25,
+thunder_slash : 25,
+last_stand    : 30,
 };
 
 export class SkillSystem {
