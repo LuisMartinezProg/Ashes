@@ -25,9 +25,11 @@ export class FlashStep {
     let target = null, minDist = Infinity;
     for (const e of enemies) {
       if (e.isDead() || !e.mesh) continue;
-      const d = this.player.position.distanceTo(e.mesh.position);
-      if (d <= RANGE && d < minDist) { minDist = d; target = e; }
-    }
+      const dx = this.player.position.x - e.mesh.position.x;
+const dz = this.player.position.z - e.mesh.position.z;
+const d  = Math.sqrt(dx*dx + dz*dz);
+if (d <= RANGE && d < minDist) { minDist = d; target = e; }
+       }
 
     if (target) {
       target.takeDamage(DAMAGE);
