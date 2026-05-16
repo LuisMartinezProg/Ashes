@@ -131,11 +131,23 @@ export class CombatSystem {
                       ?? this._progression.getActiveFusion(this._weaponType);
           console.log(`[Combat] Fusión: ${school} | arma: ${this._weaponType}`);
           if (school === 'fire'  || school === 'fuego') target.applyBurn?.(5, 3);
-          if (school === 'ice'   || school === 'hielo') target.applySlow?.(0.4, 2);
-        }
-        
-      }
-    }
+if (school === 'ice'   || school === 'hielo') target.applySlow?.(0.4, 2);
+if (school === 'viento') {
+  const dx = this.player.position.x - target.mesh.position.x;
+  const dz = this.player.position.z - target.mesh.position.z;
+  const len = Math.sqrt(dx*dx + dz*dz);
+  if (len > 0) {
+    this.player.position.x += (dx/len) * 1.5;
+    this.player.position.z += (dz/len) * 1.5;
+  }
+}
+if (school === 'soporte') {
+  const heal = Math.floor(dmg * 0.05);
+  if (window._player && heal > 0) {
+    window._player.hp = Math.min(window._player.maxHp, window._player.hp + heal);
+    window._player.onDamage?.(window._player.hp, window._player.maxHp);
+  }
+}
 
     setTimeout(() => { this.attacking = false; }, this.weapon.getAnimDuration(hitIndex));
   }
