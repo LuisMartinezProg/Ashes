@@ -15,6 +15,9 @@ import { PiercingShot }  from '../skills/bow/piercingShot.js';
 import { RainOfArrows }  from '../skills/bow/rainOfArrows.js';
 import { PoisonArrow }   from '../skills/bow/poisonArrow.js';
 import { BackStep }      from '../skills/bow/backStep.js';
+import { ShadowSlash }   from '../skills/katana/shadowSlash.js';
+import { ThunderSlash }  from '../skills/katana/thunderSlash.js';
+import { LastStand }     from '../skills/katana/lastStand.js';
 
 const MAX_ENERGY  = 100;
 const ENERGY_REGEN = 3;
@@ -59,6 +62,9 @@ export class SkillSystem {
       flash_step    : new FlashStep(scene, playerGroup),
       blade_dance   : new BladeDance(scene, playerGroup),
       thousand_cuts : new ThousandCuts(scene, playerGroup),
+      shadow_slash  : new ShadowSlash(scene, playerGroup),
+      thunder_slash : new ThunderSlash(scene, playerGroup),
+      last_stand    : new LastStand(scene, playerGroup),
       // Espada
       cleave        : new Cleave(scene, playerGroup),
       shield_bash   : new ShieldBash(scene, playerGroup),
