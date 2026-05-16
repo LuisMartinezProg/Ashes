@@ -17,44 +17,23 @@ export class FlashStep {
 
   isReady() { return this._timer <= 0; }
   getCooldownProgress() { return Math.min(1, 1 - this._timer / this.cooldown); }
-cast(enemies) {
-  if (!this.isReady()) return false;
 
-  let target = null, minDist = Infinity;
-  for (const e of enemies) {
-    if (e.isDead() || !e.mesh) continue;
-    const dx = this.player.position.x - e.mesh.position.x;
-    const dz = this.player.position.z - e.mesh.position.z;
-    const d  = Math.sqrt(dx*dx + dz*dz);
-    if (d <= RANGE && d < minDist) { minDist = d; target = e; }
-  }
+  cast(enemies) {
+    if (!this.isReady()) return false;
 
-  if (!target) return false; // ← no hay enemigo en rango, no castea
-
-  target.takeDamage(DAMAGE);
-  this._spawnEffect(target.mesh.position);
-  this._timer = this.cooldown;
-  if (this.onCooldownUpdate) this.onCooldownUpdate(0);
-  return true;
-}
-
-    // Buscar enemigo más cercano en rango
     let target = null, minDist = Infinity;
     for (const e of enemies) {
       if (e.isDead() || !e.mesh) continue;
       const dx = this.player.position.x - e.mesh.position.x;
-const dz = this.player.position.z - e.mesh.position.z;
-const d  = Math.sqrt(dx*dx + dz*dz);
-if (d <= RANGE && d < minDist) { minDist = d; target = e; }
-       }
-
-    if (target) {
-      target.takeDamage(DAMAGE);
-      this._spawnEffect(target.mesh.position);
-    } else {
-      this._spawnEffect(this.player.position);
+      const dz = this.player.position.z - e.mesh.position.z;
+      const d  = Math.sqrt(dx*dx + dz*dz);
+      if (d <= RANGE && d < minDist) { minDist = d; target = e; }
     }
 
+    if (!target) return false;
+
+    target.takeDamage(DAMAGE);
+    this._spawnEffect(target.mesh.position);
     this._timer = this.cooldown;
     if (this.onCooldownUpdate) this.onCooldownUpdate(0);
     return true;
@@ -66,7 +45,6 @@ if (d <= RANGE && d < minDist) { minDist = d; target = e; }
       if (this._timer < 0) this._timer = 0;
       if (this.onCooldownUpdate) this.onCooldownUpdate(this.getCooldownProgress());
     }
-
     for (let i = this._active.length - 1; i >= 0; i--) {
       const fx = this._active[i];
       fx.timer -= delta * 1000;
@@ -83,7 +61,6 @@ if (d <= RANGE && d < minDist) { minDist = d; target = e; }
   }
 
   _spawnEffect(pos) {
-    // Destello en cruz
     const geo  = new THREE.PlaneGeometry(0.2, 2.0);
     const mat  = new THREE.MeshBasicMaterial({
       color: 0xffffff, transparent: true, opacity: 0.8, side: THREE.DoubleSide,
@@ -98,4 +75,4 @@ if (d <= RANGE && d < minDist) { minDist = d; target = e; }
     this._active.push({ mesh: mesh1, timer: DURATION });
     this._active.push({ mesh: mesh2, timer: DURATION });
   }
-  }
+}
