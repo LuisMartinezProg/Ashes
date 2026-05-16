@@ -89,16 +89,16 @@ export const SKILL_DATA = {
         ],
       },
       honor: {
-        label: 'Honor',
-        icon: '⚔️',
-        color: '#ffdd88',
-        skills: [
-          { id: 'parry',         rarity: 'common',    label: 'Parada',             icon: '🛡️', cost: 20, cooldown: 3  },
-          { id: 'counter',       rarity: 'rare',      label: 'Contraataque',       icon: '⚔️', cost: 35, cooldown: 6  },
-          { id: 'bushido',       rarity: 'epic',      label: 'Bushido',            icon: '🏯', cost: 50, cooldown: 10 },
-          { id: 'last_stand',    rarity: 'legendary', label: 'Último Bastión',     icon: '👑', cost: 70, cooldown: 18 },
-        ],
-      },
+  label: 'Honor',
+  icon: '⚔️',
+  color: '#ffdd88',
+  skills: [
+    { id: 'last_stand',    rarity: 'common',    label: 'Último Bastión',   icon: '👑', cost: 30, cooldown: 10 },
+    { id: 'counter',       rarity: 'rare',      label: 'Contraataque',     icon: '⚔️', cost: 35, cooldown: 6  },
+    { id: 'bushido',       rarity: 'epic',      label: 'Bushido',          icon: '🏯', cost: 50, cooldown: 10 },
+    { id: 'parry_skill',   rarity: 'legendary', label: 'Parada Maestra',   icon: '🛡️', cost: 70, cooldown: 18 },
+  ],
+},
     },
   },
 
