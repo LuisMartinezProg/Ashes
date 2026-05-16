@@ -22,9 +22,26 @@ export class BladeDance {
   getCooldownProgress() {
     return Math.min(1, 1 - this._timer / this.cooldown);
   }
+cast(enemies) {
+  if (!this.isReady()) return false;
 
-  cast(enemies) {
-    if (!this.isReady()) return false;
+  let target = null, minDist = Infinity;
+  for (const e of enemies) {
+    if (e.isDead() || !e.mesh) continue;
+    const dx = this.player.position.x - e.mesh.position.x;
+    const dz = this.player.position.z - e.mesh.position.z;
+    const d  = Math.sqrt(dx*dx + dz*dz);
+    if (d <= RANGE && d < minDist) { minDist = d; target = e; }
+  }
+
+  if (!target) return false; // ← no hay enemigo en rango, no castea
+
+  target.takeDamage(DAMAGE);
+  this._spawnEffect(target.mesh.position);
+  this._timer = this.cooldown;
+  if (this.onCooldownUpdate) this.onCooldownUpdate(0);
+  return true;
+}
 
     for (const e of enemies) {
       if (e.isDead?.() || !e.mesh) continue;
