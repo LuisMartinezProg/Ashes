@@ -20,7 +20,12 @@ export class FlashStep {
 
   cast(enemies) {
     if (!this.isReady()) return false;
-
+ // Debug temporal
+  const div = document.createElement('div');
+  div.style.cssText = 'position:fixed;top:10%;left:10%;color:yellow;font-size:12px;z-index:9999;pointer-events:none;';
+  div.textContent = `enemies: ${enemies.length} vivos: ${enemies.filter(e=>!e.isDead()).length}`;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 2000);
     let target = null, minDist = Infinity;
     for (const e of enemies) {
       if (e.isDead() || !e.mesh) continue;
