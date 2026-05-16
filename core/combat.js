@@ -47,9 +47,7 @@ export class CombatSystem {
 
   setWeapon(type) {
     if (this.weapon && this.weapon.destroy) this.weapon.destroy();
-
     this._weaponType = type;
-
     switch (type) {
       case 'sword':
         this.weapon = new SwordWeapon(this.player);
@@ -67,11 +65,9 @@ export class CombatSystem {
         this.weapon = new KatanaWeapon(this.player);
         break;
     }
-
     this.comboMax   = this.weapon.comboMax;
     this.comboCount = 0;
     this.attacking  = false;
-
     console.log(`[Combat] Arma equipada: ${type}`);
   }
 
@@ -80,14 +76,11 @@ export class CombatSystem {
 
   triggerAttack() {
     if (this.attacking) return;
-
     const now = performance.now();
     if (now - this.lastAttackTime > COMBO_WINDOW) this.comboCount = 0;
-
     const hitIndex      = this.comboCount;
     this.comboCount     = (this.comboCount + 1) % this.comboMax;
     this.lastAttackTime = now;
-
     this._executeAttack(hitIndex);
   }
 
@@ -99,8 +92,10 @@ export class CombatSystem {
   closestEnemyInRange() {
     let closest = null, minDist = Infinity;
     for (const e of this.enemies) {
-      if (e.isDead()) continue;
-      const d = this.player.position.distanceTo(e.mesh.position);
+      if (e.isDead() || !e.mesh) continue;
+      const dx = this.player.position.x - e.mesh.position.x;
+      const dz = this.player.position.z - e.mesh.position.z;
+      const d  = Math.sqrt(dx*dx + dz*dz);
       if (d <= ATTACK_RANGE && d < minDist) { minDist = d; closest = e; }
     }
     return closest;
@@ -123,31 +118,34 @@ export class CombatSystem {
           const fusion = this._progression.getActiveFusion(this._weaponType);
           if (fusion) dmg = Math.floor(dmg * 1.25);
         }
-       target.takeDamage(dmg);
+        target.takeDamage(dmg);
         this._triggerShake(1.0);
-// Efectos de fusión
+
+        // Efectos de fusión
         if (this._progression) {
           const school = this._progression.getActiveSchool(this._weaponType)
                       ?? this._progression.getActiveFusion(this._weaponType);
-          console.log(`[Combat] Fusión: ${school} | arma: ${this._weaponType}`);
-          if (school === 'fire'  || school === 'fuego') target.applyBurn?.(5, 3);
-if (school === 'ice'   || school === 'hielo') target.applySlow?.(0.4, 2);
-if (school === 'viento') {
-  const dx = this.player.position.x - target.mesh.position.x;
-  const dz = this.player.position.z - target.mesh.position.z;
-  const len = Math.sqrt(dx*dx + dz*dz);
-  if (len > 0) {
-    this.player.position.x += (dx/len) * 1.5;
-    this.player.position.z += (dz/len) * 1.5;
-  }
-}
-if (school === 'soporte') {
-  const heal = Math.floor(dmg * 0.05);
-  if (window._player && heal > 0) {
-    window._player.hp = Math.min(window._player.maxHp, window._player.hp + heal);
-    window._player.onDamage?.(window._player.hp, window._player.maxHp);
-  }
-}
+          if (school === 'fire'  || school === 'fuego')  target.applyBurn?.(5, 3);
+          if (school === 'ice'   || school === 'hielo')  target.applySlow?.(0.4, 2);
+          if (school === 'viento') {
+            const dx = this.player.position.x - target.mesh.position.x;
+            const dz = this.player.position.z - target.mesh.position.z;
+            const len = Math.sqrt(dx*dx + dz*dz);
+            if (len > 0) {
+              this.player.position.x += (dx/len) * 1.5;
+              this.player.position.z += (dz/len) * 1.5;
+            }
+          }
+          if (school === 'soporte') {
+            const heal = Math.floor(dmg * 0.05);
+            if (window._player && heal > 0) {
+              window._player.hp = Math.min(window._player.maxHp, window._player.hp + heal);
+              window._player.onDamage?.(window._player.hp, window._player.maxHp);
+            }
+          }
+        }
+      }
+    }
 
     setTimeout(() => { this.attacking = false; }, this.weapon.getAnimDuration(hitIndex));
   }
@@ -159,22 +157,18 @@ if (school === 'soporte') {
 
   _updateShake(delta) {
     this._shakeTime -= delta * 1000;
-
     this.camera.position.x -= this._shakeOffsetX;
     this.camera.position.y -= this._shakeOffsetY;
-
     if (this._shakeTime <= 0) {
       this._shakeActive  = false;
       this._shakeOffsetX = 0;
       this._shakeOffsetY = 0;
       return;
     }
-
     const decay        = this._shakeTime / SHAKE_DURATION;
     this._shakeOffsetX = (Math.random() - 0.5) * SHAKE_STRENGTH * decay;
     this._shakeOffsetY = (Math.random() - 0.5) * SHAKE_STRENGTH * decay;
-
     this.camera.position.x += this._shakeOffsetX;
     this.camera.position.y += this._shakeOffsetY;
   }
-}
+    }
