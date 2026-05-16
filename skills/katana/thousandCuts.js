@@ -28,9 +28,11 @@ export class ThousandCuts {
       setTimeout(() => {
         for (const e of enemies) {
           if (e.isDead() || !e.mesh) continue;
-          const d = this.player.position.distanceTo(e.mesh.position);
-          if (d <= RANGE) e.takeDamage(DAMAGE_PER_HIT);
-        }
+          const dx = this.player.position.x - e.mesh.position.x;
+const dz = this.player.position.z - e.mesh.position.z;
+const d  = Math.sqrt(dx*dx + dz*dz);
+if (d <= RANGE) e.takeDamage(DAMAGE_PER_HIT);
+           }
       }, h * 120);
       hitCount++;
     }
