@@ -61,9 +61,9 @@ export const SKILL_DATA = {
         color: '#e8c9a0',
         skills: [
           { id: 'quick_slash',   rarity: 'common',    label: 'Tajo Rápido',        icon: '🗡️', cost: 20, cooldown: 3  },
-          { id: 'flash_step',    rarity: 'rare',      label: 'Paso Relámpago',     icon: '💫', cost: 35, cooldown: 6  },
-          { id: 'blade_dance',   rarity: 'epic',      label: 'Danza de Hojas',     icon: '✨', cost: 50, cooldown: 10 },
-          { id: 'thousand_cuts', rarity: 'legendary', label: 'Mil Cortes',         icon: '🌟', cost: 70, cooldown: 18 },
+          { id: 'flash_step',    rarity: 'common',      label: 'Paso Relámpago',     icon: '💫', cost: 35, cooldown: 6  },
+          { id: 'blade_dance',   rarity: 'common',      label: 'Danza de Hojas',     icon: '✨', cost: 50, cooldown: 10 },
+          { id: 'thousand_cuts', rarity: 'common', label: 'Mil Cortes',         icon: '🌟', cost: 70, cooldown: 18 },
         ],
       },
       shadow: {
