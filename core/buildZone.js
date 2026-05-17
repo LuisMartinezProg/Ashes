@@ -21,7 +21,7 @@ export class BuildZone {
     this._grid       = null;
     this._flag       = null;
     this._previewFlag   = null;
-    this._previewCircle = null;
+    this._previewSquare = null;
     this._choosing   = false;
     this._onChosen   = null;
     this._prog       = null;
@@ -53,18 +53,22 @@ export class BuildZone {
 
   // ── API pública ──────────────────────────────────────────────────────────
 
-  getRadius() { return this._radius; }
-  hasZone()   { return this._center !== null; }
-  getCenter() { return this._center ? { ...this._center } : null; }
+  getRadius()  { return this._radius; }
+  hasZone()    { return this._center !== null; }
+  getCenter()  { return this._center ? { ...this._center } : null; }
 
   isInsideZone(x, z) {
     if (!this._center) return false;
-    const dx = x - this._center.x;
-    const dz = z - this._center.z;
-    return Math.sqrt(dx * dx + dz * dz) <= this._radius;
+    const half = this._radius;
+    return (
+      x >= this._center.x - half &&
+      x <= this._center.x + half &&
+      z >= this._center.z - half &&
+      z <= this._center.z + half
+    );
   }
 
-  // ── Colocar bandera ──────────────────────────────────────────────────────
+  // ── Elegir zona ──────────────────────────────────────────────────────────
 
   startChoosing(playerPos, onChosen) {
     if (this._center) return;
@@ -115,19 +119,19 @@ export class BuildZone {
     this._previewFlag.position.set(cx, 0, cz);
     this._scene.add(this._previewFlag);
 
-    this._previewCircle = this._createCircleMesh(this._radius, 0x44aaff, 0.15);
-    this._previewCircle.position.set(cx, 0.05, cz);
-    this._scene.add(this._previewCircle);
+    this._previewSquare = this._createSquareMesh(this._radius, 0x44aaff, 0.15);
+    this._previewSquare.position.set(cx, 0.05, cz);
+    this._scene.add(this._previewSquare);
   }
 
   _setPreviewPos(x, z) {
     if (this._previewFlag)   this._previewFlag.position.set(x, 0, z);
-    if (this._previewCircle) this._previewCircle.position.set(x, 0.05, z);
+    if (this._previewSquare) this._previewSquare.position.set(x, 0.05, z);
   }
 
   _removePreview() {
     if (this._previewFlag)   { this._scene.remove(this._previewFlag);   this._previewFlag   = null; }
-    if (this._previewCircle) { this._scene.remove(this._previewCircle); this._previewCircle = null; }
+    if (this._previewSquare) { this._scene.remove(this._previewSquare); this._previewSquare = null; }
   }
 
   // ── Bandera permanente ───────────────────────────────────────────────────
@@ -159,23 +163,44 @@ export class BuildZone {
     return group;
   }
 
-  // ── Marcador circular ────────────────────────────────────────────────────
+  // ── Zona cuadrada ────────────────────────────────────────────────────────
+
+  _createSquareMesh(radius, color, opacity) {
+    const size = radius * 2;
+    const geo  = new THREE.PlaneGeometry(size, size);
+    const mat  = new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity,
+      side: THREE.DoubleSide, depthWrite: false,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.rotation.x = -Math.PI / 2;
+    return mesh;
+  }
+
+  // ── Marcador permanente ──────────────────────────────────────────────────
 
   _buildMarker() {
     if (this._border) this._scene.remove(this._border);
     if (this._grid)   this._scene.remove(this._grid);
 
     const { x, z } = this._center;
+    const size = this._radius * 2;
 
-    this._border = this._createCircleMesh(this._radius, 0x336688, 0.35);
+    // Plano cuadrado sutil
+    this._border = this._createSquareMesh(this._radius, 0x336688, 0.2);
     this._border.position.set(x, 0.06, z);
     this._scene.add(this._border);
 
-    const grid = new THREE.GridHelper(
-      this._radius * 2,
-      Math.floor(this._radius),
-      0x224455, 0x224455
-    );
+    // Borde wireframe cuadrado
+    const borderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(size, 0.1, size));
+    const borderMat = new THREE.LineBasicMaterial({ color: 0x44aaff, transparent: true, opacity: 0.5 });
+    const borderLine = new THREE.LineSegments(borderGeo, borderMat);
+    borderLine.position.set(x, 0.1, z);
+    this._scene.add(borderLine);
+    this._borderLine = borderLine;
+
+    // Cuadrícula
+    const grid = new THREE.GridHelper(size, Math.floor(this._radius), 0x224455, 0x224455);
     grid.position.set(x, 0.05, z);
     grid.material.opacity     = 0.12;
     grid.material.transparent = true;
@@ -183,17 +208,9 @@ export class BuildZone {
     this._scene.add(this._grid);
   }
 
-  _rebuildMarker() { this._buildMarker(); }
-
-  _createCircleMesh(radius, color, opacity) {
-    const geo = new THREE.CircleGeometry(radius, 64);
-    const mat = new THREE.MeshBasicMaterial({
-      color, transparent: true, opacity,
-      side: THREE.DoubleSide, depthWrite: false,
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.rotation.x = -Math.PI / 2;
-    return mesh;
+  _rebuildMarker() {
+    if (this._borderLine) { this._scene.remove(this._borderLine); this._borderLine = null; }
+    this._buildMarker();
   }
 
   // ── UI de elección ───────────────────────────────────────────────────────
@@ -342,7 +359,7 @@ export class BuildZone {
       pointerEvents: 'none',
       textAlign    : 'center',
     });
-    el.innerHTML = `🚩 ZONA EXPANDIDA<br><span style="font-size:10px;color:#8a6f2e;">Radio: ${radius} unidades</span>`;
+    el.innerHTML = `🚩 ZONA EXPANDIDA<br><span style="font-size:10px;color:#8a6f2e;">Tamaño: ${radius * 2}x${radius * 2}</span>`;
     document.body.appendChild(el);
     setTimeout(() => {
       el.style.transition = 'opacity 0.8s';
@@ -370,4 +387,4 @@ export class BuildZone {
       }
     } catch(e) {}
   }
-               }
+  }
