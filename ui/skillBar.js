@@ -86,24 +86,17 @@ export class SkillBar {
     const panelSize = atk * 3.2;
     const panel = document.createElement('div');
     Object.assign(panel.style, {
-      position      : 'relative',
-      width         : `${panelSize}px`,
-      height        : `${panelSize}px`,
+      position : 'relative',
+      width    : `${panelSize}px`,
+      height   : `${panelSize}px`,
     });
 
-    const bg = document.createElement('div');
-    Object.assign(bg.style, {
-      position     : 'absolute',
-      inset        : '0',
-      borderRadius : '50%',
-      background   : 'radial-gradient(circle at 60% 60%, rgba(10,8,20,0.7), rgba(4,4,10,0.4))',
-      border       : '1px solid rgba(201,168,76,0.1)',
-    });
-    panel.appendChild(bg);
+    // ✅ Sin fondo — bg eliminado
 
     const cx = panelSize * 0.58;
     const cy = panelSize * 0.58;
 
+    // ── Botón ATAQUE — centro ─────────────────────────────────────────────
     this._attackBtn = document.createElement('button');
     this._attackBtn.textContent = '⚔️';
     Object.assign(this._attackBtn.style, {
@@ -137,8 +130,10 @@ export class SkillBar {
     this._attackBtn.addEventListener('mousedown',  onAtk);
     panel.appendChild(this._attackBtn);
 
-    const skillRadius = atk * 1.08;
-    const skillAngles = [-130, 180, -210];
+    // ── 3 habilidades en arco uniforme hacia la izquierda ─────────────────
+    // ✅ Radio mayor y ángulos uniformes de 60° para arco limpio
+    const skillRadius = atk * 1.25;
+    const skillAngles = [-150, -180, -210];
 
     for (let i = 0; i < 3; i++) {
       const btn = this._buildSkillBtn(sk);
@@ -152,6 +147,7 @@ export class SkillBar {
       panel.appendChild(btn);
     }
 
+    // ── Botón CONSTRUCCIÓN — arriba del ataque ────────────────────────────
     const buildRadius = atk * 1.1;
     const buildAngle  = -90 * Math.PI / 180;
     const bldX = cx + Math.cos(buildAngle) * buildRadius - sk/2;
@@ -192,6 +188,7 @@ export class SkillBar {
     panel.appendChild(buildBtn);
     this._buildBtn = buildBtn;
 
+    // ── SPRINT — derecha arriba ───────────────────────────────────────────
     const sprintAngle = -40 * Math.PI / 180;
     const sprintR     = atk * 1.05;
     const spX = cx + Math.cos(sprintAngle) * sprintR - sb/2;
@@ -211,6 +208,7 @@ export class SkillBar {
     });
     panel.appendChild(this._sprintBtn);
 
+    // ── PARRY — derecha abajo ─────────────────────────────────────────────
     const parryAngle = 40 * Math.PI / 180;
     const parryR     = atk * 1.05;
     const paX = cx + Math.cos(parryAngle) * parryR - sb/2;
@@ -327,4 +325,4 @@ export class SkillBar {
       btn.style.opacity = progress < 1 ? '0.55' : '1';
     }
   }
-      }
+}
