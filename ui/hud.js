@@ -59,30 +59,18 @@ export class HUD {
 
       if (e._config?.isBoss) {
         // Jefe — barra fija arriba
-        if (!e.isDead()) {
-          bossFound = true;
-          this._updateBossBar(e);
-        }
-        this._hideLabel(e);
-        continue;
-      }
-
-      if (e.isDead()) {
-        this._hideLabel(e);
-        continue;
-      }
-
-      const dist = playerPosition.distanceTo(e.mesh.position);
-      if (dist > 14) {
-        this._hideLabel(e);
-        continue;
-      }
-
-      this._updateFloatingLabel(e);
+        if (e._config?.isBoss) {
+  if (!e.isDead() && e.mesh) {
+    const dist = playerPosition.distanceTo(e.mesh.position);
+    if (dist <= 30) { // solo si está cerca
+      bossFound = true;
+      this._updateBossBar(e);
     }
-
-    if (!bossFound) this._bossBarEl.style.display = 'none';
   }
+  this._hideLabel(e);
+  continue;
+        }
+        
 
   _updateBossBar(e) {
     const pct = Math.max(0, e.hp / e.maxHp) * 100;
