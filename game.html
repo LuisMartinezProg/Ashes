@@ -162,8 +162,6 @@ async function boot() {
     }
     window._prog = progression;
     combat.setProgression(progression);
-
-    // ── Conectar zona con progresión ──
     buildZone.setProgression(progression);
 
     setProgress(66, 'ParrySystem...');
@@ -208,7 +206,6 @@ async function boot() {
             found.dialogue.lines,
             () => { _nearNPC = null; },
             () => {
-              // ── Ganar reputación al hablar con NPC ──
               progression.addReputation(10);
               localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
               if (found.isShop()) shopUI.open(found.dialogue.shop);
@@ -337,23 +334,24 @@ async function boot() {
     building.setZone(buildZone);
     const buildMenu = new BuildMenu(building);
     window._building    = building;
+    window._buildMenu   = buildMenu;
     window._buildCamera = buildCamera;
     window._buildZone   = buildZone;
 
-    // ── Botón bandera (solo si no hay zona aún) ──
+    // ── Botón bandera ──
     if (!buildZone.hasZone()) {
       const flagBtn = document.createElement('button');
       flagBtn.textContent = '🚩';
       flagBtn.title = 'Clavar bandera';
       Object.assign(flagBtn.style, {
-        position : 'fixed', top: '8px', right: '100px',
-        height   : '36px', padding: '0 12px',
+        position    : 'fixed', top: '8px', right: '100px',
+        height      : '36px', padding: '0 12px',
         borderRadius: '8px',
-        border   : '1px solid rgba(201,168,76,0.4)',
-        background: 'rgba(10,8,20,0.8)', color: '#C9A84C',
-        fontSize : '16px', fontFamily: 'monospace',
-        cursor   : 'pointer', pointerEvents: 'all',
-        zIndex   : '150', WebkitTapHighlightColor: 'transparent',
+        border      : '1px solid rgba(201,168,76,0.4)',
+        background  : 'rgba(10,8,20,0.8)', color: '#C9A84C',
+        fontSize    : '16px', fontFamily: 'monospace',
+        cursor      : 'pointer', pointerEvents: 'all',
+        zIndex      : '150', WebkitTapHighlightColor: 'transparent',
       });
       const openFlag = (e) => {
         e.preventDefault();
@@ -369,20 +367,6 @@ async function boot() {
       buildCamera.showBtn();
     }
 
-    // ── Visibilidad de botones según proximidad a la zona ──
-    setInterval(() => {
-      const pos    = player.root.position;
-      const inside = buildZone.isInsideZone(pos.x, pos.z);
-
-      if (buildMenu._buildBtn) {
-        buildMenu._buildBtn.style.display = inside ? 'flex' : 'none';
-      }
-      if (buildCamera._btn) {
-        buildCamera._btn.style.display = inside ? 'flex' : 'none';
-        if (!inside && buildCamera.isActive()) buildCamera.deactivate();
-      }
-    }, 500);
-
     const skillTree   = new SkillTree(progression);
     const skillBar    = new SkillBar(skills, progression);
     window._skillBar  = skillBar;
@@ -390,10 +374,9 @@ async function boot() {
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
 
     const radialMenu = new RadialMenu([
-      { icon: '⚔️', label: 'Habilidades',  action: () => skillTree.open(),             locked: false },
-      { icon: '🏗',  label: 'Construcción', action: () => buildMenu.open(),             locked: false },
-      { icon: '🗺️', label: 'Mapa',         action: () => mapUI.toggle(),               locked: false },
-      { icon: '📖', label: 'Guías',         action: () => console.log('próximamente'),  locked: true  },
+      { icon: '⚔️', label: 'Habilidades',  action: () => skillTree.open(),            locked: false },
+      { icon: '🗺️', label: 'Mapa',         action: () => mapUI.toggle(),              locked: false },
+      { icon: '📖', label: 'Guías',         action: () => console.log('próximamente'), locked: true  },
     ]);
 
     const pauseMenu = new PauseMenu({
@@ -426,15 +409,24 @@ async function boot() {
 
     progression.fusionUnlocked = true;
 
+    // ── Visibilidad botones zona ──
+    setInterval(() => {
+      const pos    = player.root.position;
+      const inside = buildZone.isInsideZone(pos.x, pos.z);
+
+      if (buildCamera._btn) {
+        buildCamera._btn.style.display = inside ? 'flex' : 'none';
+        if (!inside && buildCamera.isActive()) buildCamera.deactivate();
+      }
+      if (skillBar._buildBtn) {
+        skillBar._buildBtn.style.display = inside ? 'flex' : 'none';
+      }
+    }, 500);
+
     setInterval(() => hud.updateEnemyBar(player.root.position), 300);
     setInterval(() => {
       localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
     }, 30000);
-
-    // ── Fix: ocultar buildBtn hasta que haya zona ──
-    if (buildMenu?._buildBtn && !buildZone.hasZone()) {
-      buildMenu._buildBtn.style.display = 'none';
-    }
 
     if (!progression.getFlag?.('escena01_done')) {
       narrative.play(STORY_EVENTS.escena01_despertar);
@@ -447,20 +439,20 @@ async function boot() {
 
     const errDiv = document.createElement('div');
     Object.assign(errDiv.style, {
-      position  : 'fixed',
-      top       : '40%',
-      left      : '50%',
-      transform : 'translateX(-50%)',
-      background: 'rgba(0,0,0,0.95)',
-      color     : '#ff4444',
-      fontFamily: 'monospace',
-      fontSize  : '11px',
-      padding   : '16px',
-      zIndex    : '9999',
-      maxWidth  : '90vw',
-      wordBreak : 'break-all',
+      position    : 'fixed',
+      top         : '40%',
+      left        : '50%',
+      transform   : 'translateX(-50%)',
+      background  : 'rgba(0,0,0,0.95)',
+      color       : '#ff4444',
+      fontFamily  : 'monospace',
+      fontSize    : '11px',
+      padding     : '16px',
+      zIndex      : '9999',
+      maxWidth    : '90vw',
+      wordBreak   : 'break-all',
       borderRadius: '8px',
-      border    : '1px solid #ff4444',
+      border      : '1px solid #ff4444',
     });
     errDiv.textContent = (err.message || '') + '\n' + (err.stack || '');
     document.body.appendChild(errDiv);
