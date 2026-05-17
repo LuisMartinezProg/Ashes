@@ -21,7 +21,8 @@ export class BuildMenu {
     this._buildBtn = document.createElement('button');
     this._buildBtn.innerHTML = '🏗';
     Object.assign(this._buildBtn.style, {
-      position: 'fixed', bottom: '90px', right: '24px',
+      position: 'fixed', bottom: '160px', left: '50%',
+      transform: 'translateX(-50%)',
       width: '52px', height: '52px', borderRadius: '12px',
       border: '1px solid rgba(201,168,76,0.4)',
       background: 'rgba(10,8,20,0.88)', color: '#C9A84C',
