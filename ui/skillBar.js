@@ -1,4 +1,3 @@
-
 // ui/skillBar.js — Ashes of the Reborn | Valiant Gaming
 import { RARITY_COLORS } from '../core/skillData.js';
 
@@ -337,4 +336,4 @@ export class SkillBar {
       btn.style.opacity = progress < 1 ? '0.55' : '1';
     }
   }
-        }
+}
