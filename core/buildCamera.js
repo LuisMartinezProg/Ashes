@@ -40,7 +40,8 @@ export class BuildCamera {
     Object.assign(this._btn.style, {
       position  : 'fixed',
       top       : '8px',
-      right     : '54px',
+      left      : '50%',
+      transform : 'translateX(-50%)',
       height    : '36px',
       padding   : '0 12px',
       borderRadius: '8px',
