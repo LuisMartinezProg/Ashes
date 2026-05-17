@@ -26,6 +26,7 @@ export class BuildingSystem {
   }
 
   setProgression(p) { this._prog = p; }
+setZone(zone)     { this._zone = zone; }
 
   // ─────────────────────────────────────────────
   // INVENTARIO
