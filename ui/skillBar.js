@@ -61,9 +61,9 @@ export class SkillBar {
   _sizes() {
     const ref = Math.min(window.innerWidth, window.innerHeight);
     return {
-      atk : Math.round(ref * 0.20),  // botón ataque
-      sk  : Math.round(ref * 0.13),  // botones habilidad
-      sb  : Math.round(ref * 0.11),  // sprint/parry
+      atk : Math.round(ref * 0.20),
+      sk  : Math.round(ref * 0.13),
+      sb  : Math.round(ref * 0.11),
       gap : Math.round(ref * 0.022),
       mb  : Math.round(ref * 0.035),
       mr  : Math.round(ref * 0.025),
@@ -73,7 +73,6 @@ export class SkillBar {
   _build() {
     const { atk, sk, sb, gap, mb, mr } = this._sizes();
 
-    // ── Contenedor raíz ───────────────────────────────────────────────────
     this._container = document.createElement('div');
     Object.assign(this._container.style, {
       position     : 'fixed',
@@ -84,7 +83,6 @@ export class SkillBar {
       zIndex       : '120',
     });
 
-    // ── Panel radial SVG de fondo ─────────────────────────────────────────
     const panelSize = atk * 3.2;
     const panel = document.createElement('div');
     Object.assign(panel.style, {
@@ -93,7 +91,6 @@ export class SkillBar {
       height        : `${panelSize}px`,
     });
 
-    // Fondo semicírculo oscuro
     const bg = document.createElement('div');
     Object.assign(bg.style, {
       position     : 'absolute',
@@ -104,11 +101,9 @@ export class SkillBar {
     });
     panel.appendChild(bg);
 
-    // Centro del panel
     const cx = panelSize * 0.58;
     const cy = panelSize * 0.58;
 
-    // ── Botón ATAQUE — centro ─────────────────────────────────────────────
     this._attackBtn = document.createElement('button');
     this._attackBtn.textContent = '⚔️';
     Object.assign(this._attackBtn.style, {
@@ -142,10 +137,8 @@ export class SkillBar {
     this._attackBtn.addEventListener('mousedown',  onAtk);
     panel.appendChild(this._attackBtn);
 
-    // ── Posiciones radiales para las 3 habilidades ────────────────────────
-    // Arriba-izquierda, izquierda-centro, abajo-izquierda
     const skillRadius = atk * 1.08;
-    const skillAngles = [-130, 180, -210]; // grados desde centro
+    const skillAngles = [-130, 180, -210];
 
     for (let i = 0; i < 3; i++) {
       const btn = this._buildSkillBtn(sk);
@@ -159,9 +152,8 @@ export class SkillBar {
       panel.appendChild(btn);
     }
 
-    // ── Botón CONSTRUCCIÓN — arriba del ataque ────────────────────────────
     const buildRadius = atk * 1.1;
-    const buildAngle  = -90 * Math.PI / 180; // arriba
+    const buildAngle  = -90 * Math.PI / 180;
     const bldX = cx + Math.cos(buildAngle) * buildRadius - sk/2;
     const bldY = cy + Math.sin(buildAngle) * buildRadius - sk/2;
 
@@ -190,7 +182,8 @@ export class SkillBar {
     });
     const onBuild = (e) => {
       e.preventDefault();
-      window._buildMenu?.open?.() ?? window._building && console.log('[Build] abre menú');
+      // ✅ FIX: paréntesis para evitar ambigüedad entre ?? y &&
+      window._buildMenu?.open?.() ?? (window._building && console.log('[Build] abre menú'));
       buildBtn.style.transform = 'scale(0.88)';
       setTimeout(() => buildBtn.style.transform = 'scale(1)', 140);
     };
@@ -199,7 +192,6 @@ export class SkillBar {
     panel.appendChild(buildBtn);
     this._buildBtn = buildBtn;
 
-    // ── SPRINT — derecha arriba ───────────────────────────────────────────
     const sprintAngle = -40 * Math.PI / 180;
     const sprintR     = atk * 1.05;
     const spX = cx + Math.cos(sprintAngle) * sprintR - sb/2;
@@ -219,7 +211,6 @@ export class SkillBar {
     });
     panel.appendChild(this._sprintBtn);
 
-    // ── PARRY — derecha abajo ─────────────────────────────────────────────
     const parryAngle = 40 * Math.PI / 180;
     const parryR     = atk * 1.05;
     const paX = cx + Math.cos(parryAngle) * parryR - sb/2;
@@ -336,4 +327,4 @@ export class SkillBar {
       btn.style.opacity = progress < 1 ? '0.55' : '1';
     }
   }
-}
+      }
