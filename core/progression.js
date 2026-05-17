@@ -40,14 +40,26 @@ export class Progression {
 
     this.fusionUnlocked  = false;
     this._magicEnergy    = 0;
-    this._skillSlots     = 1; // slots de habilidades disponibles
+    this._skillSlots     = 1;
     this._flags          = {};
+    this._reputation     = 0;
 
     this.onXPGain        = null;
     this.onUnlock        = null;
     this.onTrialPassed   = null;
-    this.onNewSkillSlot  = null; // callback cuando se desbloquea slot
+    this.onNewSkillSlot  = null;
+    this.onReputationGain = null;
   }
+
+  // ── Reputación ────────────────────────────────────────────────────────────
+
+  addReputation(amount) {
+    this._reputation += amount;
+    console.log(`[Progression] Reputación: ${this._reputation}`);
+    if (this.onReputationGain) this.onReputationGain(this._reputation);
+  }
+
+  getReputation() { return this._reputation; }
 
   // ── Energía mágica ────────────────────────────────────────────────────────
 
@@ -55,7 +67,6 @@ export class Progression {
     this._magicEnergy += amount;
     console.log(`[Progression] Energía mágica: ${this._magicEnergy}`);
 
-    // Revisar si se desbloquea nuevo slot
     const slotsNeeded = Math.floor(this._magicEnergy / MAGIC_ENERGY_PER_SKILL);
     if (slotsNeeded > this._skillSlots) {
       this._skillSlots = slotsNeeded;
@@ -191,6 +202,7 @@ export class Progression {
       magicEnergy     : this._magicEnergy,
       skillSlots      : this._skillSlots,
       flags           : this._flags,
+      reputation      : this._reputation,
     };
   }
 
@@ -202,8 +214,9 @@ export class Progression {
     if (data.activeSubtype)    this._activeSubtype     = data.activeSubtype;
     if (data.activeFusion)     this._activeFusion      = data.activeFusion;
     if (data.fusionUnlocked !== undefined) this.fusionUnlocked = data.fusionUnlocked;
-    if (data.magicEnergy !== undefined)    this._magicEnergy   = data.magicEnergy;
-    if (data.skillSlots  !== undefined)    this._skillSlots    = data.skillSlots;
+    if (data.magicEnergy    !== undefined) this._magicEnergy   = data.magicEnergy;
+    if (data.skillSlots     !== undefined) this._skillSlots    = data.skillSlots;
     if (data.flags)            this._flags            = data.flags;
+    if (data.reputation     !== undefined) this._reputation    = data.reputation;
   }
 }
