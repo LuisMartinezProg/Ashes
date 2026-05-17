@@ -19,7 +19,7 @@ export class SkillBar {
   }
 
   setWeapon(type)  { this._weapon = type; this.refresh(); }
-  show()           { if (this._container) this._container.style.display = 'flex'; }
+  show()           { if (this._container) this._container.style.display = 'block'; }
   hide()           { if (this._container) this._container.style.display = 'none'; }
 
   setWeaponIcon(type) {
@@ -31,7 +31,6 @@ export class SkillBar {
     if (!this._weapon) return;
     const skills = this.progression.getActiveSkills(this._weapon).slice(0, 3);
     skills.forEach((sk, i) => this._updateButton(i, sk));
-    // Ocultar botones sin habilidad asignada
     for (let i = skills.length; i < this._buttons.length; i++) {
       this._buttons[i].style.display = 'none';
     }
@@ -63,20 +62,57 @@ export class SkillBar {
     const vh = window.innerHeight;
     const ref = Math.min(vw, vh);
     return {
-      atk : Math.round(ref * 0.24),
-      sk  : Math.round(ref * 0.13),
-      gap : Math.round(ref * 0.025),
+      atk : Math.round(ref * 0.22),
+      sk  : Math.round(ref * 0.12),
+      sb  : Math.round(ref * 0.11),
+      gap : Math.round(ref * 0.022),
       mb  : Math.round(ref * 0.04),
       mr  : Math.round(ref * 0.03),
+      ml  : Math.round(ref * 0.03),
     };
   }
 
   _build() {
-    const { atk, sk, gap, mb, mr } = this._sizes();
-    const sbSize = Math.round(atk * 0.52);
+    const { atk, sk, sb, gap, mb, mr, ml } = this._sizes();
 
-    this._container = document.createElement('div');
-    Object.assign(this._container.style, {
+    // ── Contenedor habilidades — abajo izquierda ──────────────────────────
+    const skillWrap = document.createElement('div');
+    Object.assign(skillWrap.style, {
+      position     : 'fixed',
+      bottom       : `${mb}px`,
+      left         : `${ml + Math.round(window.innerWidth * 0.28)}px`,
+      display      : 'none',
+      flexDirection: 'column',
+      alignItems   : 'flex-start',
+      gap          : `${gap}px`,
+      pointerEvents: 'none',
+      zIndex       : '120',
+    });
+
+    const row1 = document.createElement('div');
+    Object.assign(row1.style, { display: 'flex', gap: `${gap}px` });
+    const row2 = document.createElement('div');
+    Object.assign(row2.style, { display: 'flex', gap: `${gap}px` });
+
+    // 2 habilidades arriba
+    for (let i = 0; i < 2; i++) {
+      const btn = this._buildSkillBtn(sk);
+      this._buttons.push(btn);
+      row1.appendChild(btn);
+    }
+
+    // 1 habilidad abajo izquierda
+    const btn2 = this._buildSkillBtn(sk);
+    this._buttons.push(btn2);
+    row2.appendChild(btn2);
+
+    skillWrap.appendChild(row1);
+    skillWrap.appendChild(row2);
+    document.body.appendChild(skillWrap);
+
+    // ── Contenedor derecho — ataque + sprint + parry ──────────────────────
+    const rightWrap = document.createElement('div');
+    Object.assign(rightWrap.style, {
       position     : 'fixed',
       bottom       : `${mb}px`,
       right        : `${mr}px`,
@@ -88,23 +124,48 @@ export class SkillBar {
       zIndex       : '120',
     });
 
-    const row1 = document.createElement('div');
-    Object.assign(row1.style, { display: 'flex', gap: `${gap}px`, alignItems: 'center' });
+    // Fila superior derecha: sprint + parry
+    const topRow = document.createElement('div');
+    Object.assign(topRow.style, {
+      display    : 'flex',
+      gap        : `${gap}px`,
+      alignItems : 'center',
+      justifyContent: 'flex-end',
+    });
 
-    const row2 = document.createElement('div');
-    Object.assign(row2.style, { display: 'flex', gap: `${gap}px`, alignItems: 'center' });
+    this._sprintBtn = this._buildSmallBtn('🏃', sb, 'rgba(100,220,255,0.5)');
+    this._sprintBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      window._player?.setSprinting?.(true);
+      this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.9)';
+      this._sprintBtn.style.transform   = 'scale(0.92)';
+    }, { passive: false });
+    this._sprintBtn.addEventListener('touchend', () => {
+      window._player?.setSprinting?.(false);
+      this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
+      this._sprintBtn.style.transform   = 'scale(1)';
+    });
 
-    for (let i = 0; i < 2; i++) {
-      const btn = this._buildSkillBtn(sk);
-      this._buttons.push(btn);
-      row1.appendChild(btn);
-    }
+    this._parryBtn = this._buildSmallBtn('🛡️', sb, 'rgba(201,168,76,0.5)');
+    this._parryBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      window._parry?.attemptParry?.();
+      this._parryBtn.style.transform = 'scale(0.88)';
+      setTimeout(() => this._parryBtn.style.transform = 'scale(1)', 180);
+    }, { passive: false });
 
-    const btn2 = this._buildSkillBtn(sk);
-    this._buttons.push(btn2);
-    row2.appendChild(btn2);
+    topRow.appendChild(this._sprintBtn);
+    topRow.appendChild(this._parryBtn);
 
-    // Botón ataque
+    // Fila inferior derecha: ataque
+    const atkRow = document.createElement('div');
+    Object.assign(atkRow.style, {
+      display        : 'flex',
+      justifyContent : 'flex-end',
+      paddingRight   : `${Math.round(atk * 0.15)}px`,
+      paddingBottom  : `${Math.round(atk * 0.08)}px`,
+    });
+
     this._attackBtn = document.createElement('button');
     this._attackBtn.textContent = '⚔️';
     Object.assign(this._attackBtn.style, {
@@ -134,27 +195,28 @@ export class SkillBar {
     };
     this._attackBtn.addEventListener('touchstart', onAtk, { passive: false });
     this._attackBtn.addEventListener('mousedown',  onAtk);
-    row2.appendChild(this._attackBtn);
 
-    // Columna sprint + parry
-    const col = document.createElement('div');
-    Object.assign(col.style, {
-      display      : 'flex',
-      flexDirection: 'column',
-      gap          : `${Math.round(gap * 0.6)}px`,
-      pointerEvents: 'none',
-    });
+    atkRow.appendChild(this._attackBtn);
+    rightWrap.appendChild(topRow);
+    rightWrap.appendChild(atkRow);
+    document.body.appendChild(rightWrap);
 
-    this._sprintBtn = document.createElement('button');
-    this._sprintBtn.textContent = '🏃';
-    Object.assign(this._sprintBtn.style, {
-      width        : `${sbSize}px`,
-      height       : `${sbSize}px`,
+    // Guardar referencia del contenedor principal (para show/hide)
+    this._container  = skillWrap;
+    this._rightWrap  = rightWrap;
+  }
+
+  _buildSmallBtn(icon, size, borderColor) {
+    const btn = document.createElement('button');
+    btn.textContent = icon;
+    Object.assign(btn.style, {
+      width        : `${size}px`,
+      height       : `${size}px`,
       borderRadius : '50%',
-      border       : '2px solid rgba(100,220,255,0.5)',
+      border       : `2px solid ${borderColor}`,
       background   : 'rgba(10,8,20,0.88)',
       color        : '#fff',
-      fontSize     : `${Math.round(sbSize * 0.4)}px`,
+      fontSize     : `${Math.round(size * 0.4)}px`,
       cursor       : 'pointer',
       pointerEvents: 'all',
       display      : 'flex',
@@ -164,53 +226,17 @@ export class SkillBar {
       boxShadow    : '0 2px 8px rgba(0,0,0,0.5)',
       transition   : 'transform 0.08s, border-color 0.1s',
     });
+    return btn;
+  }
 
-    this._sprintBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      window._player?.setSprinting?.(true);
-      this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.9)';
-      this._sprintBtn.style.transform   = 'scale(0.92)';
-    }, { passive: false });
-    this._sprintBtn.addEventListener('touchend', () => {
-      window._player?.setSprinting?.(false);
-      this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
-      this._sprintBtn.style.transform   = 'scale(1)';
-    });
+  show() {
+    if (this._container)  this._container.style.display  = 'flex';
+    if (this._rightWrap)  this._rightWrap.style.display  = 'flex';
+  }
 
-    this._parryBtn = document.createElement('button');
-    this._parryBtn.textContent = '🛡️';
-    Object.assign(this._parryBtn.style, {
-      width        : `${sbSize}px`,
-      height       : `${sbSize}px`,
-      borderRadius : '50%',
-      border       : '2px solid rgba(201,168,76,0.5)',
-      background   : 'rgba(10,8,20,0.88)',
-      color        : '#fff',
-      fontSize     : `${Math.round(sbSize * 0.4)}px`,
-      cursor       : 'pointer',
-      pointerEvents: 'all',
-      display      : 'flex',
-      alignItems   : 'center',
-      justifyContent: 'center',
-      WebkitTapHighlightColor: 'transparent',
-      boxShadow    : '0 2px 8px rgba(0,0,0,0.5)',
-      transition   : 'transform 0.08s',
-    });
-
-    this._parryBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      window._parry?.attemptParry?.();
-      this._parryBtn.style.transform = 'scale(0.88)';
-      setTimeout(() => this._parryBtn.style.transform = 'scale(1)', 180);
-    }, { passive: false });
-
-    col.appendChild(this._sprintBtn);
-    col.appendChild(this._parryBtn);
-    row2.appendChild(col);
-
-    this._container.appendChild(row1);
-    this._container.appendChild(row2);
-    document.body.appendChild(this._container);
+  hide() {
+    if (this._container)  this._container.style.display  = 'none';
+    if (this._rightWrap)  this._rightWrap.style.display  = 'none';
   }
 
   _buildSkillBtn(size) {
@@ -270,7 +296,6 @@ export class SkillBar {
     const r = btn.querySelector('.skill-rarity');
     r.textContent = RARITY_LABELS[skill.rarity];
     r.style.color = RARITY_COLORS[skill.rarity];
-    // Siempre visible — bloqueadas se muestran en gris
     btn.style.display     = 'flex';
     btn.style.borderColor = skill.available ? RARITY_COLORS[skill.rarity] : 'rgba(255,255,255,0.1)';
     btn.style.opacity     = skill.available ? '1' : '0.4';
@@ -284,4 +309,4 @@ export class SkillBar {
       btn.style.opacity = progress < 1 ? '0.55' : '1';
     }
   }
-  }
+}
