@@ -50,12 +50,15 @@ function _tick(timestamp) {
 
   _updateFPS(delta);
   _animateScene(timestamp);
+const buildCamActive = window._buildCamera?._active;
 
+if (!buildCamActive) {
   const input = _joystick.getInput();
   _player.update(delta, input, _camera);
   if (_triggers) _triggers.update(_player.root.position);
-  if (!window._buildCamera?._active) _thirdCam.update(delta);
-  if (_skillSystem) _skillSystem.update(delta);
+  _thirdCam.update(delta);
+}
+if (_skillSystem) _skillSystem.update(delta);
   for (const e of _enemies) {
     if (e && typeof e.isDead === 'function') e.update(delta);
   }
