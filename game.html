@@ -84,18 +84,18 @@ import { CrystalSpider }    from './core/enemies/CrystalSpider.js';
 import { Troll }            from './core/enemies/Troll.js';
 import { EarthGolem }       from './core/enemies/EarthGolem.js';
 import { WanderingSpirit }  from './core/enemies/WanderingSpirit.js';
-import { ShadowForest }   from './core/enemies/ShadowForest.js';
-import { StoneSnake }     from './core/enemies/StoneSnake.js';
-import { WarriorGhost }   from './core/enemies/WarriorGhost.js';
-import { EliteMercenary } from './core/enemies/EliteMercenary.js';
-import { ShadowSoldier }  from './core/enemies/ShadowSoldier.js';
-import { DarkArcher }     from './core/enemies/DarkArcher.js';
-import { Berserker }      from './core/enemies/Berserker.js';
-import { YamiMage }       from './core/enemies/YamiMage.js';
-import { ShadowCaptain }  from './core/enemies/ShadowCaptain.js';
-import { BuildCamera } from './core/buildCamera.js';
-import { BuildZone }   from './core/buildZone.js';;
-  
+import { ShadowForest }     from './core/enemies/ShadowForest.js';
+import { StoneSnake }       from './core/enemies/StoneSnake.js';
+import { WarriorGhost }     from './core/enemies/WarriorGhost.js';
+import { EliteMercenary }   from './core/enemies/EliteMercenary.js';
+import { ShadowSoldier }    from './core/enemies/ShadowSoldier.js';
+import { DarkArcher }       from './core/enemies/DarkArcher.js';
+import { Berserker }        from './core/enemies/Berserker.js';
+import { YamiMage }         from './core/enemies/YamiMage.js';
+import { ShadowCaptain }    from './core/enemies/ShadowCaptain.js';
+import { BuildCamera }      from './core/buildCamera.js';
+import { BuildZone }        from './core/buildZone.js';
+
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -112,6 +112,10 @@ async function boot() {
     setProgress(20, 'initScene...');
     const { scene, camera, renderer } = await initScene();
     await new Promise(r => setTimeout(r, 100));
+
+    setProgress(25, 'BuildCamera / BuildZone...');
+    const buildCamera = new BuildCamera(camera, renderer);
+    const buildZone   = new BuildZone(scene);
 
     setProgress(30, 'initResize...');
     initResize(camera, renderer);
@@ -174,7 +178,7 @@ async function boot() {
     setSkillSystem(skills);
     setEnemies(enemies);
     hud.setEnemies(enemies);
-  
+
     setProgress(74, 'DialogueUI...');
     const dialogueUI = new DialogueUI();
     const shopUI     = new ShopUI();
@@ -233,6 +237,7 @@ async function boot() {
     hud.setWeaponIcon(weaponType);
     hud.show();
     hud.setCamera(camera);
+
     const mapUI = new MapUI(player);
     window._mapUI = mapUI;
     setInterval(() => mapUI.update(), 500);
@@ -255,7 +260,7 @@ async function boot() {
       setTimeout(() => wolves.forEach(w => w.startRoaming()), 3000);
     };
 
-    // ── Monstruos del bosque denso (z: -40 a -80) ──
+    // ── Monstruos del bosque denso ──
     const forestMonsters = [
       new Mossling(scene, { x: -15, z: -50 }, player),
       new Mossling(scene, { x:  12, z: -55 }, player),
@@ -270,7 +275,7 @@ async function boot() {
       new Troll(scene, { x:  20, z: -65 }, player),
     ];
 
-    // ── Monstruos de la planicie (z: -10 a 30) ──
+    // ── Monstruos de la planicie ──
     const plainsMonsters = [
       new EarthGolem(scene,      { x: -18, z: 10 }, player),
       new EarthGolem(scene,      { x:  20, z: 18 }, player),
@@ -278,52 +283,55 @@ async function boot() {
       new WanderingSpirit(scene, { x:  12, z:  5 }, player),
       new WanderingSpirit(scene, { x: -22, z: 28 }, player),
     ];
-     // ── Camino a Ironfell (z: 30 a 60) ──
-const roadMonsters = [
-  new ShadowForest(scene,   { x: -10, z: 35 }, player),
-  new ShadowForest(scene,   { x:  12, z: 42 }, player),
-  new StoneSnake(scene,     { x:   5, z: 38 }, player),
-  new StoneSnake(scene,     { x: -15, z: 50 }, player),
-  new WarriorGhost(scene,   { x:  18, z: 45 }, player),
-  new WarriorGhost(scene,   { x:  -8, z: 55 }, player),
-  new EliteMercenary(scene, { x:   0, z: 52 }, player),
-  new EliteMercenary(scene, { x:  14, z: 58 }, player),
-];
 
-// ── Ejército Yami (z: 60+, cerca de Ironfell) ──
-const yamiArmy = [
-  new ShadowSoldier(scene,  { x: -12, z: 65 }, player),
-  new ShadowSoldier(scene,  { x:   8, z: 68 }, player),
-  new ShadowSoldier(scene,  { x:  -2, z: 72 }, player),
-  new DarkArcher(scene,     { x:  20, z: 66 }, player),
-  new DarkArcher(scene,     { x: -20, z: 70 }, player),
-  new Berserker(scene,      { x:   5, z: 75 }, player),
-  new Berserker(scene,      { x: -10, z: 80 }, player),
-  new YamiMage(scene,       { x:  15, z: 78 }, player),
-  new YamiMage(scene,       { x:  -5, z: 85 }, player),
-  new ShadowCaptain(scene,  { x:   0, z: 90 }, player),
-];
-    // ── Registrar todos ──/
-   const allEnemies = [...enemies, ...wolves, bear, ...forestMonsters, ...plainsMonsters, ...roadMonsters, ...yamiArmy];
+    // ── Camino a Ironfell ──
+    const roadMonsters = [
+      new ShadowForest(scene,   { x: -10, z: 35 }, player),
+      new ShadowForest(scene,   { x:  12, z: 42 }, player),
+      new StoneSnake(scene,     { x:   5, z: 38 }, player),
+      new StoneSnake(scene,     { x: -15, z: 50 }, player),
+      new WarriorGhost(scene,   { x:  18, z: 45 }, player),
+      new WarriorGhost(scene,   { x:  -8, z: 55 }, player),
+      new EliteMercenary(scene, { x:   0, z: 52 }, player),
+      new EliteMercenary(scene, { x:  14, z: 58 }, player),
+    ];
+
+    // ── Ejército Yami ──
+    const yamiArmy = [
+      new ShadowSoldier(scene,  { x: -12, z: 65 }, player),
+      new ShadowSoldier(scene,  { x:   8, z: 68 }, player),
+      new ShadowSoldier(scene,  { x:  -2, z: 72 }, player),
+      new DarkArcher(scene,     { x:  20, z: 66 }, player),
+      new DarkArcher(scene,     { x: -20, z: 70 }, player),
+      new Berserker(scene,      { x:   5, z: 75 }, player),
+      new Berserker(scene,      { x: -10, z: 80 }, player),
+      new YamiMage(scene,       { x:  15, z: 78 }, player),
+      new YamiMage(scene,       { x:  -5, z: 85 }, player),
+      new ShadowCaptain(scene,  { x:   0, z: 90 }, player),
+    ];
+
+    // ── Registrar todos ──
+    const allEnemies = [...enemies, ...wolves, bear, ...forestMonsters, ...plainsMonsters, ...roadMonsters, ...yamiArmy];
     allEnemies.forEach(e => combat.registerEnemy(e));
+    skills.registerEnemies(allEnemies);
     setEnemies(allEnemies);
     hud.setEnemies(allEnemies);
-    skills.registerEnemies(allEnemies); // ← agregar esto
     window._bear           = bear;
     window._wolves         = wolves;
     window._forestMonsters = forestMonsters;
     window._plainsMonsters = plainsMonsters;
-    window._bear           = bear;
-    window._wolves         = wolves;
-    window._forestMonsters = forestMonsters;
-    window._plainsMonsters = plainsMonsters;
-    window._roadMonsters   = roadMonsters;  // ← aquí
-    window._yamiArmy       = yamiArmy;      // ← aquí
-    
-    const building   = new BuildingSystem(scene, player);
+    window._roadMonsters   = roadMonsters;
+    window._yamiArmy       = yamiArmy;
+
+    // ── Building ──
+    const building = new BuildingSystem(scene, player);
     building.setProgression(progression);
-    const buildMenu  = new BuildMenu(building);
-    window._building = building;
+    building.setZone(buildZone);
+    const buildMenu = new BuildMenu(building, buildCamera, buildZone);
+    buildCamera.showBtn();
+    window._building    = building;
+    window._buildCamera = buildCamera;
+    window._buildZone   = buildZone;
 
     const skillTree   = new SkillTree(progression);
     const skillBar    = new SkillBar(skills, progression);
@@ -332,9 +340,9 @@ const yamiArmy = [
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
 
     const radialMenu = new RadialMenu([
-      { icon: '⚔️', label: 'Habilidades',  action: () => skillTree.open(),      locked: false },
-      { icon: '🏗',  label: 'Construcción', action: () => buildMenu.open(),      locked: false },
-      { icon: '🗺️', label: 'Mapa',         action: () => mapUI.toggle(),        locked: false },
+      { icon: '⚔️', label: 'Habilidades',  action: () => skillTree.open(),           locked: false },
+      { icon: '🏗',  label: 'Construcción', action: () => buildMenu.open(),           locked: false },
+      { icon: '🗺️', label: 'Mapa',         action: () => mapUI.toggle(),             locked: false },
       { icon: '📖', label: 'Guías',         action: () => console.log('próximamente'), locked: true },
     ]);
 
@@ -379,30 +387,30 @@ const yamiArmy = [
       narrative.play(STORY_EVENTS.escena01_despertar);
     }
 
-} catch (err) {
-  txt.textContent = 'ERROR: ' + (err.message || err.toString());
-  bar.style.background = '#8B2A0A';
-  console.error('[BOOT ERROR]', err.message, err.stack);
+  } catch (err) {
+    txt.textContent = 'ERROR: ' + (err.message || err.toString());
+    bar.style.background = '#8B2A0A';
+    console.error('[BOOT ERROR]', err.message, err.stack);
 
-  const errDiv = document.createElement('div');
-  Object.assign(errDiv.style, {
-    position  : 'fixed',
-    top       : '40%',
-    left      : '50%',
-    transform : 'translateX(-50%)',
-    background: 'rgba(0,0,0,0.95)',
-    color     : '#ff4444',
-    fontFamily: 'monospace',
-    fontSize  : '11px',
-    padding   : '16px',
-    zIndex    : '9999',
-    maxWidth  : '90vw',
-    wordBreak : 'break-all',
-    borderRadius: '8px',
-    border    : '1px solid #ff4444',
-  });
-  errDiv.textContent = (err.message || '') + '\n' + (err.stack || '');
-  document.body.appendChild(errDiv);
+    const errDiv = document.createElement('div');
+    Object.assign(errDiv.style, {
+      position  : 'fixed',
+      top       : '40%',
+      left      : '50%',
+      transform : 'translateX(-50%)',
+      background: 'rgba(0,0,0,0.95)',
+      color     : '#ff4444',
+      fontFamily: 'monospace',
+      fontSize  : '11px',
+      padding   : '16px',
+      zIndex    : '9999',
+      maxWidth  : '90vw',
+      wordBreak : 'break-all',
+      borderRadius: '8px',
+      border    : '1px solid #ff4444',
+    });
+    errDiv.textContent = (err.message || '') + '\n' + (err.stack || '');
+    document.body.appendChild(errDiv);
   }
 }
 
