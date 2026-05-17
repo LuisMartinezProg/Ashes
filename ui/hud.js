@@ -2,10 +2,10 @@
 
 export class HUD {
   constructor(combatSystem, skillSystem = null) {
-    this.combat = combatSystem;
-    this.skills = skillSystem;
+    this.combat         = combatSystem;
+    this.skills         = skillSystem;
     this._enemies       = [];
-    this._enemyLabels   = new Map(); // enemy → div
+    this._enemyLabels   = new Map();
     this._bossBarEl     = null;
     this._bossFillEl    = null;
     this._bossTextEl    = null;
@@ -25,7 +25,6 @@ export class HUD {
   }
 
   setEnemies(list) {
-    // Limpiar labels viejos
     for (const el of this._enemyLabels.values()) el.remove();
     this._enemyLabels.clear();
     this._enemies = list;
@@ -58,25 +57,38 @@ export class HUD {
       if (!e.mesh) continue;
 
       if (e._config?.isBoss) {
-        // Jefe — barra fija arriba
-        if (e._config?.isBoss) {
-  if (!e.isDead() && e.mesh) {
-    const dist = playerPosition.distanceTo(e.mesh.position);
-    if (dist <= 30) { // solo si está cerca
-      bossFound = true;
-      this._updateBossBar(e);
-    }
-  }
-  this._hideLabel(e);
-  continue;
+        if (!e.isDead() && e.mesh) {
+          const dist = playerPosition.distanceTo(e.mesh.position);
+          if (dist <= 30) {
+            bossFound = true;
+            this._updateBossBar(e);
+          }
         }
-        
+        this._hideLabel(e);
+        continue;
+      }
+
+      if (e.isDead?.()) {
+        this._hideLabel(e);
+        continue;
+      }
+
+      const dist = playerPosition.distanceTo(e.mesh.position);
+      if (dist <= 20) {
+        this._updateFloatingLabel(e);
+      } else {
+        this._hideLabel(e);
+      }
+    }
+
+    if (!bossFound) this._bossBarEl.style.display = 'none';
+  }
 
   _updateBossBar(e) {
     const pct = Math.max(0, e.hp / e.maxHp) * 100;
-    this._bossFillEl.style.width = `${pct}%`;
-    this._bossTextEl.textContent = `${Math.ceil(e.hp)} / ${e.maxHp}`;
-    this._bossNameEl.textContent = e._config?.name ?? 'JEFE';
+    this._bossFillEl.style.width   = `${pct}%`;
+    this._bossTextEl.textContent   = `${Math.ceil(e.hp)} / ${e.maxHp}`;
+    this._bossNameEl.textContent   = e._config?.name ?? 'JEFE';
     this._bossFillEl.style.background = pct > 50
       ? 'linear-gradient(90deg,#7700cc,#cc44ff)'
       : pct > 25
@@ -93,21 +105,19 @@ export class HUD {
       document.body.appendChild(el);
     }
 
-    // Proyectar posición world → screen
     const pos = e.mesh.position.clone();
-    pos.y += 2.2; // encima de la cabeza
+    pos.y += 2.2;
     pos.project(this._camera);
 
     const x = (pos.x *  0.5 + 0.5) * window.innerWidth;
     const y = (pos.y * -0.5 + 0.5) * window.innerHeight;
 
-    // Ocultar si está detrás de la cámara
     if (pos.z > 1) {
       el.style.display = 'none';
       return;
     }
 
-    const pct = Math.max(0, e.hp / e.maxHp) * 100;
+    const pct  = Math.max(0, e.hp / e.maxHp) * 100;
     const fill = el.querySelector('.ef');
     const text = el.querySelector('.et');
     const name = el.querySelector('.en');
@@ -122,8 +132,8 @@ export class HUD {
     name.textContent = e._config?.name ?? 'Enemigo';
 
     el.style.display = 'block';
-    el.style.left = `${x}px`;
-    el.style.top  = `${y}px`;
+    el.style.left    = `${x}px`;
+    el.style.top     = `${y}px`;
   }
 
   _hideLabel(e) {
@@ -134,15 +144,15 @@ export class HUD {
   _makeFloatingLabel() {
     const wrap = document.createElement('div');
     Object.assign(wrap.style, {
-      position      : 'fixed',
-      transform     : 'translateX(-50%)',
-      display       : 'none',
-      flexDirection : 'column',
-      alignItems    : 'center',
-      gap           : '2px',
-      pointerEvents : 'none',
-      zIndex        : '90',
-      minWidth      : '80px',
+      position     : 'fixed',
+      transform    : 'translateX(-50%)',
+      display      : 'none',
+      flexDirection: 'column',
+      alignItems   : 'center',
+      gap          : '2px',
+      pointerEvents: 'none',
+      zIndex       : '90',
+      minWidth     : '80px',
     });
 
     const name = document.createElement('div');
@@ -233,8 +243,8 @@ export class HUD {
     this._showFloating(`+${power} ${res.type}`, res.type === 'madera' ? '#8B6340' : '#888078');
 
     if (res.hp <= 0) {
-      res.depleted      = true;
-      res.mesh.visible  = false;
+      res.depleted     = true;
+      res.mesh.visible = false;
       this._hideCollectBtn();
       setTimeout(() => {
         res.hp           = res.maxHp;
@@ -473,4 +483,4 @@ export class HUD {
     const pct = Math.max(0, energy / maxEnergy) * 100;
     this._energyFill.style.width = `${pct}%`;
   }
-      }
+    }
