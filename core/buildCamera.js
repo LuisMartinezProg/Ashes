@@ -114,12 +114,38 @@ document.body.appendChild(this._btn);
     this._height = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, this._height + delta));
     this._updateCameraPos();
   }
+_pan(dx, dz) {
+  const zone   = window._buildZone;
+  const center = zone?.getCenter();
+  const radius = zone?.getRadius() ?? 999;
+  const margin = 5; // permite ver un poco más allá del borde
 
-  _pan(dx, dz) {
-    this._target.x += dx * PAN_SPEED * (this._height / 20);
-    this._target.z += dz * PAN_SPEED * (this._height / 20);
-    this._updateCameraPos();
+  const nx = this._target.x + dx * PAN_SPEED * (this._height / 20);
+  const nz = this._target.z + dz * PAN_SPEED * (this._height / 20);
+
+  if (center) {
+    const distX = nx - center.x;
+    const distZ = nz - center.z;
+    const dist  = Math.sqrt(distX * distX + distZ * distZ);
+    const limit = radius + margin;
+
+    if (dist > limit) {
+      // Clamp al borde del círculo
+      const angle    = Math.atan2(distZ, distX);
+      this._target.x = center.x + Math.cos(angle) * limit;
+      this._target.z = center.z + Math.sin(angle) * limit;
+    } else {
+      this._target.x = nx;
+      this._target.z = nz;
+    }
+  } else {
+    this._target.x = nx;
+    this._target.z = nz;
   }
+
+  this._updateCameraPos();
+}
+  
 
   _bindEvents() {
     const canvas = this._renderer.domElement;
