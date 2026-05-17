@@ -163,6 +163,9 @@ async function boot() {
     window._prog = progression;
     combat.setProgression(progression);
 
+    // ── Conectar zona con progresión ──
+    buildZone.setProgression(progression);
+
     setProgress(66, 'ParrySystem...');
     const parry = new ParrySystem(player, combat);
     window._parry = parry;
@@ -204,7 +207,12 @@ async function boot() {
             found.dialogue.name,
             found.dialogue.lines,
             () => { _nearNPC = null; },
-            found.isShop() ? () => shopUI.open(found.dialogue.shop) : null
+            () => {
+              // ── Ganar reputación al hablar con NPC ──
+              progression.addReputation(10);
+              localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
+              if (found.isShop()) shopUI.open(found.dialogue.shop);
+            }
           );
         });
       } else if (!found && _nearNPC) {
@@ -327,11 +335,53 @@ async function boot() {
     const building = new BuildingSystem(scene, player);
     building.setProgression(progression);
     building.setZone(buildZone);
-    const buildMenu = new BuildMenu(building, buildCamera, buildZone);
-    buildCamera.showBtn();
+    const buildMenu = new BuildMenu(building);
     window._building    = building;
     window._buildCamera = buildCamera;
     window._buildZone   = buildZone;
+
+    // ── Botón bandera (solo si no hay zona aún) ──
+    if (!buildZone.hasZone()) {
+      const flagBtn = document.createElement('button');
+      flagBtn.textContent = '🚩';
+      flagBtn.title = 'Clavar bandera';
+      Object.assign(flagBtn.style, {
+        position : 'fixed', top: '8px', right: '100px',
+        height   : '36px', padding: '0 12px',
+        borderRadius: '8px',
+        border   : '1px solid rgba(201,168,76,0.4)',
+        background: 'rgba(10,8,20,0.8)', color: '#C9A84C',
+        fontSize : '16px', fontFamily: 'monospace',
+        cursor   : 'pointer', pointerEvents: 'all',
+        zIndex   : '150', WebkitTapHighlightColor: 'transparent',
+      });
+      const openFlag = (e) => {
+        e.preventDefault();
+        buildZone.startChoosing(player.root.position, () => {
+          flagBtn.remove();
+          buildCamera.showBtn();
+        });
+      };
+      flagBtn.addEventListener('click', openFlag);
+      flagBtn.addEventListener('touchstart', openFlag, { passive: false });
+      document.body.appendChild(flagBtn);
+    } else {
+      buildCamera.showBtn();
+    }
+
+    // ── Visibilidad de botones según proximidad a la zona ──
+    setInterval(() => {
+      const pos    = player.root.position;
+      const inside = buildZone.isInsideZone(pos.x, pos.z);
+
+      if (buildMenu._buildBtn) {
+        buildMenu._buildBtn.style.display = inside ? 'flex' : 'none';
+      }
+      if (buildCamera._btn) {
+        buildCamera._btn.style.display = inside ? 'flex' : 'none';
+        if (!inside && buildCamera.isActive()) buildCamera.deactivate();
+      }
+    }, 500);
 
     const skillTree   = new SkillTree(progression);
     const skillBar    = new SkillBar(skills, progression);
@@ -340,10 +390,10 @@ async function boot() {
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
 
     const radialMenu = new RadialMenu([
-      { icon: '⚔️', label: 'Habilidades',  action: () => skillTree.open(),           locked: false },
-      { icon: '🏗',  label: 'Construcción', action: () => buildMenu.open(),           locked: false },
-      { icon: '🗺️', label: 'Mapa',         action: () => mapUI.toggle(),             locked: false },
-      { icon: '📖', label: 'Guías',         action: () => console.log('próximamente'), locked: true },
+      { icon: '⚔️', label: 'Habilidades',  action: () => skillTree.open(),             locked: false },
+      { icon: '🏗',  label: 'Construcción', action: () => buildMenu.open(),             locked: false },
+      { icon: '🗺️', label: 'Mapa',         action: () => mapUI.toggle(),               locked: false },
+      { icon: '📖', label: 'Guías',         action: () => console.log('próximamente'),  locked: true  },
     ]);
 
     const pauseMenu = new PauseMenu({
@@ -381,7 +431,10 @@ async function boot() {
       localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
     }, 30000);
 
-    if (buildMenu?._buildBtn) buildMenu._buildBtn.style.display = 'none';
+    // ── Fix: ocultar buildBtn hasta que haya zona ──
+    if (buildMenu?._buildBtn && !buildZone.hasZone()) {
+      buildMenu._buildBtn.style.display = 'none';
+    }
 
     if (!progression.getFlag?.('escena01_done')) {
       narrative.play(STORY_EVENTS.escena01_despertar);
