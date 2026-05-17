@@ -57,15 +57,20 @@ export class BuildCamera {
       letterSpacing : '1px',
       WebkitTapHighlightColor: 'transparent',
     });
-
-    const toggle = (e) => {
-      e.preventDefault();
-      this._active ? this.deactivate() : this.activate();
-    };
-    this._btn.addEventListener('click', toggle);
-    this._btn.addEventListener('touchstart', toggle, { passive: false });
-    document.body.appendChild(this._btn);
+const toggle = (e) => {
+  e.preventDefault();
+  if (this._active) {
+    this.deactivate();
+  } else {
+    const center = window._buildZone?.getCenter();
+    this.activate(center ?? undefined);
   }
+};
+this._btn.addEventListener('click', toggle);
+this._btn.addEventListener('touchstart', toggle, { passive: false });
+document.body.appendChild(this._btn);
+  }
+    
 
   showBtn() { this._btn.style.display = 'flex'; }
   hideBtn() {
