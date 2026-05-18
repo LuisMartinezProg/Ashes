@@ -3,6 +3,10 @@ import { RARITY_COLORS } from '../core/skillData.js';
 
 const RARITY_LABELS = { common:'C', rare:'R', epic:'E', legendary:'L' };
 
+// Coordenadas base HUD designer (800×450) → se escalan al tamaño real
+const BASE_W = 800;
+const BASE_H = 450;
+
 export class SkillBar {
   constructor(skillSystem, progression) {
     this.skillSystem = skillSystem;
@@ -12,11 +16,19 @@ export class SkillBar {
     this._attackBtn = null;
     this._sprintBtn = null;
     this._parryBtn  = null;
+    this._buildBtn  = null;
     this._container = null;
     this._cooldowns = {};
+    this._enemyNear = false;
+
     this._build();
     window.addEventListener('resize', () => this._rebuild());
+
+    // Revisar enemigos cercanos cada 500ms
+    setInterval(() => this._checkEnemyProximity(), 500);
   }
+
+  // ── API pública ──────────────────────────────────────────────────────────
 
   setWeapon(type)  { this._weapon = type; this.refresh(); }
 
@@ -43,6 +55,40 @@ export class SkillBar {
   show() { if (this._container) this._container.style.display = 'block'; }
   hide() { if (this._container) this._container.style.display = 'none'; }
 
+  // ── Detección de enemigos ────────────────────────────────────────────────
+
+  _checkEnemyProximity() {
+    const playerPos = window._player?.root?.position;
+    const enemies   = window._combat?._enemies ?? [];
+    if (!playerPos) return;
+
+    let near = false;
+    for (const e of enemies) {
+      if (!e.mesh || e.isDead?.()) continue;
+      if (e.mesh.position.distanceTo(playerPos) < 12) { near = true; break; }
+    }
+
+    if (near !== this._enemyNear) {
+      this._enemyNear = near;
+      this._updateActionBtn();
+    }
+  }
+
+  _updateActionBtn() {
+    if (!this._sprintBtn) return;
+    if (this._enemyNear) {
+      this._sprintBtn.textContent   = '🛡️';
+      this._sprintBtn.style.borderColor = 'rgba(201,168,76,0.7)';
+      this._sprintBtn.title = 'Parry';
+    } else {
+      this._sprintBtn.textContent   = '🏃';
+      this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
+      this._sprintBtn.title = 'Sprint';
+    }
+  }
+
+  // ── Build ────────────────────────────────────────────────────────────────
+
   _rebuild() {
     try {
       if (this._container) this._container.remove();
@@ -50,6 +96,7 @@ export class SkillBar {
       this._attackBtn = null;
       this._sprintBtn = null;
       this._parryBtn  = null;
+      this._buildBtn  = null;
       this._build();
       if (this._weapon) this.refresh();
       this.show();
@@ -58,58 +105,69 @@ export class SkillBar {
     }
   }
 
-  _sizes() {
-    const ref = Math.min(window.innerWidth, window.innerHeight);
+  // Convierte coordenadas del HUD designer (800×450) a px reales
+  _px(x, y) {
+    const sw = window.innerWidth;
+    const sh = window.innerHeight;
     return {
-      atk : Math.round(ref * 0.20),
-      sk  : Math.round(ref * 0.13),
-      sb  : Math.round(ref * 0.11),
-      gap : Math.round(ref * 0.022),
-      mb  : Math.round(ref * 0.035),
-      mr  : Math.round(ref * 0.025),
+      left  : Math.round((x / BASE_W) * sw),
+      top   : Math.round((y / BASE_H) * sh),
     };
   }
 
-  _build() {
-    const { atk, sk, sb, gap, mb, mr } = this._sizes();
+  // Tamaño base escalado
+  _sz(baseSize) {
+    const ref = Math.min(window.innerWidth, window.innerHeight);
+    return Math.round(ref * baseSize);
+  }
 
+  _build() {
+    // Contenedor fixed que cubre toda la pantalla
     this._container = document.createElement('div');
     Object.assign(this._container.style, {
       position     : 'fixed',
-      bottom       : `${mb}px`,
-      right        : `${mr}px`,
+      inset        : '0',
       display      : 'none',
       pointerEvents: 'none',
       zIndex       : '120',
     });
+    document.body.appendChild(this._container);
 
-    const panelSize = atk * 3.2;
-    const panel = document.createElement('div');
-    Object.assign(panel.style, {
-      position : 'relative',
-      width    : `${panelSize}px`,
-      height   : `${panelSize}px`,
-    });
+    const atkSize  = this._sz(0.19);  // ataque grande
+    const skSize   = this._sz(0.12);  // habilidades
+    const sbSize   = this._sz(0.10);  // sprint/parry/build
+    const fontSize = (s) => `${Math.round(s * 0.42)}px`;
 
-    // ✅ Sin fondo — bg eliminado
+    // ── Habilidad 1 — x:558 y:403 ────────────────────────────────────────
+    const sk1 = this._buildSkillBtn(skSize);
+    this._placeBtn(sk1, 558, 403, skSize);
+    this._buttons.push(sk1);
+    this._container.appendChild(sk1);
 
-    const cx = panelSize * 0.58;
-    const cy = panelSize * 0.58;
+    // ── Habilidad 2 — x:584 y:313 ────────────────────────────────────────
+    const sk2 = this._buildSkillBtn(skSize);
+    this._placeBtn(sk2, 584, 313, skSize);
+    this._buttons.push(sk2);
+    this._container.appendChild(sk2);
 
-    // ── Botón ATAQUE — centro ─────────────────────────────────────────────
+    // ── Habilidad 3 — x:668 y:263 ────────────────────────────────────────
+    const sk3 = this._buildSkillBtn(skSize);
+    this._placeBtn(sk3, 668, 263, skSize);
+    this._buttons.push(sk3);
+    this._container.appendChild(sk3);
+
+    // ── Ataque básico — x:679 y:379 ──────────────────────────────────────
     this._attackBtn = document.createElement('button');
     this._attackBtn.textContent = '⚔️';
     Object.assign(this._attackBtn.style, {
-      position      : 'absolute',
-      width         : `${atk}px`,
-      height        : `${atk}px`,
-      left          : `${cx - atk/2}px`,
-      top           : `${cy - atk/2}px`,
+      position      : 'fixed',
+      width         : `${atkSize}px`,
+      height        : `${atkSize}px`,
       borderRadius  : '50%',
       border        : '3px solid rgba(255,200,80,0.9)',
       background    : 'radial-gradient(circle at 35% 35%, rgba(220,100,40,0.95), rgba(140,40,10,0.95))',
       color         : '#fff',
-      fontSize      : `${Math.round(atk * 0.38)}px`,
+      fontSize      : `${Math.round(atkSize * 0.38)}px`,
       cursor        : 'pointer',
       pointerEvents : 'all',
       display       : 'flex',
@@ -118,8 +176,9 @@ export class SkillBar {
       WebkitTapHighlightColor: 'transparent',
       boxShadow     : '0 0 24px rgba(255,120,40,0.7), inset 0 1px 0 rgba(255,255,255,0.2)',
       transition    : 'transform 0.08s',
-      zIndex        : '2',
+      zIndex        : '121',
     });
+    this._placeBtn(this._attackBtn, 679, 379, atkSize);
     const onAtk = (e) => {
       e.preventDefault();
       window._combat?.triggerAttack?.();
@@ -128,112 +187,62 @@ export class SkillBar {
     };
     this._attackBtn.addEventListener('touchstart', onAtk, { passive: false });
     this._attackBtn.addEventListener('mousedown',  onAtk);
-    panel.appendChild(this._attackBtn);
+    this._container.appendChild(this._attackBtn);
 
-    // ── 3 habilidades en arco uniforme hacia la izquierda ─────────────────
-    // ✅ Radio mayor y ángulos uniformes de 60° para arco limpio
-    const skillRadius = atk * 1.25;
-    const skillAngles = [-150, -180, -210];
-
-    for (let i = 0; i < 3; i++) {
-      const btn = this._buildSkillBtn(sk);
-      const rad = skillAngles[i] * Math.PI / 180;
-      const bx  = cx + Math.cos(rad) * skillRadius - sk/2;
-      const by  = cy + Math.sin(rad) * skillRadius - sk/2;
-      btn.style.position = 'absolute';
-      btn.style.left     = `${bx}px`;
-      btn.style.top      = `${by}px`;
-      this._buttons.push(btn);
-      panel.appendChild(btn);
-    }
-
-    // ── Botón CONSTRUCCIÓN — arriba del ataque ────────────────────────────
-    const buildRadius = atk * 1.1;
-    const buildAngle  = -90 * Math.PI / 180;
-    const bldX = cx + Math.cos(buildAngle) * buildRadius - sk/2;
-    const bldY = cy + Math.sin(buildAngle) * buildRadius - sk/2;
-
-    const buildBtn = document.createElement('button');
-    buildBtn.textContent = '🏗';
-    Object.assign(buildBtn.style, {
-      position      : 'absolute',
-      left          : `${bldX}px`,
-      top           : `${bldY}px`,
-      width         : `${sk}px`,
-      height        : `${sk}px`,
-      borderRadius  : '50%',
-      border        : '2px solid rgba(201,168,76,0.6)',
-      background    : 'rgba(10,8,20,0.88)',
-      color         : '#C9A84C',
-      fontSize      : `${Math.round(sk * 0.42)}px`,
-      cursor        : 'pointer',
-      pointerEvents : 'all',
-      display       : 'flex',
-      alignItems    : 'center',
-      justifyContent: 'center',
-      WebkitTapHighlightColor: 'transparent',
-      boxShadow     : '0 2px 10px rgba(0,0,0,0.5)',
-      transition    : 'transform 0.08s',
-      zIndex        : '2',
-    });
-    const onBuild = (e) => {
-      e.preventDefault();
-      // ✅ FIX: paréntesis para evitar ambigüedad entre ?? y &&
-      window._buildMenu?.open?.() ?? (window._building && console.log('[Build] abre menú'));
-      buildBtn.style.transform = 'scale(0.88)';
-      setTimeout(() => buildBtn.style.transform = 'scale(1)', 140);
-    };
-    buildBtn.addEventListener('touchstart', onBuild, { passive: false });
-    buildBtn.addEventListener('click', onBuild);
-    panel.appendChild(buildBtn);
-    this._buildBtn = buildBtn;
-
-    // ── SPRINT — derecha arriba ───────────────────────────────────────────
-    const sprintAngle = -40 * Math.PI / 180;
-    const sprintR     = atk * 1.05;
-    const spX = cx + Math.cos(sprintAngle) * sprintR - sb/2;
-    const spY = cy + Math.sin(sprintAngle) * sprintR - sb/2;
-
-    this._sprintBtn = this._buildSmallBtn('🏃', sb, 'rgba(100,220,255,0.5)', spX, spY);
+    // ── Sprint/Parry — x:755 y:302 ───────────────────────────────────────
+    this._sprintBtn = this._buildSmallBtn('🏃', sbSize, 'rgba(100,220,255,0.5)');
+    this._placeBtn(this._sprintBtn, 755, 302, sbSize);
     this._sprintBtn.addEventListener('touchstart', (e) => {
       e.preventDefault();
-      window._player?.setSprinting?.(true);
-      this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.9)';
-      this._sprintBtn.style.transform   = 'scale(0.92)';
+      if (this._enemyNear) {
+        window._parry?.attemptParry?.();
+        this._sprintBtn.style.transform = 'scale(0.88)';
+        setTimeout(() => this._sprintBtn.style.transform = 'scale(1)', 180);
+      } else {
+        window._player?.setSprinting?.(true);
+        this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.9)';
+        this._sprintBtn.style.transform   = 'scale(0.92)';
+      }
     }, { passive: false });
     this._sprintBtn.addEventListener('touchend', () => {
-      window._player?.setSprinting?.(false);
-      this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
-      this._sprintBtn.style.transform   = 'scale(1)';
+      if (!this._enemyNear) {
+        window._player?.setSprinting?.(false);
+        this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
+        this._sprintBtn.style.transform   = 'scale(1)';
+      }
     });
-    panel.appendChild(this._sprintBtn);
+    this._container.appendChild(this._sprintBtn);
 
-    // ── PARRY — derecha abajo ─────────────────────────────────────────────
-    const parryAngle = 40 * Math.PI / 180;
-    const parryR     = atk * 1.05;
-    const paX = cx + Math.cos(parryAngle) * parryR - sb/2;
-    const paY = cy + Math.sin(parryAngle) * parryR - sb/2;
-
-    this._parryBtn = this._buildSmallBtn('🛡️', sb, 'rgba(201,168,76,0.5)', paX, paY);
-    this._parryBtn.addEventListener('touchstart', (e) => {
+    // ── Construcción 🏗️ — arriba de sprint (~x:755 y:220) ────────────────
+    this._buildBtn = this._buildSmallBtn('🏗️', sbSize, 'rgba(201,168,76,0.5)');
+    this._placeBtn(this._buildBtn, 755, 215, sbSize);
+    this._buildBtn.style.color = '#C9A84C';
+    const onBuild = (e) => {
       e.preventDefault();
-      window._parry?.attemptParry?.();
-      this._parryBtn.style.transform = 'scale(0.88)';
-      setTimeout(() => this._parryBtn.style.transform = 'scale(1)', 180);
-    }, { passive: false });
-    panel.appendChild(this._parryBtn);
-
-    this._container.appendChild(panel);
-    document.body.appendChild(this._container);
+      window._buildMenu?.open?.();
+      this._buildBtn.style.transform = 'scale(0.88)';
+      setTimeout(() => this._buildBtn.style.transform = 'scale(1)', 140);
+    };
+    this._buildBtn.addEventListener('touchstart', onBuild, { passive: false });
+    this._buildBtn.addEventListener('click', onBuild);
+    this._container.appendChild(this._buildBtn);
   }
 
-  _buildSmallBtn(icon, size, borderColor, x, y) {
+  // Posiciona un botón usando coordenadas HUD designer
+  _placeBtn(el, hx, hy, size) {
+    const sw = window.innerWidth;
+    const sh = window.innerHeight;
+    const left = Math.round((hx / BASE_W) * sw) - size / 2;
+    const top  = Math.round((hy / BASE_H) * sh) - size / 2;
+    el.style.left = `${left}px`;
+    el.style.top  = `${top}px`;
+  }
+
+  _buildSmallBtn(icon, size, borderColor) {
     const btn = document.createElement('button');
     btn.textContent = icon;
     Object.assign(btn.style, {
-      position      : 'absolute',
-      left          : `${x}px`,
-      top           : `${y}px`,
+      position      : 'fixed',
       width         : `${size}px`,
       height        : `${size}px`,
       borderRadius  : '50%',
@@ -249,7 +258,7 @@ export class SkillBar {
       WebkitTapHighlightColor: 'transparent',
       boxShadow     : '0 2px 8px rgba(0,0,0,0.5)',
       transition    : 'transform 0.08s, border-color 0.1s',
-      zIndex        : '2',
+      zIndex        : '121',
     });
     return btn;
   }
@@ -257,23 +266,22 @@ export class SkillBar {
   _buildSkillBtn(size) {
     const wrap = document.createElement('div');
     Object.assign(wrap.style, {
-      width        : `${size}px`,
-      height       : `${size}px`,
-      borderRadius : '50%',
-      border       : '2px solid rgba(255,255,255,0.15)',
-      background   : 'rgba(12,10,22,0.88)',
-      cursor       : 'pointer',
-      pointerEvents: 'all',
-      overflow     : 'hidden',
+      position      : 'fixed',
+      width         : `${size}px`,
+      height        : `${size}px`,
+      borderRadius  : '50%',
+      border        : '2px solid rgba(255,255,255,0.15)',
+      background    : 'rgba(12,10,22,0.88)',
+      cursor        : 'pointer',
+      pointerEvents : 'all',
+      overflow      : 'hidden',
       WebkitTapHighlightColor: 'transparent',
-      boxShadow    : '0 2px 10px rgba(0,0,0,0.6)',
-      transition   : 'transform 0.08s',
-      display      : 'none',
-      alignItems   : 'center',
+      boxShadow     : '0 2px 10px rgba(0,0,0,0.6)',
+      transition    : 'transform 0.08s',
+      display       : 'none',
+      alignItems    : 'center',
       justifyContent: 'center',
-      position     : 'absolute',
-      flexShrink   : '0',
-      zIndex       : '2',
+      zIndex        : '121',
     });
 
     const icon = document.createElement('div');
@@ -307,7 +315,7 @@ export class SkillBar {
   _updateButton(index, skill) {
     const btn = this._buttons[index];
     if (!btn) return;
-    btn.dataset.skillId   = skill.id;
+    btn.dataset.skillId = skill.id;
     btn.querySelector('.skill-icon').textContent = skill.icon;
     const r = btn.querySelector('.skill-rarity');
     r.textContent = RARITY_LABELS[skill.rarity];
