@@ -14,18 +14,19 @@ const RADIUS_TIERS = [
 
 export class BuildZone {
   constructor(scene) {
-    this._scene      = scene;
-    this._center     = null;
-    this._radius     = 8;
-    this._border     = null;
-    this._grid       = null;
-    this._flag       = null;
+    this._scene         = scene;
+    this._center        = null;
+    this._radius        = 8;
+    this._border        = null;
+    this._borderLine    = null;
+    this._grid          = null;
+    this._flag          = null;
     this._previewFlag   = null;
     this._previewSquare = null;
-    this._choosing   = false;
-    this._onChosen   = null;
-    this._prog       = null;
-    this._choosingUI = null;
+    this._choosing      = false;
+    this._onChosen      = null;
+    this._prog          = null;
+    this._choosingUI    = null;
 
     this._loadFromStorage();
   }
@@ -114,7 +115,6 @@ export class BuildZone {
 
   _showPreview(cx, cz) {
     this._removePreview();
-
     this._previewFlag = this._createFlagMesh(0x88ccff, 0.5);
     this._previewFlag.position.set(cx, 0, cz);
     this._scene.add(this._previewFlag);
@@ -180,26 +180,23 @@ export class BuildZone {
   // ── Marcador permanente ──────────────────────────────────────────────────
 
   _buildMarker() {
-    if (this._border) this._scene.remove(this._border);
-    if (this._grid)   this._scene.remove(this._grid);
+    if (this._border)     this._scene.remove(this._border);
+    if (this._borderLine) this._scene.remove(this._borderLine);
+    if (this._grid)       this._scene.remove(this._grid);
 
     const { x, z } = this._center;
     const size = this._radius * 2;
 
-    // Plano cuadrado sutil
     this._border = this._createSquareMesh(this._radius, 0x336688, 0.2);
     this._border.position.set(x, 0.06, z);
     this._scene.add(this._border);
 
-    // Borde wireframe cuadrado
-    const borderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(size, 0.1, size));
-    const borderMat = new THREE.LineBasicMaterial({ color: 0x44aaff, transparent: true, opacity: 0.5 });
-    const borderLine = new THREE.LineSegments(borderGeo, borderMat);
-    borderLine.position.set(x, 0.1, z);
-    this._scene.add(borderLine);
-    this._borderLine = borderLine;
+    const borderGeo  = new THREE.EdgesGeometry(new THREE.BoxGeometry(size, 0.1, size));
+    const borderMat  = new THREE.LineBasicMaterial({ color: 0x44aaff, transparent: true, opacity: 0.5 });
+    this._borderLine = new THREE.LineSegments(borderGeo, borderMat);
+    this._borderLine.position.set(x, 0.1, z);
+    this._scene.add(this._borderLine);
 
-    // Cuadrícula
     const grid = new THREE.GridHelper(size, Math.floor(this._radius), 0x224455, 0x224455);
     grid.position.set(x, 0.05, z);
     grid.material.opacity     = 0.12;
@@ -219,13 +216,13 @@ export class BuildZone {
     this._choosingUI = document.createElement('div');
     Object.assign(this._choosingUI.style, {
       position     : 'fixed',
-      bottom       : '140px',
+      bottom       : '160px',
       left         : '50%',
       transform    : 'translateX(-50%)',
       display      : 'flex',
       flexDirection: 'column',
       alignItems   : 'center',
-      gap          : '10px',
+      gap          : '12px',
       zIndex       : '200',
       pointerEvents: 'all',
     });
@@ -243,60 +240,88 @@ export class BuildZone {
     });
     label.textContent = 'ELIGE DÓNDE CLAVAR TU BANDERA';
 
-    const dpad = document.createElement('div');
-    Object.assign(dpad.style, {
-      display             : 'grid',
-      gridTemplateColumns : 'repeat(3, 44px)',
-      gridTemplateRows    : 'repeat(3, 44px)',
-      gap                 : '4px',
-    });
-
-    const dirs = [
-      { label:'↖', dx:-2, dz:-2, col:1, row:1 },
-      { label:'↑', dx: 0, dz:-2, col:2, row:1 },
-      { label:'↗', dx: 2, dz:-2, col:3, row:1 },
-      { label:'←', dx:-2, dz: 0, col:1, row:2 },
-      { label:'·', dx: 0, dz: 0, col:2, row:2 },
-      { label:'→', dx: 2, dz: 0, col:3, row:2 },
-      { label:'↙', dx:-2, dz: 2, col:1, row:3 },
-      { label:'↓', dx: 0, dz: 2, col:2, row:3 },
-      { label:'↘', dx: 2, dz: 2, col:3, row:3 },
+    const DIRS = [
+      { icon: '↑',  dx:  0, dz: -2 },
+      { icon: '↗',  dx:  2, dz: -2 },
+      { icon: '→',  dx:  2, dz:  0 },
+      { icon: '↘',  dx:  2, dz:  2 },
+      { icon: '↓',  dx:  0, dz:  2 },
+      { icon: '↙',  dx: -2, dz:  2 },
+      { icon: '←',  dx: -2, dz:  0 },
+      { icon: '↖',  dx: -2, dz: -2 },
     ];
+    let dirIndex = 0;
 
-    dirs.forEach(d => {
-      const btn = document.createElement('button');
-      btn.textContent = d.label;
-      Object.assign(btn.style, {
-        gridColumn  : `${d.col}`,
-        gridRow     : `${d.row}`,
-        width       : '44px',
-        height      : '44px',
-        borderRadius: '8px',
-        border      : '1px solid rgba(100,200,255,0.3)',
-        background  : d.label === '·' ? 'transparent' : 'rgba(10,8,20,0.88)',
-        color       : '#88ccff',
-        fontSize    : '18px',
-        cursor      : d.label === '·' ? 'default' : 'pointer',
-        pointerEvents: d.label === '·' ? 'none' : 'all',
-        WebkitTapHighlightColor: 'transparent',
-      });
-      if (d.label !== '·') {
-        btn.addEventListener('touchstart', (e) => { e.preventDefault(); this.movePreview(d.dx, d.dz); }, { passive: false });
-        btn.addEventListener('click', () => this.movePreview(d.dx, d.dz));
-      }
-      dpad.appendChild(btn);
+    const row = document.createElement('div');
+    Object.assign(row.style, { display: 'flex', gap: '10px', alignItems: 'center' });
+
+    const dirBtn = document.createElement('button');
+    dirBtn.textContent = DIRS[dirIndex].icon;
+    Object.assign(dirBtn.style, {
+      width        : '52px',
+      height       : '52px',
+      borderRadius : '50%',
+      border       : '2px solid rgba(100,200,255,0.5)',
+      background   : 'rgba(10,8,20,0.9)',
+      color        : '#88ccff',
+      fontSize     : '22px',
+      cursor       : 'pointer',
+      pointerEvents: 'all',
+      WebkitTapHighlightColor: 'transparent',
+      transition   : 'transform 0.1s',
     });
+
+    const moveBtn = document.createElement('button');
+    moveBtn.textContent = '▶ MOVER';
+    Object.assign(moveBtn.style, {
+      height       : '52px',
+      padding      : '0 18px',
+      borderRadius : '26px',
+      border       : '2px solid rgba(100,200,255,0.4)',
+      background   : 'rgba(10,8,20,0.9)',
+      color        : '#88ccff',
+      fontFamily   : 'monospace',
+      fontSize     : '11px',
+      letterSpacing: '1px',
+      cursor       : 'pointer',
+      pointerEvents: 'all',
+      WebkitTapHighlightColor: 'transparent',
+    });
+
+    const rotate = (e) => {
+      e.preventDefault();
+      dirIndex = (dirIndex + 1) % DIRS.length;
+      dirBtn.textContent     = DIRS[dirIndex].icon;
+      dirBtn.style.transform = 'scale(0.88)';
+      setTimeout(() => dirBtn.style.transform = 'scale(1)', 120);
+    };
+    dirBtn.addEventListener('touchstart', rotate, { passive: false });
+    dirBtn.addEventListener('click', rotate);
+
+    const move = (e) => {
+      e.preventDefault();
+      const d = DIRS[dirIndex];
+      this.movePreview(d.dx, d.dz);
+      moveBtn.style.transform = 'scale(0.93)';
+      setTimeout(() => moveBtn.style.transform = 'scale(1)', 120);
+    };
+    moveBtn.addEventListener('touchstart', move, { passive: false });
+    moveBtn.addEventListener('click', move);
+
+    row.appendChild(dirBtn);
+    row.appendChild(moveBtn);
 
     const btnRow = document.createElement('div');
-    Object.assign(btnRow.style, { display: 'flex', gap: '12px' });
+    Object.assign(btnRow.style, { display: 'flex', gap: '10px' });
 
     const confirmBtn = document.createElement('button');
-    confirmBtn.textContent = '🚩 CLAVAR BANDERA';
+    confirmBtn.textContent = '🚩 CLAVAR';
     Object.assign(confirmBtn.style, {
-      padding      : '10px 20px',
-      borderRadius : '8px',
-      border       : '1px solid rgba(46,204,113,0.5)',
-      background   : 'rgba(10,8,20,0.88)',
+      height       : '44px',
+      padding      : '0 20px',
+      borderRadius : '22px',
+      border       : '2px solid rgba(46,204,113,0.5)',
+      background   : 'rgba(10,8,20,0.9)',
       color        : '#2ecc71',
       fontFamily   : 'monospace',
       fontSize     : '11px',
@@ -309,16 +334,15 @@ export class BuildZone {
     confirmBtn.addEventListener('click', () => this.confirmZone());
 
     const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = '✕ CANCELAR';
+    cancelBtn.textContent = '✕';
     Object.assign(cancelBtn.style, {
-      padding      : '10px 20px',
-      borderRadius : '8px',
-      border       : '1px solid rgba(231,76,60,0.4)',
-      background   : 'rgba(10,8,20,0.88)',
+      width        : '44px',
+      height       : '44px',
+      borderRadius : '50%',
+      border       : '2px solid rgba(231,76,60,0.4)',
+      background   : 'rgba(10,8,20,0.9)',
       color        : '#e74c3c',
-      fontFamily   : 'monospace',
-      fontSize     : '11px',
-      letterSpacing: '1px',
+      fontSize     : '16px',
       cursor       : 'pointer',
       pointerEvents: 'all',
       WebkitTapHighlightColor: 'transparent',
@@ -328,8 +352,9 @@ export class BuildZone {
 
     btnRow.appendChild(confirmBtn);
     btnRow.appendChild(cancelBtn);
+
     this._choosingUI.appendChild(label);
-    this._choosingUI.appendChild(dpad);
+    this._choosingUI.appendChild(row);
     this._choosingUI.appendChild(btnRow);
     document.body.appendChild(this._choosingUI);
   }
@@ -387,4 +412,4 @@ export class BuildZone {
       }
     } catch(e) {}
   }
-  }
+      }
