@@ -242,6 +242,8 @@ async function boot() {
     hud.setWeaponIcon(weaponType);
     hud.show();
     hud.setCamera(camera);
+    // Conectar stamina del player con el HUD
+    player.onStaminaUpdate = (stamina, max) => hud.updateStamina(stamina, max);
 
     const mapUI = new MapUI(player);
     window._mapUI = mapUI;
