@@ -332,9 +332,11 @@ async function boot() {
 
     // ── Building ──
     const building = new BuildingSystem(scene, player);
+    
     building.setProgression(progression);
     building.setZone(buildZone);
     const buildMenu = new BuildMenu(building);
+    if (buildMenu._buildBtn) buildMenu._buildBtn.style.display = 'none';
     window._building    = building;
     window._buildMenu   = buildMenu;
     window._buildCamera = buildCamera;
