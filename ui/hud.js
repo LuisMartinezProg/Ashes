@@ -13,6 +13,9 @@ export class HUD {
     this._playerHpFill  = null;
     this._playerHpText  = null;
     this._energyFill    = null;
+    this._staminaEl     = null;
+    this._staminaSvg    = null;
+    this._staminaHideTimer = null;
     this._container     = null;
     this._collectBtn    = null;
     this._camera        = null;
@@ -46,11 +49,38 @@ export class HUD {
     if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(hp)}/${max}`;
   }
 
+  // ── Stamina estilo Genshin ───────────────────────────────────────────────
+
+  updateStamina(stamina, max) {
+    if (!this._staminaSvg) return;
+    const pct = Math.max(0, stamina / max);
+    const full = pct >= 1;
+
+    // Arco SVG
+    const r = 28;
+    const circ = 2 * Math.PI * r;
+    this._staminaArc.style.strokeDashoffset = `${circ * (1 - pct)}`;
+
+    // Color según nivel
+    const color = pct > 0.5 ? '#f5d442' : pct > 0.25 ? '#f5a623' : '#e74c3c';
+    this._staminaArc.style.stroke = color;
+
+    if (full) {
+      // Ocultar tras 1.5s si está llena
+      if (this._staminaHideTimer) clearTimeout(this._staminaHideTimer);
+      this._staminaHideTimer = setTimeout(() => {
+        this._staminaEl.style.opacity = '0';
+      }, 1500);
+    } else {
+      if (this._staminaHideTimer) clearTimeout(this._staminaHideTimer);
+      this._staminaEl.style.opacity = '1';
+    }
+  }
+
   // ── Barra de enemigos ────────────────────────────────────────────────────
 
   updateEnemyBar(playerPosition) {
     if (!this._camera) return;
-
     let bossFound = false;
 
     for (const e of this._enemies) {
@@ -59,26 +89,17 @@ export class HUD {
       if (e._config?.isBoss) {
         if (!e.isDead() && e.mesh) {
           const dist = playerPosition.distanceTo(e.mesh.position);
-          if (dist <= 30) {
-            bossFound = true;
-            this._updateBossBar(e);
-          }
+          if (dist <= 30) { bossFound = true; this._updateBossBar(e); }
         }
         this._hideLabel(e);
         continue;
       }
 
-      if (e.isDead?.()) {
-        this._hideLabel(e);
-        continue;
-      }
+      if (e.isDead?.()) { this._hideLabel(e); continue; }
 
       const dist = playerPosition.distanceTo(e.mesh.position);
-      if (dist <= 20) {
-        this._updateFloatingLabel(e);
-      } else {
-        this._hideLabel(e);
-      }
+      if (dist <= 20) this._updateFloatingLabel(e);
+      else this._hideLabel(e);
     }
 
     if (!bossFound) this._bossBarEl.style.display = 'none';
@@ -112,10 +133,7 @@ export class HUD {
     const x = (pos.x *  0.5 + 0.5) * window.innerWidth;
     const y = (pos.y * -0.5 + 0.5) * window.innerHeight;
 
-    if (pos.z > 1) {
-      el.style.display = 'none';
-      return;
-    }
+    if (pos.z > 1) { el.style.display = 'none'; return; }
 
     const pct  = Math.max(0, e.hp / e.maxHp) * 100;
     const fill = el.querySelector('.ef');
@@ -279,7 +297,7 @@ export class HUD {
     setTimeout(() => el.remove(), 900);
   }
 
-  // ── Build ────────────────────────────────────────────────────────────────
+  // ── Build UI ─────────────────────────────────────────────────────────────
 
   _build() {
     this._container = document.createElement('div');
@@ -294,8 +312,78 @@ export class HUD {
 
     this._buildPlayerBlock();
     this._buildBossBar();
+    this._buildStamina();
     this._buildCollectBtn();
     document.body.appendChild(this._container);
+  }
+
+  _buildStamina() {
+    // Círculo SVG estilo Genshin — aparece al lado derecho del personaje
+    // centrado en pantalla
+    const size = 72;
+    const r    = 28;
+    const circ = 2 * Math.PI * r;
+
+    this._staminaEl = document.createElement('div');
+    Object.assign(this._staminaEl.style, {
+      position  : 'fixed',
+      left      : '58%',
+      top       : '50%',
+      transform : 'translateY(-50%)',
+      width     : `${size}px`,
+      height    : `${size}px`,
+      opacity   : '0',
+      transition: 'opacity 0.4s ease',
+      pointerEvents: 'none',
+      zIndex    : '110',
+    });
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width',  size);
+    svg.setAttribute('height', size);
+    svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+
+    // Fondo del arco
+    const bgArc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    bgArc.setAttribute('cx', size / 2);
+    bgArc.setAttribute('cy', size / 2);
+    bgArc.setAttribute('r',  r);
+    bgArc.setAttribute('fill', 'none');
+    bgArc.setAttribute('stroke', 'rgba(255,255,255,0.1)');
+    bgArc.setAttribute('stroke-width', '4');
+    svg.appendChild(bgArc);
+
+    // Arco de stamina
+    this._staminaArc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    this._staminaArc.setAttribute('cx', size / 2);
+    this._staminaArc.setAttribute('cy', size / 2);
+    this._staminaArc.setAttribute('r',  r);
+    this._staminaArc.setAttribute('fill', 'none');
+    this._staminaArc.setAttribute('stroke', '#f5d442');
+    this._staminaArc.setAttribute('stroke-width', '4');
+    this._staminaArc.setAttribute('stroke-linecap', 'round');
+    this._staminaArc.style.strokeDasharray  = `${circ}`;
+    this._staminaArc.style.strokeDashoffset = '0';
+    this._staminaArc.style.transformOrigin  = 'center';
+    this._staminaArc.style.transform        = 'rotate(-90deg)';
+    this._staminaArc.style.transition       = 'stroke-dashoffset 0.15s linear, stroke 0.3s';
+    svg.appendChild(this._staminaArc);
+
+    // Texto % dentro del círculo
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', '50%');
+    label.setAttribute('y', '50%');
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('dominant-baseline', 'middle');
+    label.setAttribute('fill', '#f5d442');
+    label.setAttribute('font-size', '10');
+    label.setAttribute('font-family', 'monospace');
+    label.textContent = '⚡';
+    svg.appendChild(label);
+
+    this._staminaEl.appendChild(svg);
+    this._staminaSvg = svg;
+    this._container.appendChild(this._staminaEl);
   }
 
   _buildBossBar() {
@@ -483,4 +571,4 @@ export class HUD {
     const pct = Math.max(0, energy / maxEnergy) * 100;
     this._energyFill.style.width = `${pct}%`;
   }
-}
+      }
