@@ -5,10 +5,15 @@
 
 import * as THREE from 'three';
 
-const MOVE_SPEED   = 5.0;
-const SPRINT_SPEED = 9.0;
-const TURN_SPEED   = 8.0;
-const GROUND_Y     = 0.0;
+const MOVE_SPEED     = 5.0;
+const SPRINT_SPEED   = 9.0;
+const TURN_SPEED     = 8.0;
+const GROUND_Y       = 0.0;
+
+const STAMINA_MAX    = 100;
+const STAMINA_SPRINT = 18;  // por segundo corriendo
+const STAMINA_REGEN  = 25;  // por segundo en reposo
+const STAMINA_DELAY  = 1.5; // segundos antes de regenerar
 
 export class Player {
   constructor(scene) {
@@ -20,6 +25,11 @@ export class Player {
     this._moveDir    = new THREE.Vector3();
     this._sprinting  = false;
 
+    this.stamina     = STAMINA_MAX;
+    this.maxStamina  = STAMINA_MAX;
+    this._staminaTimer = 0; // delay antes de regen
+    this.onStaminaUpdate = null;
+
     this.root = new THREE.Group();
     this.root.position.set(0, GROUND_Y, -20);
     scene.add(this.root);
@@ -27,25 +37,29 @@ export class Player {
     this._buildMesh();
   }
 
-  setSprinting(val) { this._sprinting = val; }
+  setSprinting(val) {
+    // No puede correr sin stamina
+    if (val && this.stamina <= 0) return;
+    this._sprinting = val;
+  }
+
+  isSprinting() { return this._sprinting; }
 
   _buildMesh() {
-    // Esfera blanca — alma del protagonista
     const mat = new THREE.MeshStandardMaterial({
-      color           : 0xffffff,
-      transparent     : true,
-      opacity         : 0.85,
-      emissive        : 0xaaccff,
+      color            : 0xffffff,
+      transparent      : true,
+      opacity          : 0.85,
+      emissive         : 0xaaccff,
       emissiveIntensity: 0.6,
-      roughness       : 0.1,
-      metalness       : 0.0,
+      roughness        : 0.1,
+      metalness        : 0.0,
     });
 
     const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), mat);
     sphere.position.y = 0.6;
     this.root.add(sphere);
 
-    // Halo suave
     const halo = new THREE.Mesh(
       new THREE.SphereGeometry(0.52, 12, 12),
       new THREE.MeshBasicMaterial({ color: 0x88aaff, transparent: true, opacity: 0.12 })
@@ -61,6 +75,25 @@ export class Player {
     const { dx, dy } = joystickInput;
     const moving = Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01;
 
+    // ── Stamina ───────────────────────────────────────────────────────────
+    if (this._sprinting && moving) {
+      this.stamina -= STAMINA_SPRINT * delta;
+      this._staminaTimer = STAMINA_DELAY;
+      if (this.stamina <= 0) {
+        this.stamina    = 0;
+        this._sprinting = false; // fuerza parar
+      }
+      this.onStaminaUpdate?.(this.stamina, this.maxStamina);
+    } else {
+      if (this._staminaTimer > 0) {
+        this._staminaTimer -= delta;
+      } else if (this.stamina < this.maxStamina) {
+        this.stamina = Math.min(this.maxStamina, this.stamina + STAMINA_REGEN * delta);
+        this.onStaminaUpdate?.(this.stamina, this.maxStamina);
+      }
+    }
+
+    // ── Movimiento ────────────────────────────────────────────────────────
     if (moving) {
       const camFwd = new THREE.Vector3();
       camera.getWorldDirection(camFwd);
@@ -91,7 +124,7 @@ export class Player {
       }
     }
 
-    // Bob flotante del alma
+    // Bob flotante
     const t = performance.now() * 0.001;
     this.bodyMesh.position.y = 0.6 + Math.sin(t * 2.2) * 0.06;
   }
