@@ -3,7 +3,8 @@ import { RARITY_COLORS } from '../core/skillData.js';
 
 const RARITY_LABELS = { common:'C', rare:'R', epic:'E', legendary:'L' };
 
-// Coordenadas base HUD designer (800×450) → se escalan al tamaño real
+// Coordenadas base del HUD designer (800×450)
+// Origen = esquina inferior derecha para escala correcta en móvil
 const BASE_W = 800;
 const BASE_H = 450;
 
@@ -15,7 +16,6 @@ export class SkillBar {
     this._buttons   = [];
     this._attackBtn = null;
     this._sprintBtn = null;
-    this._parryBtn  = null;
     this._buildBtn  = null;
     this._container = null;
     this._cooldowns = {};
@@ -23,8 +23,6 @@ export class SkillBar {
 
     this._build();
     window.addEventListener('resize', () => this._rebuild());
-
-    // Revisar enemigos cercanos cada 500ms
     setInterval(() => this._checkEnemyProximity(), 500);
   }
 
@@ -77,11 +75,11 @@ export class SkillBar {
   _updateActionBtn() {
     if (!this._sprintBtn) return;
     if (this._enemyNear) {
-      this._sprintBtn.textContent   = '🛡️';
+      this._sprintBtn.textContent       = '🛡️';
       this._sprintBtn.style.borderColor = 'rgba(201,168,76,0.7)';
       this._sprintBtn.title = 'Parry';
     } else {
-      this._sprintBtn.textContent   = '🏃';
+      this._sprintBtn.textContent       = '🏃';
       this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
       this._sprintBtn.title = 'Sprint';
     }
@@ -95,7 +93,6 @@ export class SkillBar {
       this._buttons   = [];
       this._attackBtn = null;
       this._sprintBtn = null;
-      this._parryBtn  = null;
       this._buildBtn  = null;
       this._build();
       if (this._weapon) this.refresh();
@@ -105,24 +102,28 @@ export class SkillBar {
     }
   }
 
-  // Convierte coordenadas del HUD designer (800×450) a px reales
-  _px(x, y) {
-    const sw = window.innerWidth;
-    const sh = window.innerHeight;
-    return {
-      left  : Math.round((x / BASE_W) * sw),
-      top   : Math.round((y / BASE_H) * sh),
-    };
+  // Factor de escala uniforme basado en ancho
+  _scale() {
+    return window.innerWidth / BASE_W;
   }
 
-  // Tamaño base escalado
+  // Convierte coords del designer (desde esquina inferior derecha) a fixed px
+  // hx, hy = posición desde esquina inferior derecha en el canvas base
+  _placeFromBottomRight(el, hx, hy, size) {
+    const s = this._scale();
+    const right  = Math.round((BASE_W - hx) * s) - size / 2;
+    const bottom = Math.round((BASE_H - hy) * s) - size / 2;
+    el.style.right  = `${right}px`;
+    el.style.bottom = `${bottom}px`;
+    el.style.left   = 'auto';
+    el.style.top    = 'auto';
+  }
+
   _sz(baseSize) {
-    const ref = Math.min(window.innerWidth, window.innerHeight);
-    return Math.round(ref * baseSize);
+    return Math.round(this._scale() * baseSize);
   }
 
   _build() {
-    // Contenedor fixed que cubre toda la pantalla
     this._container = document.createElement('div');
     Object.assign(this._container.style, {
       position     : 'fixed',
@@ -133,26 +134,28 @@ export class SkillBar {
     });
     document.body.appendChild(this._container);
 
-    const atkSize  = this._sz(0.19);  // ataque grande
-    const skSize   = this._sz(0.12);  // habilidades
-    const sbSize   = this._sz(0.10);  // sprint/parry/build
-    const fontSize = (s) => `${Math.round(s * 0.42)}px`;
+    const atkSize = this._sz(85);   // ataque grande
+    const skSize  = this._sz(58);   // habilidades
+    const sbSize  = this._sz(48);   // sprint/parry/build
+
+    // Coords del designer — posiciones absolutas en canvas 800×450
+    // Las convertimos a "desde bottom-right"
 
     // ── Habilidad 1 — x:558 y:403 ────────────────────────────────────────
     const sk1 = this._buildSkillBtn(skSize);
-    this._placeBtn(sk1, 558, 403, skSize);
+    this._placeFromBottomRight(sk1, 558, 403, skSize);
     this._buttons.push(sk1);
     this._container.appendChild(sk1);
 
     // ── Habilidad 2 — x:584 y:313 ────────────────────────────────────────
     const sk2 = this._buildSkillBtn(skSize);
-    this._placeBtn(sk2, 584, 313, skSize);
+    this._placeFromBottomRight(sk2, 584, 313, skSize);
     this._buttons.push(sk2);
     this._container.appendChild(sk2);
 
     // ── Habilidad 3 — x:668 y:263 ────────────────────────────────────────
     const sk3 = this._buildSkillBtn(skSize);
-    this._placeBtn(sk3, 668, 263, skSize);
+    this._placeFromBottomRight(sk3, 668, 263, skSize);
     this._buttons.push(sk3);
     this._container.appendChild(sk3);
 
@@ -178,7 +181,7 @@ export class SkillBar {
       transition    : 'transform 0.08s',
       zIndex        : '121',
     });
-    this._placeBtn(this._attackBtn, 679, 379, atkSize);
+    this._placeFromBottomRight(this._attackBtn, 679, 379, atkSize);
     const onAtk = (e) => {
       e.preventDefault();
       window._combat?.triggerAttack?.();
@@ -191,7 +194,7 @@ export class SkillBar {
 
     // ── Sprint/Parry — x:755 y:302 ───────────────────────────────────────
     this._sprintBtn = this._buildSmallBtn('🏃', sbSize, 'rgba(100,220,255,0.5)');
-    this._placeBtn(this._sprintBtn, 755, 302, sbSize);
+    this._placeFromBottomRight(this._sprintBtn, 755, 302, sbSize);
     this._sprintBtn.addEventListener('touchstart', (e) => {
       e.preventDefault();
       if (this._enemyNear) {
@@ -213,9 +216,9 @@ export class SkillBar {
     });
     this._container.appendChild(this._sprintBtn);
 
-    // ── Construcción 🏗️ — arriba de sprint (~x:755 y:220) ────────────────
+    // ── Construcción 🏗️ — x:755 y:215 ────────────────────────────────────
     this._buildBtn = this._buildSmallBtn('🏗️', sbSize, 'rgba(201,168,76,0.5)');
-    this._placeBtn(this._buildBtn, 755, 215, sbSize);
+    this._placeFromBottomRight(this._buildBtn, 755, 215, sbSize);
     this._buildBtn.style.color = '#C9A84C';
     const onBuild = (e) => {
       e.preventDefault();
@@ -226,16 +229,6 @@ export class SkillBar {
     this._buildBtn.addEventListener('touchstart', onBuild, { passive: false });
     this._buildBtn.addEventListener('click', onBuild);
     this._container.appendChild(this._buildBtn);
-  }
-
-  // Posiciona un botón usando coordenadas HUD designer
-  _placeBtn(el, hx, hy, size) {
-    const sw = window.innerWidth;
-    const sh = window.innerHeight;
-    const left = Math.round((hx / BASE_W) * sw) - size / 2;
-    const top  = Math.round((hy / BASE_H) * sh) - size / 2;
-    el.style.left = `${left}px`;
-    el.style.top  = `${top}px`;
   }
 
   _buildSmallBtn(icon, size, borderColor) {
