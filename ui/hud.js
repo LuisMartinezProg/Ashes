@@ -53,10 +53,10 @@ export class HUD {
 
   updateStamina(stamina, max) {
     if (!this._staminaSvg) return;
-    const pct = Math.max(0, stamina / max);
+    const pct  = Math.max(0, stamina / max);
     const full = pct >= 1;
 
-    const r = 28;
+    const r    = 22;
     const circ = 2 * Math.PI * r;
     this._staminaArc.style.strokeDashoffset = `${circ * (1 - pct)}`;
 
@@ -315,18 +315,16 @@ export class HUD {
   }
 
   _buildStamina() {
-    const size = 64;
-    const r    = 26;
+    const size = 52;
+    const r    = 20;
     const circ = 2 * Math.PI * r;
 
     this._staminaEl = document.createElement('div');
     Object.assign(this._staminaEl.style, {
       position     : 'fixed',
-      // Centrado horizontalmente, justo a la derecha del personaje
-      // El personaje está en el centro de pantalla, lo desplazamos ~8% a la derecha
-      left         : '58%',
-      top          : '50%',
-      transform    : 'translateY(-50%)',
+      // Derecha del personaje, ligeramente bajo el centro
+      right        : '38%',
+      top          : '56%',
       width        : `${size}px`,
       height       : `${size}px`,
       opacity      : '0',
@@ -340,24 +338,22 @@ export class HUD {
     svg.setAttribute('height',  size);
     svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
 
-    // Fondo arco
     const bgArc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     bgArc.setAttribute('cx', size / 2);
     bgArc.setAttribute('cy', size / 2);
     bgArc.setAttribute('r',  r);
     bgArc.setAttribute('fill',         'none');
     bgArc.setAttribute('stroke',       'rgba(255,255,255,0.1)');
-    bgArc.setAttribute('stroke-width', '4');
+    bgArc.setAttribute('stroke-width', '3');
     svg.appendChild(bgArc);
 
-    // Arco stamina
     this._staminaArc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     this._staminaArc.setAttribute('cx', size / 2);
     this._staminaArc.setAttribute('cy', size / 2);
     this._staminaArc.setAttribute('r',  r);
-    this._staminaArc.setAttribute('fill',         'none');
-    this._staminaArc.setAttribute('stroke',       '#f5d442');
-    this._staminaArc.setAttribute('stroke-width', '4');
+    this._staminaArc.setAttribute('fill',           'none');
+    this._staminaArc.setAttribute('stroke',         '#f5d442');
+    this._staminaArc.setAttribute('stroke-width',   '3');
     this._staminaArc.setAttribute('stroke-linecap', 'round');
     this._staminaArc.style.strokeDasharray  = `${circ}`;
     this._staminaArc.style.strokeDashoffset = '0';
@@ -366,15 +362,14 @@ export class HUD {
     this._staminaArc.style.transition       = 'stroke-dashoffset 0.15s linear, stroke 0.3s';
     svg.appendChild(this._staminaArc);
 
-    // Ícono ⚡ centrado
     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    label.setAttribute('x',                  '50%');
-    label.setAttribute('y',                  '50%');
-    label.setAttribute('text-anchor',        'middle');
-    label.setAttribute('dominant-baseline',  'middle');
-    label.setAttribute('fill',               '#f5d442');
-    label.setAttribute('font-size',          '14');
-    label.setAttribute('font-family',        'monospace');
+    label.setAttribute('x',                 '50%');
+    label.setAttribute('y',                 '50%');
+    label.setAttribute('text-anchor',       'middle');
+    label.setAttribute('dominant-baseline', 'middle');
+    label.setAttribute('fill',              '#f5d442');
+    label.setAttribute('font-size',         '12');
+    label.setAttribute('font-family',       'monospace');
     label.textContent = '⚡';
     svg.appendChild(label);
 
@@ -482,20 +477,22 @@ export class HUD {
       transform    : 'translateX(-50%)',
       display      : 'flex',
       flexDirection: 'column',
-      gap          : '6px',
-      width        : '42vw',
-      maxWidth     : '240px',
+      gap          : '5px',
+      width        : '32vw',
+      maxWidth     : '200px',
+      minWidth     : '140px',
     });
 
+    // ── HP ──
     const hpWrap  = this._makeBarWrap('rgba(255,50,50,0.15)', 'rgba(255,80,80,0.3)');
-    const hpTrack = this._makeTrack('12px', '#220000');
+    const hpTrack = this._makeTrack('10px', '#220000');
     this._playerHpFill = this._makeFill('linear-gradient(90deg,#aa0000,#ff4444)');
     hpTrack.appendChild(this._playerHpFill);
 
     this._playerHpText = document.createElement('div');
     Object.assign(this._playerHpText.style, {
       color        : 'rgba(255,180,180,0.9)',
-      fontSize     : '9px',
+      fontSize     : '8px',
       fontFamily   : 'monospace',
       textAlign    : 'center',
       marginTop    : '2px',
@@ -506,15 +503,16 @@ export class HUD {
     hpWrap.appendChild(hpTrack);
     hpWrap.appendChild(this._playerHpText);
 
+    // ── Energía ──
     const enWrap  = this._makeBarWrap('rgba(50,100,255,0.1)', 'rgba(80,130,255,0.25)');
-    const enTrack = this._makeTrack('8px', '#1a1a2e');
+    const enTrack = this._makeTrack('7px', '#1a1a2e');
     this._energyFill = this._makeFill('linear-gradient(90deg,#2244cc,#66aaff)');
     enTrack.appendChild(this._energyFill);
 
     const enText = document.createElement('div');
     Object.assign(enText.style, {
       color        : 'rgba(150,180,255,0.7)',
-      fontSize     : '8px',
+      fontSize     : '7px',
       fontFamily   : 'monospace',
       textAlign    : 'center',
       marginTop    : '2px',
@@ -536,7 +534,7 @@ export class HUD {
       background  : 'rgba(0,0,0,0.75)',
       border      : `1px solid ${border}`,
       borderRadius: '4px',
-      padding     : '4px 8px',
+      padding     : '3px 7px',
     });
     return w;
   }
@@ -568,4 +566,4 @@ export class HUD {
     const pct = Math.max(0, energy / maxEnergy) * 100;
     this._energyFill.style.width = `${pct}%`;
   }
-                                  }
+}
