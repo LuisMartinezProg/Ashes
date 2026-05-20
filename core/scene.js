@@ -1,6 +1,4 @@
-ufferAttribute(pos, 3));
-
-  const particles = new THREE.// core/scene.js — Ashes of the Reborn | Valiant Gaming
+// core/scene.js — Ashes of the Reborn | Valiant Gaming
 import * as THREE from 'three';
 
 export const FOREST_RESOURCES = [];
