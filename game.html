@@ -95,7 +95,8 @@ import { YamiMage }         from './core/enemies/YamiMage.js';
 import { ShadowCaptain }    from './core/enemies/ShadowCaptain.js';
 import { BuildCamera }      from './core/buildCamera.js';
 import { BuildZone }        from './core/buildZone.js';
-
+import { EliteMercenary } from './core/enemies/EliteMercenary.js';
+  
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -316,7 +317,7 @@ async function boot() {
     const mikaBandits = [
       new Bandit(scene, { x: -3, z: 47 }, player),
       new Bandit(scene, { x:  3, z: 48 }, player),
-      new (scene, { x:  0, z: 50 }, player),
+      new Bandit(scene, { x:  0, z: 50 }, player),
     ];
 
     // Cuando todos los bandidos mueren → rescatar a Mika
