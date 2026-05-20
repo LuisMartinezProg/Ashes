@@ -189,11 +189,20 @@ async function boot() {
     setNPCs(npcs);
     setDialogueUI(dialogueUI);
 
+    // ── Referencia a Mika ──
+    const mikaNPC = npcs.find(n => n.isMika);
+
     setProgress(80, 'proximidad NPCs...');
     let _nearNPC = null;
     function _checkNPCProximity() {
       if (dialogueUI.isActive() || shopUI.isActive()) return;
       const playerPos = player.root.position;
+
+      // Actualizar NPCs (grito de Mika, etc.)
+      for (const npc of npcs) {
+        npc.update(performance.now() / 1000, playerPos);
+      }
+
       let found = null;
       for (const npc of npcs) {
         if (npc.isPlayerInRange(playerPos)) { found = npc; break; }
@@ -201,9 +210,10 @@ async function boot() {
       if (found && found !== _nearNPC) {
         _nearNPC = found;
         dialogueUI.showTalkBtn(() => {
+          const lines = found.isMika ? found.getLines() : found.dialogue.lines;
           dialogueUI.openDialogue(
             found.dialogue.name,
-            found.dialogue.lines,
+            lines,
             () => { _nearNPC = null; },
             () => {
               progression.addReputation(10);
@@ -242,7 +252,6 @@ async function boot() {
     hud.setWeaponIcon(weaponType);
     hud.show();
     hud.setCamera(camera);
-    // Conectar stamina del player con el HUD
     player.onStaminaUpdate = (stamina, max) => hud.updateStamina(stamina, max);
 
     const mapUI = new MapUI(player);
@@ -303,6 +312,26 @@ async function boot() {
       new EliteMercenary(scene, { x:  14, z: 58 }, player),
     ];
 
+    // ── Bandidos de Mika (z≈45, cerca del carruaje) ──
+    const mikaBandits = [
+      new EliteMercenary(scene, { x: -3, z: 47 }, player),
+      new EliteMercenary(scene, { x:  3, z: 48 }, player),
+      new EliteMercenary(scene, { x:  0, z: 50 }, player),
+    ];
+
+    // Cuando todos los bandidos mueren → rescatar a Mika
+    let _mikaRescued = false;
+    function _checkMikaRescue() {
+      if (_mikaRescued || !mikaNPC) return;
+      const allDead = mikaBandits.every(b => b.isDead?.());
+      if (allDead) {
+        _mikaRescued = true;
+        mikaNPC.rescue();
+        console.log('[Mika] Rescatada');
+      }
+    }
+    setInterval(_checkMikaRescue, 500);
+
     // ── Ejército Yami ──
     const yamiArmy = [
       new ShadowSoldier(scene,  { x: -12, z: 65 }, player),
@@ -318,7 +347,11 @@ async function boot() {
     ];
 
     // ── Registrar todos ──
-    const allEnemies = [...enemies, ...wolves, bear, ...forestMonsters, ...plainsMonsters, ...roadMonsters, ...yamiArmy];
+    const allEnemies = [
+      ...enemies, ...wolves, bear,
+      ...forestMonsters, ...plainsMonsters,
+      ...roadMonsters, ...mikaBandits, ...yamiArmy,
+    ];
     allEnemies.forEach(e => combat.registerEnemy(e));
     skills.registerEnemies(allEnemies);
     setEnemies(allEnemies);
@@ -328,11 +361,11 @@ async function boot() {
     window._forestMonsters = forestMonsters;
     window._plainsMonsters = plainsMonsters;
     window._roadMonsters   = roadMonsters;
+    window._mikaBandits    = mikaBandits;
     window._yamiArmy       = yamiArmy;
 
     // ── Building ──
     const building = new BuildingSystem(scene, player);
-    
     building.setProgression(progression);
     building.setZone(buildZone);
     const buildMenu = new BuildMenu(building);
