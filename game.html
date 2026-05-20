@@ -87,7 +87,7 @@ import { WanderingSpirit }  from './core/enemies/WanderingSpirit.js';
 import { ShadowForest }     from './core/enemies/ShadowForest.js';
 import { StoneSnake }       from './core/enemies/StoneSnake.js';
 import { WarriorGhost }     from './core/enemies/WarriorGhost.js';
-import { EliteMercenary }   from './core/enemies/EliteMercenary.js';
+import { Bandit } from './core/enemies/Bandit.js';
 import { ShadowSoldier }    from './core/enemies/ShadowSoldier.js';
 import { DarkArcher }       from './core/enemies/DarkArcher.js';
 import { Berserker }        from './core/enemies/Berserker.js';
@@ -314,9 +314,9 @@ async function boot() {
 
     // ── Bandidos de Mika (z≈45, cerca del carruaje) ──
     const mikaBandits = [
-      new EliteMercenary(scene, { x: -3, z: 47 }, player),
-      new EliteMercenary(scene, { x:  3, z: 48 }, player),
-      new EliteMercenary(scene, { x:  0, z: 50 }, player),
+      new Bandit(scene, { x: -3, z: 47 }, player),
+      new Bandit(scene, { x:  3, z: 48 }, player),
+      new (scene, { x:  0, z: 50 }, player),
     ];
 
     // Cuando todos los bandidos mueren → rescatar a Mika
