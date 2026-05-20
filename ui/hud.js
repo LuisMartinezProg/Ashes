@@ -56,17 +56,14 @@ export class HUD {
     const pct = Math.max(0, stamina / max);
     const full = pct >= 1;
 
-    // Arco SVG
     const r = 28;
     const circ = 2 * Math.PI * r;
     this._staminaArc.style.strokeDashoffset = `${circ * (1 - pct)}`;
 
-    // Color según nivel
     const color = pct > 0.5 ? '#f5d442' : pct > 0.25 ? '#f5a623' : '#e74c3c';
     this._staminaArc.style.stroke = color;
 
     if (full) {
-      // Ocultar tras 1.5s si está llena
       if (this._staminaHideTimer) clearTimeout(this._staminaHideTimer);
       this._staminaHideTimer = setTimeout(() => {
         this._staminaEl.style.opacity = '0';
@@ -318,48 +315,48 @@ export class HUD {
   }
 
   _buildStamina() {
-    // Círculo SVG estilo Genshin — aparece al lado derecho del personaje
-    // centrado en pantalla
-    const size = 72;
-    const r    = 28;
+    const size = 64;
+    const r    = 26;
     const circ = 2 * Math.PI * r;
 
     this._staminaEl = document.createElement('div');
     Object.assign(this._staminaEl.style, {
-      position  : 'fixed',
-      left      : '58%',
-      top       : '50%',
-      transform : 'translateY(-50%)',
-      width     : `${size}px`,
-      height    : `${size}px`,
-      opacity   : '0',
-      transition: 'opacity 0.4s ease',
+      position     : 'fixed',
+      // Centrado horizontalmente, justo a la derecha del personaje
+      // El personaje está en el centro de pantalla, lo desplazamos ~8% a la derecha
+      left         : '58%',
+      top          : '50%',
+      transform    : 'translateY(-50%)',
+      width        : `${size}px`,
+      height       : `${size}px`,
+      opacity      : '0',
+      transition   : 'opacity 0.4s ease',
       pointerEvents: 'none',
-      zIndex    : '110',
+      zIndex       : '110',
     });
 
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width',  size);
-    svg.setAttribute('height', size);
+    svg.setAttribute('width',   size);
+    svg.setAttribute('height',  size);
     svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
 
-    // Fondo del arco
+    // Fondo arco
     const bgArc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     bgArc.setAttribute('cx', size / 2);
     bgArc.setAttribute('cy', size / 2);
     bgArc.setAttribute('r',  r);
-    bgArc.setAttribute('fill', 'none');
-    bgArc.setAttribute('stroke', 'rgba(255,255,255,0.1)');
+    bgArc.setAttribute('fill',         'none');
+    bgArc.setAttribute('stroke',       'rgba(255,255,255,0.1)');
     bgArc.setAttribute('stroke-width', '4');
     svg.appendChild(bgArc);
 
-    // Arco de stamina
+    // Arco stamina
     this._staminaArc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     this._staminaArc.setAttribute('cx', size / 2);
     this._staminaArc.setAttribute('cy', size / 2);
     this._staminaArc.setAttribute('r',  r);
-    this._staminaArc.setAttribute('fill', 'none');
-    this._staminaArc.setAttribute('stroke', '#f5d442');
+    this._staminaArc.setAttribute('fill',         'none');
+    this._staminaArc.setAttribute('stroke',       '#f5d442');
     this._staminaArc.setAttribute('stroke-width', '4');
     this._staminaArc.setAttribute('stroke-linecap', 'round');
     this._staminaArc.style.strokeDasharray  = `${circ}`;
@@ -369,15 +366,15 @@ export class HUD {
     this._staminaArc.style.transition       = 'stroke-dashoffset 0.15s linear, stroke 0.3s';
     svg.appendChild(this._staminaArc);
 
-    // Texto % dentro del círculo
+    // Ícono ⚡ centrado
     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    label.setAttribute('x', '50%');
-    label.setAttribute('y', '50%');
-    label.setAttribute('text-anchor', 'middle');
-    label.setAttribute('dominant-baseline', 'middle');
-    label.setAttribute('fill', '#f5d442');
-    label.setAttribute('font-size', '10');
-    label.setAttribute('font-family', 'monospace');
+    label.setAttribute('x',                  '50%');
+    label.setAttribute('y',                  '50%');
+    label.setAttribute('text-anchor',        'middle');
+    label.setAttribute('dominant-baseline',  'middle');
+    label.setAttribute('fill',               '#f5d442');
+    label.setAttribute('font-size',          '14');
+    label.setAttribute('font-family',        'monospace');
     label.textContent = '⚡';
     svg.appendChild(label);
 
@@ -480,14 +477,14 @@ export class HUD {
     const block = document.createElement('div');
     Object.assign(block.style, {
       position     : 'absolute',
-      bottom       : '12px',
+      bottom       : '18px',
       left         : '50%',
       transform    : 'translateX(-50%)',
       display      : 'flex',
       flexDirection: 'column',
       gap          : '6px',
-      width        : '38vw',
-      maxWidth     : '320px',
+      width        : '42vw',
+      maxWidth     : '240px',
     });
 
     const hpWrap  = this._makeBarWrap('rgba(255,50,50,0.15)', 'rgba(255,80,80,0.3)');
@@ -571,4 +568,4 @@ export class HUD {
     const pct = Math.max(0, energy / maxEnergy) * 100;
     this._energyFill.style.width = `${pct}%`;
   }
-      }
+                                  }
