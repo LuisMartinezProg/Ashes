@@ -15,10 +15,14 @@ export class HUD {
     this._energyFill    = null;
     this._staminaEl     = null;
     this._staminaSvg    = null;
+    this._staminaArc    = null;
     this._staminaHideTimer = null;
     this._container     = null;
     this._collectBtn    = null;
     this._camera        = null;
+
+    this._ARC_R   = 24;
+    this._ARC_LEN = 2 * Math.PI * 24 * 0.75;
 
     this._build();
 
@@ -52,13 +56,11 @@ export class HUD {
   // ── Stamina estilo Genshin ───────────────────────────────────────────────
 
   updateStamina(stamina, max) {
-    if (!this._staminaSvg) return;
+    if (!this._staminaArc) return;
     const pct  = Math.max(0, stamina / max);
     const full = pct >= 1;
 
-    const r    = 22;
-    const circ = 2 * Math.PI * r;
-    this._staminaArc.style.strokeDashoffset = `${circ * (1 - pct)}`;
+    this._staminaArc.style.strokeDashoffset = `${this._ARC_LEN * (1 - pct)}`;
 
     const color = pct > 0.5 ? '#f5d442' : pct > 0.25 ? '#f5a623' : '#e74c3c';
     this._staminaArc.style.stroke = color;
@@ -66,11 +68,11 @@ export class HUD {
     if (full) {
       if (this._staminaHideTimer) clearTimeout(this._staminaHideTimer);
       this._staminaHideTimer = setTimeout(() => {
-        this._staminaEl.style.opacity = '0';
+        if (this._staminaEl) this._staminaEl.style.opacity = '0';
       }, 1500);
     } else {
       if (this._staminaHideTimer) clearTimeout(this._staminaHideTimer);
-      this._staminaEl.style.opacity = '1';
+      if (this._staminaEl) this._staminaEl.style.opacity = '1';
     }
   }
 
@@ -315,16 +317,18 @@ export class HUD {
   }
 
   _buildStamina() {
-    const size = 52;
-    const r    = 20;
-    const circ = 2 * Math.PI * r;
+    const size     = 56;
+    const r        = this._ARC_R;
+    const circ     = 2 * Math.PI * r;
+    const arcLen   = this._ARC_LEN;
+    const arcGap   = circ - arcLen;
+    const rotStart = 135; // hueco abajo, como Genshin
 
     this._staminaEl = document.createElement('div');
     Object.assign(this._staminaEl.style, {
       position     : 'fixed',
-      // Derecha del personaje, ligeramente bajo el centro
-      right        : '38%',
-      top          : '56%',
+      right        : '22%',
+      top          : '62%',
       width        : `${size}px`,
       height       : `${size}px`,
       opacity      : '0',
@@ -338,37 +342,44 @@ export class HUD {
     svg.setAttribute('height',  size);
     svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
 
+    // Fondo arco — mismo hueco abajo
     const bgArc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     bgArc.setAttribute('cx', size / 2);
     bgArc.setAttribute('cy', size / 2);
     bgArc.setAttribute('r',  r);
-    bgArc.setAttribute('fill',         'none');
-    bgArc.setAttribute('stroke',       'rgba(255,255,255,0.1)');
-    bgArc.setAttribute('stroke-width', '3');
+    bgArc.setAttribute('fill',           'none');
+    bgArc.setAttribute('stroke',         'rgba(255,255,255,0.12)');
+    bgArc.setAttribute('stroke-width',   '3.5');
+    bgArc.setAttribute('stroke-linecap', 'round');
+    bgArc.style.strokeDasharray  = `${arcLen} ${arcGap}`;
+    bgArc.style.transformOrigin  = 'center';
+    bgArc.style.transform        = `rotate(${rotStart}deg)`;
     svg.appendChild(bgArc);
 
+    // Arco stamina
     this._staminaArc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     this._staminaArc.setAttribute('cx', size / 2);
     this._staminaArc.setAttribute('cy', size / 2);
     this._staminaArc.setAttribute('r',  r);
     this._staminaArc.setAttribute('fill',           'none');
     this._staminaArc.setAttribute('stroke',         '#f5d442');
-    this._staminaArc.setAttribute('stroke-width',   '3');
+    this._staminaArc.setAttribute('stroke-width',   '3.5');
     this._staminaArc.setAttribute('stroke-linecap', 'round');
-    this._staminaArc.style.strokeDasharray  = `${circ}`;
+    this._staminaArc.style.strokeDasharray  = `${arcLen} ${circ}`;
     this._staminaArc.style.strokeDashoffset = '0';
     this._staminaArc.style.transformOrigin  = 'center';
-    this._staminaArc.style.transform        = 'rotate(-90deg)';
+    this._staminaArc.style.transform        = `rotate(${rotStart}deg)`;
     this._staminaArc.style.transition       = 'stroke-dashoffset 0.15s linear, stroke 0.3s';
     svg.appendChild(this._staminaArc);
 
+    // ⚡ centrado
     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     label.setAttribute('x',                 '50%');
     label.setAttribute('y',                 '50%');
     label.setAttribute('text-anchor',       'middle');
     label.setAttribute('dominant-baseline', 'middle');
     label.setAttribute('fill',              '#f5d442');
-    label.setAttribute('font-size',         '12');
+    label.setAttribute('font-size',         '13');
     label.setAttribute('font-family',       'monospace');
     label.textContent = '⚡';
     svg.appendChild(label);
@@ -566,4 +577,4 @@ export class HUD {
     const pct = Math.max(0, energy / maxEnergy) * 100;
     this._energyFill.style.width = `${pct}%`;
   }
-}
+    }
