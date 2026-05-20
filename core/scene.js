@@ -1,4 +1,6 @@
-// core/scene.js — Ashes of the Reborn | Valiant Gaming
+ufferAttribute(pos, 3));
+
+  const particles = new THREE.// core/scene.js — Ashes of the Reborn | Valiant Gaming
 import * as THREE from 'three';
 
 export const FOREST_RESOURCES = [];
@@ -40,16 +42,11 @@ export async function initScene() {
   scene.add(new THREE.HemisphereLight(0x88AA66, 0x2A3A1A, 1.0));
 
   // ── SUELO POR ZONAS ───────────────────────
-  // Bosque denso norte (z: -80 a -40)
-  addGround(scene, 200, 80,  0, -60, 0x1E3A14, 0.98);
-  // Bosque claro transición (z: -40 a -10)
-  addGround(scene, 200, 30,  0, -25, 0x2A4A1E, 0.97);
-  // Planicie (z: -10 a 30)
-  addGround(scene, 200, 40,  0,  10, 0x4A7A3A, 0.95);
-  // Camino a Ironfell (z: 30 a 60)
-  addGround(scene, 200, 30,  0,  45, 0x5A8A4A, 0.93);
-  // Zona Ironfell (z: 60+)
-  addGround(scene, 200, 60,  0,  90, 0x6A9A5A, 0.90);
+  addGround(scene, 200, 80,  0, -60, 0x1E3A14, 0.98); // Bosque denso
+  addGround(scene, 200, 30,  0, -25, 0x2A4A1E, 0.97); // Bosque claro
+  addGround(scene, 200, 40,  0,  10, 0x4A7A3A, 0.95); // Planicie
+  addGround(scene, 200, 30,  0,  45, 0x5A8A4A, 0.93); // Camino Ironfell
+  addGround(scene, 200, 60,  0,  90, 0x6A9A5A, 0.90); // Ironfell
 
   // ── PLACEHOLDER JUGADOR ───────────────────
   const playerMesh = new THREE.Mesh(
@@ -64,11 +61,13 @@ export async function initScene() {
   scene.add(playerMesh);
 
   // ── CONSTRUCCIÓN DEL MUNDO ────────────────
-  buildForestDense(scene);    // bosque norte denso
-  buildForestLight(scene);    // bosque claro transición
-  buildPlains(scene);         // planicie
-  buildSouthPath(scene);      // camino a Ironfell
-  buildIronfellHorizon(scene);// Ironfell a lo lejos
+  buildForestDense(scene);
+  buildForestLight(scene);
+  buildPlains(scene);
+  buildSouthPath(scene);
+  buildMikaCarriage(scene);      // Carruaje en z≈47 (escena 6)
+  buildIronfellHorizon(scene);
+  buildIronfellInterior(scene);  // Ironfell interior (escena 6-7)
   buildForestParticles(scene);
 
   console.log('[SCENE] Mundo inicializado — Greymantle + Planicie + Ironfell');
@@ -189,14 +188,12 @@ function buildForestLight(scene) {
 
 // ── PLANICIE (z: -10 a 30) ───────────────────────────────────────────────────
 function buildPlains(scene) {
-  // Árboles dispersos en los bordes de la planicie
   const edgeTrees = [
     [-35, 0], [35, 5], [-32, 15], [32, 10],
     [-38, 25], [38, 20], [-30, 28], [30, 25],
   ];
   edgeTrees.forEach(([x, z]) => buildTree(scene, x, z, 1.0 + Math.random() * 0.3, false));
 
-  // Rocas decorativas en la planicie
   const plainsRocks = [
     [-20, 5], [20, 8], [-15, 20], [18, 22],
   ];
@@ -207,13 +204,11 @@ function buildPlains(scene) {
 function buildSouthPath(scene) {
   const pathMat = new THREE.MeshStandardMaterial({ color: 0xC8A87A, roughness: 0.98 });
 
-  // Camino principal
   const path = new THREE.Mesh(new THREE.PlaneGeometry(4, 160), pathMat);
   path.rotation.x = -Math.PI / 2;
   path.position.set(0, 0.01, 30);
   scene.add(path);
 
-  // Señal de dirección
   const postMat = new THREE.MeshStandardMaterial({ color: 0x6B4423, roughness: 0.9 });
   const post    = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 2, 6), postMat);
   post.position.set(3, 1, -8);
@@ -226,18 +221,60 @@ function buildSouthPath(scene) {
   sign.position.set(3, 1.9, -8);
   scene.add(sign);
 
-  // Árboles bordeando el camino
   [[-5,-5],[5,-5],[-5,10],[5,10],[-5,25],[5,25]].forEach(([x, z]) => {
     buildTree(scene, x, z, 0.9, false);
   });
 }
 
-// ── IRONFELL A LO LEJOS (z: 60+) ─────────────────────────────────────────────
+// ── CARRUAJE DE MIKA (z≈47, escena 6) ────────────────────────────────────────
+function buildMikaCarriage(scene) {
+  const woodMat  = new THREE.MeshStandardMaterial({ color: 0x6B4423, roughness: 0.9 });
+  const darkMat  = new THREE.MeshStandardMaterial({ color: 0x3A2810, roughness: 0.95 });
+  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x2A1A08, roughness: 0.9 });
+  const roofMat  = new THREE.MeshStandardMaterial({ color: 0x8B2020, roughness: 0.85 });
+
+  const g = new THREE.Group();
+
+  // Cuerpo del carruaje
+  const body = new THREE.Mesh(new THREE.BoxGeometry(3, 1.8, 2), woodMat);
+  body.position.y = 1.4;
+  g.add(body);
+
+  // Techo
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.2, 2.2), roofMat);
+  roof.position.y = 2.4;
+  g.add(roof);
+
+  // Techo curvo (cono aplastado)
+  const roofTop = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 1.6, 0.6, 8), roofMat);
+  roofTop.position.y = 2.7;
+  g.add(roofTop);
+
+  // Ruedas (4)
+  [[-1.2, 0.5, -1.1], [1.2, 0.5, -1.1], [-1.2, 0.5, 1.1], [1.2, 0.5, 1.1]].forEach(([wx, wy, wz]) => {
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.2, 10), wheelMat);
+    wheel.rotation.x = Math.PI / 2;
+    wheel.position.set(wx, wy, wz);
+    g.add(wheel);
+  });
+
+  // Vara delantera
+  const vara = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3, 6), darkMat);
+  vara.rotation.z = Math.PI / 2;
+  vara.position.set(-2.8, 0.7, 0);
+  g.add(vara);
+
+  // Posicionado a la derecha del camino en z≈47
+  g.position.set(5, 0, 47);
+  g.rotation.y = Math.PI / 6; // ligero ángulo como si estuviera detenido
+  scene.add(g);
+}
+
+// ── IRONFELL HORIZONTE (siluetas lejanas) ─────────────────────────────────────
 function buildIronfellHorizon(scene) {
   const stoneMat = new THREE.MeshStandardMaterial({ color: 0x8A7A6A, roughness: 0.9 });
   const roofMat  = new THREE.MeshStandardMaterial({ color: 0x6A3A2A, roughness: 0.85 });
 
-  // Siluetas de edificios a lo lejos — solo formas básicas
   const buildings = [
     [0, 75, 8, 12], [-15, 72, 6, 8], [15, 73, 7, 10],
     [-8, 78, 5, 6],  [8, 77, 5, 7],  [-22, 70, 4, 5],
@@ -249,13 +286,11 @@ function buildIronfellHorizon(scene) {
     body.position.set(x, h / 2, z);
     scene.add(body);
 
-    // Techo simple
     const roof = new THREE.Mesh(new THREE.ConeGeometry(w * 0.7, h * 0.4, 4), roofMat);
     roof.position.set(x, h + h * 0.2, z);
     scene.add(roof);
   });
 
-  // Muralla exterior de Ironfell
   const wallMat = new THREE.MeshStandardMaterial({ color: 0x7A6A5A, roughness: 0.95 });
   [
     [0,    62, 60, 2.5, 0.8],
@@ -267,7 +302,6 @@ function buildIronfellHorizon(scene) {
     scene.add(wall);
   });
 
-  // Torres en esquinas
   [-28, 28].forEach(x => {
     const tower = new THREE.Mesh(
       new THREE.CylinderGeometry(1.2, 1.4, 5, 8),
@@ -276,6 +310,255 @@ function buildIronfellHorizon(scene) {
     tower.position.set(x, 2.5, 62);
     scene.add(tower);
   });
+}
+
+// ── IRONFELL INTERIOR (z: 63 a 85) ───────────────────────────────────────────
+function buildIronfellInterior(scene) {
+  const stoneMat  = new THREE.MeshStandardMaterial({ color: 0x7A6A5A, roughness: 0.9 });
+  const roofMat   = new THREE.MeshStandardMaterial({ color: 0x5A2A1A, roughness: 0.85 });
+  const roofMat2  = new THREE.MeshStandardMaterial({ color: 0x2A4A6A, roughness: 0.85 }); // azul — tienda elfa
+  const roofMat3  = new THREE.MeshStandardMaterial({ color: 0x4A6A2A, roughness: 0.85 }); // verde — academia
+  const woodMat   = new THREE.MeshStandardMaterial({ color: 0x6B4423, roughness: 0.9 });
+  const darkMat   = new THREE.MeshStandardMaterial({ color: 0x2A1A08, roughness: 0.95 });
+  const goldMat   = new THREE.MeshStandardMaterial({ color: 0xC9A84C, roughness: 0.6 });
+  const pathMat   = new THREE.MeshStandardMaterial({ color: 0xB8987A, roughness: 0.98 });
+
+  // ── Suelo de adoquines ──
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(50, 30), pathMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, 0.005, 73);
+  scene.add(floor);
+
+  // ── Calle principal (continuación del camino) ──
+  const mainStreet = new THREE.Mesh(new THREE.PlaneGeometry(5, 30), pathMat);
+  mainStreet.rotation.x = -Math.PI / 2;
+  mainStreet.position.set(0, 0.01, 73);
+  scene.add(mainStreet);
+
+  // ── Puerta de entrada ──
+  _buildGate(scene, stoneMat, darkMat, goldMat);
+
+  // ── EDIFICIOS IZQUIERDA ──
+
+  // Casa común 1
+  _buildBuilding(scene, -10, 67, 5, 4, stoneMat, roofMat);
+  // Casa común 2
+  _buildBuilding(scene, -16, 67, 4, 3.5, stoneMat, roofMat);
+  // Casa común 3
+  _buildBuilding(scene, -10, 74, 4, 3.5, stoneMat, roofMat);
+
+  // Tienda elfa — techo azul, más llamativa (escena 7)
+  _buildShop(scene, -16, 74, stoneMat, roofMat2, woodMat, goldMat);
+
+  // Casa de Mika — techo distinto, cerca del mercado
+  _buildBuilding(scene, -22, 71, 5, 4, stoneMat, roofMat);
+
+  // ── EDIFICIOS DERECHA ──
+
+  // Casa común 4
+  _buildBuilding(scene, 10, 67, 5, 4, stoneMat, roofMat);
+  // Casa común 5
+  _buildBuilding(scene, 16, 67, 4, 3.5, stoneMat, roofMat);
+
+  // Academia Veldris — más grande, techo verde, cartel (escena 7-8)
+  _buildAcademia(scene, stoneMat, roofMat3, woodMat, goldMat);
+
+  // Despacho de Voron — edificio central al fondo
+  _buildBuilding(scene, 0, 82, 7, 6, stoneMat, roofMat);
+
+  // ── Faroles decorativos ──
+  [[-4,65],[4,65],[-4,72],[4,72],[-4,79],[4,79]].forEach(([x, z]) => {
+    _buildLantern(scene, x, z, woodMat, goldMat);
+  });
+
+  // ── Fuente central ──
+  _buildFountain(scene, 0, 73, stoneMat, goldMat);
+}
+
+// ── PUERTA DE ENTRADA ─────────────────────────────────────────────────────────
+function _buildGate(scene, stoneMat, darkMat, goldMat) {
+  // Pilares
+  [-2.5, 2.5].forEach(x => {
+    const pillar = new THREE.Mesh(new THREE.BoxGeometry(1.2, 4, 1.2), stoneMat);
+    pillar.position.set(x, 2, 63);
+    scene.add(pillar);
+
+    // Antorcha en cada pilar
+    const torch = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 6), darkMat);
+    torch.position.set(x, 3.8, 63);
+    scene.add(torch);
+
+    const flame = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), goldMat);
+    flame.position.set(x, 4.1, 63);
+    scene.add(flame);
+  });
+
+  // Arco superior
+  const arch = new THREE.Mesh(new THREE.BoxGeometry(6, 0.8, 1.0), stoneMat);
+  arch.position.set(0, 4.2, 63);
+  scene.add(arch);
+
+  // Nombre de la ciudad — placa dorada
+  const plaque = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.5, 0.1), goldMat);
+  plaque.position.set(0, 3.6, 62.5);
+  scene.add(plaque);
+}
+
+// ── EDIFICIO GENÉRICO ─────────────────────────────────────────────────────────
+function _buildBuilding(scene, x, z, w, h, wallMat, roofMat) {
+  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, w * 0.8), wallMat);
+  body.position.set(x, h / 2, z);
+  scene.add(body);
+
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(w * 0.75, h * 0.5, 4), roofMat);
+  roof.position.set(x, h + h * 0.25, z);
+  roof.rotation.y = Math.PI / 4;
+  scene.add(roof);
+
+  // Puerta
+  const door = new THREE.Mesh(
+    new THREE.BoxGeometry(0.7, 1.2, 0.1),
+    new THREE.MeshStandardMaterial({ color: 0x3A2008, roughness: 0.9 })
+  );
+  door.position.set(x, 0.6, z - w * 0.4 - 0.05);
+  scene.add(door);
+
+  // Ventana
+  const win = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 0.4, 0.1),
+    new THREE.MeshStandardMaterial({ color: 0xAADDFF, roughness: 0.2, transparent: true, opacity: 0.6 })
+  );
+  win.position.set(x + 0.8, h * 0.6, z - w * 0.4 - 0.05);
+  scene.add(win);
+}
+
+// ── TIENDA ELFA ───────────────────────────────────────────────────────────────
+function _buildShop(scene, x, z, wallMat, roofMat, woodMat, goldMat) {
+  // Edificio base
+  const body = new THREE.Mesh(new THREE.BoxGeometry(6, 4, 5), wallMat);
+  body.position.set(x, 2, z);
+  scene.add(body);
+
+  // Techo azul puntiagudo
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(4.5, 2.5, 4), roofMat);
+  roof.position.set(x, 5.2, z);
+  roof.rotation.y = Math.PI / 4;
+  scene.add(roof);
+
+  // Toldo de entrada
+  const awning = new THREE.Mesh(new THREE.BoxGeometry(4, 0.15, 1.5), roofMat);
+  awning.position.set(x, 2.2, z - 2.8);
+  awning.rotation.x = -0.3;
+  scene.add(awning);
+
+  // Poste del toldo
+  [-1.8, 1.8].forEach(ox => {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2, 6), woodMat);
+    pole.position.set(x + ox, 1, z - 3.2);
+    scene.add(pole);
+  });
+
+  // Letrero dorado
+  const sign = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.5, 0.1), goldMat);
+  sign.position.set(x, 3.2, z - 2.55);
+  scene.add(sign);
+
+  // Puerta
+  const door = new THREE.Mesh(
+    new THREE.BoxGeometry(1.0, 1.6, 0.1),
+    new THREE.MeshStandardMaterial({ color: 0x3A2008, roughness: 0.9 })
+  );
+  door.position.set(x, 0.8, z - 2.55);
+  scene.add(door);
+}
+
+// ── ACADEMIA VELDRIS ──────────────────────────────────────────────────────────
+function _buildAcademia(scene, wallMat, roofMat, woodMat, goldMat) {
+  const x = 14, z = 74;
+
+  // Edificio principal — más grande
+  const body = new THREE.Mesh(new THREE.BoxGeometry(9, 6, 7), wallMat);
+  body.position.set(x, 3, z);
+  scene.add(body);
+
+  // Techo verde
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(6, 3, 4), roofMat);
+  roof.position.set(x, 7.5, z);
+  roof.rotation.y = Math.PI / 4;
+  scene.add(roof);
+
+  // Torre lateral izquierda
+  const tower = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.2, 8, 8), wallMat);
+  tower.position.set(x - 5, 4, z);
+  scene.add(tower);
+
+  const towerRoof = new THREE.Mesh(new THREE.ConeGeometry(1.2, 2, 8), roofMat);
+  towerRoof.position.set(x - 5, 9, z);
+  scene.add(towerRoof);
+
+  // Columnas de entrada
+  [-2, 0, 2].forEach(ox => {
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 5, 8), wallMat);
+    col.position.set(x + ox, 2.5, z - 3.55);
+    scene.add(col);
+  });
+
+  // Cartel de la Academia — visible desde el camino (escena 7)
+  const signPost = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 3, 6), woodMat);
+  signPost.position.set(x - 2, 1.5, z - 5);
+  scene.add(signPost);
+
+  const signBoard = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.7, 0.1), goldMat);
+  signBoard.position.set(x - 2, 3.2, z - 5);
+  scene.add(signBoard);
+
+  // Puerta principal
+  const door = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 2.5, 0.1),
+    new THREE.MeshStandardMaterial({ color: 0x3A2008, roughness: 0.9 })
+  );
+  door.position.set(x, 1.25, z - 3.55);
+  scene.add(door);
+
+  // Ventanas
+  [[-3, 4], [3, 4], [-3, 2], [3, 2]].forEach(([ox, oy]) => {
+    const win = new THREE.Mesh(
+      new THREE.BoxGeometry(0.8, 0.8, 0.1),
+      new THREE.MeshStandardMaterial({ color: 0xAADDFF, roughness: 0.2, transparent: true, opacity: 0.6 })
+    );
+    win.position.set(x + ox, oy, z - 3.55);
+    scene.add(win);
+  });
+}
+
+// ── FAROL ─────────────────────────────────────────────────────────────────────
+function _buildLantern(scene, x, z, woodMat, goldMat) {
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 3, 6), woodMat);
+  post.position.set(x, 1.5, z);
+  scene.add(post);
+
+  const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), goldMat);
+  lamp.position.set(x, 3.1, z);
+  scene.add(lamp);
+}
+
+// ── FUENTE ────────────────────────────────────────────────────────────────────
+function _buildFountain(scene, x, z, stoneMat, goldMat) {
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 2, 0.4, 12), stoneMat);
+  base.position.set(x, 0.2, z);
+  scene.add(base);
+
+  const basin = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.6, 12, 1, true), stoneMat);
+  basin.position.set(x, 0.6, z);
+  scene.add(basin);
+
+  const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 1.5, 8), stoneMat);
+  pillar.position.set(x, 1.1, z);
+  scene.add(pillar);
+
+  const top = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), goldMat);
+  top.position.set(x, 1.9, z);
+  scene.add(top);
 }
 
 // ── PARTÍCULAS ────────────────────────────────────────────────────────────────
@@ -299,4 +582,4 @@ function buildForestParticles(scene) {
   }));
   particles.name = 'ambient_particles';
   scene.add(particles);
-                                          }
+}
