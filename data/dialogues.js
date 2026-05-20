@@ -48,6 +48,21 @@ export const DIALOGUES = {
     ],
   },
 
+  mika: {
+    name: 'Mika',
+    lines: [
+      '¡Por favor, ayúdame! Hay una bestia cerca...',
+      'Gracias. De verdad, pensé que no saldría de esta.',
+      'Me llamo Mika. Conozco bien el camino a Ironfell — puedo guiarte si quieres.',
+      'Ironfell no es perfecta, pero es un buen lugar. Ya verás.',
+    ],
+    // Diálogo post-rescate (después de eliminar la bestia)
+    linesAfterRescue: [
+      'Ya está, todo bien. ¿Vamos juntos a Ironfell?',
+      'Oye... ¿escuchaste eso? Hay alguien en ese carruaje.',
+    ],
+  },
+
 };
 
 // ── TIENDAS ──────────────────────────────────────────────────────────────────
@@ -57,18 +72,18 @@ export const SHOPS = {
   armas: {
     title: 'Armería',
     items: [
-      { id: 'sword',  name: 'Espada',     icon: '⚔️',  price: 80,  desc: 'Daño equilibrado. Buena para combate directo.' },
-      { id: 'bow',    name: 'Arco',       icon: '🏹',  price: 100, desc: 'Ataque a distancia. Requiere puntería.' },
-      { id: 'magic',  name: 'Orbe Mágico',icon: '🔮',  price: 120, desc: 'Canaliza energía arcana. Alto daño mágico.' },
+      { id: 'sword',  name: 'Espada',      icon: '⚔️',  price: 80,  desc: 'Daño equilibrado. Buena para combate directo.' },
+      { id: 'bow',    name: 'Arco',        icon: '🏹',  price: 100, desc: 'Ataque a distancia. Requiere puntería.' },
+      { id: 'magic',  name: 'Orbe Mágico', icon: '🔮',  price: 120, desc: 'Canaliza energía arcana. Alto daño mágico.' },
     ],
   },
 
   items: {
     title: 'Alquimia',
     items: [
-      { id: 'potion_hp',     name: 'Poción HP',      icon: '🧪', price: 20,  desc: 'Restaura 30 puntos de vida.' },
-      { id: 'potion_energy', name: 'Poción Energía',  icon: '⚗️', price: 25,  desc: 'Restaura 40 puntos de energía.' },
-      { id: 'potion_hp_max', name: 'Elixir Mayor',    icon: '🫧', price: 60,  desc: 'Restaura toda la vida.' },
+      { id: 'potion_hp',     name: 'Poción HP',     icon: '🧪', price: 20, desc: 'Restaura 30 puntos de vida.' },
+      { id: 'potion_energy', name: 'Poción Energía', icon: '⚗️', price: 25, desc: 'Restaura 40 puntos de energía.' },
+      { id: 'potion_hp_max', name: 'Elixir Mayor',   icon: '🫧', price: 60, desc: 'Restaura toda la vida.' },
     ],
   },
 
