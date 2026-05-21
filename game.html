@@ -87,7 +87,8 @@ import { WanderingSpirit }  from './core/enemies/WanderingSpirit.js';
 import { ShadowForest }     from './core/enemies/ShadowForest.js';
 import { StoneSnake }       from './core/enemies/StoneSnake.js';
 import { WarriorGhost }     from './core/enemies/WarriorGhost.js';
-import { Bandit } from './core/enemies/Bandit.js';
+import { EliteMercenary }   from './core/enemies/EliteMercenary.js';
+import { Bandit }           from './core/enemies/Bandit.js';
 import { ShadowSoldier }    from './core/enemies/ShadowSoldier.js';
 import { DarkArcher }       from './core/enemies/DarkArcher.js';
 import { Berserker }        from './core/enemies/Berserker.js';
@@ -95,8 +96,7 @@ import { YamiMage }         from './core/enemies/YamiMage.js';
 import { ShadowCaptain }    from './core/enemies/ShadowCaptain.js';
 import { BuildCamera }      from './core/buildCamera.js';
 import { BuildZone }        from './core/buildZone.js';
-import { EliteMercenary } from './core/enemies/EliteMercenary.js';
-  
+
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -199,7 +199,6 @@ async function boot() {
       if (dialogueUI.isActive() || shopUI.isActive()) return;
       const playerPos = player.root.position;
 
-      // Actualizar NPCs (grito de Mika, etc.)
       for (const npc of npcs) {
         npc.update(performance.now() / 1000, playerPos);
       }
@@ -279,17 +278,17 @@ async function boot() {
 
     // ── Monstruos del bosque denso ──
     const forestMonsters = [
-      new Mossling(scene, { x: -15, z: -50 }, player),
-      new Mossling(scene, { x:  12, z: -55 }, player),
-      new Mossling(scene, { x:  -5, z: -65 }, player),
-      new Mossling(scene, { x:  18, z: -48 }, player),
-      new Firefly(scene,  { x:  -8, z: -58 }, player),
-      new Firefly(scene,  { x:  10, z: -70 }, player),
-      new Firefly(scene,  { x: -20, z: -62 }, player),
+      new Mossling(scene,      { x: -15, z: -50 }, player),
+      new Mossling(scene,      { x:  12, z: -55 }, player),
+      new Mossling(scene,      { x:  -5, z: -65 }, player),
+      new Mossling(scene,      { x:  18, z: -48 }, player),
+      new Firefly(scene,       { x:  -8, z: -58 }, player),
+      new Firefly(scene,       { x:  10, z: -70 }, player),
+      new Firefly(scene,       { x: -20, z: -62 }, player),
       new CrystalSpider(scene, { x:   5, z: -52 }, player),
       new CrystalSpider(scene, { x: -12, z: -68 }, player),
-      new Troll(scene, { x: -22, z: -72 }, player),
-      new Troll(scene, { x:  20, z: -65 }, player),
+      new Troll(scene,         { x: -22, z: -72 }, player),
+      new Troll(scene,         { x:  20, z: -65 }, player),
     ];
 
     // ── Monstruos de la planicie ──
@@ -301,17 +300,24 @@ async function boot() {
       new WanderingSpirit(scene, { x: -22, z: 28 }, player),
     ];
 
-    // ── Camino a Ironfell ─//
-        const roadMonsters = [
-  new ShadowForest(scene,   { x: -35, z: 35 }, player),
-  new ShadowForest(scene,   { x:  38, z: 38 }, player),
-  new StoneSnake(scene,     { x: -40, z: 34 }, player),
-  new StoneSnake(scene,     { x:  42, z: 36 }, player),
-  new WarriorGhost(scene,   { x: -38, z: 57 }, player),
-  new WarriorGhost(scene,   { x:  40, z: 58 }, player),
-  new EliteMercenary(scene, { x: -36, z: 56 }, player),
-  new EliteMercenary(scene, { x:  38, z: 59 }, player),
-];
+    // ── Camino a Ironfell — alejados del camino central (X±35) ──
+    const roadMonsters = [
+      new ShadowForest(scene,   { x: -35, z: 35 }, player),
+      new ShadowForest(scene,   { x:  38, z: 38 }, player),
+      new StoneSnake(scene,     { x: -40, z: 34 }, player),
+      new StoneSnake(scene,     { x:  42, z: 36 }, player),
+      new WarriorGhost(scene,   { x: -38, z: 57 }, player),
+      new WarriorGhost(scene,   { x:  40, z: 58 }, player),
+      new EliteMercenary(scene, { x: -36, z: 56 }, player),
+      new EliteMercenary(scene, { x:  38, z: 59 }, player),
+    ];
+
+    // ── Bandidos de Mika — cerca del carruaje en z≈38 ──
+    const mikaBandits = [
+      new Bandit(scene, { x: -6, z: 36 }, player),
+      new Bandit(scene, { x:  6, z: 37 }, player),
+      new Bandit(scene, { x:  0, z: 35 }, player),
+    ];
 
     // Cuando todos los bandidos mueren → rescatar a Mika
     let _mikaRescued = false;
