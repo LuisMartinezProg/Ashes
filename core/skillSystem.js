@@ -1,47 +1,65 @@
 // core/skillSystem.js — Ashes of the Reborn | Valiant Gaming
-import { Fireball }      from '../skills/fireball.js';
-import { IceShard }      from '../skills/iceShard.js';
-import { WindGust }      from '../skills/windGust.js';
-import { ThornShot }     from '../skills/thornShot.js';
-import { QuickSlash }    from '../skills/katana/quickSlash.js';
-import { FlashStep }     from '../skills/katana/flashStep.js';
-import { BladeDance }    from '../skills/katana/bladeDance.js';
-import { ThousandCuts }  from '../skills/katana/thousandCuts.js';
-import { Cleave }        from '../skills/sword/cleave.js';
-import { ShieldBash }    from '../skills/sword/shieldBash.js';
-import { WarCry }        from '../skills/sword/warCry.js';
-import { Execute }       from '../skills/sword/execute.js';
-import { PiercingShot }  from '../skills/bow/piercingShot.js';
-import { RainOfArrows }  from '../skills/bow/rainOfArrows.js';
-import { PoisonArrow }   from '../skills/bow/poisonArrow.js';
-import { BackStep }      from '../skills/bow/backStep.js';
-import { ShadowSlash }   from '../skills/katana/shadowSlash.js';
-import { ThunderSlash }  from '../skills/katana/thunderSlash.js';
-import { LastStand }     from '../skills/katana/lastStand.js';
+import { Fireball }       from '../skills/fireball.js';
+import { IceShard }       from '../skills/iceShard.js';
+import { WindGust }       from '../skills/windGust.js';
+import { ThornShot }      from '../skills/thornShot.js';
+import { QuickSlash }     from '../skills/katana/quickSlash.js';
+import { FlashStep }      from '../skills/katana/flashStep.js';
+import { BladeDance }     from '../skills/katana/bladeDance.js';
+import { ThousandCuts }   from '../skills/katana/thousandCuts.js';
+import { ShadowSlash }    from '../skills/katana/shadowSlash.js';
+import { Nightfall }      from '../skills/katana/nightfall.js';
+import { VoidStep }       from '../skills/katana/voidStep.js';
+import { ShadowRealm }    from '../skills/katana/shadowRealm.js';
+import { ThunderSlash }   from '../skills/katana/thunderSlash.js';
+import { StaticField }    from '../skills/katana/staticField.js';
+import { ThunderStorm }   from '../skills/katana/thunderStorm.js';
+import { GodOfThunder }   from '../skills/katana/godOfThunder.js';
+import { LastStand }      from '../skills/katana/lastStand.js';
+import { Martyr }         from '../skills/katana/martyr.js';
+import { SacredBlade }    from '../skills/katana/sacredBlade.js';
+import { LegendaryStand } from '../skills/katana/legendaryStand.js';
+import { Cleave }         from '../skills/sword/cleave.js';
+import { ShieldBash }     from '../skills/sword/shieldBash.js';
+import { WarCry }         from '../skills/sword/warCry.js';
+import { Execute }        from '../skills/sword/execute.js';
+import { PiercingShot }   from '../skills/bow/piercingShot.js';
+import { RainOfArrows }   from '../skills/bow/rainOfArrows.js';
+import { PoisonArrow }    from '../skills/bow/poisonArrow.js';
+import { BackStep }       from '../skills/bow/backStep.js';
 
-const MAX_ENERGY  = 100;
+const MAX_ENERGY   = 100;
 const ENERGY_REGEN = 3;
 
 const SKILL_COST = {
-  fireball      : 30,
-  ice_shard     : 30,
-  gust          : 25,
-  thorn         : 30,
-  quick_slash   : 20,
-  flash_step    : 25,
-  blade_dance   : 35,
-  thousand_cuts : 40,
-  cleave        : 25,
-  shield_bash   : 30,
-  war_cry       : 40,
-  execute       : 35,
-  piercing_shot : 25,
-  rain_of_arrows: 40,
-  poison_arrow  : 30,
-  back_step     : 25,
-  shadow_slash  : 25,
-thunder_slash : 25,
-last_stand    : 30,
+  fireball       : 30,
+  ice_shard      : 30,
+  gust           : 25,
+  thorn          : 30,
+  quick_slash    : 20,
+  flash_step     : 25,
+  blade_dance    : 35,
+  thousand_cuts  : 40,
+  shadow_slash   : 25,
+  nightfall      : 35,
+  void_step      : 45,
+  shadow_realm   : 60,
+  thunder_slash  : 25,
+  static_field   : 35,
+  thunder_storm  : 50,
+  god_of_thunder : 70,
+  last_stand     : 30,
+  martyr         : 35,
+  sacred_blade   : 50,
+  legendary_stand: 70,
+  cleave         : 25,
+  shield_bash    : 30,
+  war_cry        : 40,
+  execute        : 35,
+  piercing_shot  : 25,
+  rain_of_arrows : 40,
+  poison_arrow   : 30,
+  back_step      : 25,
 };
 
 export class SkillSystem {
@@ -56,28 +74,40 @@ export class SkillSystem {
 
     this._skills = {
       // Magia
-      fireball      : new Fireball(scene, playerGroup),
-      ice_shard     : new IceShard(scene, playerGroup),
-      gust          : new WindGust(scene, playerGroup),
-      thorn         : new ThornShot(scene, playerGroup),
-      // Katana
-      quick_slash   : new QuickSlash(scene, playerGroup),
-      flash_step    : new FlashStep(scene, playerGroup),
-      blade_dance   : new BladeDance(scene, playerGroup),
-      thousand_cuts : new ThousandCuts(scene, playerGroup),
-      shadow_slash  : new ShadowSlash(scene, playerGroup),
-      thunder_slash : new ThunderSlash(scene, playerGroup),
-      last_stand    : new LastStand(scene, playerGroup),
+      fireball       : new Fireball(scene, playerGroup),
+      ice_shard      : new IceShard(scene, playerGroup),
+      gust           : new WindGust(scene, playerGroup),
+      thorn          : new ThornShot(scene, playerGroup),
+      // Katana — Velocidad
+      quick_slash    : new QuickSlash(scene, playerGroup),
+      flash_step     : new FlashStep(scene, playerGroup),
+      blade_dance    : new BladeDance(scene, playerGroup),
+      thousand_cuts  : new ThousandCuts(scene, playerGroup),
+      // Katana — Sombra
+      shadow_slash   : new ShadowSlash(scene, playerGroup),
+      nightfall      : new Nightfall(scene, playerGroup),
+      void_step      : new VoidStep(scene, playerGroup),
+      shadow_realm   : new ShadowRealm(scene, playerGroup),
+      // Katana — Tormenta
+      thunder_slash  : new ThunderSlash(scene, playerGroup),
+      static_field   : new StaticField(scene, playerGroup),
+      thunder_storm  : new ThunderStorm(scene, playerGroup),
+      god_of_thunder : new GodOfThunder(scene, playerGroup),
+      // Katana — Honor
+      last_stand     : new LastStand(scene, playerGroup),
+      martyr         : new Martyr(scene, playerGroup),
+      sacred_blade   : new SacredBlade(scene, playerGroup),
+      legendary_stand: new LegendaryStand(scene, playerGroup),
       // Espada
-      cleave        : new Cleave(scene, playerGroup),
-      shield_bash   : new ShieldBash(scene, playerGroup),
-      war_cry       : new WarCry(scene, playerGroup),
-      execute       : new Execute(scene, playerGroup),
+      cleave         : new Cleave(scene, playerGroup),
+      shield_bash    : new ShieldBash(scene, playerGroup),
+      war_cry        : new WarCry(scene, playerGroup),
+      execute        : new Execute(scene, playerGroup),
       // Arco
-      piercing_shot : new PiercingShot(scene, playerGroup),
-      rain_of_arrows: new RainOfArrows(scene, playerGroup),
-      poison_arrow  : new PoisonArrow(scene, playerGroup),
-      back_step     : new BackStep(scene, playerGroup),
+      piercing_shot  : new PiercingShot(scene, playerGroup),
+      rain_of_arrows : new RainOfArrows(scene, playerGroup),
+      poison_arrow   : new PoisonArrow(scene, playerGroup),
+      back_step      : new BackStep(scene, playerGroup),
     };
   }
 
