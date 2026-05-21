@@ -8,12 +8,20 @@ const INTERACT_RANGE = 2.5;
 const MIKA_CRY_RANGE = 15;
 
 const NPC_DEFS = [
+  // ── Zona inicial ──
   { id: 'aldeano',        x:  2,   z:  2,   color: 0x8899AA },
   { id: 'herrero',        x: -10,  z: -13,  color: 0x886644 },
   { id: 'guardia',        x:  17,  z:  0,   color: 0x445566 },
   { id: 'vendedor_armas', x:  6,   z:  6,   color: 0xCC9944 },
   { id: 'vendedor_items', x:  8,   z:  6,   color: 0x44AA88 },
-  { id: 'mika',           x:  0,   z:  45,  color: 0xFFAABB, isMika: true },
+
+  // ── Camino a Ironfell ──
+  { id: 'mika',           x:  0,   z:  38,  color: 0xFFAABB, isMika: true },
+
+  // ── Ironfell ──
+  { id: 'yuna',           x:  0,   z:  64,  color: 0x4466AA }, // puerta norte
+  { id: 'voron',          x:  0,   z:  82,  color: 0x8866AA }, // despacho al fondo
+  { id: 'elfa_vendedora', x: -16,  z:  74,  color: 0x66AA88 }, // tienda elfa
 ];
 
 export class NPC {
@@ -24,10 +32,9 @@ export class NPC {
     this.isMika   = def.isMika ?? false;
     this._range   = INTERACT_RANGE;
 
-    // Estado Mika
-    this._mikaRescued   = false;
-    this._cryShown      = false;
-    this._cryEl         = null;
+    this._mikaRescued = false;
+    this._cryShown    = false;
+    this._cryEl       = null;
 
     this.mesh = new THREE.Group();
 
@@ -54,7 +61,6 @@ export class NPC {
       this.mesh.add(shopDot);
     }
 
-    // Exclamación roja sobre Mika antes de rescate
     if (this.isMika) {
       const exGeo = new THREE.SphereGeometry(0.12, 6, 6);
       const exMat = new THREE.MeshBasicMaterial({ color: 0xFF2222 });
@@ -65,13 +71,10 @@ export class NPC {
 
     this.mesh.add(body, head, this._dot);
     this.mesh.position.set(def.x, 0, def.z);
-
     scene.add(this.mesh);
 
     if (this.isMika) this._buildCryLabel();
   }
-
-  // ── Grito de ayuda ───────────────────────────────────────────────────────
 
   _buildCryLabel() {
     this._cryEl = document.createElement('div');
@@ -101,8 +104,8 @@ export class NPC {
 
   _showCry() {
     if (!this._cryEl || this._mikaRescued) return;
-    this._cryEl.style.display  = 'block';
-    this._cryEl.style.opacity  = '1';
+    this._cryEl.style.display = 'block';
+    this._cryEl.style.opacity = '1';
     if (this._cryTimer) clearTimeout(this._cryTimer);
     this._cryTimer = setTimeout(() => {
       if (this._cryEl) this._cryEl.style.opacity = '0';
@@ -116,11 +119,8 @@ export class NPC {
     this._mikaRescued = true;
     if (this._cryEl) this._cryEl.style.display = 'none';
     if (this._exclamation) this._exclamation.visible = false;
-    // Cambiar punto dorado a verde — rescatada
     this._dot.material.color.setHex(0x44FF88);
   }
-
-  // ── API pública ──────────────────────────────────────────────────────────
 
   isPlayerInRange(playerPos) {
     const dx = playerPos.x - this.mesh.position.x;
@@ -147,12 +147,10 @@ export class NPC {
   update(t, playerPos) {
     this._dot.position.y = 1.9 + Math.sin(t * 2.5) * 0.08;
 
-    // Grito periódico de Mika si el jugador está en rango
     if (this.isMika && playerPos && this.isInCryRange(playerPos)) {
       if (!this._cryShown) {
         this._cryShown = true;
         this._showCry();
-        // Repetir grito cada 4s mientras esté en rango
         this._cryInterval = setInterval(() => {
           if (!this._mikaRescued && this.isInCryRange(playerPos)) {
             this._showCry();
