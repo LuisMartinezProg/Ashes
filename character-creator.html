@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Ashes of the Reborn — Renacimiento</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A84C;--gold-light:#E8C97A;--gold-dim:#7A6030;
+  --ash:#1A1A1E;--ash-mid:#12121A;--ash-deep:#0A0A10;
+  --ember:#8B2A0A;--smoke:#2E2E38;--text:#D4C9A8;--text-dim:#7A7060;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--ash-deep);
+  font-family:'EB Garamond',serif;color:var(--text);}
+
+/* FADE */
+#fade{position:fixed;inset:0;background:#04040A;opacity:1;pointer-events:none;z-index:50;transition:opacity 1.2s ease;}
+#fade.clear{opacity:0;}
+
+/* PARTICLES */
+#particles{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.vignette{position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 30%,rgba(5,5,10,0.7) 80%,rgba(5,5,10,0.97) 100%);pointer-events:none;z-index:1;}
+
+/* LAYOUT PRINCIPAL */
+.creator{
+  position:fixed;inset:0;display:flex;z-index:10;
+  opacity:0;transition:opacity 0.8s;
+}
+.creator.visible{opacity:1;}
+
+/* COLUMNA IZQUIERDA — PREVIEW */
+.col-preview{
+  width:38%;height:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px;border-right:1px solid rgba(201,168,76,0.12);
+  position:relative;
+}
+.preview-title{
+  font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.4em;
+  color:var(--gold-dim);text-transform:uppercase;margin-bottom:16px;
+}
+#sprite-canvas{
+  width:180px;height:280px;
+  border:1px solid rgba(201,168,76,0.2);
+  background:rgba(0,0,0,0.4);
+  image-rendering:pixelated;
+}
+.preview-name-wrap{margin-top:16px;text-align:center;}
+.preview-name-label{font-family:'Cinzel',serif;font-size:0.55rem;letter-spacing:0.3em;color:var(--gold-dim);margin-bottom:6px;}
+#char-name-input{
+  background:transparent;border:none;border-bottom:1px solid rgba(201,168,76,0.4);
+  color:var(--gold-light);font-family:'Cinzel',serif;font-size:0.9rem;
+  letter-spacing:0.15em;text-align:center;width:160px;outline:none;padding:4px;
+}
+#char-name-input::placeholder{color:var(--gold-dim);opacity:0.5;}
+
+/* COLUMNA DERECHA — OPCIONES */
+.col-options{
+  flex:1;height:100%;overflow-y:auto;
+  padding:24px 28px;display:flex;flex-direction:column;gap:0;
+}
+.col-options::-webkit-scrollbar{width:3px;}
+.col-options::-webkit-scrollbar-track{background:transparent;}
+.col-options::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px;}
+
+.creator-header{margin-bottom:24px;}
+.creator-title{
+  font-family:'Cinzel Decorative',serif;font-size:clamp(1rem,2.5vw,1.6rem);
+  background:linear-gradient(175deg,var(--gold-light) 0%,var(--gold) 50%,var(--gold-dim) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.creator-sub{
+  font-family:'EB Garamond',serif;font-style:italic;
+  font-size:0.9rem;color:var(--text-dim);margin-top:4px;
+}
+
+/* SECCIONES */
+.section{margin-bottom:22px;}
+.section-title{
+  font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.35em;
+  color:var(--gold-dim);text-transform:uppercase;
+  margin-bottom:10px;padding-bottom:6px;
+  border-bottom:1px solid rgba(201,168,76,0.12);
+}
+
+/* OPCIONES PILL */
+.pill-group{display:flex;flex-wrap:wrap;gap:8px;}
+.pill{
+  font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.15em;
+  color:var(--text-dim);background:rgba(201,168,76,0.04);
+  border:1px solid rgba(201,168,76,0.18);padding:7px 14px;
+  cursor:pointer;transition:all 0.18s;-webkit-tap-highlight-color:transparent;
+}
+.pill:hover{color:var(--gold);border-color:rgba(201,168,76,0.45);}
+.pill.active{
+  color:var(--ash-deep);background:var(--gold);
+  border-color:var(--gold);font-weight:600;
+}
+
+/* COLOR SWATCHES */
+.swatch-group{display:flex;flex-wrap:wrap;gap:8px;}
+.swatch{
+  width:28px;height:28px;border-radius:50%;cursor:pointer;
+  border:2px solid transparent;transition:all 0.18s;
+  -webkit-tap-highlight-color:transparent;
+}
+.swatch:hover{transform:scale(1.15);}
+.swatch.active{border-color:var(--gold);transform:scale(1.2);box-shadow:0 0 8px rgba(201,168,76,0.5);}
+
+/* ARMA — PROYECCIÓN */
+.weapon-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.weapon-card{
+  border:1px solid rgba(201,168,76,0.18);padding:14px 12px;
+  cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+  background:rgba(201,168,76,0.02);
+}
+.weapon-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(201,168,76,0.06) 0%,transparent 60%);
+  opacity:0;transition:opacity 0.2s;
+}
+.weapon-card:hover::before,.weapon-card.active::before{opacity:1;}
+.weapon-card.active{
+  border-color:rgba(201,168,76,0.6);
+  box-shadow:0 0 20px rgba(201,168,76,0.1),inset 0 0 20px rgba(201,168,76,0.03);
+}
+.weapon-icon{font-size:1.6rem;margin-bottom:6px;}
+.weapon-name{
+  font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.2em;
+  color:var(--gold);display:block;margin-bottom:4px;
+}
+.weapon-desc{font-size:0.78rem;color:var(--text-dim);line-height:1.4;}
+
+/* ÁRBOL DE HABILIDADES — PROYECCIÓN */
+.skill-projection{
+  margin-top:14px;
+  border:1px solid rgba(201,168,76,0.15);
+  background:rgba(0,0,0,0.5);
+  padding:16px;position:relative;overflow:hidden;
+  min-height:120px;
+  transition:opacity 0.4s;
+}
+.skill-projection::before{
+  content:'ÁRBOL DE HABILIDADES';
+  position:absolute;top:8px;right:10px;
+  font-family:'Cinzel',serif;font-size:0.45rem;letter-spacing:0.3em;
+  color:rgba(201,168,76,0.25);
+}
+/* línea de escaneo holográfica */
+.skill-projection::after{
+  content:'';position:absolute;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(201,168,76,0.4),transparent);
+  animation:scan 3s linear infinite;top:0;
+}
+@keyframes scan{0%{top:0;}100%{top:100%;}}
+
+.skill-tree-wrap{display:flex;flex-direction:column;gap:10px;}
+.skill-subtype{margin-bottom:8px;}
+.subtype-label{
+  font-family:'Cinzel',serif;font-size:0.55rem;letter-spacing:0.25em;
+  color:rgba(201,168,76,0.5);text-transform:uppercase;margin-bottom:6px;
+}
+.skill-row{display:flex;gap:6px;align-items:center;}
+.skill-node{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  position:relative;
+}
+.skill-node + .skill-node::before{
+  content:'──';position:absolute;left:-14px;top:10px;
+  font-size:0.5rem;color:rgba(201,168,76,0.2);
+}
+.s-gem{
+  width:32px;height:32px;border:1px solid;border-radius:2px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.65rem;position:relative;
+  transition:all 0.2s;
+}
+.s-gem.common{border-color:rgba(180,180,180,0.4);background:rgba(180,180,180,0.05);color:#aaa;}
+.s-gem.rare{border-color:rgba(100,180,255,0.5);background:rgba(100,180,255,0.06);color:#7bbfff;}
+.s-gem.epic{border-color:rgba(180,100,255,0.5);background:rgba(180,100,255,0.06);color:#c27fff;}
+.s-gem.legendary{border-color:rgba(255,180,50,0.7);background:rgba(255,180,50,0.08);color:#ffbe32;box-shadow:0 0 8px rgba(255,180,50,0.2);}
+.s-gem.locked{border-color:rgba(80,80,80,0.3);background:rgba(0,0,0,0.3);color:rgba(80,80,80,0.5);filter:grayscale(1);}
+.s-name{font-family:'Cinzel',serif;font-size:0.42rem;letter-spacing:0.05em;color:var(--text-dim);text-align:center;max-width:40px;line-height:1.2;}
+
+.no-weapon{
+  font-family:'EB Garamond',serif;font-style:italic;
+  color:var(--text-dim);font-size:0.85rem;text-align:center;
+  padding:20px 0;
+}
+
+/* BOTÓN CONFIRMAR */
+.confirm-wrap{margin-top:auto;padding-top:20px;}
+.confirm-btn{
+  width:100%;font-family:'Cinzel',serif;font-size:0.75rem;
+  letter-spacing:0.3em;color:var(--ash-deep);
+  background:linear-gradient(135deg,var(--gold) 0%,var(--gold-light) 100%);
+  border:none;padding:16px;cursor:pointer;
+  transition:all 0.2s;text-transform:uppercase;
+  -webkit-tap-highlight-color:transparent;
+}
+.confirm-btn:hover{filter:brightness(1.1);}
+.confirm-btn:active{transform:scale(0.98);}
+.confirm-btn:disabled{opacity:0.3;cursor:not-allowed;filter:none;}
+
+/* MOBILE PORTRAIT */
+@media(orientation:portrait),(max-width:600px){
+  .creator{flex-direction:column;}
+  .col-preview{width:100%;height:auto;padding:16px;border-right:none;border-bottom:1px solid rgba(201,168,76,0.12);flex-direction:row;gap:20px;justify-content:flex-start;}
+  #sprite-canvas{width:90px;height:140px;}
+  .col-options{padding:16px;}
+  .weapon-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+<div class="vignette"></div>
+<div id="fade"></div>
+
+<div class="creator" id="creator">
+
+  <!-- IZQUIERDA: PREVIEW -->
+  <div class="col-preview">
+    <div class="preview-title">Vista Previa</div>
+    <canvas id="sprite-canvas" width="180" height="280"></canvas>
+    <div class="preview-name-wrap">
+      <div class="preview-name-label">Nombre del Personaje</div>
+      <input id="char-name-input" type="text" maxlength="16" placeholder="Sin nombre" spellcheck="false"/>
+    </div>
+  </div>
+
+  <!-- DERECHA: OPCIONES -->
+  <div class="col-options">
+    <div class="creator-header">
+      <div class="creator-title">Renacimiento</div>
+      <div class="creator-sub">"Elige cómo llegarás a este mundo."</div>
+    </div>
+
+    <!-- GÉNERO -->
+    <div class="section">
+      <div class="section-title">Género</div>
+      <div class="pill-group" id="gender-group">
+        <div class="pill active" data-val="male">Masculino</div>
+        <div class="pill" data-val="female">Femenino</div>
+        <div class="pill" data-val="nb">No binario</div>
+      </div>
+    </div>
+
+    <!-- ESTILO DE PELO -->
+    <div class="section">
+      <div class="section-title">Estilo de Pelo</div>
+      <div class="pill-group" id="hair-group">
+        <div class="pill active" data-val="short">Corto</div>
+        <div class="pill" data-val="medium">Medio</div>
+        <div class="pill" data-val="long">Largo</div>
+        <div class="pill" data-val="shaved">Rapado</div>
+        <div class="pill" data-val="spiky">Puntas</div>
+      </div>
+    </div>
+
+    <!-- COLOR DE PELO -->
+    <div class="section">
+      <div class="section-title">Color de Pelo</div>
+      <div class="swatch-group" id="hair-color-group">
+        <div class="swatch active" data-val="#1a1008" style="background:#1a1008" title="Negro"></div>
+        <div class="swatch" data-val="#3d1f00" style="background:#3d1f00" title="Castaño oscuro"></div>
+        <div class="swatch" data-val="#7a4010" style="background:#7a4010" title="Castaño"></div>
+        <div class="swatch" data-val="#c88030" style="background:#c88030" title="Rubio oscuro"></div>
+        <div class="swatch" data-val="#e8c060" style="background:#e8c060" title="Rubio"></div>
+        <div class="swatch" data-val="#f0f0e0" style="background:#f0f0e0" title="Blanco"></div>
+        <div class="swatch" data-val="#8b0000" style="background:#8b0000" title="Rojo oscuro"></div>
+        <div class="swatch" data-val="#c44020" style="background:#c44020" title="Pelirrojo"></div>
+        <div class="swatch" data-val="#4040c0" style="background:#4040c0" title="Azul"></div>
+        <div class="swatch" data-val="#208050" style="background:#208050" title="Verde"></div>
+        <div class="swatch" data-val="#808080" style="background:#808080" title="Gris"></div>
+        <div class="swatch" data-val="#c060c0" style="background:#c060c0" title="Morado"></div>
+      </div>
+    </div>
+
+    <!-- COLOR DE PIEL -->
+    <div class="section">
+      <div class="section-title">Tono de Piel</div>
+      <div class="swatch-group" id="skin-group">
+        <div class="swatch" data-val="#fde0c0" style="background:#fde0c0" title="Muy claro"></div>
+        <div class="swatch" data-val="#f0c090" style="background:#f0c090" title="Claro"></div>
+        <div class="swatch active" data-val="#d4945a" style="background:#d4945a" title="Medio"></div>
+        <div class="swatch" data-val="#b06830" style="background:#b06830" title="Moreno"></div>
+        <div class="swatch" data-val="#7a4018" style="background:#7a4018" title="Oscuro"></div>
+        <div class="swatch" data-val="#3d1a08" style="background:#3d1a08" title="Muy oscuro"></div>
+      </div>
+    </div>
+
+    <!-- OJOS -->
+    <div class="section">
+      <div class="section-title">Color de Ojos</div>
+      <div class="swatch-group" id="eye-group">
+        <div class="swatch active" data-val="#3a2010" style="background:#3a2010" title="Marrón"></div>
+        <div class="swatch" data-val="#1a3a20" style="background:#1a3a20" title="Verde"></div>
+        <div class="swatch" data-val="#1a2a5a" style="background:#1a2a5a" title="Azul"></div>
+        <div class="swatch" data-val="#505050" style="background:#505050" title="Gris"></div>
+        <div class="swatch" data-val="#3a0020" style="background:#3a0020" title="Rojo"></div>
+        <div class="swatch" data-val="#b08000" style="background:#b08000" title="Ámbar"></div>
+        <div class="swatch" data-val="#006060" style="background:#006060" title="Aguamarina"></div>
+        <div class="swatch" data-val="#8000a0" style="background:#8000a0" title="Violeta"></div>
+      </div>
+    </div>
+
+    <!-- FORMA DE OJOS -->
+    <div class="section">
+      <div class="section-title">Forma de Ojos</div>
+      <div class="pill-group" id="eye-shape-group">
+        <div class="pill active" data-val="normal">Normal</div>
+        <div class="pill" data-val="sharp">Afilados</div>
+        <div class="pill" data-val="round">Redondos</div>
+        <div class="pill" data-val="droopy">Caídos</div>
+      </div>
+    </div>
+
+    <!-- ARMA INICIAL -->
+    <div class="section">
+      <div class="section-title">Arma Inicial</div>
+      <div class="weapon-grid" id="weapon-grid">
+
+        <div class="weapon-card" data-weapon="katana">
+          <div class="weapon-icon">⚔️</div>
+          <span class="weapon-name">Katana</span>
+          <div class="weapon-desc">Velocidad y precisión. Domina las sombras, la tormenta y el honor.</div>
+        </div>
+
+        <div class="weapon-card" data-weapon="sword">
+          <div class="weapon-icon">🗡️</div>
+          <span class="weapon-name">Espada</span>
+          <div class="weapon-desc">Fuerza y resistencia. Maestría en defensa, batalla y ejecución.</div>
+        </div>
+
+        <div class="weapon-card" data-weapon="bow">
+          <div class="weapon-icon">🏹</div>
+          <span class="weapon-name">Arco</span>
+          <div class="weapon-desc">Distancia y agilidad. Precisión, veneno, lluvia de flechas y movimiento.</div>
+        </div>
+
+        <div class="weapon-card" data-weapon="magic">
+          <div class="weapon-icon">✨</div>
+          <span class="weapon-name">Magia</span>
+          <div class="weapon-desc">Elementos puros. Fuego, hielo, viento y naturaleza a tu disposición.</div>
+        </div>
+
+      </div>
+
+      <!-- ÁRBOL DE HABILIDADES -->
+      <div class="skill-projection" id="skill-projection">
+        <div class="no-weapon" id="no-weapon-msg">Selecciona un arma para ver su árbol de habilidades</div>
+        <div class="skill-tree-wrap" id="skill-tree" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- CONFIRMAR -->
+    <div class="confirm-wrap">
+      <button class="confirm-btn" id="confirm-btn" disabled onclick="confirmCharacter()">
+        Renacer en Aeltherion ›
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── PARTICLES ──
+const pc=document.getElementById('particles'),px=pc.getContext('2d');
+function rsz(){pc.width=innerWidth;pc.height=innerHeight;}rsz();
+window.addEventListener('resize',rsz);
+class P{constructor(){this.reset(true);}reset(r){this.x=Math.random()*pc.width;this.y=r?Math.random()*pc.height:pc.height+5;this.s=Math.random()*1.1+0.2;this.vx=(Math.random()-.5)*.1;this.vy=-(Math.random()*.22+.06);this.ml=Math.random()*280+160;this.l=r?Math.random()*this.ml:0;this.h=Math.random()*25+32;}update(){this.x+=this.vx;this.y+=this.vy;this.l++;if(this.l>this.ml||this.y<-4)this.reset(false);}draw(){const p=this.l/this.ml,a=p<.12?p/.12:p>.78?(1-p)/.22:1;px.save();px.globalAlpha=a*.3;px.fillStyle=`hsl(${this.h},58%,58%)`;px.beginPath();px.arc(this.x,this.y,this.s,0,Math.PI*2);px.fill();px.restore();}}
+const pts=Array.from({length:90},()=>new P());
+(function loop(){px.clearRect(0,0,pc.width,pc.height);pts.forEach(p=>{p.update();p.draw();});requestAnimationFrame(loop);})();
+
+// ── ESTADO ──
+const state = {
+  gender: 'male',
+  hair: 'short',
+  hairColor: '#1a1008',
+  skin: '#d4945a',
+  eyeColor: '#3a2010',
+  eyeShape: 'normal',
+  weapon: null,
+  name: ''
+};
+
+// ── SKILL TREES ──
+const SKILLS = {
+  katana: [
+    { label: 'Velocidad', nodes: [
+      {name:'Quick\nSlash',tier:'common'},{name:'Flash\nStep',tier:'common'},{name:'Blade\nDance',tier:'common'},{name:'1000\nCuts',tier:'common'}
+    ]},
+    { label: 'Sombra', nodes: [
+      {name:'Shadow\nSlash',tier:'common'},{name:'Nightfall',tier:'rare'},{name:'Void\nStep',tier:'epic'},{name:'Shadow\nRealm',tier:'legendary'}
+    ]},
+    { label: 'Tormenta', nodes: [
+      {name:'Thunder\nSlash',tier:'common'},{name:'Static\nField',tier:'rare'},{name:'Thunder\nStorm',tier:'epic'},{name:'God of\nThunder',tier:'legendary'}
+    ]},
+    { label: 'Honor', nodes: [
+      {name:'Last\nStand',tier:'common'},{name:'Martyr',tier:'rare'},{name:'Sacred\nBlade',tier:'epic'},{name:'Leg.\nStand',tier:'legendary'}
+    ]},
+  ],
+  sword: [
+    { label: 'Fuerza', nodes: [
+      {name:'Cleave',tier:'common'},{name:'—',tier:'locked'},{name:'—',tier:'locked'},{name:'—',tier:'locked'}
+    ]},
+    { label: 'Defensa', nodes: [
+      {name:'Shield\nBash',tier:'common'},{name:'—',tier:'locked'},{name:'—',tier:'locked'},{name:'—',tier:'locked'}
+    ]},
+    { label: 'Batalla', nodes: [
+      {name:'War\nCry',tier:'common'},{name:'—',tier:'locked'},{name:'—',tier:'locked'},{name:'—',tier:'locked'}
+    ]},
+    { label: 'Ejecución', nodes: [
+      {name:'Execute',tier:'common'},{name:'—',tier:'locked'},{name:'—',tier:'locked'},{name:'—',tier:'locked'}
+    ]},
+  ],
+  bow: [
+    { label: 'Precisión', nodes: [
+      {name:'Piercing\nShot',tier:'common'},{name:'Snipe',tier:'rare'},{name:'Bullseye',tier:'locked'},{name:'Divine\nArrow',tier:'locked'}
+    ]},
+    { label: 'Veneno', nodes: [
+      {name:'Poison\nArrow',tier:'common'},{name:'Plague\nShot',tier:'locked'},{name:'Toxic\nCloud',tier:'locked'},{name:'Death\nPlague',tier:'locked'}
+    ]},
+    { label: 'Lluvia', nodes: [
+      {name:'Rain of\nArrows',tier:'common'},{name:'Storm\nVolley',tier:'locked'},{name:'Arrow\nStorm',tier:'locked'},{name:'Sky\nCollapse',tier:'locked'}
+    ]},
+    { label: 'Agilidad', nodes: [
+      {name:'Back\nStep',tier:'common'},{name:'Roll\nShot',tier:'locked'},{name:'Phantom\nStep',tier:'locked'},{name:'Void\nDance',tier:'locked'}
+    ]},
+  ],
+  magic: [
+    { label: 'Fuego', nodes: [
+      {name:'Fireball',tier:'common'},{name:'—',tier:'locked'},{name:'—',tier:'locked'},{name:'—',tier:'locked'}
+    ]},
+    { label: 'Hielo', nodes: [
+      {name:'Ice\nShard',tier:'common'},{name:'—',tier:'locked'},{name:'—',tier:'locked'},{name:'—',tier:'locked'}
+    ]},
+    { label: 'Viento', nodes: [
+      {name:'Wind\nGust',tier:'common'},{name:'—',tier:'locked'},{name:'—',tier:'locked'},{name:'—',tier:'locked'}
+    ]},
+    { label: 'Planta', nodes: [
+      {name:'Thorn\nShot',tier:'common'},{name:'—',tier:'locked'},{name:'—',tier:'locked'},{name:'—',tier:'locked'}
+    ]},
+  ],
+};
+
+const TIER_ICONS = {common:'○',rare:'◆',epic:'★',legendary:'✦',locked:'🔒'};
+
+function renderSkillTree(weapon) {
+  const tree = document.getElementById('skill-tree');
+  const msg  = document.getElementById('no-weapon-msg');
+  if (!weapon) { tree.style.display='none'; msg.style.display='block'; return; }
+  msg.style.display='none'; tree.style.display='flex';
+  const data = SKILLS[weapon];
+  tree.innerHTML = data.map(sub => `
+    <div class="skill-subtype">
+      <div class="subtype-label">${sub.label}</div>
+      <div class="skill-row">
+        ${sub.nodes.map((n,i) => `
+          <div class="skill-node">
+            <div class="s-gem ${n.tier}" title="${n.name.replace('\n',' ')} · ${n.tier}">
+              ${TIER_ICONS[n.tier]}
+            </div>
+            <div class="s-name">${n.name}</div>
+          </div>
+          ${i < sub.nodes.length-1 ? '<div style="color:rgba(201,168,76,0.2);font-size:0.6rem;margin-bottom:16px;">─</div>' : ''}
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── SPRITE CANVAS ──
+const sc = document.getElementById('sprite-canvas');
+const sx = sc.getContext('2d');
+
+function drawSprite() {
+  const w = sc.width, h = sc.height;
+  sx.clearRect(0,0,w,h);
+
+  // Fondo sutil
+  sx.fillStyle = 'rgba(0,0,0,0.3)';
+  sx.fillRect(0,0,w,h);
+
+  // Sombra en suelo
+  sx.save();
+  sx.globalAlpha = 0.25;
+  sx.fillStyle = '#000';
+  sx.beginPath();
+  sx.ellipse(w/2, h-18, 30, 8, 0, 0, Math.PI*2);
+  sx.fill();
+  sx.restore();
+
+  const skin = state.skin;
+  const hair = state.hairColor;
+  const eye  = state.eyeColor;
+  const isFemale = state.gender === 'female';
+  const isNB     = state.gender === 'nb';
+
+  // Proporciones
+  const bodyW   = isFemale ? 34 : 38;
+  const bodyH   = 58;
+  const headR   = isFemale ? 22 : 24;
+  const legH    = 52;
+  const legW    = isFemale ? 10 : 12;
+  const cx      = w/2;
+  const headY   = h - legH - bodyH - headR*2 - 10;
+  const bodyY   = headY + headR*2 + 4;
+  const legY    = bodyY + bodyH;
+
+  // PIERNAS
+  sx.fillStyle = '#1a1a2e';
+  sx.fillRect(cx - bodyW/2 + 2, legY, legW, legH);
+  sx.fillRect(cx + bodyW/2 - legW - 2, legY, legW, legH);
+
+  // ZAPATOS
+  sx.fillStyle = '#0a0a14';
+  sx.fillRect(cx - bodyW/2 + 1, legY+legH-8, legW+4, 8);
+  sx.fillRect(cx + bodyW/2 - legW - 3, legY+legH-8, legW+4, 8);
+
+  // CUERPO
+  const bodyColor = isFemale ? '#1a2a4a' : '#1e1e3a';
+  sx.fillStyle = bodyColor;
+  sx.fillRect(cx - bodyW/2, bodyY, bodyW, bodyH);
+
+  // Detalle cuerpo (cinturón / solapa)
+  sx.fillStyle = 'rgba(201,168,76,0.4)';
+  sx.fillRect(cx - bodyW/2, bodyY + bodyH - 10, bodyW, 2);
+
+  // BRAZOS
+  sx.fillStyle = bodyColor;
+  const armW = isFemale ? 9 : 11;
+  const armH = isFemale ? 50 : 54;
+  sx.fillRect(cx - bodyW/2 - armW, bodyY + 6, armW, armH);
+  sx.fillRect(cx + bodyW/2, bodyY + 6, armW, armH);
+
+  // MANOS
+  sx.fillStyle = skin;
+  sx.beginPath(); sx.arc(cx - bodyW/2 - armW/2, bodyY+6+armH, armW/2+1, 0, Math.PI*2); sx.fill();
+  sx.beginPath(); sx.arc(cx + bodyW/2 + armW/2, bodyY+6+armH, armW/2+1, 0, Math.PI*2); sx.fill();
+
+  // ARMA en mano derecha
+  drawWeaponSprite(cx + bodyW/2 + armW/2, bodyY + 6 + armH);
+
+  // CUELLO
+  sx.fillStyle = skin;
+  sx.fillRect(cx - 7, headY + headR*2 - 4, 14, 10);
+
+  // CABEZA
+  sx.fillStyle = skin;
+  sx.beginPath();
+  if (isNB) {
+    sx.rect(cx - headR, headY, headR*2, headR*2);
+  } else {
+    sx.ellipse(cx, headY + headR, headR, headR * (isFemale ? 1.1 : 1.0), 0, 0, Math.PI*2);
+  }
+  sx.fill();
+
+  // PELO
+  drawHair(cx, headY, headR, hair, isFemale);
+
+  // OJOS
+  drawEyes(cx, headY + headR * 0.7, headR, eye);
+
+  // NARIZ (simple)
+  sx.fillStyle = shadeColor(skin, -20);
+  sx.beginPath();
+  sx.ellipse(cx, headY + headR * 1.05, 2.5, 2, 0, 0, Math.PI*2);
+  sx.fill();
+
+  // BOCA
+  sx.strokeStyle = shadeColor(skin, -35);
+  sx.lineWidth = 1.5;
+  sx.beginPath();
+  sx.arc(cx, headY + headR * 1.28, 6, 0.1, Math.PI - 0.1);
+  sx.stroke();
+
+  // HOLOGRAPHIC GRID overlay
+  sx.save();
+  sx.globalAlpha = 0.04;
+  sx.strokeStyle = '#C9A84C';
+  sx.lineWidth = 0.5;
+  for (let y = 0; y < h; y += 12) {
+    sx.beginPath(); sx.moveTo(0,y); sx.lineTo(w,y); sx.stroke();
+  }
+  for (let x = 0; x < w; x += 12) {
+    sx.beginPath(); sx.moveTo(x,0); sx.lineTo(x,h); sx.stroke();
+  }
+  sx.restore();
+
+  // Scan line animado
+  const t = Date.now() * 0.001;
+  const scanY = ((t % 2) / 2) * h;
+  sx.save();
+  sx.globalAlpha = 0.08;
+  const grad = sx.createLinearGradient(0, scanY-6, 0, scanY+6);
+  grad.addColorStop(0,'transparent');
+  grad.addColorStop(0.5,'rgba(201,168,76,0.8)');
+  grad.addColorStop(1,'transparent');
+  sx.fillStyle = grad;
+  sx.fillRect(0, scanY-6, w, 12);
+  sx.restore();
+}
+
+function drawHair(cx, headY, headR, color, isFemale) {
+  sx.fillStyle = color;
+  const style = state.hair;
+
+  if (style === 'shaved') {
+    sx.save(); sx.globalAlpha = 0.4;
+    sx.fillStyle = color;
+    sx.beginPath(); sx.ellipse(cx, headY+headR*0.3, headR-2, headR*0.4, 0, Math.PI, Math.PI*2); sx.fill();
+    sx.restore(); return;
+  }
+  if (style === 'short') {
+    sx.beginPath(); sx.ellipse(cx, headY+headR*0.3, headR+1, headR*0.55, 0, Math.PI, Math.PI*2); sx.fill();
+    sx.fillRect(cx-headR-1, headY, 6, headR*0.9);
+    sx.fillRect(cx+headR-5, headY, 6, headR*0.9);
+    return;
+  }
+  if (style === 'medium') {
+    sx.beginPath(); sx.ellipse(cx, headY+headR*0.3, headR+2, headR*0.6, 0, Math.PI, Math.PI*2); sx.fill();
+    sx.fillRect(cx-headR-2, headY, 7, headR*1.5);
+    sx.fillRect(cx+headR-5, headY, 7, headR*1.5);
+    return;
+  }
+  if (style === 'long') {
+    sx.beginPath(); sx.ellipse(cx, headY+headR*0.3, headR+2, headR*0.6, 0, Math.PI, Math.PI*2); sx.fill();
+    sx.fillRect(cx-headR-2, headY, 8, headR*2.8);
+    sx.fillRect(cx+headR-6, headY, 8, headR*2.8);
+    sx.beginPath(); sx.moveTo(cx-headR-2,headY+headR*2.8); sx.lineTo(cx-headR+4,headY+headR*3.5); sx.lineTo(cx-headR+8,headY+headR*2.8); sx.fill();
+    sx.beginPath(); sx.moveTo(cx+headR-6,headY+headR*2.8); sx.lineTo(cx+headR-1,headY+headR*3.5); sx.lineTo(cx+headR+2,headY+headR*2.8); sx.fill();
+    return;
+  }
+  if (style === 'spiky') {
+    sx.beginPath(); sx.ellipse(cx, headY+headR*0.3, headR+1, headR*0.5, 0, Math.PI, Math.PI*2); sx.fill();
+    const spikes = [-headR*0.6,-headR*0.2,headR*0.2,headR*0.6];
+    spikes.forEach(ox => {
+      sx.beginPath();
+      sx.moveTo(cx+ox-5, headY+6);
+      sx.lineTo(cx+ox, headY-headR*0.6);
+      sx.lineTo(cx+ox+5, headY+6);
+      sx.fill();
+    });
+    return;
+  }
+}
+
+function drawEyes(cx, eyeY, headR, color) {
+  const shape = state.eyeShape;
+  const ex = headR * 0.42;
+  [-ex, ex].forEach(ox => {
+    // Blanco del ojo
+    sx.fillStyle = '#e8e0d0';
+    if (shape === 'round') {
+      sx.beginPath(); sx.ellipse(cx+ox, eyeY, 7, 6, 0, 0, Math.PI*2); sx.fill();
+    } else if (shape === 'sharp') {
+      sx.beginPath(); sx.moveTo(cx+ox-7,eyeY); sx.lineTo(cx+ox,eyeY-5); sx.lineTo(cx+ox+7,eyeY); sx.lineTo(cx+ox,eyeY+4); sx.closePath(); sx.fill();
+    } else if (shape === 'droopy') {
+      sx.save(); sx.translate(cx+ox,eyeY);
+      sx.rotate(ox > 0 ? 0.2 : -0.2);
+      sx.beginPath(); sx.ellipse(0,0,7,4.5,0,0,Math.PI*2); sx.fill();
+      sx.restore();
+    } else {
+      sx.beginPath(); sx.ellipse(cx+ox, eyeY, 7, 5, 0, 0, Math.PI*2); sx.fill();
+    }
+    // Iris
+    sx.fillStyle = color;
+    sx.beginPath(); sx.ellipse(cx+ox, eyeY, 4, 4, 0, 0, Math.PI*2); sx.fill();
+    // Pupila
+    sx.fillStyle = '#000';
+    sx.beginPath(); sx.ellipse(cx+ox, eyeY, 2, 2.5, 0, 0, Math.PI*2); sx.fill();
+    // Brillo
+    sx.fillStyle = 'rgba(255,255,255,0.8)';
+    sx.beginPath(); sx.ellipse(cx+ox+2, eyeY-1.5, 1.5, 1.5, 0, 0, Math.PI*2); sx.fill();
+  });
+}
+
+function drawWeaponSprite(x, y) {
+  if (!state.weapon) return;
+  sx.save();
+  sx.translate(x, y);
+
+  if (state.weapon === 'katana') {
+    sx.strokeStyle = '#e0e8f0'; sx.lineWidth = 2.5;
+    sx.beginPath(); sx.moveTo(4,-40); sx.lineTo(2,10); sx.stroke();
+    sx.strokeStyle = '#c9a84c'; sx.lineWidth = 4;
+    sx.beginPath(); sx.moveTo(-4,10); sx.lineTo(8,10); sx.stroke();
+    sx.strokeStyle = '#7a5020'; sx.lineWidth = 3;
+    sx.beginPath(); sx.moveTo(3,10); sx.lineTo(5,30); sx.stroke();
+  } else if (state.weapon === 'sword') {
+    sx.strokeStyle = '#c0c8d0'; sx.lineWidth = 4;
+    sx.beginPath(); sx.moveTo(3,-45); sx.lineTo(3,8); sx.stroke();
+    sx.strokeStyle = '#8a8090'; sx.lineWidth = 6;
+    sx.beginPath(); sx.moveTo(-8,8); sx.lineTo(14,8); sx.stroke();
+    sx.strokeStyle = '#c9a84c'; sx.lineWidth = 3;
+    sx.beginPath(); sx.moveTo(3,8); sx.lineTo(5,28); sx.stroke();
+  } else if (state.weapon === 'bow') {
+    sx.strokeStyle = '#7a5020'; sx.lineWidth = 2.5;
+    sx.beginPath(); sx.arc(0,0,24,-(Math.PI*0.7),Math.PI*0.7); sx.stroke();
+    sx.strokeStyle = 'rgba(201,168,76,0.6)'; sx.lineWidth = 1;
+    sx.beginPath(); sx.moveTo(14,-17); sx.lineTo(14,17); sx.stroke();
+  } else if (state.weapon === 'magic') {
+    sx.strokeStyle = '#6080ff'; sx.lineWidth = 2;
+    sx.beginPath(); sx.moveTo(0,5); sx.lineTo(0,-30); sx.stroke();
+    sx.fillStyle = 'rgba(100,150,255,0.8)';
+    sx.beginPath(); sx.arc(0,-32,5,0,Math.PI*2); sx.fill();
+    sx.fillStyle = 'rgba(180,200,255,0.4)';
+    sx.beginPath(); sx.arc(0,-32,9,0,Math.PI*2); sx.fill();
+    // Partículas mágicas
+    [[8,-20],[−6,-10],[10,-5]].forEach(([px,py]) => {
+      sx.fillStyle = `rgba(100,180,255,${Math.random()*0.5+0.3})`;
+      sx.beginPath(); sx.arc(px,py,2,0,Math.PI*2); sx.fill();
+    });
+  }
+  sx.restore();
+}
+
+function shadeColor(col, amt) {
+  let r=parseInt(col.slice(1,3),16)+amt;
+  let g=parseInt(col.slice(3,5),16)+amt;
+  let b=parseInt(col.slice(5,7),16)+amt;
+  r=Math.max(0,Math.min(255,r)); g=Math.max(0,Math.min(255,g)); b=Math.max(0,Math.min(255,b));
+  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+// Loop animado
+(function spriteLoop() { drawSprite(); requestAnimationFrame(spriteLoop); })();
+
+// ── PILLS ──
+document.querySelectorAll('.pill-group').forEach(group => {
+  group.addEventListener('click', e => {
+    const pill = e.target.closest('.pill');
+    if (!pill) return;
+    group.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    const id = group.id;
+    if (id === 'gender-group')     state.gender    = pill.dataset.val;
+    if (id === 'hair-group')       state.hair      = pill.dataset.val;
+    if (id === 'eye-shape-group')  state.eyeShape  = pill.dataset.val;
+  });
+});
+
+// ── SWATCHES ──
+document.querySelectorAll('.swatch-group').forEach(group => {
+  group.addEventListener('click', e => {
+    const sw = e.target.closest('.swatch');
+    if (!sw) return;
+    group.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+    sw.classList.add('active');
+    const id = group.id;
+    if (id === 'hair-color-group') state.hairColor = sw.dataset.val;
+    if (id === 'skin-group')       state.skin      = sw.dataset.val;
+    if (id === 'eye-group')        state.eyeColor  = sw.dataset.val;
+  });
+});
+
+// ── ARMAS ──
+document.querySelectorAll('.weapon-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.weapon-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    state.weapon = card.dataset.weapon;
+    renderSkillTree(state.weapon);
+    document.getElementById('confirm-btn').disabled = false;
+  });
+});
+
+// ── NOMBRE ──
+document.getElementById('char-name-input').addEventListener('input', e => {
+  state.name = e.target.value;
+});
+
+// ── CONFIRMAR ──
+function confirmCharacter() {
+  if (!state.weapon) return;
+  localStorage.setItem('ashesCharacter', JSON.stringify(state));
+  const fade = document.getElementById('fade');
+  fade.style.transition = 'opacity 1s ease';
+  fade.style.opacity = '1';
+  setTimeout(() => { window.location.href = './game.html'; }, 1100);
+}
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  renderSkillTree(null);
+  const fade = document.getElementById('fade');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    fade.style.transition = 'opacity 1.2s ease';
+    fade.style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('creator').classList.add('visible');
+    }, 400);
+  }));
+});
+</script>
+</body>
+</html>
