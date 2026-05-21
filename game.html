@@ -302,22 +302,16 @@ async function boot() {
     ];
 
     // ── Camino a Ironfell ─//
-      const roadMonsters = [
-  new ShadowForest(scene,   { x: -10, z: 35 }, player),
-  new ShadowForest(scene,   { x:  12, z: 38 }, player), // antes z:42
-  new StoneSnake(scene,     { x:   5, z: 34 }, player), // antes z:38
-  new StoneSnake(scene,     { x: -15, z: 36 }, player), // antes z:50
-  new WarriorGhost(scene,   { x:  18, z: 57 }, player), // antes z:45
-  new WarriorGhost(scene,   { x:  -8, z: 58 }, player),
-  new EliteMercenary(scene, { x:   0, z: 56 }, player), // antes z:52
-  new EliteMercenary(scene, { x:  14, z: 59 }, player), // antes z:58
+        const roadMonsters = [
+  new ShadowForest(scene,   { x: -35, z: 35 }, player),
+  new ShadowForest(scene,   { x:  38, z: 38 }, player),
+  new StoneSnake(scene,     { x: -40, z: 34 }, player),
+  new StoneSnake(scene,     { x:  42, z: 36 }, player),
+  new WarriorGhost(scene,   { x: -38, z: 57 }, player),
+  new WarriorGhost(scene,   { x:  40, z: 58 }, player),
+  new EliteMercenary(scene, { x: -36, z: 56 }, player),
+  new EliteMercenary(scene, { x:  38, z: 59 }, player),
 ];
-    // ── Bandidos de Mika (z≈45, cerca del carruaje) ──
-    const mikaBandits = [
-      new Bandit(scene, { x: -3, z: 47 }, player),
-      new Bandit(scene, { x:  3, z: 48 }, player),
-      new Bandit(scene, { x:  0, z: 50 }, player),
-    ];
 
     // Cuando todos los bandidos mueren → rescatar a Mika
     let _mikaRescued = false;
