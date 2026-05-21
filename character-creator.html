@@ -785,17 +785,11 @@ function confirmCharacter() {
   setTimeout(() => { window.location.href = './game.html'; }, 1100);
 }
 
-// ── INIT ──
+// ── INIT ── //
 window.addEventListener('load', () => {
   renderSkillTree(null);
-  const fade = document.getElementById('fade');
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    fade.style.transition = 'opacity 1.2s ease';
-    fade.style.opacity = '0';
-    setTimeout(() => {
-      document.getElementById('creator').classList.add('visible');
-    }, 400);
-  }));
+  document.getElementById('fade').style.display = 'none';
+  document.getElementById('creator').classList.add('visible');
 });
 </script>
 </body>
