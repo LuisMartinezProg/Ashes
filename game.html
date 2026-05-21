@@ -57,7 +57,6 @@ import { CombatSystem }     from './core/combat.js';
 import { spawnEnemies }     from './core/enemy.js';
 import { HUD }              from './ui/hud.js';
 import { SkillSystem }      from './core/skillSystem.js';
-import { showWeaponSelect } from './ui/weaponSelect.js';
 import { spawnNPCs }        from './core/npc.js';
 import { DialogueUI }       from './ui/dialogue.js';
 import { ShopUI }           from './ui/shop.js';
@@ -247,9 +246,10 @@ async function boot() {
     loading.classList.add('hidden');
     setTimeout(() => loading.remove(), 900);
 
-    const weaponType = await showWeaponSelect();
-    combat.setWeapon(weaponType);
-    hud.setWeaponIcon(weaponType);
+    const charData   = JSON.parse(localStorage.getItem('ashesCharacter') || '{}');
+const weaponType = charData.weapon || 'sword';
+combat.setWeapon(weaponType);
+hud.setWeaponIcon(weaponType);
     hud.show();
     hud.setCamera(camera);
     player.onStaminaUpdate = (stamina, max) => hud.updateStamina(stamina, max);
