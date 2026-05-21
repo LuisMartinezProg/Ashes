@@ -28,8 +28,8 @@ const SPEAKER_LABELS = {
   voron       : 'Voron',
 };
 
-const TYPEWRITER_SPEED = 28; // ms por carácter
-const MIN_ADVANCE_TIME = 1200; // ms mínimo antes de poder avanzar
+const TYPEWRITER_SPEED = 40; // ms por carácter
+const MIN_ADVANCE_TIME = 2500; // ms mínimo antes de poder avanzar
 
 export class NarrativeSystem {
   constructor() {
@@ -479,23 +479,29 @@ export class NarrativeSystem {
     this._titleLayer.style.display = 'none';
     this._skipBtn.style.display    = 'none';
   }
+_bindInput() {
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter') this.advance();
+  });
 
-  _bindInput() {
-    document.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' || e.code === 'Enter') this.advance();
-    });
-    document.addEventListener('touchend', (e) => {
-      if (e.target.closest('.nar-choice-btn')) return;
-      if (e.target === this._skipBtn) return;
-      this.advance();
-    }, { passive: true });
-    document.addEventListener('click', (e) => {
-      if (e.target.closest('.nar-choice-btn')) return;
-      if (e.target === this._skipBtn) return;
-      this.advance();
-    });
-  }
+  let _lastTouch = 0;
+  document.addEventListener('touchstart', (e) => {
+    if (e.target.closest('.nar-choice-btn')) return;
+    if (e.target === this._skipBtn) return;
+    if (!this._active) return;
+    const now = Date.now();
+    if (now - _lastTouch < 300) return;
+    _lastTouch = now;
+    this.advance();
+  }, { passive: true });
 
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.nar-choice-btn')) return;
+    if (e.target === this._skipBtn) return;
+    this.advance();
+  });
+}
+  
   _el(tag, styles = {}) {
     const el = document.createElement(tag);
     Object.assign(el.style, styles);
