@@ -51,21 +51,48 @@ export const DIALOGUES = {
   mika: {
     name: 'Mika',
     lines: [
-      '¡Por favor, ayúdame! Hay una bestia cerca...',
+      '¡Por favor, ayúdame! Hay bandidos cerca...',
       'Gracias. De verdad, pensé que no saldría de esta.',
       'Me llamo Mika. Conozco bien el camino a Ironfell — puedo guiarte si quieres.',
       'Ironfell no es perfecta, pero es un buen lugar. Ya verás.',
     ],
-    // Diálogo post-rescate (después de eliminar la bestia)
     linesAfterRescue: [
       'Ya está, todo bien. ¿Vamos juntos a Ironfell?',
       'Oye... ¿escuchaste eso? Hay alguien en ese carruaje.',
     ],
   },
 
-};
+  yuna: {
+    name: 'Yuna',
+    lines: [
+      'Alto. Ironfell no acepta extraños sin identificación.',
+      '...Vienes con Mika. Está bien, puedes entrar.',
+      'Soy Yuna, guardia de la puerta norte. Cualquier problema, me buscas.',
+      'Mantente fuera de problemas dentro de los muros.',
+    ],
+  },
 
-// ── TIENDAS ──────────────────────────────────────────────────────────────────
+  voron: {
+    name: 'Voron',
+    lines: [
+      'Así que eres el forastero del que me habló Mika.',
+      'Ironfell tiene sus propias reglas. Respétalas y no habrá problemas.',
+      'Si quieres ganarte un lugar aquí, demuestra tu valía.',
+      'La Academia Veldris acepta nuevos estudiantes. Podrías presentarte.',
+    ],
+  },
+
+  elfa_vendedora: {
+    name: 'Aerith',
+    shop: 'items',
+    lines: [
+      'Bienvenido a mi tienda, viajero. Soy Aerith.',
+      'Vengo del bosque élfico del este. Mis mercancías son únicas.',
+      'Toma lo que necesites — a un precio justo, claro.',
+    ],
+  },
+
+};
 
 export const SHOPS = {
 
@@ -81,9 +108,9 @@ export const SHOPS = {
   items: {
     title: 'Alquimia',
     items: [
-      { id: 'potion_hp',     name: 'Poción HP',     icon: '🧪', price: 20, desc: 'Restaura 30 puntos de vida.' },
-      { id: 'potion_energy', name: 'Poción Energía', icon: '⚗️', price: 25, desc: 'Restaura 40 puntos de energía.' },
-      { id: 'potion_hp_max', name: 'Elixir Mayor',   icon: '🫧', price: 60, desc: 'Restaura toda la vida.' },
+      { id: 'potion_hp',     name: 'Poción HP',      icon: '🧪', price: 20, desc: 'Restaura 30 puntos de vida.' },
+      { id: 'potion_energy', name: 'Poción Energía',  icon: '⚗️', price: 25, desc: 'Restaura 40 puntos de energía.' },
+      { id: 'potion_hp_max', name: 'Elixir Mayor',    icon: '🫧', price: 60, desc: 'Restaura toda la vida.' },
     ],
   },
 
