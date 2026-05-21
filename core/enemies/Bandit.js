@@ -6,7 +6,7 @@ const CONFIG = {
   hp            : 60,
   damage        : 10,
   attackRange   : 1.4,
-  detectRange   : 8,
+  detectRange   : 5,
   chaseSpeed    : 3.8,
   roamSpeed     : 1.2,
   attackCooldown: 1.2,
