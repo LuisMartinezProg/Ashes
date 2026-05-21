@@ -501,4 +501,4 @@ export class NarrativeSystem {
     Object.assign(el.style, styles);
     return el;
   }
-}
+      }
