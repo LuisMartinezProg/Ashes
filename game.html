@@ -301,18 +301,17 @@ async function boot() {
       new WanderingSpirit(scene, { x: -22, z: 28 }, player),
     ];
 
-    // ── Camino a Ironfell ──
-    const roadMonsters = [
-      new ShadowForest(scene,   { x: -10, z: 35 }, player),
-      new ShadowForest(scene,   { x:  12, z: 42 }, player),
-      new StoneSnake(scene,     { x:   5, z: 38 }, player),
-      new StoneSnake(scene,     { x: -15, z: 50 }, player),
-      new WarriorGhost(scene,   { x:  18, z: 45 }, player),
-      new WarriorGhost(scene,   { x:  -8, z: 55 }, player),
-      new EliteMercenary(scene, { x:   0, z: 52 }, player),
-      new EliteMercenary(scene, { x:  14, z: 58 }, player),
-    ];
-
+    // ── Camino a Ironfell ─//
+      const roadMonsters = [
+  new ShadowForest(scene,   { x: -10, z: 35 }, player),
+  new ShadowForest(scene,   { x:  12, z: 38 }, player), // antes z:42
+  new StoneSnake(scene,     { x:   5, z: 34 }, player), // antes z:38
+  new StoneSnake(scene,     { x: -15, z: 36 }, player), // antes z:50
+  new WarriorGhost(scene,   { x:  18, z: 57 }, player), // antes z:45
+  new WarriorGhost(scene,   { x:  -8, z: 58 }, player),
+  new EliteMercenary(scene, { x:   0, z: 56 }, player), // antes z:52
+  new EliteMercenary(scene, { x:  14, z: 59 }, player), // antes z:58
+];
     // ── Bandidos de Mika (z≈45, cerca del carruaje) ──
     const mikaBandits = [
       new Bandit(scene, { x: -3, z: 47 }, player),
