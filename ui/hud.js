@@ -21,6 +21,13 @@ export class HUD {
     this._collectBtn    = null;
     this._camera        = null;
 
+    // Party
+    this._partyEl       = null;
+    this._partyManager  = null;
+    this._mikaHpFill    = null;
+    this._mikaSkillBtn  = null;
+    this._switchCoolEl  = null;
+
     this._ARC_R   = 24;
     this._ARC_LEN = 2 * Math.PI * 24 * 0.75;
 
@@ -31,6 +38,268 @@ export class HUD {
     }
   }
 
+  // ── Party ─────────────────────────────────────────────────────────────────
+
+  setPartyManager(pm) {
+    this._partyManager = pm;
+
+    // Escuchar cambios de personaje
+    pm.onSwitch = (idx) => this._onPartySwitch(idx);
+
+    // Escuchar reacciones
+    pm.onReaction = (name) => this._showReactionLabel(name);
+
+    // HP de Mika
+    pm.companion.onDamage = (hp, max) => this._updateMikaHp(hp, max);
+  }
+
+  _buildParty() {
+    this._partyEl = document.createElement('div');
+    Object.assign(this._partyEl.style, {
+      position     : 'fixed',
+      right        : '10px',
+      bottom       : '120px',
+      display      : 'flex',
+      flexDirection: 'column',
+      gap          : '8px',
+      pointerEvents: 'all',
+      zIndex       : '120',
+    });
+
+    // ── Protagonista ──
+    this._p1Card = this._makePartyCard({
+      name    : 'KAEL',
+      color   : '#88aaff',
+      active  : true,
+      idx     : 0,
+    });
+
+    // ── Mika ──
+    this._p2Card = this._makePartyCard({
+      name    : 'MIKA',
+      color   : '#ff88aa',
+      active  : false,
+      idx     : 1,
+    });
+
+    this._partyEl.appendChild(this._p1Card.wrap);
+    this._partyEl.appendChild(this._p2Card.wrap);
+    document.body.appendChild(this._partyEl);
+  }
+
+  _makePartyCard({ name, color, active, idx }) {
+    const wrap = document.createElement('div');
+    Object.assign(wrap.style, {
+      display      : 'flex',
+      flexDirection: 'column',
+      alignItems   : 'center',
+      gap          : '3px',
+      cursor       : 'pointer',
+      transition   : 'transform 0.15s',
+    });
+
+    // Círculo avatar
+    const avatar = document.createElement('div');
+    Object.assign(avatar.style, {
+      width       : active ? '44px' : '36px',
+      height      : active ? '44px' : '36px',
+      borderRadius: '50%',
+      background  : `radial-gradient(circle at 35% 35%, ${color}, ${color}66)`,
+      border      : `2px solid ${active ? color : color + '55'}`,
+      boxShadow   : active ? `0 0 10px ${color}88` : 'none',
+      transition  : 'all 0.2s',
+      display     : 'flex',
+      alignItems  : 'center',
+      justifyContent: 'center',
+      fontSize    : '16px',
+    });
+    avatar.textContent = idx === 0 ? '⚔️' : '🏹';
+
+    // Nombre
+    const label = document.createElement('div');
+    Object.assign(label.style, {
+      fontFamily   : 'monospace',
+      fontSize     : '7px',
+      color        : active ? color : color + '88',
+      letterSpacing: '1px',
+      transition   : 'color 0.2s',
+    });
+    label.textContent = name;
+
+    // Barra HP mini
+    const hpTrack = document.createElement('div');
+    Object.assign(hpTrack.style, {
+      width       : active ? '44px' : '36px',
+      height      : '3px',
+      background  : '#222',
+      borderRadius: '2px',
+      overflow    : 'hidden',
+      transition  : 'width 0.2s',
+    });
+    const hpFill = document.createElement('div');
+    Object.assign(hpFill.style, {
+      height    : '100%',
+      width     : '100%',
+      background: color,
+      transition: 'width 0.2s ease',
+    });
+    hpTrack.appendChild(hpFill);
+
+    // Cooldown overlay (switch)
+    const coolOverlay = document.createElement('div');
+    Object.assign(coolOverlay.style, {
+      position     : 'absolute',
+      inset        : '0',
+      borderRadius : '50%',
+      background   : 'rgba(0,0,0,0.55)',
+      display      : 'none',
+      alignItems   : 'center',
+      justifyContent: 'center',
+      fontSize     : '9px',
+      color        : '#fff',
+      fontFamily   : 'monospace',
+    });
+    avatar.style.position = 'relative';
+    avatar.appendChild(coolOverlay);
+
+    wrap.appendChild(avatar);
+    wrap.appendChild(label);
+    wrap.appendChild(hpTrack);
+
+    // Tap para cambiar personaje
+    const onTap = (e) => {
+      e.preventDefault();
+      if (!this._partyManager) return;
+      if (this._partyManager.getActiveIdx() === idx) return;
+      this._partyManager.switchCharacter();
+    };
+    wrap.addEventListener('touchstart', onTap, { passive: false });
+    wrap.addEventListener('click',      onTap);
+
+    return { wrap, avatar, label, hpFill, hpTrack, coolOverlay };
+  }
+
+  _onPartySwitch(idx) {
+    // Actualizar estilos activo/inactivo
+    const cards  = [this._p1Card, this._p2Card];
+    const colors = ['#88aaff', '#ff88aa'];
+
+    cards.forEach((card, i) => {
+      const active = i === idx;
+      const color  = colors[i];
+      card.avatar.style.width      = active ? '44px' : '36px';
+      card.avatar.style.height     = active ? '44px' : '36px';
+      card.avatar.style.border     = `2px solid ${active ? color : color + '55'}`;
+      card.avatar.style.boxShadow  = active ? `0 0 10px ${color}88` : 'none';
+      card.label.style.color       = active ? color : color + '88';
+      card.hpTrack.style.width     = active ? '44px' : '36px';
+    });
+
+    // Mostrar cooldown en el que acaba de salir
+    const prevIdx  = idx === 0 ? 1 : 0;
+    const prevCard = cards[prevIdx];
+    prevCard.coolOverlay.style.display = 'flex';
+    let cd = 1.5;
+    const tick = setInterval(() => {
+      cd -= 0.1;
+      prevCard.coolOverlay.textContent = cd > 0 ? cd.toFixed(1) : '';
+      if (cd <= 0) {
+        clearInterval(tick);
+        prevCard.coolOverlay.style.display = 'none';
+      }
+    }, 100);
+  }
+
+  _updateMikaHp(hp, max) {
+    if (!this._p2Card) return;
+    const pct = Math.max(0, hp / max) * 100;
+    this._p2Card.hpFill.style.width = `${pct}%`;
+  }
+
+  updateProtagonistHp(hp, max) {
+    if (!this._p1Card) return;
+    const pct = Math.max(0, hp / max) * 100;
+    this._p1Card.hpFill.style.width = `${pct}%`;
+  }
+
+  // Botón habilidad de Mika (abajo derecha, junto al skillbar)
+  _buildMikaSkillBtn() {
+    this._mikaSkillBtn = document.createElement('button');
+    Object.assign(this._mikaSkillBtn.style, {
+      position      : 'fixed',
+      right         : '62px',
+      bottom        : '62px',
+      width         : '46px',
+      height        : '46px',
+      borderRadius  : '50%',
+      background    : 'radial-gradient(circle at 35% 35%, #ff88aa, #cc4477)',
+      border        : '2px solid #ff88aaaa',
+      color         : '#fff',
+      fontSize      : '18px',
+      display       : 'flex',
+      alignItems    : 'center',
+      justifyContent: 'center',
+      cursor        : 'pointer',
+      pointerEvents : 'all',
+      zIndex        : '130',
+      boxShadow     : '0 0 8px #ff88aa66',
+      transition    : 'transform 0.1s, opacity 0.2s',
+    });
+    this._mikaSkillBtn.textContent = '🏹';
+
+    const onTap = (e) => {
+      e.preventDefault();
+      if (!this._partyManager) return;
+      const ok = this._partyManager.castCompanionSkill();
+      if (ok) {
+        this._mikaSkillBtn.style.transform = 'scale(0.85)';
+        setTimeout(() => this._mikaSkillBtn.style.transform = 'scale(1)', 150);
+      }
+    };
+    this._mikaSkillBtn.addEventListener('touchstart', onTap, { passive: false });
+    this._mikaSkillBtn.addEventListener('click',      onTap);
+    document.body.appendChild(this._mikaSkillBtn);
+  }
+
+  // Label de reacción
+  _showReactionLabel(name) {
+    const labels = {
+      vapor         : { text: '💨 VAPOR',           color: '#aaddff' },
+      discharge     : { text: '⚡ DESCARGA',         color: '#ffff44' },
+      blizzard      : { text: '❄️ VENTISCA',         color: '#88ccff' },
+      cyclone       : { text: '🌪️ CICLÓN',           color: '#aaeeff' },
+      dark_sentence : { text: '☠️ SENTENCIA OSCURA', color: '#cc44ff' },
+    };
+    const data = labels[name] ?? { text: name.toUpperCase(), color: '#ffffff' };
+
+    const el = document.createElement('div');
+    Object.assign(el.style, {
+      position     : 'fixed',
+      top          : '38%',
+      left         : '50%',
+      transform    : 'translateX(-50%)',
+      fontFamily   : "'Cinzel', serif",
+      fontSize     : '16px',
+      fontWeight   : 'bold',
+      letterSpacing: '3px',
+      color        : data.color,
+      textShadow   : `0 0 12px ${data.color}`,
+      pointerEvents: 'none',
+      zIndex       : '300',
+      opacity      : '1',
+      transition   : 'opacity 0.8s ease, top 0.8s ease',
+    });
+    el.textContent = data.text;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.opacity = '0';
+      el.style.top     = '32%';
+    }));
+    setTimeout(() => el.remove(), 900);
+  }
+
+  // ── Resto del HUD sin cambios ─────────────────────────────────────────────
+
   setEnemies(list) {
     for (const el of this._enemyLabels.values()) el.remove();
     this._enemyLabels.clear();
@@ -39,8 +308,17 @@ export class HUD {
 
   setCamera(camera) { this._camera = camera; }
 
-  show() { this._container.style.display = 'block'; }
-  hide() { this._container.style.display = 'none'; }
+  show() {
+    this._container.style.display = 'block';
+    if (this._partyEl)      this._partyEl.style.display      = 'flex';
+    if (this._mikaSkillBtn) this._mikaSkillBtn.style.display = 'flex';
+  }
+
+  hide() {
+    this._container.style.display = 'none';
+    if (this._partyEl)      this._partyEl.style.display      = 'none';
+    if (this._mikaSkillBtn) this._mikaSkillBtn.style.display = 'none';
+  }
 
   setWeaponIcon(type) {
     if (window._skillBar) window._skillBar.setWeaponIcon(type);
@@ -51,20 +329,16 @@ export class HUD {
     const pct = Math.max(0, hp / max) * 100;
     this._playerHpFill.style.width = `${pct}%`;
     if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(hp)}/${max}`;
+    this.updateProtagonistHp(hp, max);
   }
-
-  // ── Stamina estilo Genshin ───────────────────────────────────────────────
 
   updateStamina(stamina, max) {
     if (!this._staminaArc) return;
     const pct  = Math.max(0, stamina / max);
     const full = pct >= 1;
-
     this._staminaArc.style.strokeDashoffset = `${this._ARC_LEN * (1 - pct)}`;
-
     const color = pct > 0.5 ? '#f5d442' : pct > 0.25 ? '#f5a623' : '#e74c3c';
     this._staminaArc.style.stroke = color;
-
     if (full) {
       if (this._staminaHideTimer) clearTimeout(this._staminaHideTimer);
       this._staminaHideTimer = setTimeout(() => {
@@ -76,15 +350,11 @@ export class HUD {
     }
   }
 
-  // ── Barra de enemigos ────────────────────────────────────────────────────
-
   updateEnemyBar(playerPosition) {
     if (!this._camera) return;
     let bossFound = false;
-
     for (const e of this._enemies) {
       if (!e.mesh) continue;
-
       if (e._config?.isBoss) {
         if (!e.isDead() && e.mesh) {
           const dist = playerPosition.distanceTo(e.mesh.position);
@@ -93,14 +363,11 @@ export class HUD {
         this._hideLabel(e);
         continue;
       }
-
       if (e.isDead?.()) { this._hideLabel(e); continue; }
-
       const dist = playerPosition.distanceTo(e.mesh.position);
       if (dist <= 20) this._updateFloatingLabel(e);
       else this._hideLabel(e);
     }
-
     if (!bossFound) this._bossBarEl.style.display = 'none';
   }
 
@@ -124,21 +391,16 @@ export class HUD {
       this._enemyLabels.set(e, el);
       document.body.appendChild(el);
     }
-
     const pos = e.mesh.position.clone();
     pos.y += 2.2;
     pos.project(this._camera);
-
     const x = (pos.x *  0.5 + 0.5) * window.innerWidth;
     const y = (pos.y * -0.5 + 0.5) * window.innerHeight;
-
     if (pos.z > 1) { el.style.display = 'none'; return; }
-
     const pct  = Math.max(0, e.hp / e.maxHp) * 100;
     const fill = el.querySelector('.ef');
     const text = el.querySelector('.et');
     const name = el.querySelector('.en');
-
     fill.style.width = `${pct}%`;
     fill.style.background = pct > 50
       ? 'linear-gradient(90deg,#cc2222,#ff4444)'
@@ -147,7 +409,6 @@ export class HUD {
         : 'linear-gradient(90deg,#882200,#cc2200)';
     text.textContent = `${Math.ceil(e.hp)}/${e.maxHp}`;
     name.textContent = e._config?.name ?? 'Enemigo';
-
     el.style.display = 'block';
     el.style.left    = `${x}px`;
     el.style.top     = `${y}px`;
@@ -171,7 +432,6 @@ export class HUD {
       zIndex       : '90',
       minWidth     : '80px',
     });
-
     const name = document.createElement('div');
     name.className = 'en';
     Object.assign(name.style, {
@@ -182,7 +442,6 @@ export class HUD {
       textShadow   : '0 1px 3px #000',
       textAlign    : 'center',
     });
-
     const track = document.createElement('div');
     Object.assign(track.style, {
       width       : '80px',
@@ -192,7 +451,6 @@ export class HUD {
       overflow    : 'hidden',
       border      : '1px solid rgba(255,255,255,0.15)',
     });
-
     const fill = document.createElement('div');
     fill.className = 'ef';
     Object.assign(fill.style, {
@@ -201,7 +459,6 @@ export class HUD {
       background: 'linear-gradient(90deg,#cc2222,#ff4444)',
       transition: 'width 0.15s ease',
     });
-
     const text = document.createElement('div');
     text.className = 'et';
     Object.assign(text.style, {
@@ -210,15 +467,12 @@ export class HUD {
       fontFamily: 'monospace',
       textAlign : 'center',
     });
-
     track.appendChild(fill);
     wrap.appendChild(name);
     wrap.appendChild(track);
     wrap.appendChild(text);
     return wrap;
   }
-
-  // ── Recolección ──────────────────────────────────────────────────────────
 
   showCollectBtn(resource) {
     if (!resource) { this._hideCollectBtn(); return; }
@@ -239,26 +493,20 @@ export class HUD {
     this._lastCollect = now;
     const res = this._currentResource;
     if (!res || res.depleted) return;
-
     const tool    = window._building?.getTool?.() ?? 'punos';
     const toolMap = { punos: 1, hacha_madera: 2, hacha_piedra: 4, pico_madera: 2, pico_piedra: 4 };
     const power   = toolMap[tool] ?? 1;
-
     const needsAxe  = res.type === 'madera';
     const needsPick = res.type === 'piedra';
     const hasAxe    = tool.includes('hacha');
     const hasPick   = tool.includes('pico');
-
     if (needsAxe && !hasAxe && tool !== 'punos') return;
     if (needsPick && !hasPick && tool !== 'punos') return;
-
     this._collectBtn.style.transform = 'scale(0.88)';
     setTimeout(() => this._collectBtn.style.transform = 'scale(1)', 140);
-
     res.hp -= power;
     window._building?.addMaterial?.(res.type, power);
     this._showFloating(`+${power} ${res.type}`, res.type === 'madera' ? '#8B6340' : '#888078');
-
     if (res.hp <= 0) {
       res.depleted     = true;
       res.mesh.visible = false;
@@ -296,8 +544,6 @@ export class HUD {
     setTimeout(() => el.remove(), 900);
   }
 
-  // ── Build UI ─────────────────────────────────────────────────────────────
-
   _build() {
     this._container = document.createElement('div');
     this._container.id = 'hud-combat';
@@ -308,11 +554,12 @@ export class HUD {
       zIndex       : '100',
       display      : 'none',
     });
-
     this._buildPlayerBlock();
     this._buildBossBar();
     this._buildStamina();
     this._buildCollectBtn();
+    this._buildParty();
+    this._buildMikaSkillBtn();
     document.body.appendChild(this._container);
   }
 
@@ -322,8 +569,7 @@ export class HUD {
     const circ     = 2 * Math.PI * r;
     const arcLen   = this._ARC_LEN;
     const arcGap   = circ - arcLen;
-    const rotStart = 135; // hueco abajo, como Genshin
-
+    const rotStart = 135;
     this._staminaEl = document.createElement('div');
     Object.assign(this._staminaEl.style, {
       position     : 'fixed',
@@ -336,13 +582,10 @@ export class HUD {
       pointerEvents: 'none',
       zIndex       : '110',
     });
-
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('width',   size);
     svg.setAttribute('height',  size);
     svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
-
-    // Fondo arco — mismo hueco abajo
     const bgArc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     bgArc.setAttribute('cx', size / 2);
     bgArc.setAttribute('cy', size / 2);
@@ -355,8 +598,6 @@ export class HUD {
     bgArc.style.transformOrigin  = 'center';
     bgArc.style.transform        = `rotate(${rotStart}deg)`;
     svg.appendChild(bgArc);
-
-    // Arco stamina
     this._staminaArc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     this._staminaArc.setAttribute('cx', size / 2);
     this._staminaArc.setAttribute('cy', size / 2);
@@ -371,8 +612,6 @@ export class HUD {
     this._staminaArc.style.transform        = `rotate(${rotStart}deg)`;
     this._staminaArc.style.transition       = 'stroke-dashoffset 0.15s linear, stroke 0.3s';
     svg.appendChild(this._staminaArc);
-
-    // ⚡ centrado
     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     label.setAttribute('x',                 '50%');
     label.setAttribute('y',                 '50%');
@@ -383,7 +622,6 @@ export class HUD {
     label.setAttribute('font-family',       'monospace');
     label.textContent = '⚡';
     svg.appendChild(label);
-
     this._staminaEl.appendChild(svg);
     this._staminaSvg = svg;
     this._container.appendChild(this._staminaEl);
@@ -404,7 +642,6 @@ export class HUD {
       padding     : '6px 10px',
       display     : 'none',
     });
-
     this._bossNameEl = document.createElement('div');
     Object.assign(this._bossNameEl.style, {
       color        : '#cc88ff',
@@ -415,7 +652,6 @@ export class HUD {
       textAlign    : 'center',
     });
     this._bossNameEl.textContent = 'JEFE';
-
     const track = document.createElement('div');
     Object.assign(track.style, {
       width       : '100%',
@@ -424,7 +660,6 @@ export class HUD {
       borderRadius: '4px',
       overflow    : 'hidden',
     });
-
     this._bossFillEl = document.createElement('div');
     Object.assign(this._bossFillEl.style, {
       height    : '100%',
@@ -432,7 +667,6 @@ export class HUD {
       background: 'linear-gradient(90deg,#7700cc,#cc44ff)',
       transition: 'width 0.15s ease',
     });
-
     this._bossTextEl = document.createElement('div');
     Object.assign(this._bossTextEl.style, {
       color     : '#aaa',
@@ -441,7 +675,6 @@ export class HUD {
       marginTop : '3px',
       textAlign : 'right',
     });
-
     track.appendChild(this._bossFillEl);
     this._bossBarEl.appendChild(this._bossNameEl);
     this._bossBarEl.appendChild(track);
@@ -493,13 +726,10 @@ export class HUD {
       maxWidth     : '200px',
       minWidth     : '140px',
     });
-
-    // ── HP ──
     const hpWrap  = this._makeBarWrap('rgba(255,50,50,0.15)', 'rgba(255,80,80,0.3)');
     const hpTrack = this._makeTrack('10px', '#220000');
     this._playerHpFill = this._makeFill('linear-gradient(90deg,#aa0000,#ff4444)');
     hpTrack.appendChild(this._playerHpFill);
-
     this._playerHpText = document.createElement('div');
     Object.assign(this._playerHpText.style, {
       color        : 'rgba(255,180,180,0.9)',
@@ -510,16 +740,12 @@ export class HUD {
       letterSpacing: '0.5px',
     });
     this._playerHpText.textContent = '100/100';
-
     hpWrap.appendChild(hpTrack);
     hpWrap.appendChild(this._playerHpText);
-
-    // ── Energía ──
     const enWrap  = this._makeBarWrap('rgba(50,100,255,0.1)', 'rgba(80,130,255,0.25)');
     const enTrack = this._makeTrack('7px', '#1a1a2e');
     this._energyFill = this._makeFill('linear-gradient(90deg,#2244cc,#66aaff)');
     enTrack.appendChild(this._energyFill);
-
     const enText = document.createElement('div');
     Object.assign(enText.style, {
       color        : 'rgba(150,180,255,0.7)',
@@ -530,10 +756,8 @@ export class HUD {
       letterSpacing: '0.5px',
     });
     enText.textContent = 'ENERGÍA';
-
     enWrap.appendChild(enTrack);
     enWrap.appendChild(enText);
-
     block.appendChild(hpWrap);
     block.appendChild(enWrap);
     this._container.appendChild(block);
@@ -577,4 +801,4 @@ export class HUD {
     const pct = Math.max(0, energy / maxEnergy) * 100;
     this._energyFill.style.width = `${pct}%`;
   }
-    }
+}
