@@ -1,0 +1,121 @@
+// skills/bow/stormVolley.js — Descarga de Tormenta (Lluvia - Rara)
+import * as THREE from 'three';
+
+const DAMAGE         = 40;
+const ARROW_COUNT    = 5;
+const SPREAD_ANGLE   = 0.35;
+const SPEED          = 17.0;
+const MAX_RANGE      = 30;
+const MAX_CAST_RANGE = 28;
+const DURATION_VFX   = 400;
+
+export class StormVolley {
+  constructor(scene, player) {
+    this.scene    = scene;
+    this.player   = player;
+    this.cooldown = 9;
+    this._timer   = 0;
+    this._active  = [];
+    this.onCooldownUpdate = null;
+  }
+
+  isReady() { return this._timer <= 0; }
+  getCooldownProgress() { return Math.min(1, 1 - this._timer / this.cooldown); }
+
+  cast(enemies) {
+    if (!this.isReady()) return false;
+    const target = this._findTarget(enemies);
+    if (!target) return false;
+    this._spawnVolley(target, enemies);
+    this._spawnChargeVFX();
+    this._timer = this.cooldown;
+    if (this.onCooldownUpdate) this.onCooldownUpdate(0);
+    return true;
+  }
+
+  update(delta) {
+    if (this._timer > 0) {
+      this._timer -= delta;
+      if (this._timer < 0) this._timer = 0;
+      if (this.onCooldownUpdate) this.onCooldownUpdate(this.getCooldownProgress());
+    }
+    for (let i = this._active.length - 1; i >= 0; i--) {
+      const p = this._active[i];
+
+      if (p.type === 'vfx') {
+        p.timer -= delta * 1000;
+        const t = Math.max(0, p.timer / p.maxTimer);
+        p.mesh.material.opacity = t * 0.7;
+        p.mesh.scale.setScalar(1 + (1 - t) * 0.6);
+        if (p.timer <= 0) {
+          this.scene.remove(p.mesh);
+          p.mesh.geometry.dispose();
+          p.mesh.material.dispose();
+          this._active.splice(i, 1);
+        }
+        continue;
+      }
+
+      p.mesh.position.addScaledVector(p.direction, SPEED * delta);
+      p.traveled += SPEED * delta;
+
+      for (const e of p.enemies) {
+        if (e.isDead() || !e.mesh || p.hit.has(e)) continue;
+        const dx = p.mesh.position.x - e.mesh.position.x;
+        const dz = p.mesh.position.z - e.mesh.position.z;
+        if (Math.sqrt(dx * dx + dz * dz) < 1.0) {
+          e.takeDamage(DAMAGE);
+          p.hit.add(e);
+        }
+      }
+
+      if (p.traveled > MAX_RANGE) {
+        this.scene.remove(p.mesh);
+        p.mesh.geometry.dispose();
+        p.mesh.material.dispose();
+        this._active.splice(i, 1);
+      }
+    }
+  }
+
+  _findTarget(enemies) {
+    let closest = null, minDist = Infinity;
+    for (const e of enemies) {
+      if (e.isDead() || !e.mesh) continue;
+      const dx = this.player.position.x - e.mesh.position.x;
+      const dz = this.player.position.z - e.mesh.position.z;
+      const d  = Math.sqrt(dx * dx + dz * dz);
+      if (d < minDist && d < MAX_CAST_RANGE) { minDist = d; closest = e; }
+    }
+    return closest;
+  }
+
+  _spawnVolley(target, enemies) {
+    const origin = this.player.position.clone().add(new THREE.Vector3(0, 1.2, 0));
+    const baseDir = new THREE.Vector3(
+      target.mesh.position.x - origin.x, 0,
+      target.mesh.position.z - origin.z
+    ).normalize();
+
+    for (let i = 0; i < ARROW_COUNT; i++) {
+      const angle = (i - Math.floor(ARROW_COUNT / 2)) * SPREAD_ANGLE;
+      const dir = baseDir.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
+      const geo  = new THREE.CylinderGeometry(0.03, 0.03, 1.2, 4);
+      const mat  = new THREE.MeshBasicMaterial({ color: 0x88aaff });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.copy(origin);
+      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+      this.scene.add(mesh);
+      this._active.push({ type: 'arrow', mesh, direction: dir, traveled: 0, enemies: [...enemies], hit: new Set() });
+    }
+  }
+
+  _spawnChargeVFX() {
+    const geo  = new THREE.SphereGeometry(0.32, 8, 8);
+    const mat  = new THREE.MeshBasicMaterial({ color: 0x88aaff, transparent: true, opacity: 0.7 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(this.player.position).add(new THREE.Vector3(0, 1.2, 0));
+    this.scene.add(mesh);
+    this._active.push({ type: 'vfx', mesh, timer: DURATION_VFX, maxTimer: DURATION_VFX });
+  }
+}
