@@ -1,238 +1,101 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"/>
-<style>
-  body { background: #0a0a14; color: #ccc; font-family: monospace; padding: 16px; }
-  #out { white-space: pre; font-size: 13px; line-height: 1.8; }
-  .ok  { color: #44ff88; }
-  .err { color: #ff4444; }
-  .inf { color: #88aaff; }
-</style>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Skill Import Test</title>
+  <style>
+    body { background: #0a0a10; color: #ccc; font-family: monospace; padding: 20px; }
+    h2 { color: #C9A84C; margin-bottom: 16px; }
+    .ok  { color: #44ff88; }
+    .err { color: #ff4444; }
+    .mod { margin: 4px 0; font-size: 13px; }
+  </style>
 </head>
 <body>
-<div id="out">Probando...</div>
+<h2>🏹 Skill Import Test — Ashes of the Reborn</h2>
+<div id="out"></div>
+
 <script type="importmap">
-{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}
-</script>
-<script type="module">
-const out = document.getElementById('out');
-const results = [];
-
-function render() {
-  out.innerHTML = results.map(r => {
-    if (r.startsWith('✅')) return `<span class="ok">${r}</span>`;
-    if (r.startsWith('❌')) return `<span class="err">${r}</span>`;
-    return `<span class="inf">${r}</span>`;
-  }).join('\n');
-}
-
-async function test(name, fn) {
-  try {
-    await fn();
-    results.push(`✅ ${name}`);
-  } catch(e) {
-    results.push(`❌ ${name}: ${e.message}`);
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
   }
-  render();
+}
+</script>
+
+<script type="module">
+const modules = [
+  // Magia
+  ['Fireball',        '../skills/fireball.js'],
+  ['IceShard',        '../skills/iceShard.js'],
+  ['WindGust',        '../skills/windGust.js'],
+  ['ThornShot',       '../skills/thornShot.js'],
+  // Katana
+  ['QuickSlash',      '../skills/katana/quickSlash.js'],
+  ['FlashStep',       '../skills/katana/flashStep.js'],
+  ['BladeDance',      '../skills/katana/bladeDance.js'],
+  ['ThousandCuts',    '../skills/katana/thousandCuts.js'],
+  ['ShadowSlash',     '../skills/katana/shadowSlash.js'],
+  ['Nightfall',       '../skills/katana/nightfall.js'],
+  ['VoidStep',        '../skills/katana/voidStep.js'],
+  ['ShadowRealm',     '../skills/katana/shadowRealm.js'],
+  ['ThunderSlash',    '../skills/katana/thunderSlash.js'],
+  ['StaticField',     '../skills/katana/staticField.js'],
+  ['ThunderStorm',    '../skills/katana/thunderStorm.js'],
+  ['GodOfThunder',    '../skills/katana/godOfThunder.js'],
+  ['LastStand',       '../skills/katana/lastStand.js'],
+  ['Martyr',          '../skills/katana/martyr.js'],
+  ['SacredBlade',     '../skills/katana/sacredBlade.js'],
+  ['LegendaryStand',  '../skills/katana/legendaryStand.js'],
+  // Espada
+  ['Cleave',          '../skills/sword/cleave.js'],
+  ['ShieldBash',      '../skills/sword/shieldBash.js'],
+  ['WarCry',          '../skills/sword/warCry.js'],
+  ['Execute',         '../skills/sword/execute.js'],
+  // Arco — Precisión
+  ['PiercingShot',    '../skills/bow/piercingShot.js'],
+  ['Snipe',           '../skills/bow/snipe.js'],
+  ['Bullseye',        '../skills/bow/bullseye.js'],
+  ['DivineArrow',     '../skills/bow/divineArrow.js'],
+  // Arco — Veneno
+  ['PoisonArrow',     '../skills/bow/poisonArrow.js'],
+  ['PlagueShot',      '../skills/bow/plagueShot.js'],
+  ['ToxicCloud',      '../skills/bow/toxicCloud.js'],
+  ['DeathPlague',     '../skills/bow/deathPlague.js'],
+  // Arco — Lluvia
+  ['RainOfArrows',    '../skills/bow/rainOfArrows.js'],
+  ['StormVolley',     '../skills/bow/stormVolley.js'],
+  ['ArrowStorm',      '../skills/bow/arrowStorm.js'],
+  ['SkyCollapse',     '../skills/bow/skyCollapse.js'],
+  // Arco — Agilidad
+  ['BackStep',        '../skills/bow/backStep.js'],
+  ['RollShot',        '../skills/bow/rollShot.js'],
+  ['PhantomStep',     '../skills/bow/phantomStep.js'],
+  ['VoidDance',       '../skills/bow/voidDance.js'],
+];
+
+const out = document.getElementById('out');
+let ok = 0, fail = 0;
+
+for (const [name, path] of modules) {
+  const div = document.createElement('div');
+  div.className = 'mod';
+  try {
+    await import(path);
+    div.innerHTML = `<span class="ok">✅ ${name}</span> <span style="color:#555">${path}</span>`;
+    ok++;
+  } catch(e) {
+    div.innerHTML = `<span class="err">❌ ${name}</span> <span style="color:#555">${path}</span> — <span style="color:#ff6666">${e.message}</span>`;
+    fail++;
+  }
+  out.appendChild(div);
 }
 
-// ── Imports individuales ──
-await test('Fireball',      () => import('./skills/fireball.js'));
-await test('IceShard',      () => import('./skills/iceShard.js'));
-await test('WindGust',      () => import('./skills/windGust.js'));
-await test('ThornShot',     () => import('./skills/thornShot.js'));
-await test('QuickSlash',    () => import('./skills/katana/quickSlash.js'));
-await test('FlashStep',     () => import('./skills/katana/flashStep.js'));
-await test('BladeDance',    () => import('./skills/katana/bladeDance.js'));
-await test('ThousandCuts',  () => import('./skills/katana/thousandCuts.js'));
-await test('Cleave',        () => import('./skills/sword/cleave.js'));
-await test('ShieldBash',    () => import('./skills/sword/shieldBash.js'));
-await test('WarCry',        () => import('./skills/sword/warCry.js'));
-await test('Execute',       () => import('./skills/sword/execute.js'));
-await test('PiercingShot',  () => import('./skills/bow/piercingShot.js'));
-await test('RainOfArrows',  () => import('./skills/bow/rainOfArrows.js'));
-await test('PoisonArrow',   () => import('./skills/bow/poisonArrow.js'));
-await test('BackStep',      () => import('./skills/bow/backStep.js'));
-await test('SkillData',     () => import('./core/skillData.js'));
-await test('Progression',   () => import('./core/progression.js'));
-await test('SkillSystem',   () => import('./core/skillSystem.js'));
-await test('SkillBar',      () => import('./ui/skillBar.js'));
-
-// ── Instancia real ──
-await test('SkillBar katana', async () => {
-  const { SkillSystem }  = await import('./core/skillSystem.js');
-  const { Progression }  = await import('./core/progression.js');
-  const { SkillBar }     = await import('./ui/skillBar.js');
-  const { Scene, Group } = await import('three');
-
-  const scene  = new Scene();
-  const player = new Group();
-  const skills = new SkillSystem(scene, player);
-  const prog   = new Progression();
-  const bar    = new SkillBar(skills, prog);
-  bar.setWeapon('katana');
-  bar.show();
-  const activeSkills = prog.getActiveSkills('katana');
-  results.push(`  → botones: ${bar._buttons.length}`);
-  results.push(`  → skills activas: ${activeSkills.map(s => s.id).join(', ')}`);
-  results.push(`  → disponibles: ${activeSkills.filter(s => s.available).map(s => s.id).join(', ')}`);
-  render();
-});
-
-await test('SkillBar sword', async () => {
-  const { SkillSystem }  = await import('./core/skillSystem.js');
-  const { Progression }  = await import('./core/progression.js');
-  const { SkillBar }     = await import('./ui/skillBar.js');
-  const { Scene, Group } = await import('three');
-
-  const scene  = new Scene();
-  const player = new Group();
-  const skills = new SkillSystem(scene, player);
-  const prog   = new Progression();
-  const bar    = new SkillBar(skills, prog);
-  bar.setWeapon('sword');
-  bar.show();
-  const activeSkills = prog.getActiveSkills('sword');
-  results.push(`  → subtipo activo: ${prog.getActiveSubtype('sword')}`);
-  results.push(`  → skills activas: ${activeSkills.map(s => s.id).join(', ')}`);
-  results.push(`  → disponibles: ${activeSkills.filter(s => s.available).map(s => s.id).join(', ')}`);
-  render();
-});
-
-await test('SkillBar bow', async () => {
-  const { SkillSystem }  = await import('./core/skillSystem.js');
-  const { Progression }  = await import('./core/progression.js');
-  const { SkillBar }     = await import('./ui/skillBar.js');
-  const { Scene, Group } = await import('three');
-
-  const scene  = new Scene();
-  const player = new Group();
-  const skills = new SkillSystem(scene, player);
-  const prog   = new Progression();
-  const bar    = new SkillBar(skills, prog);
-  bar.setWeapon('bow');
-  bar.show();
-  const activeSkills = prog.getActiveSkills('bow');
-  results.push(`  → subtipo activo: ${prog.getActiveSubtype('bow')}`);
-  results.push(`  → skills activas: ${activeSkills.map(s => s.id).join(', ')}`);
-  results.push(`  → disponibles: ${activeSkills.filter(s => s.available).map(s => s.id).join(', ')}`);
-  render();
-});
-
-await test('SkillBar magic', async () => {
-  const { SkillSystem }  = await import('./core/skillSystem.js');
-  const { Progression }  = await import('./core/progression.js');
-  const { SkillBar }     = await import('./ui/skillBar.js');
-  const { Scene, Group } = await import('three');
-
-  const scene  = new Scene();
-  const player = new Group();
-  const skills = new SkillSystem(scene, player);
-  const prog   = new Progression();
-  const bar    = new SkillBar(skills, prog);
-  bar.setWeapon('magic');
-  bar.show();
-  const activeSkills = prog.getActiveSkills('magic');
-  results.push(`  → subtipo activo: ${prog.getActiveSubtype('magic')}`);
-  results.push(`  → skills activas: ${activeSkills.map(s => s.id).join(', ')}`);
-  results.push(`  → disponibles: ${activeSkills.filter(s => s.available).map(s => s.id).join(', ')}`);
-  render();
-});
-
-// ── Cast real ──
-await test('Cast fireball', async () => {
-  const { SkillSystem }  = await import('./core/skillSystem.js');
-  const { Scene, Group } = await import('three');
-  const scene  = new Scene();
-  const player = new Group();
-  player.position.set(0, 0, 0);
-  const skills = new SkillSystem(scene, player);
-  skills.registerEnemies([]);
-  const ok = skills.castSkill('fireball');
-  results.push(`  → cast sin enemigos: ${ok}`);
-  render();
-});
-
-await test('Cast cleave', async () => {
-  const { SkillSystem }  = await import('./core/skillSystem.js');
-  const { Scene, Group } = await import('three');
-  const scene  = new Scene();
-  const player = new Group();
-  player.position.set(0, 0, 0);
-  const skills = new SkillSystem(scene, player);
-  skills.registerEnemies([]);
-  skills.energy = 100;
-  const ok = skills.castSkill('cleave');
-  results.push(`  → cast cleave sin enemigos: ${ok}`);
-  render();
-});
-await test('SkillSystem instancia', async () => {
-  const { Scene, Group } = await import('three');
-  const mod = await import('./core/skillSystem.js');
-  const scene  = new Scene();
-  const player = new Group();
-  const skills = new mod.SkillSystem(scene, player);
-  results.push('  → skills keys: ' + Object.keys(skills._skills).join(', '));
-  render();
-});
-  await test('version check', async () => {
-  const res = await fetch('./core/skillSystem.js?bust=' + Date.now());
-  const text = await res.text();
-  results.push('  → tiene Cleave import: ' + text.includes("from '../skills/sword/cleave.js'"));
-  results.push('  → está comentado: ' + text.includes("//import { Cleave }"));
-  render();
-});
-  await test('SkillBar DOM', async () => {
-  const { SkillSystem }  = await import('./core/skillSystem.js');
-  const { Progression }  = await import('./core/progression.js');
-  const { SkillBar }     = await import('./ui/skillBar.js');
-  const { Scene, Group } = await import('three');
-
-  const scene  = new Scene();
-  const player = new Group();
-  const skills = new SkillSystem(scene, player);
-  const prog   = new Progression();
-  const bar    = new SkillBar(skills, prog);
-  bar.setWeapon('katana');
-  bar.show();
-
-  results.push('  → container en DOM: ' + !!document.body.contains(bar._container));
-  results.push('  → container display: ' + bar._container.style.display);
-  results.push('  → attackBtn existe: ' + !!bar._attackBtn);
-  results.push('  → attackBtn display: ' + bar._attackBtn?.style.display);
-  results.push('  → container bottom: ' + bar._container.style.bottom);
-  results.push('  → container right: ' + bar._container.style.right);
-  results.push('  → container zIndex: ' + bar._container.style.zIndex);
-  render();
-});
-  await test('Boot simulation', async () => {
-  const { Progression } = await import('./core/progression.js');
-  const { SkillSystem } = await import('./core/skillSystem.js');
-  const { SkillBar }    = await import('./ui/skillBar.js');
-  const { RadialMenu }  = await import('./ui/radialMenu.js');
-  const { Scene, Group, PerspectiveCamera } = await import('three');
-
-  const scene  = new Scene();
-  const player = new Group();
-  const camera = new PerspectiveCamera();
-  const prog   = new Progression();
-  const skills = new SkillSystem(scene, player);
-  results.push('  → SkillSystem OK');
-
-  const bar = new SkillBar(skills, prog);
-  bar.setWeapon('katana');
-  bar.show();
-  results.push('  → SkillBar OK');
-
-  const radial = new RadialMenu([
-    { icon: '⚔️', label: 'Test', action: () => {}, locked: false },
-  ]);
-  results.push('  → RadialMenu OK');
-  render();
-});
-results.push('');
-results.push('── DONE ──');
-render();
+const summary = document.createElement('div');
+summary.style.cssText = 'margin-top:20px;font-size:14px;border-top:1px solid #333;padding-top:12px;';
+summary.innerHTML = `<span class="ok">✅ ${ok} OK</span> &nbsp; <span class="err">❌ ${fail} ERRORES</span>`;
+out.appendChild(summary);
 </script>
 </body>
 </html>
