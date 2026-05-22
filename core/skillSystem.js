@@ -27,6 +27,18 @@ import { PiercingShot }   from '../skills/bow/piercingShot.js';
 import { RainOfArrows }   from '../skills/bow/rainOfArrows.js';
 import { PoisonArrow }    from '../skills/bow/poisonArrow.js';
 import { BackStep }       from '../skills/bow/backStep.js';
+import { Snipe }        from '../skills/bow/snipe.js';
+import { Bullseye }     from '../skills/bow/bullseye.js';
+import { DivineArrow }  from '../skills/bow/divineArrow.js';
+import { PlagueShot }   from '../skills/bow/plagueShot.js';
+import { ToxicCloud }   from '../skills/bow/toxicCloud.js';
+import { DeathPlague }  from '../skills/bow/deathPlague.js';
+import { StormVolley }  from '../skills/bow/stormVolley.js';
+import { ArrowStorm }   from '../skills/bow/arrowStorm.js';
+import { SkyCollapse }  from '../skills/bow/skyCollapse.js';
+import { RollShot }     from '../skills/bow/rollShot.js';
+import { PhantomStep }  from '../skills/bow/phantomStep.js';
+import { VoidDance }    from '../skills/bow/voidDance.js';
 
 const MAX_ENERGY   = 100;
 const ENERGY_REGEN = 3;
@@ -60,6 +72,18 @@ const SKILL_COST = {
   rain_of_arrows : 40,
   poison_arrow   : 30,
   back_step      : 25,
+  snipe          : 40,
+  bullseye       : 55,
+  divine_arrow   : 75,
+  plague_shot    : 40,
+  toxic_cloud    : 55,
+  death_plague   : 75,
+  storm_volley   : 55,
+  arrow_storm    : 70,
+  sky_collapse   : 90,
+  roll_shot      : 40,
+  phantom_step   : 55,
+  void_dance     : 75,
 };
 
 export class SkillSystem {
@@ -108,6 +132,18 @@ export class SkillSystem {
       rain_of_arrows : new RainOfArrows(scene, playerGroup),
       poison_arrow   : new PoisonArrow(scene, playerGroup),
       back_step      : new BackStep(scene, playerGroup),
+      snipe          : new Snipe(scene, playerGroup),
+      bullseye       : new Bullseye(scene, playerGroup),
+      divine_arrow   : new DivineArrow(scene, playerGroup),
+      plague_shot    : new PlagueShot(scene, playerGroup), 
+      toxic_cloud    : new ToxicCloud(scene, playerGroup),
+      death_plague   : new DeathPlague(scene, playerGroup),
+      storm_volley   : new StormVolley(scene, playerGroup),
+      arrow_storm    : new ArrowStorm(scene, playerGroup),
+      sky_collapse   : new SkyCollapse(scene, playerGroup),
+      roll_shot      : new RollShot(scene, playerGroup),
+      phantom_step   : new PhantomStep(scene, playerGroup),
+     void_dance     : new VoidDance(scene, playerGroup),
     };
   }
 
