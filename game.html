@@ -183,6 +183,7 @@ async function boot() {
     const hud = new HUD(combat, skills);
     hud.setPartyManager(partyManager);
     setResourceCallback((resource) => hud.showCollectBtn(resource));
+
     setProgress(73, 'spawnEnemies...');
     const enemies = spawnEnemies(scene, player);
     enemies.forEach(e => combat.registerEnemy(e));
@@ -207,11 +208,9 @@ async function boot() {
     function _checkNPCProximity() {
       if (dialogueUI.isActive() || shopUI.isActive()) return;
       const playerPos = player.root.position;
-
       for (const npc of npcs) {
         npc.update(performance.now() / 1000, playerPos);
       }
-
       let found = null;
       for (const npc of npcs) {
         if (npc.isPlayerInRange(playerPos)) { found = npc; break; }
@@ -350,6 +349,7 @@ async function boot() {
     window._roadMonsters   = roadMonsters;
     window._mikaBandits    = mikaBandits;
     window._yamiArmy       = yamiArmy;
+
     setProgress(86, 'Building...');
     const building = new BuildingSystem(scene, player);
     building.setProgression(progression);
@@ -462,25 +462,6 @@ async function boot() {
     setInterval(() => {
       localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
     }, 30000);
-
-    // ── Loop de update — Companion + PartyManager ──────────────────────────
-    // Inyectamos el update de partyManager en el game loop via monkey-patch
-    // sobre el renderer (se ejecuta cada frame junto al loop principal)
-    const _origLoop = renderer.setAnimationLoop.bind(renderer);
-    let _joystickInput = { dx: 0, dy: 0 };
-
-    // Exponer para que loop.js pueda pasar el joystick si lo necesita
-    window._setJoystick = (dx, dy) => { _joystickInput.dx = dx; _joystickInput.dy = dy; };
-
-    let _lastTime = performance.now();
-    renderer.setAnimationLoop((time) => {
-      const now   = performance.now();
-      const delta = Math.min((now - _lastTime) / 1000, 0.1);
-      _lastTime   = now;
-
-      partyManager.update(delta, _joystickInput, camera);
-      companion.update(delta, _joystickInput, camera);
-    });
 
     setProgress(100, 'LISTO');
     await new Promise(r => setTimeout(r, 300));
