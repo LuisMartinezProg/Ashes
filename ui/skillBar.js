@@ -26,8 +26,6 @@ export class SkillBar {
     setInterval(() => this._checkEnemyProximity(), 500);
   }
 
-  // ── API pública ──────────────────────────────────────────────────────────
-
   setWeapon(type) {
     this._weapon       = type;
     this._activeWeapon = type;
@@ -43,10 +41,17 @@ export class SkillBar {
     if (idx === 1 && mikaSkillSystem) {
       this._activeSkillSystem = mikaSkillSystem;
       this._activeWeapon      = 'bow';
+      if (this._attackBtn) this._attackBtn.textContent = '🏹';
     } else {
       this._activeSkillSystem = this.skillSystem;
       this._activeWeapon      = this._weapon;
+      const icons = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
+      if (this._attackBtn) this._attackBtn.textContent = icons[this._weapon] ?? '⚔️';
     }
+    this._buttons.forEach(b => {
+      b.dataset.skillId = '';
+      b.style.display   = 'none';
+    });
     this.refresh();
   }
 
@@ -54,7 +59,10 @@ export class SkillBar {
     const weapon = this._activeWeapon ?? this._weapon;
     if (!weapon) return;
     const skills = this.progression.getActiveSkills(weapon).slice(0, 3);
-    skills.forEach((sk, i) => this._updateButton(i, sk));
+    skills.forEach((sk, i) => {
+      this._updateButton(i, sk);
+      this._buttons[i].style.display = 'flex';
+    });
     for (let i = skills.length; i < this._buttons.length; i++) {
       this._buttons[i].style.display = 'none';
     }
@@ -69,19 +77,15 @@ export class SkillBar {
   show() { if (this._container) this._container.style.display = 'block'; }
   hide() { if (this._container) this._container.style.display = 'none'; }
 
-  // ── Detección de enemigos ────────────────────────────────────────────────
-
   _checkEnemyProximity() {
     const playerPos = window._player?.root?.position;
     const enemies   = window._combat?._enemies ?? [];
     if (!playerPos) return;
-
     let near = false;
     for (const e of enemies) {
       if (!e.mesh || e.isDead?.()) continue;
       if (e.mesh.position.distanceTo(playerPos) < 12) { near = true; break; }
     }
-
     if (near !== this._enemyNear) {
       this._enemyNear = near;
       this._updateActionBtn();
@@ -101,8 +105,6 @@ export class SkillBar {
     }
   }
 
-  // ── Build ────────────────────────────────────────────────────────────────
-
   _rebuild() {
     try {
       if (this._container) this._container.remove();
@@ -118,13 +120,13 @@ export class SkillBar {
     }
   }
 
-  
-_scale() {
-  const isLandscape = window.innerWidth > window.innerHeight;
-  return isLandscape
-    ? window.innerHeight / 450
-    : window.innerWidth  / 480;
-}
+  _scale() {
+    const isLandscape = window.innerWidth > window.innerHeight;
+    return isLandscape
+      ? window.innerHeight / 450
+      : window.innerWidth  / 480;
+  }
+
   _placeFromBottomRight(el, hx, hy, size) {
     const s = this._scale();
     const right  = Math.round((BASE_W - hx) * s) - size / 2;
@@ -154,25 +156,21 @@ _scale() {
     const skSize  = this._sz(58);
     const sbSize  = this._sz(48);
 
-    // ── Habilidad 1 ──────────────────────────────────────────────────────
     const sk1 = this._buildSkillBtn(skSize);
     this._placeFromBottomRight(sk1, 558, 403, skSize);
     this._buttons.push(sk1);
     this._container.appendChild(sk1);
 
-    // ── Habilidad 2 ──────────────────────────────────────────────────────
     const sk2 = this._buildSkillBtn(skSize);
     this._placeFromBottomRight(sk2, 584, 313, skSize);
     this._buttons.push(sk2);
     this._container.appendChild(sk2);
 
-    // ── Habilidad 3 ──────────────────────────────────────────────────────
     const sk3 = this._buildSkillBtn(skSize);
     this._placeFromBottomRight(sk3, 668, 263, skSize);
     this._buttons.push(sk3);
     this._container.appendChild(sk3);
 
-    // ── Ataque básico ─────────────────────────────────────────────────────
     this._attackBtn = document.createElement('button');
     this._attackBtn.textContent = '⚔️';
     Object.assign(this._attackBtn.style, {
@@ -205,7 +203,6 @@ _scale() {
     this._attackBtn.addEventListener('mousedown',  onAtk);
     this._container.appendChild(this._attackBtn);
 
-    // ── Sprint/Parry ──────────────────────────────────────────────────────
     this._sprintBtn = this._buildSmallBtn('🏃', sbSize, 'rgba(100,220,255,0.5)');
     this._placeFromBottomRight(this._sprintBtn, 755, 302, sbSize);
     this._sprintBtn.addEventListener('touchstart', (e) => {
@@ -229,7 +226,6 @@ _scale() {
     });
     this._container.appendChild(this._sprintBtn);
 
-    // ── Construcción ──────────────────────────────────────────────────────
     this._buildBtn = this._buildSmallBtn('🏗️', sbSize, 'rgba(201,168,76,0.5)');
     this._placeFromBottomRight(this._buildBtn, 755, 215, sbSize);
     this._buildBtn.style.color = '#C9A84C';
@@ -327,7 +323,6 @@ _scale() {
     const r = btn.querySelector('.skill-rarity');
     r.textContent = RARITY_LABELS[skill.rarity];
     r.style.color = RARITY_COLORS[skill.rarity];
-    btn.style.display     = 'flex';
     btn.style.borderColor = skill.available ? RARITY_COLORS[skill.rarity] : 'rgba(255,255,255,0.1)';
     btn.style.opacity     = skill.available ? '1' : '0.4';
     this._applyCooldown(btn, this._cooldowns[skill.id] ?? 1);
