@@ -126,7 +126,13 @@ export class Companion {
   }
 
   get position() { return this.root.position; }
-
+get chestPosition() {
+  return new THREE.Vector3(
+    this.root.position.x,
+    this.root.position.y + 0.8,
+    this.root.position.z
+  );
+}
   // ── Update ────────────────────────────────────────────────────────────────
   update(delta, joystickInput, camera) {
     if (this.isActive) {
