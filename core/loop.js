@@ -32,6 +32,7 @@ export function startLoop(scene, camera, renderer) {
   _player   = new Player(scene);
   _joystick = new VirtualJoystick();
   _thirdCam = new ThirdPersonCamera(camera, _player);
+  window._thirdCam = _thirdCam;
 
   _running  = true;
   _lastTime = performance.now();
