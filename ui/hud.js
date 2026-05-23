@@ -156,8 +156,9 @@ export class HUD {
     const colors = ['#88aaff', '#ff88aa'];
     const names  = ['KAEL', 'MIKA'];
      if (window._skillBar) {
-  const mikaSys = this._partyManager?.companion?.skillSystem;
-  window._skillBar.setActiveCharacter(idx, mikaSys);
+  const mikaSys  = this._partyManager?.companion?.skillSystem;
+  const mikaProg = window._mikaProgression;
+  window._skillBar.setActiveCharacter(idx, mikaSys, mikaProg);
      }
     // Actualizar cards
     cards.forEach((card, i) => {
