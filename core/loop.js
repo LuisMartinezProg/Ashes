@@ -5,8 +5,8 @@ import { ThirdPersonCamera } from './camera.js';
 import { FOREST_RESOURCES } from './scene.js';
 
 const FRAME_CAP       = 1 / 20;
-const COLLECT_RANGE   = 3.5; // distancia para mostrar botón
-const COLLECT_CHECK   = 0.3; // cada cuántos segundos revisar
+const COLLECT_RANGE   = 3.5;
+const COLLECT_CHECK   = 0.3;
 
 let _triggers = null;
 let _scene, _camera, _renderer;
@@ -18,7 +18,7 @@ let _fpsFrames = 0;
 let _fpsAccum  = 0;
 let _collectAccum = 0;
 let _nearResource = null;
-let _onResourceNear = null; // callback → hud
+let _onResourceNear = null;
 const _fpsEl = document.getElementById('fps');
 
 export function startLoop(scene, camera, renderer) {
@@ -41,6 +41,7 @@ export function startLoop(scene, camera, renderer) {
 function _tick(timestamp) {
   if (!_running) return;
   requestAnimationFrame(_tick);
+
   if (window._building && window._building.isPlacing()) {
     window._building.updateGhostPosition();
   }
@@ -50,22 +51,37 @@ function _tick(timestamp) {
 
   _updateFPS(delta);
   _animateScene(timestamp);
-const buildCamActive = window._buildCamera?._active;
 
-if (!buildCamActive) {
-  const input = _joystick.getInput();
-  _player.update(delta, input, _camera);
-  if (_triggers) _triggers.update(_player.root.position);
-  _thirdCam.update(delta);
-}
-if (_skillSystem) _skillSystem.update(delta);
+  const buildCamActive = window._buildCamera?._active;
+
+  if (!buildCamActive) {
+    const input = _joystick.getInput();
+
+    // ── PartyManager toma control del update de personajes ──
+    if (window._partyManager) {
+      window._partyManager.update(delta, input, _camera);
+    } else {
+      // Fallback sin partyManager
+      _player.update(delta, input, _camera);
+    }
+
+    // Alimentar joystick global para companion/partyManager
+    window._setJoystick?.(input.dx, input.dy);
+
+    if (_triggers) _triggers.update(_player.root.position);
+    _thirdCam.update(delta);
+  }
+
+  if (_skillSystem) _skillSystem.update(delta);
+
   for (const e of _enemies) {
     if (e && typeof e.isDead === 'function') e.update(delta);
   }
+
   if (_combatSystem) _combatSystem.update(delta);
+
   for (const n of _npcs) n.update(timestamp * 0.001);
 
-  // ── Detección de recursos ──
   _collectAccum += delta;
   if (_collectAccum >= COLLECT_CHECK) {
     _collectAccum = 0;
@@ -96,8 +112,6 @@ function _checkResourceProximity() {
 }
 
 function _animateScene(timestamp) {
-  const t = timestamp * 0.001;
-
   const particles = _scene.getObjectByName('ambient_particles');
   if (particles) {
     const pos = particles.geometry.attributes.position;
