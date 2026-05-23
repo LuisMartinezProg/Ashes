@@ -97,7 +97,8 @@ import { BuildCamera }      from './core/buildCamera.js';
 import { BuildZone }        from './core/buildZone.js';
 import { Companion }        from './core/companion.js';
 import { PartyManager }     from './core/partyManager.js';
-
+import { createMikaProgression } from './core/mikaProgression.js';
+  
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -140,6 +141,8 @@ async function boot() {
 
     setProgress(57, 'Progression...');
     const progression = new Progression();
+    const mikaProgression = createMikaProgression();
+window._mikaProgression = mikaProgression;
 
     setProgress(59, 'Companion...');
     const companion = new Companion(scene, player.root.position);
