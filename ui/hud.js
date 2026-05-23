@@ -12,6 +12,7 @@ export class HUD {
     this._bossNameEl    = null;
     this._playerHpFill  = null;
     this._playerHpText  = null;
+    this._playerHpName  = null;
     this._energyFill    = null;
     this._staminaEl     = null;
     this._staminaSvg    = null;
@@ -21,12 +22,9 @@ export class HUD {
     this._collectBtn    = null;
     this._camera        = null;
 
-    // Party
-    this._partyEl       = null;
-    this._partyManager  = null;
-    this._mikaHpFill    = null;
-    this._mikaSkillBtn  = null;
-    this._switchCoolEl  = null;
+    this._partyEl      = null;
+    this._partyManager = null;
+    this._mikaSkillBtn = null;
 
     this._ARC_R   = 24;
     this._ARC_LEN = 2 * Math.PI * 24 * 0.75;
@@ -38,18 +36,10 @@ export class HUD {
     }
   }
 
-  // ── Party ─────────────────────────────────────────────────────────────────
-
   setPartyManager(pm) {
     this._partyManager = pm;
-
-    // Escuchar cambios de personaje
-    pm.onSwitch = (idx) => this._onPartySwitch(idx);
-
-    // Escuchar reacciones
+    pm.onSwitch   = (idx) => this._onPartySwitch(idx);
     pm.onReaction = (name) => this._showReactionLabel(name);
-
-    // HP de Mika
     pm.companion.onDamage = (hp, max) => this._updateMikaHp(hp, max);
   }
 
@@ -66,21 +56,8 @@ export class HUD {
       zIndex       : '120',
     });
 
-    // ── Protagonista ──
-    this._p1Card = this._makePartyCard({
-      name    : 'KAEL',
-      color   : '#88aaff',
-      active  : true,
-      idx     : 0,
-    });
-
-    // ── Mika ──
-    this._p2Card = this._makePartyCard({
-      name    : 'MIKA',
-      color   : '#ff88aa',
-      active  : false,
-      idx     : 1,
-    });
+    this._p1Card = this._makePartyCard({ name: 'KAEL', color: '#88aaff', active: true,  idx: 0 });
+    this._p2Card = this._makePartyCard({ name: 'MIKA', color: '#ff88aa', active: false, idx: 1 });
 
     this._partyEl.appendChild(this._p1Card.wrap);
     this._partyEl.appendChild(this._p2Card.wrap);
@@ -98,24 +75,23 @@ export class HUD {
       transition   : 'transform 0.15s',
     });
 
-    // Círculo avatar
     const avatar = document.createElement('div');
     Object.assign(avatar.style, {
-      width       : active ? '44px' : '36px',
-      height      : active ? '44px' : '36px',
-      borderRadius: '50%',
-      background  : `radial-gradient(circle at 35% 35%, ${color}, ${color}66)`,
-      border      : `2px solid ${active ? color : color + '55'}`,
-      boxShadow   : active ? `0 0 10px ${color}88` : 'none',
-      transition  : 'all 0.2s',
-      display     : 'flex',
-      alignItems  : 'center',
+      width         : active ? '44px' : '36px',
+      height        : active ? '44px' : '36px',
+      borderRadius  : '50%',
+      background    : `radial-gradient(circle at 35% 35%, ${color}, ${color}66)`,
+      border        : `2px solid ${active ? color : color + '55'}`,
+      boxShadow     : active ? `0 0 10px ${color}88` : 'none',
+      transition    : 'all 0.2s',
+      display       : 'flex',
+      alignItems    : 'center',
       justifyContent: 'center',
-      fontSize    : '16px',
+      fontSize      : '16px',
+      position      : 'relative',
     });
     avatar.textContent = idx === 0 ? '⚔️' : '🏹';
 
-    // Nombre
     const label = document.createElement('div');
     Object.assign(label.style, {
       fontFamily   : 'monospace',
@@ -126,7 +102,6 @@ export class HUD {
     });
     label.textContent = name;
 
-    // Barra HP mini
     const hpTrack = document.createElement('div');
     Object.assign(hpTrack.style, {
       width       : active ? '44px' : '36px',
@@ -145,28 +120,25 @@ export class HUD {
     });
     hpTrack.appendChild(hpFill);
 
-    // Cooldown overlay (switch)
     const coolOverlay = document.createElement('div');
     Object.assign(coolOverlay.style, {
-      position     : 'absolute',
-      inset        : '0',
-      borderRadius : '50%',
-      background   : 'rgba(0,0,0,0.55)',
-      display      : 'none',
-      alignItems   : 'center',
+      position      : 'absolute',
+      inset         : '0',
+      borderRadius  : '50%',
+      background    : 'rgba(0,0,0,0.55)',
+      display       : 'none',
+      alignItems    : 'center',
       justifyContent: 'center',
-      fontSize     : '9px',
-      color        : '#fff',
-      fontFamily   : 'monospace',
+      fontSize      : '9px',
+      color         : '#fff',
+      fontFamily    : 'monospace',
     });
-    avatar.style.position = 'relative';
     avatar.appendChild(coolOverlay);
 
     wrap.appendChild(avatar);
     wrap.appendChild(label);
     wrap.appendChild(hpTrack);
 
-    // Tap para cambiar personaje
     const onTap = (e) => {
       e.preventDefault();
       if (!this._partyManager) return;
@@ -180,22 +152,23 @@ export class HUD {
   }
 
   _onPartySwitch(idx) {
-    // Actualizar estilos activo/inactivo
     const cards  = [this._p1Card, this._p2Card];
     const colors = ['#88aaff', '#ff88aa'];
+    const names  = ['KAEL', 'MIKA'];
 
+    // Actualizar cards
     cards.forEach((card, i) => {
       const active = i === idx;
       const color  = colors[i];
-      card.avatar.style.width      = active ? '44px' : '36px';
-      card.avatar.style.height     = active ? '44px' : '36px';
-      card.avatar.style.border     = `2px solid ${active ? color : color + '55'}`;
-      card.avatar.style.boxShadow  = active ? `0 0 10px ${color}88` : 'none';
-      card.label.style.color       = active ? color : color + '88';
-      card.hpTrack.style.width     = active ? '44px' : '36px';
+      card.avatar.style.width     = active ? '44px' : '36px';
+      card.avatar.style.height    = active ? '44px' : '36px';
+      card.avatar.style.border    = `2px solid ${active ? color : color + '55'}`;
+      card.avatar.style.boxShadow = active ? `0 0 10px ${color}88` : 'none';
+      card.label.style.color      = active ? color : color + '88';
+      card.hpTrack.style.width    = active ? '44px' : '36px';
     });
 
-    // Mostrar cooldown en el que acaba de salir
+    // Cooldown en el que sale
     const prevIdx  = idx === 0 ? 1 : 0;
     const prevCard = cards[prevIdx];
     prevCard.coolOverlay.style.display = 'flex';
@@ -208,12 +181,46 @@ export class HUD {
         prevCard.coolOverlay.style.display = 'none';
       }
     }, 100);
+
+    // Cambiar color y nombre de la barra HP central
+    const color = colors[idx];
+    if (this._playerHpFill) {
+      this._playerHpFill.style.background =
+        idx === 0
+          ? 'linear-gradient(90deg,#aa0000,#ff4444)'
+          : 'linear-gradient(90deg,#aa0044,#ff88aa)';
+    }
+    if (this._playerHpName) {
+      this._playerHpName.textContent = names[idx];
+      this._playerHpName.style.color = color;
+    }
+    if (this._energyFill) {
+      this._energyFill.style.background =
+        idx === 0
+          ? 'linear-gradient(90deg,#2244cc,#66aaff)'
+          : 'linear-gradient(90deg,#aa2266,#ff88aa)';
+    }
+
+    // Botón 🏹 — solo visible cuando Mika NO está activa
+    if (this._mikaSkillBtn) {
+      this._mikaSkillBtn.style.display = idx === 1 ? 'none' : 'flex';
+    }
+
+    // Stamina — solo relevante para el protagonista
+    if (this._staminaEl) {
+      this._staminaEl.style.display = idx === 0 ? 'block' : 'none';
+    }
   }
 
   _updateMikaHp(hp, max) {
     if (!this._p2Card) return;
     const pct = Math.max(0, hp / max) * 100;
     this._p2Card.hpFill.style.width = `${pct}%`;
+    // Si Mika está activa, actualizar también la barra central
+    if (this._partyManager?.getActiveIdx() === 1) {
+      if (this._playerHpFill) this._playerHpFill.style.width = `${pct}%`;
+      if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(hp)}/${max}`;
+    }
   }
 
   updateProtagonistHp(hp, max) {
@@ -222,7 +229,6 @@ export class HUD {
     this._p1Card.hpFill.style.width = `${pct}%`;
   }
 
-  // Botón habilidad de Mika (abajo derecha, junto al skillbar)
   _buildMikaSkillBtn() {
     this._mikaSkillBtn = document.createElement('button');
     Object.assign(this._mikaSkillBtn.style, {
@@ -261,7 +267,6 @@ export class HUD {
     document.body.appendChild(this._mikaSkillBtn);
   }
 
-  // Label de reacción
   _showReactionLabel(name) {
     const labels = {
       vapor         : { text: '💨 VAPOR',           color: '#aaddff' },
@@ -298,8 +303,6 @@ export class HUD {
     setTimeout(() => el.remove(), 900);
   }
 
-  // ── Resto del HUD sin cambios ─────────────────────────────────────────────
-
   setEnemies(list) {
     for (const el of this._enemyLabels.values()) el.remove();
     this._enemyLabels.clear();
@@ -326,9 +329,12 @@ export class HUD {
 
   updatePlayerHp(hp, max) {
     if (!this._playerHpFill) return;
-    const pct = Math.max(0, hp / max) * 100;
-    this._playerHpFill.style.width = `${pct}%`;
-    if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(hp)}/${max}`;
+    // Solo actualizar barra central si el protagonista está activo
+    if (!this._partyManager || this._partyManager.getActiveIdx() === 0) {
+      const pct = Math.max(0, hp / max) * 100;
+      this._playerHpFill.style.width = `${pct}%`;
+      if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(hp)}/${max}`;
+    }
     this.updateProtagonistHp(hp, max);
   }
 
@@ -726,6 +732,18 @@ export class HUD {
       maxWidth     : '200px',
       minWidth     : '140px',
     });
+
+    // Nombre del personaje activo
+    this._playerHpName = document.createElement('div');
+    Object.assign(this._playerHpName.style, {
+      color        : '#88aaff',
+      fontSize     : '8px',
+      fontFamily   : 'monospace',
+      textAlign    : 'center',
+      letterSpacing: '2px',
+    });
+    this._playerHpName.textContent = 'KAEL';
+
     const hpWrap  = this._makeBarWrap('rgba(255,50,50,0.15)', 'rgba(255,80,80,0.3)');
     const hpTrack = this._makeTrack('10px', '#220000');
     this._playerHpFill = this._makeFill('linear-gradient(90deg,#aa0000,#ff4444)');
@@ -742,6 +760,7 @@ export class HUD {
     this._playerHpText.textContent = '100/100';
     hpWrap.appendChild(hpTrack);
     hpWrap.appendChild(this._playerHpText);
+
     const enWrap  = this._makeBarWrap('rgba(50,100,255,0.1)', 'rgba(80,130,255,0.25)');
     const enTrack = this._makeTrack('7px', '#1a1a2e');
     this._energyFill = this._makeFill('linear-gradient(90deg,#2244cc,#66aaff)');
@@ -758,6 +777,8 @@ export class HUD {
     enText.textContent = 'ENERGÍA';
     enWrap.appendChild(enTrack);
     enWrap.appendChild(enText);
+
+    block.appendChild(this._playerHpName);
     block.appendChild(hpWrap);
     block.appendChild(enWrap);
     this._container.appendChild(block);
