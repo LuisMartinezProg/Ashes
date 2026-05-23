@@ -3,23 +3,23 @@ import { RARITY_COLORS } from '../core/skillData.js';
 
 const RARITY_LABELS = { common:'C', rare:'R', epic:'E', legendary:'L' };
 
-// Coordenadas base del HUD designer (800×450)
-// Origen = esquina inferior derecha para escala correcta en móvil
 const BASE_W = 800;
 const BASE_H = 450;
 
 export class SkillBar {
   constructor(skillSystem, progression) {
-    this.skillSystem = skillSystem;
-    this.progression = progression;
-    this._weapon    = null;
-    this._buttons   = [];
-    this._attackBtn = null;
-    this._sprintBtn = null;
-    this._buildBtn  = null;
-    this._container = null;
-    this._cooldowns = {};
-    this._enemyNear = false;
+    this.skillSystem         = skillSystem;
+    this.progression         = progression;
+    this._activeSkillSystem  = skillSystem;
+    this._weapon             = null;
+    this._activeWeapon       = null;
+    this._buttons            = [];
+    this._attackBtn          = null;
+    this._sprintBtn          = null;
+    this._buildBtn           = null;
+    this._container          = null;
+    this._cooldowns          = {};
+    this._enemyNear          = false;
 
     this._build();
     window.addEventListener('resize', () => this._rebuild());
@@ -28,16 +28,32 @@ export class SkillBar {
 
   // ── API pública ──────────────────────────────────────────────────────────
 
-  setWeapon(type)  { this._weapon = type; this.refresh(); }
+  setWeapon(type) {
+    this._weapon       = type;
+    this._activeWeapon = type;
+    this.refresh();
+  }
 
   setWeaponIcon(type) {
     const icons = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
     if (this._attackBtn) this._attackBtn.textContent = icons[type] ?? '⚔️';
   }
 
+  setActiveCharacter(idx, mikaSkillSystem) {
+    if (idx === 1 && mikaSkillSystem) {
+      this._activeSkillSystem = mikaSkillSystem;
+      this._activeWeapon      = 'bow';
+    } else {
+      this._activeSkillSystem = this.skillSystem;
+      this._activeWeapon      = this._weapon;
+    }
+    this.refresh();
+  }
+
   refresh() {
-    if (!this._weapon) return;
-    const skills = this.progression.getActiveSkills(this._weapon).slice(0, 3);
+    const weapon = this._activeWeapon ?? this._weapon;
+    if (!weapon) return;
+    const skills = this.progression.getActiveSkills(weapon).slice(0, 3);
     skills.forEach((sk, i) => this._updateButton(i, sk));
     for (let i = skills.length; i < this._buttons.length; i++) {
       this._buttons[i].style.display = 'none';
@@ -102,13 +118,10 @@ export class SkillBar {
     }
   }
 
-  // Factor de escala uniforme basado en ancho
   _scale() {
     return window.innerWidth / BASE_W;
   }
 
-  // Convierte coords del designer (desde esquina inferior derecha) a fixed px
-  // hx, hy = posición desde esquina inferior derecha en el canvas base
   _placeFromBottomRight(el, hx, hy, size) {
     const s = this._scale();
     const right  = Math.round((BASE_W - hx) * s) - size / 2;
@@ -134,32 +147,29 @@ export class SkillBar {
     });
     document.body.appendChild(this._container);
 
-    const atkSize = this._sz(85);   // ataque grande
-    const skSize  = this._sz(58);   // habilidades
-    const sbSize  = this._sz(48);   // sprint/parry/build
+    const atkSize = this._sz(85);
+    const skSize  = this._sz(58);
+    const sbSize  = this._sz(48);
 
-    // Coords del designer — posiciones absolutas en canvas 800×450
-    // Las convertimos a "desde bottom-right"
-
-    // ── Habilidad 1 — x:558 y:403 ────────────────────────────────────────
+    // ── Habilidad 1 ──────────────────────────────────────────────────────
     const sk1 = this._buildSkillBtn(skSize);
     this._placeFromBottomRight(sk1, 558, 403, skSize);
     this._buttons.push(sk1);
     this._container.appendChild(sk1);
 
-    // ── Habilidad 2 — x:584 y:313 ────────────────────────────────────────
+    // ── Habilidad 2 ──────────────────────────────────────────────────────
     const sk2 = this._buildSkillBtn(skSize);
     this._placeFromBottomRight(sk2, 584, 313, skSize);
     this._buttons.push(sk2);
     this._container.appendChild(sk2);
 
-    // ── Habilidad 3 — x:668 y:263 ────────────────────────────────────────
+    // ── Habilidad 3 ──────────────────────────────────────────────────────
     const sk3 = this._buildSkillBtn(skSize);
     this._placeFromBottomRight(sk3, 668, 263, skSize);
     this._buttons.push(sk3);
     this._container.appendChild(sk3);
 
-    // ── Ataque básico — x:679 y:379 ──────────────────────────────────────
+    // ── Ataque básico ─────────────────────────────────────────────────────
     this._attackBtn = document.createElement('button');
     this._attackBtn.textContent = '⚔️';
     Object.assign(this._attackBtn.style, {
@@ -192,7 +202,7 @@ export class SkillBar {
     this._attackBtn.addEventListener('mousedown',  onAtk);
     this._container.appendChild(this._attackBtn);
 
-    // ── Sprint/Parry — x:755 y:302 ───────────────────────────────────────
+    // ── Sprint/Parry ──────────────────────────────────────────────────────
     this._sprintBtn = this._buildSmallBtn('🏃', sbSize, 'rgba(100,220,255,0.5)');
     this._placeFromBottomRight(this._sprintBtn, 755, 302, sbSize);
     this._sprintBtn.addEventListener('touchstart', (e) => {
@@ -216,7 +226,7 @@ export class SkillBar {
     });
     this._container.appendChild(this._sprintBtn);
 
-    // ── Construcción 🏗️ — x:755 y:215 ────────────────────────────────────
+    // ── Construcción ──────────────────────────────────────────────────────
     this._buildBtn = this._buildSmallBtn('🏗️', sbSize, 'rgba(201,168,76,0.5)');
     this._placeFromBottomRight(this._buildBtn, 755, 215, sbSize);
     this._buildBtn.style.color = '#C9A84C';
@@ -296,7 +306,8 @@ export class SkillBar {
     const onPress = (e) => {
       e.preventDefault();
       if (!wrap.dataset.skillId) return;
-      this.skillSystem.castSkill(wrap.dataset.skillId);
+      const sys = this._activeSkillSystem ?? this.skillSystem;
+      sys.castSkill(wrap.dataset.skillId);
       wrap.style.transform = 'scale(0.88)';
       setTimeout(() => wrap.style.transform = 'scale(1)', 140);
     };
