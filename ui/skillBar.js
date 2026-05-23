@@ -20,7 +20,8 @@ export class SkillBar {
     this._container          = null;
     this._cooldowns          = {};
     this._enemyNear          = false;
-
+    this._activeProgression = skillSystem; // se sobreescribe luego
+    
     this._build();
     window.addEventListener('resize', () => this._rebuild());
     setInterval(() => this._checkEnemyProximity(), 500);
@@ -37,37 +38,35 @@ export class SkillBar {
     if (this._attackBtn) this._attackBtn.textContent = icons[type] ?? '⚔️';
   }
 
-  setActiveCharacter(idx, mikaSkillSystem) {
-    if (idx === 1 && mikaSkillSystem) {
-      this._activeSkillSystem = mikaSkillSystem;
-      this._activeWeapon      = 'bow';
-      if (this._attackBtn) this._attackBtn.textContent = '🏹';
-    } else {
-      this._activeSkillSystem = this.skillSystem;
-      this._activeWeapon      = this._weapon;
-      const icons = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
-      if (this._attackBtn) this._attackBtn.textContent = icons[this._weapon] ?? '⚔️';
-    }
-    this._buttons.forEach(b => {
-      b.dataset.skillId = '';
-      b.style.display   = 'none';
-    });
-    this.refresh();
+  setActiveCharacter(idx, mikaSkillSystem, mikaProgression) {
+  if (idx === 1 && mikaSkillSystem) {
+    this._activeSkillSystem  = mikaSkillSystem;
+    this._activeWeapon       = 'bow';
+    this._activeProgression  = mikaProgression ?? this.progression;
+    if (this._attackBtn) this._attackBtn.textContent = '🏹';
+  } else {
+    this._activeSkillSystem  = this.skillSystem;
+    this._activeWeapon       = this._weapon;
+    this._activeProgression  = this.progression;
+    const icons = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
+    if (this._attackBtn) this._attackBtn.textContent = icons[this._weapon] ?? '⚔️';
   }
-
+  this._buttons.forEach(b => { b.dataset.skillId = ''; b.style.display = 'none'; });
+  this.refresh();
+  }
   refresh() {
-    const weapon = this._activeWeapon ?? this._weapon;
-    if (!weapon) return;
-    const skills = this.progression.getActiveSkills(weapon).slice(0, 3);
-    skills.forEach((sk, i) => {
-      this._updateButton(i, sk);
-      this._buttons[i].style.display = 'flex';
-    });
-    for (let i = skills.length; i < this._buttons.length; i++) {
-      this._buttons[i].style.display = 'none';
-    }
+  const weapon = this._activeWeapon      ?? this._weapon;
+  const prog   = this._activeProgression ?? this.progression;
+  if (!weapon) return;
+  const skills = prog.getActiveSkills(weapon).slice(0, 3);
+  skills.forEach((sk, i) => {
+    this._updateButton(i, sk);
+    this._buttons[i].style.display = 'flex';
+  });
+  for (let i = skills.length; i < this._buttons.length; i++) {
+    this._buttons[i].style.display = 'none';
   }
-
+  }
   setCooldown(skillId, progress) {
     this._cooldowns[skillId] = progress;
     const btn = this._buttons.find(b => b.dataset.skillId === skillId);
