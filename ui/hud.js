@@ -61,7 +61,7 @@ export class HUD {
 
     this._partyEl.appendChild(this._p1Card.wrap);
     this._partyEl.appendChild(this._p2Card.wrap);
-    document.body.appendChild(this._partyEl);
+    this._container.appendChild(this._partyEl);
   }
 
   _makePartyCard({ name, color, active, idx }) {
@@ -231,44 +231,45 @@ export class HUD {
     const pct = Math.max(0, hp / max) * 100;
     this._p1Card.hpFill.style.width = `${pct}%`;
   }
+_buildMikaSkillBtn() {
+  this._mikaSkillBtn = document.createElement('button');
+  Object.assign(this._mikaSkillBtn.style, {
+    position      : 'fixed',
+    right         : '62px',
+    bottom        : '62px',
+    width         : '46px',
+    height        : '46px',
+    borderRadius  : '50%',
+    background    : 'radial-gradient(circle at 35% 35%, #ff88aa, #cc4477)',
+    border        : '2px solid #ff88aaaa',
+    color         : '#fff',
+    fontSize      : '18px',
+    display       : 'none',
+    alignItems    : 'center',
+    justifyContent: 'center',
+    cursor        : 'pointer',
+    pointerEvents : 'all',
+    zIndex        : '130',
+    boxShadow     : '0 0 8px #ff88aa66',
+    transition    : 'transform 0.1s, opacity 0.2s',
+  });
+  this._mikaSkillBtn.textContent = '🏹';
 
-  _buildMikaSkillBtn() {
-    this._mikaSkillBtn = document.createElement('button');
-    Object.assign(this._mikaSkillBtn.style, {
-      position      : 'fixed',
-      right         : '62px',
-      bottom        : '62px',
-      width         : '46px',
-      height        : '46px',
-      borderRadius  : '50%',
-      background    : 'radial-gradient(circle at 35% 35%, #ff88aa, #cc4477)',
-      border        : '2px solid #ff88aaaa',
-      color         : '#fff',
-      fontSize      : 'none',
-      display       : 'flex',
-      alignItems    : 'center',
-      justifyContent: 'center',
-      cursor        : 'pointer',
-      pointerEvents : 'all',
-      zIndex        : '130',
-      boxShadow     : '0 0 8px #ff88aa66',
-      transition    : 'transform 0.1s, opacity 0.2s',
-    });
-    this._mikaSkillBtn.textContent = '🏹';
-
-    const onTap = (e) => {
-      e.preventDefault();
-      if (!this._partyManager) return;
-      const ok = this._partyManager.castCompanionSkill();
-      if (ok) {
-        this._mikaSkillBtn.style.transform = 'scale(0.85)';
-        setTimeout(() => this._mikaSkillBtn.style.transform = 'scale(1)', 150);
-      }
-    };
-    this._mikaSkillBtn.addEventListener('touchstart', onTap, { passive: false });
-    this._mikaSkillBtn.addEventListener('click',      onTap);
-    document.body.appendChild(this._mikaSkillBtn);
-  }
+  const onTap = (e) => {
+    e.preventDefault();
+    if (!this._partyManager) return;
+    const ok = this._partyManager.castCompanionSkill();
+    if (ok) {
+      this._mikaSkillBtn.style.transform = 'scale(0.85)';
+      setTimeout(() => this._mikaSkillBtn.style.transform = 'scale(1)', 150);
+    }
+  };
+  this._mikaSkillBtn.addEventListener('touchstart', onTap, { passive: false });
+  this._mikaSkillBtn.addEventListener('click',      onTap);
+  this._container.appendChild(this._mikaSkillBtn);
+}
+  
+  
 
   _showReactionLabel(name) {
     const labels = {
@@ -313,12 +314,16 @@ export class HUD {
   }
 
   setCamera(camera) { this._camera = camera; }
-
-  show() {
-    this._container.style.display = 'block';
-    if (this._partyEl)      this._partyEl.style.display      = 'flex';
-    if (this._mikaSkillBtn) this._mikaSkillBtn.style.display = 'flex';
+show() {
+  this._container.style.display = 'block';
+  if (this._partyEl) this._partyEl.style.display = 'flex';
+  // 🏹 solo visible si protagonista activo
+  if (this._mikaSkillBtn) {
+    const idx = this._partyManager?.getActiveIdx() ?? 0;
+    this._mikaSkillBtn.style.display = idx === 0 ? 'flex' : 'none';
   }
+}
+  
 
   hide() {
     this._container.style.display = 'none';
