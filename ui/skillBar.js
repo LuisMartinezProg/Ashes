@@ -119,7 +119,10 @@ export class SkillBar {
   }
 
   _scale() {
-    return window.innerWidth / BASE_W;
+  const isLandscape = window.innerWidth > window.innerHeight;
+  return isLandscape
+    ? window.innerHeight / 450  // landscape — escala por altura
+    : window.innerWidth  / 480; // portrait — escala por ancho
   }
 
   _placeFromBottomRight(el, hx, hy, size) {
