@@ -1,7 +1,7 @@
 // core/partyManager.js — Cambio de personaje + reacciones | Ashes of the Reborn | Valiant Gaming
 import * as THREE from 'three';
 import { ReactionEngine, SUBTYPE_ELEMENT } from './reactions.js';
-import { ReactionEngine, SUBTYPE_ELEMENT } from './reactions.js';
+
 
 const SWITCH_COOLDOWN = 1.5; // segundos entre cambios
 
