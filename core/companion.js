@@ -237,17 +237,19 @@ get chestPosition() {
   }
 
   _updateNameTag(camera) {
-    if (!camera) return;
-    const pos = this.root.position.clone().add(new THREE.Vector3(0, 1.8, 0));
-    pos.project(camera);
-    if (pos.z > 1) { this._nameTag.style.display = 'none'; return; }
-    const x = (pos.x *  0.5 + 0.5) * window.innerWidth;
-    const y = (pos.y * -0.5 + 0.5) * window.innerHeight;
-    this._nameTag.style.left    = `${x - 16}px`;
-    this._nameTag.style.top     = `${y}px`;
-    this._nameTag.style.display = 'block';
+  if (!camera || !this.root.visible) {
+    this._nameTag.style.display = 'none';
+    return;
   }
-
+  const pos = this.root.position.clone().add(new THREE.Vector3(0, 1.8, 0));
+  pos.project(camera);
+  if (pos.z > 1) { this._nameTag.style.display = 'none'; return; }
+  const x = (pos.x *  0.5 + 0.5) * window.innerWidth;
+  const y = (pos.y * -0.5 + 0.5) * window.innerHeight;
+  this._nameTag.style.left    = `${x - 16}px`;
+  this._nameTag.style.top     = `${y}px`;
+  this._nameTag.style.display = 'block';
+  }
   destroy() {
     this.scene.remove(this.root);
     this._nameTag.remove();
