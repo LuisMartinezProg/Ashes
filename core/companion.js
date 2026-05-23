@@ -29,7 +29,7 @@ export class Companion {
       playerPosition.z + 1.5
     );
     scene.add(this.root);
-
+    this.root.visible = false;
     this._buildMesh();
 
     // Su propio SkillSystem con arco
