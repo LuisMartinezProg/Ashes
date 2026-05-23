@@ -95,6 +95,8 @@ import { YamiMage }         from './core/enemies/YamiMage.js';
 import { ShadowCaptain }    from './core/enemies/ShadowCaptain.js';
 import { BuildCamera }      from './core/buildCamera.js';
 import { BuildZone }        from './core/buildZone.js';
+import { Companion }        from './core/companion.js';
+import { PartyManager }     from './core/partyManager.js';
 
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -139,18 +141,27 @@ async function boot() {
     setProgress(57, 'Progression...');
     const progression = new Progression();
 
-    setProgress(60, 'NarrativeSystem...');
+    setProgress(59, 'Companion...');
+    const companion = new Companion(scene, player.root.position);
+    window._companion = companion;
+
+    setProgress(61, 'PartyManager...');
+    const partyManager = new PartyManager(scene, player, companion);
+    partyManager.setSkillSystems(skills, companion.skillSystem);
+    window._partyManager = partyManager;
+
+    setProgress(63, 'NarrativeSystem...');
     const narrative = new NarrativeSystem();
     narrative.setScene(scene);
     narrative.onPause  = () => {};
     narrative.onResume = () => {};
     window._narrative  = narrative;
 
-    setProgress(63, 'WorldTriggers...');
+    setProgress(65, 'WorldTriggers...');
     const triggers = new WorldTriggers(narrative, player);
     setTriggers(triggers);
 
-    setProgress(65, 'localStorage...');
+    setProgress(67, 'localStorage...');
     const savedData = localStorage.getItem('ashes_progression');
     if (savedData) {
       try {
@@ -164,15 +175,15 @@ async function boot() {
     combat.setProgression(progression);
     buildZone.setProgression(progression);
 
-    setProgress(66, 'ParrySystem...');
+    setProgress(69, 'ParrySystem...');
     const parry = new ParrySystem(player, combat);
     window._parry = parry;
 
-    setProgress(68, 'HUD...');
+    setProgress(71, 'HUD...');
     const hud = new HUD(combat, skills);
+    hud.setPartyManager(partyManager);
     setResourceCallback((resource) => hud.showCollectBtn(resource));
-
-    setProgress(70, 'spawnEnemies...');
+    setProgress(73, 'spawnEnemies...');
     const enemies = spawnEnemies(scene, player);
     enemies.forEach(e => combat.registerEnemy(e));
     skills.registerEnemies(enemies);
@@ -180,7 +191,7 @@ async function boot() {
     setEnemies(enemies);
     hud.setEnemies(enemies);
 
-    setProgress(74, 'DialogueUI...');
+    setProgress(75, 'DialogueUI...');
     const dialogueUI = new DialogueUI();
     const shopUI     = new ShopUI();
 
@@ -189,10 +200,9 @@ async function boot() {
     setNPCs(npcs);
     setDialogueUI(dialogueUI);
 
-    // ── Referencia a Mika ──
     const mikaNPC = npcs.find(n => n.isMika);
 
-    setProgress(80, 'proximidad NPCs...');
+    setProgress(79, 'proximidad NPCs...');
     let _nearNPC = null;
     function _checkNPCProximity() {
       if (dialogueUI.isActive() || shopUI.isActive()) return;
@@ -228,7 +238,7 @@ async function boot() {
     }
     setInterval(_checkNPCProximity, 200);
 
-    setProgress(83, 'callbacks...');
+    setProgress(81, 'callbacks...');
     player.onDamage = (hp, max) => hud.updatePlayerHp(hp, max);
     hud.updatePlayerHp(player.hp, player.maxHp);
 
@@ -240,25 +250,7 @@ async function boot() {
       };
     });
 
-    setProgress(100, 'LISTO');
-    await new Promise(r => setTimeout(r, 300));
-    const loading = document.getElementById('loading');
-    loading.classList.add('hidden');
-    setTimeout(() => loading.remove(), 900);
-
-    const charData   = JSON.parse(localStorage.getItem('ashesCharacter') || '{}');
-const weaponType = charData.weapon || 'sword';
-combat.setWeapon(weaponType);
-hud.setWeaponIcon(weaponType);
-    hud.show();
-    hud.setCamera(camera);
-    player.onStaminaUpdate = (stamina, max) => hud.updateStamina(stamina, max);
-
-    const mapUI = new MapUI(player);
-    window._mapUI = mapUI;
-    setInterval(() => mapUI.update(), 500);
-
-    // ── Lobos y oso del bosque ──
+    setProgress(83, 'lobos y oso...');
     const wolves = [
       new Wolf(scene, { x: -12, z: -38 }, player),
       new Wolf(scene, { x:  -8, z: -42 }, player),
@@ -276,7 +268,6 @@ hud.setWeaponIcon(weaponType);
       setTimeout(() => wolves.forEach(w => w.startRoaming()), 3000);
     };
 
-    // ── Monstruos del bosque denso ──
     const forestMonsters = [
       new Mossling(scene,      { x: -15, z: -50 }, player),
       new Mossling(scene,      { x:  12, z: -55 }, player),
@@ -291,7 +282,6 @@ hud.setWeaponIcon(weaponType);
       new Troll(scene,         { x:  20, z: -65 }, player),
     ];
 
-    // ── Monstruos de la planicie ──
     const plainsMonsters = [
       new EarthGolem(scene,      { x: -18, z: 10 }, player),
       new EarthGolem(scene,      { x:  20, z: 18 }, player),
@@ -300,7 +290,6 @@ hud.setWeaponIcon(weaponType);
       new WanderingSpirit(scene, { x: -22, z: 28 }, player),
     ];
 
-    // ── Camino a Ironfell — alejados del camino central (X±35) ──
     const roadMonsters = [
       new ShadowForest(scene,   { x: -35, z: 35 }, player),
       new ShadowForest(scene,   { x:  38, z: 38 }, player),
@@ -312,14 +301,12 @@ hud.setWeaponIcon(weaponType);
       new EliteMercenary(scene, { x:  38, z: 59 }, player),
     ];
 
-    // ── Bandidos de Mika — cerca del carruaje en z≈38 ──
     const mikaBandits = [
       new Bandit(scene, { x: -6, z: 36 }, player),
       new Bandit(scene, { x:  6, z: 37 }, player),
       new Bandit(scene, { x:  0, z: 35 }, player),
     ];
 
-    // Cuando todos los bandidos mueren → rescatar a Mika
     let _mikaRescued = false;
     function _checkMikaRescue() {
       if (_mikaRescued || !mikaNPC) return;
@@ -332,21 +319,19 @@ hud.setWeaponIcon(weaponType);
     }
     setInterval(_checkMikaRescue, 500);
 
-    // ── Ejército Yami ──
     const yamiArmy = [
-  new ShadowSoldier(scene,  { x: -12, z: 150 }, player),
-  new ShadowSoldier(scene,  { x:   8, z: 153 }, player),
-  new ShadowSoldier(scene,  { x:  -2, z: 156 }, player),
-  new DarkArcher(scene,     { x:  20, z: 151 }, player),
-  new DarkArcher(scene,     { x: -20, z: 154 }, player),
-  new Berserker(scene,      { x:   5, z: 157 }, player),
-  new Berserker(scene,      { x: -10, z: 160 }, player),
-  new YamiMage(scene,       { x:  15, z: 158 }, player),
-  new YamiMage(scene,       { x:  -5, z: 162 }, player),
-  new ShadowCaptain(scene,  { x:   0, z: 165 }, player),
-];
+      new ShadowSoldier(scene,  { x: -12, z: 150 }, player),
+      new ShadowSoldier(scene,  { x:   8, z: 153 }, player),
+      new ShadowSoldier(scene,  { x:  -2, z: 156 }, player),
+      new DarkArcher(scene,     { x:  20, z: 151 }, player),
+      new DarkArcher(scene,     { x: -20, z: 154 }, player),
+      new Berserker(scene,      { x:   5, z: 157 }, player),
+      new Berserker(scene,      { x: -10, z: 160 }, player),
+      new YamiMage(scene,       { x:  15, z: 158 }, player),
+      new YamiMage(scene,       { x:  -5, z: 162 }, player),
+      new ShadowCaptain(scene,  { x:   0, z: 165 }, player),
+    ];
 
-    // ── Registrar todos ──
     const allEnemies = [
       ...enemies, ...wolves, bear,
       ...forestMonsters, ...plainsMonsters,
@@ -354,8 +339,10 @@ hud.setWeaponIcon(weaponType);
     ];
     allEnemies.forEach(e => combat.registerEnemy(e));
     skills.registerEnemies(allEnemies);
+    partyManager.registerEnemies(allEnemies);
     setEnemies(allEnemies);
     hud.setEnemies(allEnemies);
+    window._enemies        = allEnemies;
     window._bear           = bear;
     window._wolves         = wolves;
     window._forestMonsters = forestMonsters;
@@ -363,8 +350,7 @@ hud.setWeaponIcon(weaponType);
     window._roadMonsters   = roadMonsters;
     window._mikaBandits    = mikaBandits;
     window._yamiArmy       = yamiArmy;
-
-    // ── Building ──
+    setProgress(86, 'Building...');
     const building = new BuildingSystem(scene, player);
     building.setProgression(progression);
     building.setZone(buildZone);
@@ -375,7 +361,6 @@ hud.setWeaponIcon(weaponType);
     window._buildCamera = buildCamera;
     window._buildZone   = buildZone;
 
-    // ── Botón bandera ──
     if (!buildZone.hasZone()) {
       const flagBtn = document.createElement('button');
       flagBtn.textContent = '🚩';
@@ -404,6 +389,7 @@ hud.setWeaponIcon(weaponType);
       buildCamera.showBtn();
     }
 
+    setProgress(89, 'UI...');
     const skillTree   = new SkillTree(progression);
     const skillBar    = new SkillBar(skills, progression);
     window._skillBar  = skillBar;
@@ -423,10 +409,25 @@ hud.setWeaponIcon(weaponType);
       getFusionUnlocked: () => progression.fusionUnlocked,
     });
 
+    setProgress(91, 'weapon...');
+    const charData   = JSON.parse(localStorage.getItem('ashesCharacter') || '{}');
+    const weaponType = charData.weapon || 'sword';
+    combat.setWeapon(weaponType);
+    hud.setWeaponIcon(weaponType);
+    hud.show();
+    hud.setCamera(camera);
+    player.onStaminaUpdate = (stamina, max) => hud.updateStamina(stamina, max);
+
     skillBar.setWeapon(weaponType);
     skillBar.show();
     subtypeMenu.setWeapon(weaponType);
     fusionMenu.setWeapon(weaponType);
+    progression.fusionUnlocked = true;
+
+    setProgress(93, 'MapUI...');
+    const mapUI = new MapUI(player);
+    window._mapUI = mapUI;
+    setInterval(() => mapUI.update(), 500);
 
     const pauseBtn = document.createElement('button');
     pauseBtn.textContent = '☰';
@@ -444,13 +445,10 @@ hud.setWeaponIcon(weaponType);
     pauseBtn.addEventListener('touchstart', openPause, { passive: false });
     document.body.appendChild(pauseBtn);
 
-    progression.fusionUnlocked = true;
-
-    // ── Visibilidad botones zona ──
+    setProgress(96, 'intervalos...');
     setInterval(() => {
       const pos    = player.root.position;
       const inside = buildZone.isInsideZone(pos.x, pos.z);
-
       if (buildCamera._btn) {
         buildCamera._btn.style.display = inside ? 'flex' : 'none';
         if (!inside && buildCamera.isActive()) buildCamera.deactivate();
@@ -464,6 +462,31 @@ hud.setWeaponIcon(weaponType);
     setInterval(() => {
       localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
     }, 30000);
+
+    // ── Loop de update — Companion + PartyManager ──────────────────────────
+    // Inyectamos el update de partyManager en el game loop via monkey-patch
+    // sobre el renderer (se ejecuta cada frame junto al loop principal)
+    const _origLoop = renderer.setAnimationLoop.bind(renderer);
+    let _joystickInput = { dx: 0, dy: 0 };
+
+    // Exponer para que loop.js pueda pasar el joystick si lo necesita
+    window._setJoystick = (dx, dy) => { _joystickInput.dx = dx; _joystickInput.dy = dy; };
+
+    let _lastTime = performance.now();
+    renderer.setAnimationLoop((time) => {
+      const now   = performance.now();
+      const delta = Math.min((now - _lastTime) / 1000, 0.1);
+      _lastTime   = now;
+
+      partyManager.update(delta, _joystickInput, camera);
+      companion.update(delta, _joystickInput, camera);
+    });
+
+    setProgress(100, 'LISTO');
+    await new Promise(r => setTimeout(r, 300));
+    const loading = document.getElementById('loading');
+    loading.classList.add('hidden');
+    setTimeout(() => loading.remove(), 900);
 
     if (!progression.getFlag?.('escena01_done')) {
       narrative.play(STORY_EVENTS.escena01_despertar);
