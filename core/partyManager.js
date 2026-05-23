@@ -1,4 +1,6 @@
 // core/partyManager.js — Cambio de personaje + reacciones | Ashes of the Reborn | Valiant Gaming
+import * as THREE from 'three';
+import { ReactionEngine, SUBTYPE_ELEMENT } from './reactions.js';
 import { ReactionEngine, SUBTYPE_ELEMENT } from './reactions.js';
 
 const SWITCH_COOLDOWN = 1.5; // segundos entre cambios
@@ -73,6 +75,9 @@ export class PartyManager {
   this._spawnSwitchVFX();
   return true;
   }
+  canSwitch() { return this._switchTimer <= 0; }
+getActiveIdx()       { return this._activeIdx; }
+getActiveCharacter() { return this._activeIdx === 0 ? this.player : this.companion; }
   // ── Lanzar habilidad de Mika (botón HUD) ─────────────────────────────────
   castCompanionSkill() {
     return this.companion.castSkill();
