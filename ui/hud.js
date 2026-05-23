@@ -241,7 +241,7 @@ export class HUD {
       background    : 'radial-gradient(circle at 35% 35%, #ff88aa, #cc4477)',
       border        : '2px solid #ff88aaaa',
       color         : '#fff',
-      fontSize      : '18px',
+      fontSize      : 'none',
       display       : 'flex',
       alignItems    : 'center',
       justifyContent: 'center',
