@@ -155,7 +155,10 @@ export class HUD {
     const cards  = [this._p1Card, this._p2Card];
     const colors = ['#88aaff', '#ff88aa'];
     const names  = ['KAEL', 'MIKA'];
-
+     if (window._skillBar) {
+  const mikaSys = this._partyManager?.companion?.skillSystem;
+  window._skillBar.setActiveCharacter(idx, mikaSys);
+     }
     // Actualizar cards
     cards.forEach((card, i) => {
       const active = i === idx;
