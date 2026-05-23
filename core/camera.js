@@ -1,5 +1,5 @@
 /**
- * camera.js — Cámara tercera persona (Fase 1 corregida)
+ * camera.js — Cámara tercera persona
  * Ashes of the Reborn | Valiant Gaming
  */
 
@@ -16,7 +16,7 @@ const ROTATION_SENS     = 0.008;
 export class ThirdPersonCamera {
   constructor(camera, player) {
     this.camera  = camera;
-    this.player  = player;
+    this._target = player;
 
     this.azimuth   = Math.PI;
     this.elevation = DEFAULT_ELEVATION;
@@ -33,16 +33,16 @@ export class ThirdPersonCamera {
     this._snapToPlayer();
   }
 
-  // ─── Eventos directo en window, filtrando mitad derecha ──────────────────
+  setTarget(character) {
+    this._target = character;
+    this._snapToPlayer();
+  }
 
   _bindEvents() {
-    // Touch — escuchamos en window para no perder eventos
     window.addEventListener('touchstart',  this._onTouchStart.bind(this),  { passive: false });
     window.addEventListener('touchmove',   this._onTouchMove.bind(this),   { passive: false });
     window.addEventListener('touchend',    this._onTouchEnd.bind(this),    { passive: false });
     window.addEventListener('touchcancel', this._onTouchEnd.bind(this),    { passive: false });
-
-    // Mouse (debug desktop)
     window.addEventListener('mousedown',   this._onMouseDown.bind(this));
     window.addEventListener('mousemove',   this._onMouseMove.bind(this));
     window.addEventListener('mouseup',     this._onMouseUp.bind(this));
@@ -54,7 +54,6 @@ export class ThirdPersonCamera {
 
   _onTouchStart(e) {
     if (this._dragActive) return;
-    // Buscar un toque en la mitad derecha
     for (const t of e.changedTouches) {
       if (this._isRightSide(t.clientX)) {
         e.preventDefault();
@@ -108,18 +107,14 @@ export class ThirdPersonCamera {
 
   _onMouseUp() { this._dragActive = false; }
 
-  // ─── Rotación ────────────────────────────────────────────────────────────
-
   _applyDelta(dx, dy) {
     this.azimuth   -= dx * ROTATION_SENS;
     this.elevation += dy * ROTATION_SENS;
     this.elevation  = Math.max(MIN_ELEVATION, Math.min(MAX_ELEVATION, this.elevation));
   }
 
-  // ─── Posición ideal ──────────────────────────────────────────────────────
-
   _calcIdealPosition() {
-    const target = this.player.chestPosition;
+    const target = this._target.chestPosition;
     const sinEl  = Math.sin(this.elevation);
     const cosEl  = Math.cos(this.elevation);
     this._idealPos.set(
@@ -132,16 +127,14 @@ export class ThirdPersonCamera {
   _snapToPlayer() {
     this._calcIdealPosition();
     this.camera.position.copy(this._idealPos);
-    this._lookTarget.copy(this.player.chestPosition);
+    this._lookTarget.copy(this._target.chestPosition);
     this.camera.lookAt(this._lookTarget);
   }
-
-  // ─── Update ──────────────────────────────────────────────────────────────
 
   update(delta) {
     this._calcIdealPosition();
     this.camera.position.lerp(this._idealPos, Math.min(LERP_POSITION * delta, 1));
-    this._lookTarget.lerp(this.player.chestPosition, Math.min(LERP_LOOKAT * delta, 1));
+    this._lookTarget.lerp(this._target.chestPosition, Math.min(LERP_LOOKAT * delta, 1));
     this.camera.lookAt(this._lookTarget);
   }
 
@@ -153,5 +146,4 @@ export class ThirdPersonCamera {
     window.removeEventListener('touchend',    this._onTouchEnd);
     window.removeEventListener('touchcancel', this._onTouchEnd);
   }
-      }
-      
+}
