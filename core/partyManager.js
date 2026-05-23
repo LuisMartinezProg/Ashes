@@ -51,30 +51,28 @@ export class PartyManager {
   }
 
   // ── Cambio de personaje ───────────────────────────────────────────────────
-  canSwitch() { return this._switchTimer <= 0; }
-
   switchCharacter() {
-    if (!this.canSwitch()) return false;
+  if (!this.canSwitch()) return false;
 
-    this._activeIdx = this._activeIdx === 0 ? 1 : 0;
-    this._switchTimer = SWITCH_COOLDOWN;
+  this._activeIdx = this._activeIdx === 0 ? 1 : 0;
+  this._switchTimer = SWITCH_COOLDOWN;
 
-    if (this._activeIdx === 0) {
-      this.player.isActive    = true;
-      this.companion.deactivate();
-    } else {
-      this.player.isActive    = false;
-      this.companion.activate();
-    }
-
-    if (this.onSwitch) this.onSwitch(this._activeIdx);
-    this._spawnSwitchVFX();
-    return true;
+  if (this._activeIdx === 0) {
+    this.companion.deactivate();
+    this.companion.root.visible = false;
+    this.player.root.visible    = true;
+  } else {
+    this.companion.root.position.copy(this.player.root.position);
+    this.companion.activate();
+    this.companion.root.visible = true;
+    this.player.root.visible    = false;
   }
 
-  getActiveIdx()       { return this._activeIdx; }
-  getActiveCharacter() { return this._activeIdx === 0 ? this.player : this.companion; }
-
+  window._thirdCam?.setTarget(this.getActiveCharacter());
+  if (this.onSwitch) this.onSwitch(this._activeIdx);
+  this._spawnSwitchVFX();
+  return true;
+  }
   // ── Lanzar habilidad de Mika (botón HUD) ─────────────────────────────────
   castCompanionSkill() {
     return this.companion.castSkill();
