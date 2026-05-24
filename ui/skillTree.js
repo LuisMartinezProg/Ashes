@@ -19,87 +19,97 @@ const CATEGORIES = {
   defensiva: {
     label: 'Defensiva', icon: '🛡️', color: '#4488ff',
     skills: [
-      { id: 'de_01', nivel: 1, label: 'Piel de piedra',        icon: '🪨', tipo: 'Básica',     limitante: 'Ralentiza el movimiento',              cost: 0 },
-      { id: 'de_02', nivel: 2, label: 'Aura protectora',       icon: '✨', tipo: 'Básica',     limitante: 'Reducción pequeña y constante',        cost: 1 },
-      { id: 'de_03', nivel: 2, label: 'Armadura de viento',    icon: '💨', tipo: 'Básica',     limitante: 'Solo desvía proyectiles débiles',      cost: 1 },
-      { id: 'de_04', nivel: 3, label: 'Muro de fuerza',        icon: '🧱', tipo: 'Intermedia', limitante: 'Tú tampoco puedes atravesarla',        cost: 2 },
-      { id: 'de_05', nivel: 3, label: 'Barrera de grupo',      icon: '🔵', tipo: 'Intermedia', limitante: 'Se rompe con suficiente daño',         cost: 2 },
-      { id: 'de_06', nivel: 4, label: 'Escudo de espejos',     icon: '🪞', tipo: 'Intermedia', limitante: 'No funciona contra daño físico',       cost: 2 },
-      { id: 'de_07', nivel: 4, label: 'Campo de espinas',      icon: '🌵', tipo: 'Intermedia', limitante: 'Solo daña al acercarse',               cost: 2 },
-      { id: 'de_08', nivel: 5, label: 'Fortaleza indestructible', icon: '🏰', tipo: 'Élite',   limitante: 'No puedes moverte ni atacar',          cost: 3 },
-      { id: 'de_09', nivel: 5, label: 'Inversión de daño',     icon: '🔄', tipo: 'Élite',      limitante: 'Recarga de 60 segundos',               cost: 3 },
-      { id: 'de_10', nivel: 5, label: 'Resurrección arcana',   icon: '💫', tipo: 'Élite',      limitante: 'Una vez por batalla',                  cost: 3 },
+      { id: 'de_01', nivel: 1, label: 'Piel de piedra',           icon: '🪨', tipo: 'Básica',     limitante: 'Ralentiza el movimiento',         cost: 0 },
+      { id: 'de_02', nivel: 2, label: 'Aura protectora',          icon: '✨', tipo: 'Básica',     limitante: 'Reducción pequeña y constante',   cost: 1 },
+      { id: 'de_03', nivel: 2, label: 'Armadura de viento',       icon: '💨', tipo: 'Básica',     limitante: 'Solo desvía proyectiles débiles', cost: 1 },
+      { id: 'de_04', nivel: 3, label: 'Muro de fuerza',           icon: '🧱', tipo: 'Intermedia', limitante: 'Tú tampoco puedes atravesarla',   cost: 2 },
+      { id: 'de_05', nivel: 3, label: 'Barrera de grupo',         icon: '🔵', tipo: 'Intermedia', limitante: 'Se rompe con suficiente daño',    cost: 2 },
+      { id: 'de_06', nivel: 4, label: 'Escudo de espejos',        icon: '🪞', tipo: 'Intermedia', limitante: 'No funciona contra daño físico',  cost: 2 },
+      { id: 'de_07', nivel: 4, label: 'Campo de espinas',         icon: '🌵', tipo: 'Intermedia', limitante: 'Solo daña al acercarse',          cost: 2 },
+      { id: 'de_08', nivel: 5, label: 'Fortaleza indestructible', icon: '🏰', tipo: 'Élite',      limitante: 'No puedes moverte ni atacar',     cost: 3 },
+      { id: 'de_09', nivel: 5, label: 'Inversión de daño',        icon: '🔄', tipo: 'Élite',      limitante: 'Recarga de 60 segundos',          cost: 3 },
+      { id: 'de_10', nivel: 5, label: 'Resurrección arcana',      icon: '💫', tipo: 'Élite',      limitante: 'Una vez por batalla',             cost: 3 },
     ],
   },
   movilidad: {
     label: 'Movilidad', icon: '💨', color: '#44cc44',
     skills: [
-      { id: 'mo_01', nivel: 1, label: 'Carrera mágica',           icon: '🏃', tipo: 'Básica',     limitante: 'Dura 5 segundos',                  cost: 0 },
-      { id: 'mo_02', nivel: 2, label: 'Salto potenciado',         icon: '⬆️', tipo: 'Básica',     limitante: 'Sin recarga',                      cost: 1 },
-      { id: 'mo_03', nivel: 2, label: 'Impulso de viento',        icon: '🌬️', tipo: 'Básica',     limitante: 'Solo en dirección que miras',      cost: 1 },
-      { id: 'mo_04', nivel: 3, label: 'Vuelo mágico',             icon: '🦋', tipo: 'Intermedia', limitante: 'Consume energía constantemente',   cost: 2 },
-      { id: 'mo_05', nivel: 3, label: 'Dash aéreo',               icon: '💫', tipo: 'Intermedia', limitante: 'Solo horizontal en el aire',       cost: 2 },
-      { id: 'mo_06', nivel: 4, label: 'Paso de sombra',           icon: '👤', tipo: 'Intermedia', limitante: 'Intangible solo 2 segundos',       cost: 2 },
-      { id: 'mo_07', nivel: 4, label: 'Ola de impulso',           icon: '🌊', tipo: 'Intermedia', limitante: 'Dura 6 segundos',                  cost: 2 },
-      { id: 'mo_08', nivel: 5, label: 'Teletransporte de combate',icon: '⚡', tipo: 'Élite',      limitante: 'Recarga de 20 segundos',           cost: 3 },
-      { id: 'mo_09', nivel: 5, label: 'Colapso espacial',         icon: '🕳️', tipo: 'Élite',      limitante: 'Solo a aliados visibles',          cost: 3 },
-      { id: 'mo_10', nivel: 5, label: 'Parpadeo infinito',        icon: '✨', tipo: 'Élite',      limitante: 'Agota toda la energía',            cost: 3 },
+      { id: 'mo_01', nivel: 1, label: 'Carrera mágica',            icon: '🏃', tipo: 'Básica',     limitante: 'Dura 5 segundos',               cost: 0 },
+      { id: 'mo_02', nivel: 2, label: 'Salto potenciado',          icon: '⬆️', tipo: 'Básica',     limitante: 'Sin recarga',                   cost: 1 },
+      { id: 'mo_03', nivel: 2, label: 'Impulso de viento',         icon: '🌬️', tipo: 'Básica',     limitante: 'Solo en dirección que miras',   cost: 1 },
+      { id: 'mo_04', nivel: 3, label: 'Vuelo mágico',              icon: '🦋', tipo: 'Intermedia', limitante: 'Consume energía constantemente', cost: 2 },
+      { id: 'mo_05', nivel: 3, label: 'Dash aéreo',                icon: '💫', tipo: 'Intermedia', limitante: 'Solo horizontal en el aire',    cost: 2 },
+      { id: 'mo_06', nivel: 4, label: 'Paso de sombra',            icon: '👤', tipo: 'Intermedia', limitante: 'Intangible solo 2 segundos',    cost: 2 },
+      { id: 'mo_07', nivel: 4, label: 'Ola de impulso',            icon: '🌊', tipo: 'Intermedia', limitante: 'Dura 6 segundos',               cost: 2 },
+      { id: 'mo_08', nivel: 5, label: 'Teletransporte de combate', icon: '⚡', tipo: 'Élite',      limitante: 'Recarga de 20 segundos',        cost: 3 },
+      { id: 'mo_09', nivel: 5, label: 'Colapso espacial',          icon: '🕳️', tipo: 'Élite',      limitante: 'Solo a aliados visibles',       cost: 3 },
+      { id: 'mo_10', nivel: 5, label: 'Parpadeo infinito',         icon: '✨', tipo: 'Élite',      limitante: 'Agota toda la energía',         cost: 3 },
     ],
   },
   soporte: {
     label: 'Soporte', icon: '💚', color: '#ffaa00',
     skills: [
-      { id: 'so_01', nivel: 1, label: 'Curación leve',           icon: '💚', tipo: 'Básica',     limitante: 'Cantidad pequeña',                 cost: 0 },
-      { id: 'so_02', nivel: 2, label: 'Aura de regeneración',    icon: '🌿', tipo: 'Básica',     limitante: 'Lenta y continua',                 cost: 1 },
-      { id: 'so_03', nivel: 2, label: 'Vendaje mágico',          icon: '🩹', tipo: 'Básica',     limitante: 'Solo un aliado cercano',           cost: 1 },
-      { id: 'so_04', nivel: 3, label: 'Grito de guerra',         icon: '📯', tipo: 'Intermedia', limitante: 'Dura 8 segundos',                  cost: 2 },
-      { id: 'so_05', nivel: 3, label: 'Visión táctica',          icon: '👁️', tipo: 'Intermedia', limitante: 'Solo en área definida',            cost: 2 },
-      { id: 'so_06', nivel: 4, label: 'Comando de velocidad',    icon: '⚡', tipo: 'Intermedia', limitante: 'Dura 12 segundos',                 cost: 2 },
-      { id: 'so_07', nivel: 4, label: 'Escudo de tropas',        icon: '🛡️', tipo: 'Intermedia', limitante: 'Dura 10 segundos',                 cost: 2 },
-      { id: 'so_08', nivel: 5, label: 'Resurrección de aliado',  icon: '✝️', tipo: 'Élite',      limitante: 'Recarga de 90 segundos',           cost: 3 },
-      { id: 'so_09', nivel: 5, label: 'Sacrificio heroico',      icon: '❤️', tipo: 'Élite',      limitante: 'Pierdes 50% de tu vida',           cost: 3 },
-      { id: 'so_10', nivel: 5, label: 'Campo de curación masiva',icon: '🌟', tipo: 'Élite',      limitante: 'Una vez por batalla',              cost: 3 },
+      { id: 'so_01', nivel: 1, label: 'Curación leve',            icon: '💚', tipo: 'Básica',     limitante: 'Cantidad pequeña',              cost: 0 },
+      { id: 'so_02', nivel: 2, label: 'Aura de regeneración',     icon: '🌿', tipo: 'Básica',     limitante: 'Lenta y continua',              cost: 1 },
+      { id: 'so_03', nivel: 2, label: 'Vendaje mágico',           icon: '🩹', tipo: 'Básica',     limitante: 'Solo un aliado cercano',        cost: 1 },
+      { id: 'so_04', nivel: 3, label: 'Grito de guerra',          icon: '📯', tipo: 'Intermedia', limitante: 'Dura 8 segundos',               cost: 2 },
+      { id: 'so_05', nivel: 3, label: 'Visión táctica',           icon: '👁️', tipo: 'Intermedia', limitante: 'Solo en área definida',         cost: 2 },
+      { id: 'so_06', nivel: 4, label: 'Comando de velocidad',     icon: '⚡', tipo: 'Intermedia', limitante: 'Dura 12 segundos',              cost: 2 },
+      { id: 'so_07', nivel: 4, label: 'Escudo de tropas',         icon: '🛡️', tipo: 'Intermedia', limitante: 'Dura 10 segundos',              cost: 2 },
+      { id: 'so_08', nivel: 5, label: 'Resurrección de aliado',   icon: '✝️', tipo: 'Élite',      limitante: 'Recarga de 90 segundos',        cost: 3 },
+      { id: 'so_09', nivel: 5, label: 'Sacrificio heroico',       icon: '❤️', tipo: 'Élite',      limitante: 'Pierdes 50% de tu vida',        cost: 3 },
+      { id: 'so_10', nivel: 5, label: 'Campo de curación masiva', icon: '🌟', tipo: 'Élite',      limitante: 'Una vez por batalla',           cost: 3 },
     ],
   },
   estrategica: {
     label: 'Estratégica', icon: '⭐', color: '#aa44ff',
     skills: [
-      { id: 'es_01', nivel: 1, label: 'Sombra de combate',     icon: '👥', tipo: 'Básica',     limitante: 'Copia fantasmal temporal',          cost: 0 },
-      { id: 'es_02', nivel: 2, label: 'Invocación menor',      icon: '👻', tipo: 'Básica',     limitante: 'Espíritu débil',                    cost: 1 },
-      { id: 'es_03', nivel: 2, label: 'Niebla de guerra',      icon: '🌫️', tipo: 'Básica',     limitante: 'Dura 10 segundos',                  cost: 1 },
-      { id: 'es_04', nivel: 3, label: 'Control del clima',     icon: '🌧️', tipo: 'Intermedia', limitante: 'Lluvia que ralentiza en área grande',cost: 2 },
-      { id: 'es_05', nivel: 3, label: 'Interferencia mágica',  icon: '📡', tipo: 'Intermedia', limitante: 'Bloquea habilidades 8 segundos',    cost: 2 },
-      { id: 'es_06', nivel: 4, label: 'Invocación de élite',   icon: '⚔️', tipo: 'Intermedia', limitante: 'Espíritu poderoso 20 segundos',     cost: 2 },
-      { id: 'es_07', nivel: 4, label: 'Trampa espectral',      icon: '💣', tipo: 'Intermedia', limitante: 'Zona invisible que explota al pisarla', cost: 2 },
-      { id: 'es_08', nivel: 5, label: 'Invocación de dragón',  icon: '🐉', tipo: 'Élite',      limitante: 'Recarga de 120 segundos',           cost: 3 },
-      { id: 'es_09', nivel: 5, label: 'Espíritu del caos',     icon: '🌀', tipo: 'Élite',      limitante: 'Ataca a todos, aliados y enemigos', cost: 3 },
-      { id: 'es_10', nivel: 5, label: 'Juicio final',          icon: '☀️', tipo: 'Élite',      limitante: 'Una vez por guerra',                cost: 3 },
+      { id: 'es_01', nivel: 1, label: 'Sombra de combate',    icon: '👥', tipo: 'Básica',     limitante: 'Copia fantasmal temporal',             cost: 0 },
+      { id: 'es_02', nivel: 2, label: 'Invocación menor',     icon: '👻', tipo: 'Básica',     limitante: 'Espíritu débil',                       cost: 1 },
+      { id: 'es_03', nivel: 2, label: 'Niebla de guerra',     icon: '🌫️', tipo: 'Básica',     limitante: 'Dura 10 segundos',                     cost: 1 },
+      { id: 'es_04', nivel: 3, label: 'Control del clima',    icon: '🌧️', tipo: 'Intermedia', limitante: 'Lluvia que ralentiza en área grande',   cost: 2 },
+      { id: 'es_05', nivel: 3, label: 'Interferencia mágica', icon: '📡', tipo: 'Intermedia', limitante: 'Bloquea habilidades 8 segundos',        cost: 2 },
+      { id: 'es_06', nivel: 4, label: 'Invocación de élite',  icon: '⚔️', tipo: 'Intermedia', limitante: 'Espíritu poderoso 20 segundos',         cost: 2 },
+      { id: 'es_07', nivel: 4, label: 'Trampa espectral',     icon: '💣', tipo: 'Intermedia', limitante: 'Zona invisible que explota al pisarla', cost: 2 },
+      { id: 'es_08', nivel: 5, label: 'Invocación de dragón', icon: '🐉', tipo: 'Élite',      limitante: 'Recarga de 120 segundos',               cost: 3 },
+      { id: 'es_09', nivel: 5, label: 'Espíritu del caos',    icon: '🌀', tipo: 'Élite',      limitante: 'Ataca a todos, aliados y enemigos',     cost: 3 },
+      { id: 'es_10', nivel: 5, label: 'Juicio final',         icon: '☀️', tipo: 'Élite',      limitante: 'Una vez por guerra',                    cost: 3 },
     ],
   },
 };
 
 const TIPO_COLORS = { 'Básica': '#aaaaaa', 'Intermedia': '#4488ff', 'Élite': '#ffaa00' };
 
-// Niveles de mundo requeridos por tipo
 const NIVEL_REQUIRED = { 'Básica': 0, 'Intermedia': 3, 'Élite': 7 };
 
+// Categorías disponibles por tipo de arma
+const WEAPON_CATEGORIES = {
+  sword:   ['ofensiva', 'defensiva', 'movilidad'],
+  katana:  ['ofensiva', 'movilidad', 'estrategica'],
+  bow:     ['ofensiva', 'estrategica', 'soporte'],
+  staff:   ['ofensiva', 'soporte', 'estrategica'],
+  shield:  ['defensiva', 'soporte', 'movilidad'],
+  default: ['ofensiva', 'defensiva', 'movilidad'],
+};
+
 export class SkillTree {
-  constructor() {
+  constructor(progression) {
+    this._progression  = progression ?? null;
     this._container    = null;
     this._canvas       = null;
     this._ctx          = null;
     this._category     = 'ofensiva';
+    this._weaponType   = 'default';
     this._nodes        = [];
     this._selectedNode = null;
     this._visible      = false;
-    this._skillPoints  = 3; // puntos disponibles
-    this._worldLevel   = 1; // nivel de mundo actual
-    this._unlocked     = { of_01: true, de_01: true, mo_01: true, so_01: true }; // básicas nivel 1 desbloqueadas
+    this._skillPoints  = 3;
+    this._worldLevel   = 1;
+    this._unlocked     = { of_01: true, de_01: true, mo_01: true, so_01: true };
 
-    // Pan y zoom
-    this._zoom     = 1;
-    this._panX     = 0;
-    this._panY     = 0;
+    this._zoom      = 1;
+    this._panX      = 0;
+    this._panY      = 0;
     this._isPanning = false;
     this._lastTouch = null;
     this._pinchDist = null;
@@ -109,9 +119,18 @@ export class SkillTree {
 
   // ── API pública ───────────────────────────────────────────────────────────
 
-  open(category) {
-    this._category = category ?? 'ofensiva';
-    this._visible  = true;
+  open(weaponType) {
+    const weapon  = weaponType ?? 'default';
+    this._weaponType = WEAPON_CATEGORIES[weapon] ? weapon : 'default';
+
+    const allowed = WEAPON_CATEGORIES[this._weaponType];
+
+    // Si la categoría actual no está permitida para esta arma, cambia a la primera disponible
+    if (!allowed.includes(this._category)) {
+      this._category = allowed[0];
+    }
+
+    this._visible = true;
     this._container.style.display = 'flex';
     this._resetView();
     this._renderTree();
@@ -123,7 +142,7 @@ export class SkillTree {
     this._container.style.display = 'none';
   }
 
-  toggle(category) { this._visible ? this.close() : this.open(category); }
+  toggle(weaponType) { this._visible ? this.close() : this.open(weaponType); }
 
   setWorldLevel(level) {
     this._worldLevel = level;
@@ -186,9 +205,17 @@ export class SkillTree {
       fontSize: '9px', letterSpacing: '1px', whiteSpace: 'nowrap',
     });
 
+    this._weaponEl = document.createElement('div');
+    Object.assign(this._weaponEl.style, {
+      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)',
+      borderRadius: '6px', padding: '3px 8px', color: '#aaaaaa',
+      fontSize: '9px', letterSpacing: '1px', whiteSpace: 'nowrap',
+    });
+
     left.appendChild(title);
     left.appendChild(this._pointsEl);
     left.appendChild(this._levelEl);
+    left.appendChild(this._weaponEl);
 
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '✕';
@@ -222,19 +249,20 @@ export class SkillTree {
         whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px',
       });
 
-      // Estratégica bloqueada hasta nivel 5
-      if (key === 'estrategica') {
-        tab.style.opacity = this._worldLevel >= 5 ? '1' : '0.4';
-      }
-
       tab.addEventListener('click', () => {
+        const allowed = WEAPON_CATEGORIES[this._weaponType] ?? WEAPON_CATEGORIES.default;
+        // Bloqueada si no está en las permitidas para esta arma
+        if (!allowed.includes(key)) return;
+        // Estratégica además requiere nivel de mundo 5
         if (key === 'estrategica' && this._worldLevel < 5) return;
+
         this._category     = key;
         this._selectedNode = null;
         this._resetView();
         this._renderTree();
         this._hidePanel();
       });
+
       tabs.appendChild(tab);
       this._tabs[key] = tab;
     });
@@ -245,12 +273,10 @@ export class SkillTree {
     Object.assign(body.style, { flex: '1', display: 'flex', overflow: 'hidden', position: 'relative' });
     this._container.appendChild(body);
 
-    // Canvas
     this._canvas = document.createElement('canvas');
     Object.assign(this._canvas.style, { flex: '1', display: 'block', touchAction: 'none' });
     body.appendChild(this._canvas);
 
-    // Touch/mouse events para pan, zoom y tap
     this._canvas.addEventListener('touchstart',  e => this._onTouchStart(e),  { passive: false });
     this._canvas.addEventListener('touchmove',   e => this._onTouchMove(e),   { passive: false });
     this._canvas.addEventListener('touchend',    e => this._onTouchEnd(e),    { passive: false });
@@ -260,7 +286,6 @@ export class SkillTree {
     this._canvas.addEventListener('wheel',       e => this._onWheel(e),       { passive: false });
     this._canvas.addEventListener('click',       e => this._onCanvasClick(e));
 
-    // Panel lateral
     this._panel = document.createElement('div');
     Object.assign(this._panel.style, {
       width: '0px', background: 'rgba(4,4,14,0.97)',
@@ -278,7 +303,6 @@ export class SkillTree {
     });
     this._panel.appendChild(this._panelInner);
 
-    // Hint de zoom
     const hint = document.createElement('div');
     Object.assign(hint.style, {
       position: 'absolute', bottom: '12px', left: '50%',
@@ -306,10 +330,10 @@ export class SkillTree {
   _onTouchStart(e) {
     e.preventDefault();
     if (e.touches.length === 1) {
-      this._isPanning  = true;
-      this._tapStart   = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() };
-      this._lastTouch  = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      this._didPan     = false;
+      this._isPanning = true;
+      this._tapStart  = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() };
+      this._lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      this._didPan    = false;
     } else if (e.touches.length === 2) {
       this._isPanning = false;
       this._pinchDist = this._getTouchDist(e.touches);
@@ -327,9 +351,9 @@ export class SkillTree {
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) this._didPan = true;
       this._renderTree();
     } else if (e.touches.length === 2 && this._pinchDist !== null) {
-      const newDist = this._getTouchDist(e.touches);
-      const ratio   = newDist / this._pinchDist;
-      this._zoom    = Math.max(0.4, Math.min(3, this._zoom * ratio));
+      const newDist   = this._getTouchDist(e.touches);
+      const ratio     = newDist / this._pinchDist;
+      this._zoom      = Math.max(0.4, Math.min(3, this._zoom * ratio));
       this._pinchDist = newDist;
       this._renderTree();
     }
@@ -412,22 +436,41 @@ export class SkillTree {
   // ── Render ────────────────────────────────────────────────────────────────
 
   _renderTree() {
-    if (!this._category) return;
+    // Fallback seguro si la categoría es inválida
+    if (!this._category || !CATEGORIES[this._category]) {
+      this._category = 'ofensiva';
+    }
 
-    const cat = CATEGORIES[this._category];
+    const cat     = CATEGORIES[this._category];
+    const allowed = WEAPON_CATEGORIES[this._weaponType] ?? WEAPON_CATEGORIES.default;
 
     // Header info
     this._pointsEl.textContent = `✦ ${this._skillPoints} pts`;
     this._levelEl.textContent  = `NIV MUNDO ${this._worldLevel}`;
+    this._weaponEl.textContent = `⚔ ${this._weaponType.toUpperCase()}`;
 
-    // Tabs
+    // Tabs — activa, bloqueada por arma, bloqueada por nivel
     Object.entries(this._tabs).forEach(([key, tab]) => {
-      const active = key === this._category;
-      const c      = CATEGORIES[key];
+      const active    = key === this._category;
+      const permitted = allowed.includes(key);
+      const needsLvl  = key === 'estrategica' && this._worldLevel < 5;
+      const blocked   = !permitted || needsLvl;
+      const c         = CATEGORIES[key];
+
       tab.style.background  = active ? `${c.color}33` : 'rgba(255,255,255,0.05)';
       tab.style.borderColor = active ? `${c.color}99` : 'rgba(255,255,255,0.1)';
-      tab.style.color       = active ? c.color : '#888';
-      if (key === 'estrategica') tab.style.opacity = this._worldLevel >= 5 ? '1' : '0.4';
+      tab.style.color       = active ? c.color : blocked ? '#444' : '#888';
+      tab.style.opacity     = blocked ? '0.3' : '1';
+      tab.style.cursor      = blocked ? 'not-allowed' : 'pointer';
+
+      // Tooltip de por qué está bloqueada
+      if (!permitted) {
+        tab.title = `No disponible para ${this._weaponType}`;
+      } else if (needsLvl) {
+        tab.title = 'Requiere Nivel de Mundo 5';
+      } else {
+        tab.title = '';
+      }
     });
 
     // Canvas setup
@@ -441,36 +484,27 @@ export class SkillTree {
     ctx.clearRect(0, 0, W, H);
     this._ctx = ctx;
 
-    // Aplicar pan y zoom
     ctx.save();
     ctx.translate(this._panX, this._panY);
     ctx.scale(this._zoom, this._zoom);
 
-    // Layout: 5 niveles verticales, habilidades por nivel en columnas
-    // Nivel 1: 1 skill (centro)
-    // Nivel 2: 2 skills
-    // Nivel 3: 2 skills
-    // Nivel 4: 2 skills
-    // Nivel 5: 3 skills
     const skills  = cat.skills;
     const nodeR   = 28;
     const levelH  = 110;
     const padTop  = 60;
 
-    // Agrupar por nivel
     const byLevel = {};
     skills.forEach(sk => {
       if (!byLevel[sk.nivel]) byLevel[sk.nivel] = [];
       byLevel[sk.nivel].push(sk);
     });
 
-    // Calcular posiciones
     this._nodes = [];
     const centerX = W / 2;
 
     Object.entries(byLevel).forEach(([lvl, sks]) => {
-      const y    = padTop + (parseInt(lvl) - 1) * levelH;
-      const cols = sks.length;
+      const y       = padTop + (parseInt(lvl) - 1) * levelH;
+      const cols    = sks.length;
       const spacing = Math.min(120, (W - 80) / Math.max(cols, 1));
 
       sks.forEach((sk, i) => {
@@ -527,11 +561,9 @@ export class SkillTree {
 
   _drawNode(n, catColor) {
     const ctx        = this._ctx;
-    const color      = TIPO_COLORS[n.skill.tipo];
     const isSelected = this._selectedNode?.skill.id === n.skill.id;
     const r          = n.r + (isSelected ? 4 : 0);
 
-    // Glow
     if (n.unlocked || n.canUnlock) {
       ctx.save();
       ctx.shadowColor = n.unlocked ? catColor : '#ffdd88';
@@ -543,7 +575,6 @@ export class SkillTree {
       ctx.restore();
     }
 
-    // Fondo
     const grad = ctx.createRadialGradient(n.x - r * 0.3, n.y - r * 0.3, 0, n.x, n.y, r);
     if (n.unlocked) {
       grad.addColorStop(0, '#1e1238');
@@ -560,7 +591,6 @@ export class SkillTree {
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // Borde
     ctx.beginPath();
     ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
     ctx.strokeStyle = n.unlocked
@@ -569,7 +599,6 @@ export class SkillTree {
     ctx.lineWidth = isSelected ? 3 : 1.5;
     ctx.stroke();
 
-    // Icono o candado
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     if (n.locked) {
@@ -586,14 +615,12 @@ export class SkillTree {
       ctx.globalAlpha = 1;
     }
 
-    // Badge de tipo
     const badgeColor = TIPO_COLORS[n.skill.tipo];
     ctx.font      = `bold 7px monospace`;
     ctx.fillStyle = n.unlocked ? badgeColor : 'rgba(100,100,100,0.6)';
     ctx.textAlign = 'center';
     ctx.fillText(n.skill.tipo.toUpperCase(), n.x, n.y + r + 12);
 
-    // Check si desbloqueado
     if (n.unlocked) {
       ctx.beginPath();
       ctx.arc(n.x + r * 0.65, n.y - r * 0.65, 8, 0, Math.PI * 2);
@@ -605,7 +632,6 @@ export class SkillTree {
       ctx.fillText('✓', n.x + r * 0.65, n.y - r * 0.65);
     }
 
-    // Coste si puede desbloquear
     if (n.canUnlock && n.skill.cost > 0) {
       ctx.font      = 'bold 8px monospace';
       ctx.fillStyle = '#ffdd88';
@@ -618,10 +644,9 @@ export class SkillTree {
 
   _showPanel(n) {
     this._panel.style.width = '240px';
-    const skill    = n.skill;
-    const cat      = CATEGORIES[this._category];
-    const color    = TIPO_COLORS[skill.tipo];
-    const isActive = false; // se puede conectar al sistema activo
+    const skill = n.skill;
+    const cat   = CATEGORIES[this._category];
+    const color = TIPO_COLORS[skill.tipo];
 
     let statusHtml = '';
     if (n.unlocked) {
@@ -699,16 +724,15 @@ export class SkillTree {
       </div>
     `;
 
-    // Eventos
     const unlockBtn = this._panelInner.querySelector('[data-action="unlock"]');
     const equipBtn  = this._panelInner.querySelector('[data-action="equip"]');
 
     if (unlockBtn) {
       unlockBtn.addEventListener('click', () => {
         if (this._skillPoints < skill.cost) return;
-        this._skillPoints          -= skill.cost;
-        this._unlocked[skill.id]    = true;
-        this._selectedNode          = null;
+        this._skillPoints       -= skill.cost;
+        this._unlocked[skill.id] = true;
+        this._selectedNode       = null;
         this._renderTree();
         const updated = this._nodes.find(nd => nd.skill.id === skill.id);
         if (updated) { this._selectedNode = updated; this._showPanel(updated); }
@@ -718,7 +742,6 @@ export class SkillTree {
 
     if (equipBtn) {
       equipBtn.addEventListener('click', () => {
-        // Conectar con skillSystem si está disponible
         window._skillSystem?.equipSkill?.(skill.id);
         this._showFeedback(skill, cat.color, 'EQUIPADA');
       });
