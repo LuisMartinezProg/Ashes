@@ -37,7 +37,6 @@ export class BaseEnemy {
     scene.add(this.mesh);
   }
 
-  // Subclases implementan esto
   _buildMesh(pos) {}
 
   isDead() { return this.dead; }
@@ -52,6 +51,18 @@ export class BaseEnemy {
     if (this.hp <= 0) this._startDeath();
   }
 
+  // ── Obtener personaje activo ──────────────────────────────────────────────
+  _getActiveTarget() {
+    const active = window._partyManager?.getActiveCharacter();
+    if (active) return active;
+    return this.player;
+  }
+
+  _getActivePosition() {
+    const target = this._getActiveTarget();
+    return target.root?.position ?? target.position;
+  }
+
   update(delta) {
     if (!this.mesh && this.dead) {
       this._respawnTimer -= delta;
@@ -61,7 +72,6 @@ export class BaseEnemy {
     if (!this.mesh || this.dead) return;
     if (this._dying) { this._updateDeathAnim(delta); return; }
 
-    // Efectos
     if (this._burnTimer > 0) {
       this._burnTimer -= delta;
       this._burnAccum += this._burnDPS * delta;
@@ -104,10 +114,9 @@ export class BaseEnemy {
   }
 
   _updateChase(delta) {
-    if (!this.player) return;
-    const attackRange  = this._config.attackRange  ?? 1.5;
-    const detectRange  = this._config.detectRange  ?? 6;
-    const chaseSpeed   = this._config.chaseSpeed   ?? 3.5;
+    const attackRange = this._config.attackRange ?? 1.5;
+    const detectRange = this._config.detectRange ?? 6;
+    const chaseSpeed  = this._config.chaseSpeed  ?? 3.5;
 
     if (this._distToPlayer() > detectRange * 1.6) {
       this._state = STATE.ROAM;
@@ -117,11 +126,10 @@ export class BaseEnemy {
       this._state = STATE.ATTACK;
       return;
     }
-    this._moveTo(this.player.root.position, chaseSpeed * this._slowFactor, delta);
+    this._moveTo(this._getActivePosition(), chaseSpeed * this._slowFactor, delta);
   }
 
   _updateAttack(delta) {
-    if (!this.player) return;
     const attackRange = this._config.attackRange ?? 1.5;
 
     if (this._distToPlayer() > attackRange * 1.4) {
@@ -131,10 +139,11 @@ export class BaseEnemy {
     this._attackTimer -= delta;
     if (this._attackTimer <= 0) {
       this._attackTimer = this._config.attackCooldown ?? 1.5;
-      this.player.takeDamage?.(this._config.damage ?? 8);
+      const target = this._getActiveTarget();
+      target.takeDamage?.(this._config.damage ?? 8);
       this._onAttackVFX?.();
     }
-    this._lookAt(this.player.root.position);
+    this._lookAt(this._getActivePosition());
   }
 
   _flash() {
@@ -144,15 +153,13 @@ export class BaseEnemy {
     }, 110);
   }
 
-  _restoreColors() {
-    // Subclases pueden overridear
-  }
+  _restoreColors() {}
 
   _startDeath() {
-    this.dead    = true;
-    this._dying  = true;
+    this.dead        = true;
+    this._dying      = true;
     this._dyingTimer = this._config.deathDuration ?? 700;
-    this._state  = STATE.DEAD;
+    this._state      = STATE.DEAD;
     this._onDrop?.();
     if (this.onDeath) this.onDeath();
   }
@@ -180,8 +187,8 @@ export class BaseEnemy {
   }
 
   _respawn() {
-    this.hp    = this.maxHp;
-    this.dead  = false;
+    this.hp     = this.maxHp;
+    this.dead   = false;
     this._dying = false;
     this._state = STATE.ROAM;
     this._buildMesh(this._spawnPos);
@@ -217,7 +224,7 @@ export class BaseEnemy {
   }
 
   _distToPlayer() {
-    if (!this.player || !this.mesh) return Infinity;
-    return this._distTo(this.player.root.position);
+    if (!this.mesh) return Infinity;
+    return this._distTo(this._getActivePosition());
   }
-                              }
+}
