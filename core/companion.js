@@ -33,7 +33,7 @@ export class Companion {
     this._buildMesh();
 
     // Su propio SkillSystem con arco
-    this.skillSystem = new SkillSystem(scene, this.root.position);
+    this.skillSystem = new SkillSystem(scene, this.root);
     this.activeSubtype = 'precision'; // subtipo activo de Mika
     this.activeSkillId = 'piercing_shot'; // habilidad activa
 
