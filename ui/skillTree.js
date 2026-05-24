@@ -1,33 +1,119 @@
 // ui/skillTree.js — Ashes of the Reborn | Valiant Gaming
-import { SKILL_DATA, RARITY_COLORS } from '../core/skillData.js';
 
-const RARITY_LABELS   = { common: 'Común', rare: 'Raro', epic: 'Épico', legendary: 'Legendario' };
-const XP_REQUIRED     = { common: 0, rare: 100, epic: 300, legendary: 700 };
-const TRIAL_LEVEL     = { common: 0, rare: 2, epic: 5, legendary: 10 };
-const SKILL_POINTS_COST = { common: 0, rare: 1, epic: 2, legendary: 3 };
+const CATEGORIES = {
+  ofensiva: {
+    label: 'Ofensiva', icon: '⚔️', color: '#ff4400',
+    skills: [
+      { id: 'of_01', nivel: 1, label: 'Bola de fuego',         icon: '🔥', tipo: 'Básica',     limitante: 'Ninguna',                        cost: 0  },
+      { id: 'of_02', nivel: 2, label: 'Chispa en cadena',      icon: '⚡', tipo: 'Básica',     limitante: 'Necesita 2 enemigos cerca',       cost: 1  },
+      { id: 'of_03', nivel: 2, label: 'Lanza de hielo',        icon: '🧊', tipo: 'Básica',     limitante: 'Congela solo 2 segundos',         cost: 1  },
+      { id: 'of_04', nivel: 3, label: 'Meteoro pequeño',       icon: '🌑', tipo: 'Intermedia', limitante: '4 segundos antes de caer',        cost: 2  },
+      { id: 'of_05', nivel: 3, label: 'Onda sísmica mágica',   icon: '🌊', tipo: 'Intermedia', limitante: 'No funciona en el aire',          cost: 2  },
+      { id: 'of_06', nivel: 4, label: 'Lanza de plasma',       icon: '💜', tipo: 'Intermedia', limitante: 'Recarga de 10 segundos',          cost: 2  },
+      { id: 'of_07', nivel: 4, label: 'Vortex de fuego',       icon: '🌪️', tipo: 'Intermedia', limitante: 'Solo desorienta, no mata directo', cost: 2 },
+      { id: 'of_08', nivel: 5, label: 'Nova devastadora',      icon: '💥', tipo: 'Élite',      limitante: 'Sin energía 30 segundos',         cost: 3  },
+      { id: 'of_09', nivel: 5, label: 'Colapso dimensional',   icon: '🕳️', tipo: 'Élite',      limitante: 'Una vez por batalla',             cost: 3  },
+      { id: 'of_10', nivel: 5, label: 'Fragmentación cósmica', icon: '☄️', tipo: 'Élite',      limitante: 'Daña aliados cercanos',           cost: 3  },
+    ],
+  },
+  defensiva: {
+    label: 'Defensiva', icon: '🛡️', color: '#4488ff',
+    skills: [
+      { id: 'de_01', nivel: 1, label: 'Piel de piedra',        icon: '🪨', tipo: 'Básica',     limitante: 'Ralentiza el movimiento',              cost: 0 },
+      { id: 'de_02', nivel: 2, label: 'Aura protectora',       icon: '✨', tipo: 'Básica',     limitante: 'Reducción pequeña y constante',        cost: 1 },
+      { id: 'de_03', nivel: 2, label: 'Armadura de viento',    icon: '💨', tipo: 'Básica',     limitante: 'Solo desvía proyectiles débiles',      cost: 1 },
+      { id: 'de_04', nivel: 3, label: 'Muro de fuerza',        icon: '🧱', tipo: 'Intermedia', limitante: 'Tú tampoco puedes atravesarla',        cost: 2 },
+      { id: 'de_05', nivel: 3, label: 'Barrera de grupo',      icon: '🔵', tipo: 'Intermedia', limitante: 'Se rompe con suficiente daño',         cost: 2 },
+      { id: 'de_06', nivel: 4, label: 'Escudo de espejos',     icon: '🪞', tipo: 'Intermedia', limitante: 'No funciona contra daño físico',       cost: 2 },
+      { id: 'de_07', nivel: 4, label: 'Campo de espinas',      icon: '🌵', tipo: 'Intermedia', limitante: 'Solo daña al acercarse',               cost: 2 },
+      { id: 'de_08', nivel: 5, label: 'Fortaleza indestructible', icon: '🏰', tipo: 'Élite',   limitante: 'No puedes moverte ni atacar',          cost: 3 },
+      { id: 'de_09', nivel: 5, label: 'Inversión de daño',     icon: '🔄', tipo: 'Élite',      limitante: 'Recarga de 60 segundos',               cost: 3 },
+      { id: 'de_10', nivel: 5, label: 'Resurrección arcana',   icon: '💫', tipo: 'Élite',      limitante: 'Una vez por batalla',                  cost: 3 },
+    ],
+  },
+  movilidad: {
+    label: 'Movilidad', icon: '💨', color: '#44cc44',
+    skills: [
+      { id: 'mo_01', nivel: 1, label: 'Carrera mágica',           icon: '🏃', tipo: 'Básica',     limitante: 'Dura 5 segundos',                  cost: 0 },
+      { id: 'mo_02', nivel: 2, label: 'Salto potenciado',         icon: '⬆️', tipo: 'Básica',     limitante: 'Sin recarga',                      cost: 1 },
+      { id: 'mo_03', nivel: 2, label: 'Impulso de viento',        icon: '🌬️', tipo: 'Básica',     limitante: 'Solo en dirección que miras',      cost: 1 },
+      { id: 'mo_04', nivel: 3, label: 'Vuelo mágico',             icon: '🦋', tipo: 'Intermedia', limitante: 'Consume energía constantemente',   cost: 2 },
+      { id: 'mo_05', nivel: 3, label: 'Dash aéreo',               icon: '💫', tipo: 'Intermedia', limitante: 'Solo horizontal en el aire',       cost: 2 },
+      { id: 'mo_06', nivel: 4, label: 'Paso de sombra',           icon: '👤', tipo: 'Intermedia', limitante: 'Intangible solo 2 segundos',       cost: 2 },
+      { id: 'mo_07', nivel: 4, label: 'Ola de impulso',           icon: '🌊', tipo: 'Intermedia', limitante: 'Dura 6 segundos',                  cost: 2 },
+      { id: 'mo_08', nivel: 5, label: 'Teletransporte de combate',icon: '⚡', tipo: 'Élite',      limitante: 'Recarga de 20 segundos',           cost: 3 },
+      { id: 'mo_09', nivel: 5, label: 'Colapso espacial',         icon: '🕳️', tipo: 'Élite',      limitante: 'Solo a aliados visibles',          cost: 3 },
+      { id: 'mo_10', nivel: 5, label: 'Parpadeo infinito',        icon: '✨', tipo: 'Élite',      limitante: 'Agota toda la energía',            cost: 3 },
+    ],
+  },
+  soporte: {
+    label: 'Soporte', icon: '💚', color: '#ffaa00',
+    skills: [
+      { id: 'so_01', nivel: 1, label: 'Curación leve',           icon: '💚', tipo: 'Básica',     limitante: 'Cantidad pequeña',                 cost: 0 },
+      { id: 'so_02', nivel: 2, label: 'Aura de regeneración',    icon: '🌿', tipo: 'Básica',     limitante: 'Lenta y continua',                 cost: 1 },
+      { id: 'so_03', nivel: 2, label: 'Vendaje mágico',          icon: '🩹', tipo: 'Básica',     limitante: 'Solo un aliado cercano',           cost: 1 },
+      { id: 'so_04', nivel: 3, label: 'Grito de guerra',         icon: '📯', tipo: 'Intermedia', limitante: 'Dura 8 segundos',                  cost: 2 },
+      { id: 'so_05', nivel: 3, label: 'Visión táctica',          icon: '👁️', tipo: 'Intermedia', limitante: 'Solo en área definida',            cost: 2 },
+      { id: 'so_06', nivel: 4, label: 'Comando de velocidad',    icon: '⚡', tipo: 'Intermedia', limitante: 'Dura 12 segundos',                 cost: 2 },
+      { id: 'so_07', nivel: 4, label: 'Escudo de tropas',        icon: '🛡️', tipo: 'Intermedia', limitante: 'Dura 10 segundos',                 cost: 2 },
+      { id: 'so_08', nivel: 5, label: 'Resurrección de aliado',  icon: '✝️', tipo: 'Élite',      limitante: 'Recarga de 90 segundos',           cost: 3 },
+      { id: 'so_09', nivel: 5, label: 'Sacrificio heroico',      icon: '❤️', tipo: 'Élite',      limitante: 'Pierdes 50% de tu vida',           cost: 3 },
+      { id: 'so_10', nivel: 5, label: 'Campo de curación masiva',icon: '🌟', tipo: 'Élite',      limitante: 'Una vez por batalla',              cost: 3 },
+    ],
+  },
+  estrategica: {
+    label: 'Estratégica', icon: '⭐', color: '#aa44ff',
+    skills: [
+      { id: 'es_01', nivel: 1, label: 'Sombra de combate',     icon: '👥', tipo: 'Básica',     limitante: 'Copia fantasmal temporal',          cost: 0 },
+      { id: 'es_02', nivel: 2, label: 'Invocación menor',      icon: '👻', tipo: 'Básica',     limitante: 'Espíritu débil',                    cost: 1 },
+      { id: 'es_03', nivel: 2, label: 'Niebla de guerra',      icon: '🌫️', tipo: 'Básica',     limitante: 'Dura 10 segundos',                  cost: 1 },
+      { id: 'es_04', nivel: 3, label: 'Control del clima',     icon: '🌧️', tipo: 'Intermedia', limitante: 'Lluvia que ralentiza en área grande',cost: 2 },
+      { id: 'es_05', nivel: 3, label: 'Interferencia mágica',  icon: '📡', tipo: 'Intermedia', limitante: 'Bloquea habilidades 8 segundos',    cost: 2 },
+      { id: 'es_06', nivel: 4, label: 'Invocación de élite',   icon: '⚔️', tipo: 'Intermedia', limitante: 'Espíritu poderoso 20 segundos',     cost: 2 },
+      { id: 'es_07', nivel: 4, label: 'Trampa espectral',      icon: '💣', tipo: 'Intermedia', limitante: 'Zona invisible que explota al pisarla', cost: 2 },
+      { id: 'es_08', nivel: 5, label: 'Invocación de dragón',  icon: '🐉', tipo: 'Élite',      limitante: 'Recarga de 120 segundos',           cost: 3 },
+      { id: 'es_09', nivel: 5, label: 'Espíritu del caos',     icon: '🌀', tipo: 'Élite',      limitante: 'Ataca a todos, aliados y enemigos', cost: 3 },
+      { id: 'es_10', nivel: 5, label: 'Juicio final',          icon: '☀️', tipo: 'Élite',      limitante: 'Una vez por guerra',                cost: 3 },
+    ],
+  },
+};
+
+const TIPO_COLORS = { 'Básica': '#aaaaaa', 'Intermedia': '#4488ff', 'Élite': '#ffaa00' };
+
+// Niveles de mundo requeridos por tipo
+const NIVEL_REQUIRED = { 'Básica': 0, 'Intermedia': 3, 'Élite': 7 };
 
 export class SkillTree {
-  constructor(progression) {
-    this._progression    = progression;
-    this._container      = null;
-    this._canvas         = null;
-    this._ctx            = null;
-    this._weapon         = null;
-    this._nodes          = [];
-    this._selectedNode   = null;
-    this._visible        = false;
-    this._skillPoints    = 0;
-    this._unlockedSkills = {};
+  constructor() {
+    this._container    = null;
+    this._canvas       = null;
+    this._ctx          = null;
+    this._category     = 'ofensiva';
+    this._nodes        = [];
+    this._selectedNode = null;
+    this._visible      = false;
+    this._skillPoints  = 3; // puntos disponibles
+    this._worldLevel   = 1; // nivel de mundo actual
+    this._unlocked     = { of_01: true, de_01: true, mo_01: true, so_01: true }; // básicas nivel 1 desbloqueadas
+
+    // Pan y zoom
+    this._zoom     = 1;
+    this._panX     = 0;
+    this._panY     = 0;
+    this._isPanning = false;
+    this._lastTouch = null;
+    this._pinchDist = null;
 
     this._build();
   }
 
   // ── API pública ───────────────────────────────────────────────────────────
 
-  open(weapon) {
-    this._weapon  = weapon;
-    this._visible = true;
+  open(category) {
+    this._category = category ?? 'ofensiva';
+    this._visible  = true;
     this._container.style.display = 'flex';
+    this._resetView();
     this._renderTree();
   }
 
@@ -37,80 +123,78 @@ export class SkillTree {
     this._container.style.display = 'none';
   }
 
-  toggle(weapon) {
-    this._visible ? this.close() : this.open(weapon);
-  }
+  toggle(category) { this._visible ? this.close() : this.open(category); }
 
-  addSkillPoints(amount) {
-    this._skillPoints += amount;
+  setWorldLevel(level) {
+    this._worldLevel = level;
     if (this._visible) this._renderTree();
   }
 
-  getSkillPoints()          { return this._skillPoints; }
-  isSkillConfirmed(skillId) { return !!this._unlockedSkills[skillId]; }
+  addSkillPoints(n) {
+    this._skillPoints += n;
+    if (this._visible) this._renderTree();
+  }
 
   // ── Build DOM ─────────────────────────────────────────────────────────────
 
   _build() {
     this._container = document.createElement('div');
     Object.assign(this._container.style, {
-      position      : 'fixed',
-      inset         : '0',
-      display       : 'none',
-      flexDirection : 'column',
-      background    : 'radial-gradient(ellipse at center, #0d0a1a 0%, #04040a 100%)',
-      zIndex        : '200',
-      fontFamily    : "'Cinzel', serif",
-      userSelect    : 'none',
+      position     : 'fixed',
+      inset        : '0',
+      display      : 'none',
+      flexDirection: 'column',
+      background   : 'radial-gradient(ellipse at center, #0d0a1a 0%, #04040a 100%)',
+      zIndex       : '200',
+      fontFamily   : "'Cinzel', serif",
+      userSelect   : 'none',
+      overflow     : 'hidden',
     });
     document.body.appendChild(this._container);
 
-    // Header
+    // ── Header ──
     const header = document.createElement('div');
     Object.assign(header.style, {
-      display        : 'flex',
-      alignItems     : 'center',
-      justifyContent : 'space-between',
-      padding        : '12px 20px',
-      borderBottom   : '1px solid rgba(201,168,76,0.3)',
-      background     : 'rgba(0,0,0,0.4)',
-      flexShrink     : '0',
+      display       : 'flex',
+      alignItems    : 'center',
+      justifyContent: 'space-between',
+      padding       : '10px 16px',
+      borderBottom  : '1px solid rgba(201,168,76,0.3)',
+      background    : 'rgba(0,0,0,0.5)',
+      flexShrink    : '0',
+      gap           : '10px',
     });
 
     const left = document.createElement('div');
-    Object.assign(left.style, { display: 'flex', alignItems: 'center', gap: '16px' });
+    Object.assign(left.style, { display: 'flex', alignItems: 'center', gap: '12px', flex: '1', minWidth: '0' });
 
-    this._titleEl = document.createElement('div');
-    Object.assign(this._titleEl.style, {
-      color        : '#c9a84c',
-      fontSize     : '14px',
-      letterSpacing: '3px',
-    });
-    this._titleEl.textContent = 'ÁRBOL DE HABILIDADES';
+    const title = document.createElement('div');
+    Object.assign(title.style, { color: '#c9a84c', fontSize: '12px', letterSpacing: '2px', whiteSpace: 'nowrap' });
+    title.textContent = 'ÁRBOL DE HABILIDADES';
 
     this._pointsEl = document.createElement('div');
     Object.assign(this._pointsEl.style, {
-      background   : 'rgba(201,168,76,0.15)',
-      border       : '1px solid rgba(201,168,76,0.4)',
-      borderRadius : '6px',
-      padding      : '4px 10px',
-      color        : '#c9a84c',
-      fontSize     : '10px',
-      letterSpacing: '1px',
+      background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.4)',
+      borderRadius: '6px', padding: '3px 8px', color: '#c9a84c',
+      fontSize: '9px', letterSpacing: '1px', whiteSpace: 'nowrap',
     });
 
-    left.appendChild(this._titleEl);
+    this._levelEl = document.createElement('div');
+    Object.assign(this._levelEl.style, {
+      background: 'rgba(100,180,255,0.1)', border: '1px solid rgba(100,180,255,0.3)',
+      borderRadius: '6px', padding: '3px 8px', color: '#88ccff',
+      fontSize: '9px', letterSpacing: '1px', whiteSpace: 'nowrap',
+    });
+
+    left.appendChild(title);
     left.appendChild(this._pointsEl);
+    left.appendChild(this._levelEl);
 
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '✕';
     Object.assign(closeBtn.style, {
-      background: 'none',
-      border    : 'none',
-      color     : '#888',
-      fontSize  : '18px',
-      cursor    : 'pointer',
-      padding   : '4px 8px',
+      background: 'none', border: 'none', color: '#888',
+      fontSize: '18px', cursor: 'pointer', padding: '4px 8px', flexShrink: '0',
     });
     closeBtn.addEventListener('click', () => this.close());
 
@@ -118,321 +202,196 @@ export class SkillTree {
     header.appendChild(closeBtn);
     this._container.appendChild(header);
 
-    // XP bar
-    this._xpBar = document.createElement('div');
-    Object.assign(this._xpBar.style, {
-      padding     : '8px 20px',
-      background  : 'rgba(0,0,0,0.3)',
-      flexShrink  : '0',
-      borderBottom: '1px solid rgba(255,255,255,0.05)',
-    });
-    this._container.appendChild(this._xpBar);
-
-    // Weapon tabs
+    // ── Category tabs ──
     const tabs = document.createElement('div');
     Object.assign(tabs.style, {
-      display     : 'flex',
-      gap         : '6px',
-      padding     : '10px 16px',
-      background  : 'rgba(0,0,0,0.3)',
-      flexShrink  : '0',
+      display: 'flex', gap: '4px', padding: '8px 12px',
+      background: 'rgba(0,0,0,0.4)', flexShrink: '0',
       borderBottom: '1px solid rgba(255,255,255,0.05)',
-      overflowX   : 'auto',
+      overflowX: 'auto',
     });
 
-    const weaponIcons  = { magic: '🔮', katana: '🗡️', sword: '⚔️', bow: '🏹' };
-    const weaponLabels = { magic: 'Magia', katana: 'Katana', sword: 'Espada', bow: 'Arco' };
-
     this._tabs = {};
-    Object.keys(SKILL_DATA).forEach(w => {
+    Object.entries(CATEGORIES).forEach(([key, cat]) => {
       const tab = document.createElement('button');
-      tab.textContent = `${weaponIcons[w]} ${weaponLabels[w]}`;
+      tab.innerHTML = `${cat.icon} <span style="font-size:9px;">${cat.label.toUpperCase()}</span>`;
       Object.assign(tab.style, {
-        background   : 'rgba(255,255,255,0.05)',
-        border       : '1px solid rgba(255,255,255,0.1)',
-        borderRadius : '6px',
-        color        : '#888',
-        fontSize     : '11px',
-        padding      : '6px 12px',
-        cursor       : 'pointer',
-        letterSpacing: '1px',
-        transition   : 'all 0.2s',
-        whiteSpace   : 'nowrap',
+        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+        borderRadius: '6px', color: '#888', fontSize: '10px', padding: '5px 10px',
+        cursor: 'pointer', letterSpacing: '1px', transition: 'all 0.2s',
+        whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px',
       });
+
+      // Estratégica bloqueada hasta nivel 5
+      if (key === 'estrategica') {
+        tab.style.opacity = this._worldLevel >= 5 ? '1' : '0.4';
+      }
+
       tab.addEventListener('click', () => {
-        this._weapon       = w;
+        if (key === 'estrategica' && this._worldLevel < 5) return;
+        this._category     = key;
         this._selectedNode = null;
+        this._resetView();
         this._renderTree();
         this._hidePanel();
       });
       tabs.appendChild(tab);
-      this._tabs[w] = tab;
+      this._tabs[key] = tab;
     });
     this._container.appendChild(tabs);
 
-    // Body
+    // ── Body ──
     const body = document.createElement('div');
-    Object.assign(body.style, {
-      flex    : '1',
-      display : 'flex',
-      overflow: 'hidden',
-      position: 'relative',
-    });
+    Object.assign(body.style, { flex: '1', display: 'flex', overflow: 'hidden', position: 'relative' });
     this._container.appendChild(body);
 
     // Canvas
     this._canvas = document.createElement('canvas');
-    Object.assign(this._canvas.style, {
-      flex   : '1',
-      display: 'block',
-      cursor : 'pointer',
-    });
+    Object.assign(this._canvas.style, { flex: '1', display: 'block', touchAction: 'none' });
     body.appendChild(this._canvas);
-    this._canvas.addEventListener('click', e => this._onCanvasClick(e));
+
+    // Touch/mouse events para pan, zoom y tap
+    this._canvas.addEventListener('touchstart',  e => this._onTouchStart(e),  { passive: false });
+    this._canvas.addEventListener('touchmove',   e => this._onTouchMove(e),   { passive: false });
+    this._canvas.addEventListener('touchend',    e => this._onTouchEnd(e),    { passive: false });
+    this._canvas.addEventListener('mousedown',   e => this._onMouseDown(e));
+    this._canvas.addEventListener('mousemove',   e => this._onMouseMove(e));
+    this._canvas.addEventListener('mouseup',     e => this._onMouseUp(e));
+    this._canvas.addEventListener('wheel',       e => this._onWheel(e),       { passive: false });
+    this._canvas.addEventListener('click',       e => this._onCanvasClick(e));
 
     // Panel lateral
     this._panel = document.createElement('div');
     Object.assign(this._panel.style, {
-      width        : '0px',
-      background   : 'rgba(4,4,14,0.97)',
-      borderLeft   : '1px solid rgba(201,168,76,0.2)',
-      overflow     : 'hidden',
-      transition   : 'width 0.25s ease',
-      flexShrink   : '0',
-      display      : 'flex',
-      flexDirection: 'column',
+      width: '0px', background: 'rgba(4,4,14,0.97)',
+      borderLeft: '1px solid rgba(201,168,76,0.2)', overflow: 'hidden',
+      transition: 'width 0.25s ease', flexShrink: '0',
+      display: 'flex', flexDirection: 'column',
     });
     body.appendChild(this._panel);
 
     this._panelInner = document.createElement('div');
     Object.assign(this._panelInner.style, {
-      width        : '230px',
-      padding      : '20px 16px',
-      display      : 'flex',
-      flexDirection: 'column',
-      gap          : '12px',
-      overflowY    : 'auto',
-      height       : '100%',
-      boxSizing    : 'border-box',
+      width: '240px', padding: '16px', display: 'flex',
+      flexDirection: 'column', gap: '10px', overflowY: 'auto',
+      height: '100%', boxSizing: 'border-box',
     });
     this._panel.appendChild(this._panelInner);
 
-    window.addEventListener('resize', () => {
-      if (this._visible) this._renderTree();
+    // Hint de zoom
+    const hint = document.createElement('div');
+    Object.assign(hint.style, {
+      position: 'absolute', bottom: '12px', left: '50%',
+      transform: 'translateX(-50%)',
+      color: 'rgba(255,255,255,0.2)', fontSize: '9px',
+      letterSpacing: '1px', pointerEvents: 'none',
+      fontFamily: 'monospace',
     });
+    hint.textContent = 'PELLIZCA PARA ZOOM · ARRASTRA PARA MOVER';
+    body.appendChild(hint);
+
+    window.addEventListener('resize', () => { if (this._visible) this._renderTree(); });
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Vista ─────────────────────────────────────────────────────────────────
 
-  _renderTree() {
-    if (!this._weapon) return;
+  _resetView() {
+    this._zoom = 1;
+    this._panX = 0;
+    this._panY = 0;
+  }
 
-    this._pointsEl.textContent = `✦ ${this._skillPoints} punto${this._skillPoints !== 1 ? 's' : ''} disponible${this._skillPoints !== 1 ? 's' : ''}`;
+  // ── Touch / Pan / Zoom ────────────────────────────────────────────────────
 
-    Object.entries(this._tabs).forEach(([w, tab]) => {
-      const active = w === this._weapon;
-      tab.style.background  = active ? 'rgba(201,168,76,0.2)' : 'rgba(255,255,255,0.05)';
-      tab.style.borderColor = active ? 'rgba(201,168,76,0.6)' : 'rgba(255,255,255,0.1)';
-      tab.style.color       = active ? '#c9a84c' : '#888';
-    });
+  _onTouchStart(e) {
+    e.preventDefault();
+    if (e.touches.length === 1) {
+      this._isPanning  = true;
+      this._tapStart   = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() };
+      this._lastTouch  = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      this._didPan     = false;
+    } else if (e.touches.length === 2) {
+      this._isPanning = false;
+      this._pinchDist = this._getTouchDist(e.touches);
+    }
+  }
 
-    const xp    = this._progression.getXP(this._weapon);
-    const xpPct = Math.min((xp / 700) * 100, 100);
-    this._xpBar.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-        <span style="color:#888;font-size:9px;letter-spacing:2px;">EXPERIENCIA</span>
-        <span style="color:#c9a84c;font-size:10px;">${xp} / 700 XP</span>
-      </div>
-      <div style="background:rgba(255,255,255,0.08);border-radius:4px;height:4px;overflow:hidden;">
-        <div style="background:linear-gradient(90deg,#c9a84c,#ffdd88);height:100%;width:${xpPct}%;transition:width 0.4s;border-radius:4px;"></div>
-      </div>
-    `;
+  _onTouchMove(e) {
+    e.preventDefault();
+    if (e.touches.length === 1 && this._isPanning && this._lastTouch) {
+      const dx = e.touches[0].clientX - this._lastTouch.x;
+      const dy = e.touches[0].clientY - this._lastTouch.y;
+      this._panX += dx;
+      this._panY += dy;
+      this._lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) this._didPan = true;
+      this._renderTree();
+    } else if (e.touches.length === 2 && this._pinchDist !== null) {
+      const newDist = this._getTouchDist(e.touches);
+      const ratio   = newDist / this._pinchDist;
+      this._zoom    = Math.max(0.4, Math.min(3, this._zoom * ratio));
+      this._pinchDist = newDist;
+      this._renderTree();
+    }
+  }
 
-    const dpr = window.devicePixelRatio || 1;
-    const W   = this._canvas.offsetWidth;
-    const H   = this._canvas.offsetHeight;
-    this._canvas.width  = W * dpr;
-    this._canvas.height = H * dpr;
-    this._ctx = this._canvas.getContext('2d');
-    this._ctx.scale(dpr, dpr);
-    this._ctx.clearRect(0, 0, W, H);
-
-    const weaponData = SKILL_DATA[this._weapon];
-    const subtypes   = Object.entries(weaponData.subtypes);
-    const cols       = subtypes.length;
-    const padX       = 60;
-    const padY       = 60;
-    const colW       = (W - padX * 2) / cols;
-    const rowH       = (H - padY * 2) / 4;
-    const nodeR      = Math.min(colW * 0.18, 30);
-
-    this._nodes = [];
-
-    subtypes.forEach(([subtypeId, subtype], col) => {
-      const cx       = padX + colW * col + colW / 2;
-      const unlocked = this._progression.isSubtypeUnlocked(this._weapon, subtypeId);
-
-      subtype.skills.forEach((skill, row) => {
-        const cy        = padY + rowH * row + rowH / 2;
-        const xpReady   = xp >= XP_REQUIRED[skill.rarity];
-        const hasTrial  = this._progression.hasPassedTrial(skill.id);
-        const confirmed = !!this._unlockedSkills[skill.id];
-        const available = this._progression.isSkillAvailable(this._weapon, subtypeId, skill.id) || confirmed;
-        const canUnlock = unlocked && xpReady
-          && (TRIAL_LEVEL[skill.rarity] === 0 || hasTrial)
-          && !confirmed && !available;
-
-        this._nodes.push({
-          x: cx, y: cy, r: nodeR,
-          skill, subtypeId, subtype,
-          unlocked, available, canUnlock, xpReady, hasTrial, confirmed,
-          col, row,
-        });
-      });
-    });
-
-    // Líneas verticales
-    subtypes.forEach(([subtypeId], col) => {
-      const colNodes = this._nodes.filter(n => n.col === col);
-      for (let i = 0; i < colNodes.length - 1; i++) {
-        const a    = colNodes[i];
-        const b    = colNodes[i + 1];
-        const grad = this._ctx.createLinearGradient(a.x, a.y, b.x, b.y);
-        grad.addColorStop(0, a.available ? RARITY_COLORS[a.skill.rarity] + 'bb' : 'rgba(80,80,80,0.3)');
-        grad.addColorStop(1, b.available ? RARITY_COLORS[b.skill.rarity] + 'bb' : 'rgba(80,80,80,0.3)');
-        this._ctx.beginPath();
-        this._ctx.strokeStyle = grad;
-        this._ctx.lineWidth   = 2.5;
-        this._ctx.setLineDash(a.available && b.available ? [] : [5, 5]);
-        this._ctx.moveTo(a.x, a.y);
-        this._ctx.lineTo(b.x, b.y);
-        this._ctx.stroke();
-        this._ctx.setLineDash([]);
+  _onTouchEnd(e) {
+    e.preventDefault();
+    if (!this._didPan && this._tapStart && e.changedTouches.length === 1) {
+      const dt = Date.now() - this._tapStart.t;
+      const dx = e.changedTouches[0].clientX - this._tapStart.x;
+      const dy = e.changedTouches[0].clientY - this._tapStart.y;
+      if (dt < 300 && Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+        this._handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
       }
-    });
-
-    // Líneas horizontales superiores
-    const topNodes = this._nodes.filter(n => n.row === 0);
-    for (let i = 0; i < topNodes.length - 1; i++) {
-      const a = topNodes[i];
-      const b = topNodes[i + 1];
-      this._ctx.beginPath();
-      this._ctx.strokeStyle = 'rgba(201,168,76,0.15)';
-      this._ctx.lineWidth   = 1.5;
-      this._ctx.setLineDash([4, 6]);
-      this._ctx.moveTo(a.x, a.y);
-      this._ctx.lineTo(b.x, b.y);
-      this._ctx.stroke();
-      this._ctx.setLineDash([]);
     }
-
-    this._nodes.forEach(n => this._drawNode(n));
-
-    if (this._selectedNode) {
-      const updated = this._nodes.find(n => n.skill.id === this._selectedNode.skill.id);
-      if (updated) { this._selectedNode = updated; this._showPanel(updated); }
-    }
+    this._isPanning = false;
+    this._pinchDist = null;
+    this._lastTouch = null;
+    this._tapStart  = null;
   }
 
-  _drawNode(n) {
-    const ctx        = this._ctx;
-    const color      = RARITY_COLORS[n.skill.rarity];
-    const isSelected = this._selectedNode?.skill.id === n.skill.id;
-    const r          = n.r + (isSelected ? 4 : 0);
-
-    // Pulso dorado para listos a desbloquear
-    if (n.canUnlock) {
-      ctx.save();
-      ctx.shadowColor = '#ffdd88';
-      ctx.shadowBlur  = 20;
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, r + 2, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,221,136,0.5)';
-      ctx.lineWidth   = 2;
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // Glow
-    if (n.available) {
-      ctx.save();
-      ctx.shadowColor = color;
-      ctx.shadowBlur  = isSelected ? 22 : 12;
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-      ctx.fillStyle = 'transparent';
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // Fondo
-    ctx.beginPath();
-    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-    const grad = ctx.createRadialGradient(n.x - r * 0.3, n.y - r * 0.3, 0, n.x, n.y, r);
-    if (n.available) {
-      grad.addColorStop(0, '#1a1030');
-      grad.addColorStop(1, '#0a0818');
-    } else if (n.canUnlock) {
-      grad.addColorStop(0, '#1a1505');
-      grad.addColorStop(1, '#0d0e02');
-    } else {
-      grad.addColorStop(0, '#111118');
-      grad.addColorStop(1, '#08080f');
-    }
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    // Borde
-    ctx.beginPath();
-    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-    ctx.strokeStyle = n.available
-      ? color + (isSelected ? 'ff' : 'cc')
-      : n.canUnlock ? '#ffdd8899' : 'rgba(80,80,80,0.4)';
-    ctx.lineWidth = isSelected ? 2.5 : 1.5;
-    ctx.stroke();
-
-    // Icono
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    if (!n.available && !n.canUnlock) {
-      ctx.font        = `${Math.round(r * 0.85)}px serif`;
-      ctx.globalAlpha = 0.2;
-      ctx.fillText(n.skill.icon, n.x, n.y);
-      ctx.globalAlpha = 1;
-      ctx.font        = `${Math.round(r * 0.5)}px serif`;
-      ctx.fillText('🔒', n.x, n.y);
-    } else {
-      ctx.font        = `${Math.round(r * 0.85)}px serif`;
-      ctx.globalAlpha = n.canUnlock ? 0.65 : 1;
-      ctx.fillText(n.skill.icon, n.x, n.y);
-      ctx.globalAlpha = 1;
-    }
-
-    // Punto rareza
-    ctx.beginPath();
-    ctx.arc(n.x, n.y + r + 5, 3, 0, Math.PI * 2);
-    ctx.fillStyle = n.available ? color : n.canUnlock ? '#ffdd88' : 'rgba(80,80,80,0.4)';
-    ctx.fill();
-
-    // Label subtype
-    if (n.row === 0) {
-      ctx.font      = `9px 'Cinzel', serif`;
-      ctx.textAlign = 'center';
-      ctx.fillStyle = n.subtype.color + (n.unlocked ? 'dd' : '44');
-      ctx.fillText(n.subtype.label.toUpperCase(), n.x, n.y - r - 14);
-    }
+  _onMouseDown(e) {
+    this._isPanning = true;
+    this._lastTouch = { x: e.clientX, y: e.clientY };
+    this._didPan    = false;
   }
 
-  // ── Click ─────────────────────────────────────────────────────────────────
+  _onMouseMove(e) {
+    if (!this._isPanning || !this._lastTouch) return;
+    const dx = e.clientX - this._lastTouch.x;
+    const dy = e.clientY - this._lastTouch.y;
+    this._panX += dx;
+    this._panY += dy;
+    this._lastTouch = { x: e.clientX, y: e.clientY };
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) this._didPan = true;
+    this._renderTree();
+  }
+
+  _onMouseUp(e) { this._isPanning = false; }
+
+  _onWheel(e) {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    this._zoom   = Math.max(0.4, Math.min(3, this._zoom * factor));
+    this._renderTree();
+  }
 
   _onCanvasClick(e) {
+    if (this._didPan) return;
+    this._handleTap(e.clientX, e.clientY);
+  }
+
+  _handleTap(cx, cy) {
     const rect = this._canvas.getBoundingClientRect();
-    const mx   = e.clientX - rect.left;
-    const my   = e.clientY - rect.top;
-    const hit  = this._nodes.find(n => {
+    const mx   = (cx - rect.left - this._panX) / this._zoom;
+    const my   = (cy - rect.top  - this._panY) / this._zoom;
+
+    const hit = this._nodes.find(n => {
       const dx = n.x - mx, dy = n.y - my;
-      return Math.sqrt(dx * dx + dy * dy) <= n.r + 10;
+      return Math.sqrt(dx * dx + dy * dy) <= n.r + 12;
     });
+
     if (hit) {
       this._selectedNode = hit;
       this._renderTree();
@@ -444,167 +403,324 @@ export class SkillTree {
     }
   }
 
+  _getTouchDist(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
+  _renderTree() {
+    if (!this._category) return;
+
+    const cat = CATEGORIES[this._category];
+
+    // Header info
+    this._pointsEl.textContent = `✦ ${this._skillPoints} pts`;
+    this._levelEl.textContent  = `NIV MUNDO ${this._worldLevel}`;
+
+    // Tabs
+    Object.entries(this._tabs).forEach(([key, tab]) => {
+      const active = key === this._category;
+      const c      = CATEGORIES[key];
+      tab.style.background  = active ? `${c.color}33` : 'rgba(255,255,255,0.05)';
+      tab.style.borderColor = active ? `${c.color}99` : 'rgba(255,255,255,0.1)';
+      tab.style.color       = active ? c.color : '#888';
+      if (key === 'estrategica') tab.style.opacity = this._worldLevel >= 5 ? '1' : '0.4';
+    });
+
+    // Canvas setup
+    const dpr = window.devicePixelRatio || 1;
+    const W   = this._canvas.offsetWidth;
+    const H   = this._canvas.offsetHeight;
+    this._canvas.width  = W * dpr;
+    this._canvas.height = H * dpr;
+    const ctx = this._canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+    this._ctx = ctx;
+
+    // Aplicar pan y zoom
+    ctx.save();
+    ctx.translate(this._panX, this._panY);
+    ctx.scale(this._zoom, this._zoom);
+
+    // Layout: 5 niveles verticales, habilidades por nivel en columnas
+    // Nivel 1: 1 skill (centro)
+    // Nivel 2: 2 skills
+    // Nivel 3: 2 skills
+    // Nivel 4: 2 skills
+    // Nivel 5: 3 skills
+    const skills  = cat.skills;
+    const nodeR   = 28;
+    const levelH  = 110;
+    const padTop  = 60;
+
+    // Agrupar por nivel
+    const byLevel = {};
+    skills.forEach(sk => {
+      if (!byLevel[sk.nivel]) byLevel[sk.nivel] = [];
+      byLevel[sk.nivel].push(sk);
+    });
+
+    // Calcular posiciones
+    this._nodes = [];
+    const centerX = W / 2;
+
+    Object.entries(byLevel).forEach(([lvl, sks]) => {
+      const y    = padTop + (parseInt(lvl) - 1) * levelH;
+      const cols = sks.length;
+      const spacing = Math.min(120, (W - 80) / Math.max(cols, 1));
+
+      sks.forEach((sk, i) => {
+        const x         = centerX + (i - (cols - 1) / 2) * spacing;
+        const unlocked  = !!this._unlocked[sk.id];
+        const canUnlock = !unlocked && this._worldLevel >= NIVEL_REQUIRED[sk.tipo]
+                         && this._skillPoints >= sk.cost;
+        const locked    = !unlocked && !canUnlock;
+
+        this._nodes.push({ x, y, r: nodeR, skill: sk, unlocked, canUnlock, locked, nivel: parseInt(lvl) });
+      });
+    });
+
+    // Líneas entre niveles
+    const levels = Object.keys(byLevel).map(Number).sort((a, b) => a - b);
+    for (let i = 0; i < levels.length - 1; i++) {
+      const fromNodes = this._nodes.filter(n => n.nivel === levels[i]);
+      const toNodes   = this._nodes.filter(n => n.nivel === levels[i + 1]);
+
+      fromNodes.forEach(from => {
+        toNodes.forEach(to => {
+          const bothUnlocked = from.unlocked && to.unlocked;
+          const grad = ctx.createLinearGradient(from.x, from.y, to.x, to.y);
+          grad.addColorStop(0, bothUnlocked ? cat.color + 'cc' : 'rgba(80,80,80,0.25)');
+          grad.addColorStop(1, bothUnlocked ? cat.color + 'cc' : 'rgba(80,80,80,0.25)');
+          ctx.beginPath();
+          ctx.strokeStyle = grad;
+          ctx.lineWidth   = bothUnlocked ? 2.5 : 1.5;
+          ctx.setLineDash(bothUnlocked ? [] : [5, 5]);
+          ctx.moveTo(from.x, from.y);
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        });
+      });
+    }
+
+    // Nodos
+    this._nodes.forEach(n => this._drawNode(n, cat.color));
+
+    // Labels de nivel
+    levels.forEach(lvl => {
+      const nodesInLevel = this._nodes.filter(n => n.nivel === lvl);
+      if (!nodesInLevel.length) return;
+      const y = nodesInLevel[0].y - nodeR - 20;
+      ctx.font      = `bold 9px monospace`;
+      ctx.fillStyle = 'rgba(201,168,76,0.4)';
+      ctx.textAlign = 'left';
+      ctx.fillText(`NIVEL ${lvl}`, 16, y + 4);
+    });
+
+    ctx.restore();
+  }
+
+  _drawNode(n, catColor) {
+    const ctx        = this._ctx;
+    const color      = TIPO_COLORS[n.skill.tipo];
+    const isSelected = this._selectedNode?.skill.id === n.skill.id;
+    const r          = n.r + (isSelected ? 4 : 0);
+
+    // Glow
+    if (n.unlocked || n.canUnlock) {
+      ctx.save();
+      ctx.shadowColor = n.unlocked ? catColor : '#ffdd88';
+      ctx.shadowBlur  = isSelected ? 24 : 14;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+      ctx.strokeStyle = 'transparent';
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Fondo
+    const grad = ctx.createRadialGradient(n.x - r * 0.3, n.y - r * 0.3, 0, n.x, n.y, r);
+    if (n.unlocked) {
+      grad.addColorStop(0, '#1e1238');
+      grad.addColorStop(1, '#0a0818');
+    } else if (n.canUnlock) {
+      grad.addColorStop(0, '#1a1505');
+      grad.addColorStop(1, '#0d0a02');
+    } else {
+      grad.addColorStop(0, '#111118');
+      grad.addColorStop(1, '#08080f');
+    }
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Borde
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+    ctx.strokeStyle = n.unlocked
+      ? catColor + (isSelected ? 'ff' : 'bb')
+      : n.canUnlock ? '#ffdd8899' : 'rgba(80,80,80,0.35)';
+    ctx.lineWidth = isSelected ? 3 : 1.5;
+    ctx.stroke();
+
+    // Icono o candado
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    if (n.locked) {
+      ctx.font        = `${Math.round(r * 0.8)}px serif`;
+      ctx.globalAlpha = 0.18;
+      ctx.fillText(n.skill.icon, n.x, n.y - 3);
+      ctx.globalAlpha = 1;
+      ctx.font        = `${Math.round(r * 0.5)}px serif`;
+      ctx.fillText('🔒', n.x, n.y + 4);
+    } else {
+      ctx.font        = `${Math.round(r * 0.85)}px serif`;
+      ctx.globalAlpha = n.canUnlock ? 0.7 : 1;
+      ctx.fillText(n.skill.icon, n.x, n.y);
+      ctx.globalAlpha = 1;
+    }
+
+    // Badge de tipo
+    const badgeColor = TIPO_COLORS[n.skill.tipo];
+    ctx.font      = `bold 7px monospace`;
+    ctx.fillStyle = n.unlocked ? badgeColor : 'rgba(100,100,100,0.6)';
+    ctx.textAlign = 'center';
+    ctx.fillText(n.skill.tipo.toUpperCase(), n.x, n.y + r + 12);
+
+    // Check si desbloqueado
+    if (n.unlocked) {
+      ctx.beginPath();
+      ctx.arc(n.x + r * 0.65, n.y - r * 0.65, 8, 0, Math.PI * 2);
+      ctx.fillStyle = catColor;
+      ctx.fill();
+      ctx.font      = 'bold 9px sans-serif';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.fillText('✓', n.x + r * 0.65, n.y - r * 0.65);
+    }
+
+    // Coste si puede desbloquear
+    if (n.canUnlock && n.skill.cost > 0) {
+      ctx.font      = 'bold 8px monospace';
+      ctx.fillStyle = '#ffdd88';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${n.skill.cost}pts`, n.x, n.y - r - 8);
+    }
+  }
+
   // ── Panel ─────────────────────────────────────────────────────────────────
 
   _showPanel(n) {
-    this._panel.style.width = '230px';
+    this._panel.style.width = '240px';
     const skill    = n.skill;
-    const color    = RARITY_COLORS[skill.rarity];
-    const xp       = this._progression.getXP(this._weapon);
-    const xpNeeded = XP_REQUIRED[skill.rarity];
-    const trialLvl = TRIAL_LEVEL[skill.rarity];
-    const hasTrial = n.hasTrial;
-    const cost     = SKILL_POINTS_COST[skill.rarity];
-    const xpPct    = xpNeeded > 0 ? Math.min((xp / xpNeeded) * 100, 100) : 100;
-
-    const activeSubtype = this._progression.getActiveSubtype(this._weapon);
-    const isActive      = activeSubtype === n.subtypeId;
-
-    const mission     = window._branchMissions?.getMissionDef(this._weapon, n.subtypeId);
-    const missionDone = window._branchMissions?.isCompleted(this._weapon, n.subtypeId);
+    const cat      = CATEGORIES[this._category];
+    const color    = TIPO_COLORS[skill.tipo];
+    const isActive = false; // se puede conectar al sistema activo
 
     let statusHtml = '';
-    if (n.available) {
+    if (n.unlocked) {
       statusHtml = `<div style="color:#4cff88;font-size:9px;letter-spacing:1px;">✓ DESBLOQUEADA</div>`;
     } else if (n.canUnlock) {
       statusHtml = `
         <div style="color:#ffdd88;font-size:9px;letter-spacing:1px;">⬆ LISTA PARA DESBLOQUEAR</div>
-        <div style="color:#888;font-size:9px;margin-top:3px;">Coste: ${cost} punto${cost !== 1 ? 's' : ''}</div>
+        <div style="color:#888;font-size:9px;margin-top:2px;">Coste: ${skill.cost} punto${skill.cost !== 1 ? 's' : ''}</div>
       `;
     } else {
       const reasons = [];
-      if (xp < xpNeeded) reasons.push(`Faltan ${xpNeeded - xp} XP`);
-      if (trialLvl > 0 && !hasTrial) reasons.push(`Completa la misión de rama`);
+      if (this._worldLevel < NIVEL_REQUIRED[skill.tipo])
+        reasons.push(`Nivel de mundo ${NIVEL_REQUIRED[skill.tipo]} requerido (actual: ${this._worldLevel})`);
+      if (this._skillPoints < skill.cost)
+        reasons.push(`Faltan ${skill.cost - this._skillPoints} puntos`);
       statusHtml = `
         <div style="color:#ff6644;font-size:9px;letter-spacing:1px;">🔒 BLOQUEADA</div>
-        ${reasons.map(r => `<div style="color:#555;font-size:9px;margin-top:3px;">· ${r}</div>`).join('')}
+        ${reasons.map(r => `<div style="color:#555;font-size:9px;margin-top:2px;">· ${r}</div>`).join('')}
       `;
     }
 
-    let actionsHtml = '';
-    if (n.available) {
-      actionsHtml = `
-        <button data-action="activate" style="
-          background:${isActive ? 'rgba(80,80,80,0.1)' : 'rgba(201,168,76,0.2)'};
-          border:1px solid ${isActive ? '#444' : color + '88'};
-          border-radius:6px;color:${isActive ? '#555' : '#c9a84c'};
-          font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;
-          padding:10px;cursor:${isActive ? 'default' : 'pointer'};width:100%;
-        ">${isActive ? '✓ RAMA ACTIVA' : 'ACTIVAR RAMA'}</button>
+    let actionHtml = '';
+    if (n.canUnlock) {
+      actionHtml = `
+        <button data-action="unlock" style="
+          background:rgba(255,221,136,0.2);border:1px solid #ffdd8888;
+          border-radius:6px;color:#ffdd88;font-family:'Cinzel',serif;
+          font-size:9px;letter-spacing:2px;padding:10px;cursor:pointer;width:100%;
+        ">✦ DESBLOQUEAR (${skill.cost} pts)</button>
       `;
-    } else if (n.canUnlock) {
-      const canAfford = this._skillPoints >= cost;
-      actionsHtml = `
-        <button data-action="unlock" ${!canAfford ? 'disabled' : ''} style="
-          background:${canAfford ? 'rgba(255,221,136,0.2)' : 'rgba(80,80,80,0.1)'};
-          border:1px solid ${canAfford ? '#ffdd8888' : '#333'};
-          border-radius:6px;color:${canAfford ? '#ffdd88' : '#444'};
-          font-family:'Cinzel',serif;font-size:9px;letter-spacing:2px;
-          padding:10px;cursor:${canAfford ? 'pointer' : 'not-allowed'};width:100%;
-        ">${canAfford ? `✦ DESBLOQUEAR (${cost} pts)` : 'SIN PUNTOS SUFICIENTES'}</button>
+    } else if (n.unlocked) {
+      actionHtml = `
+        <button data-action="equip" style="
+          background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.5);
+          border-radius:6px;color:#c9a84c;font-family:'Cinzel',serif;
+          font-size:9px;letter-spacing:2px;padding:10px;cursor:pointer;width:100%;
+        ">EQUIPAR HABILIDAD</button>
       `;
     }
 
     this._panelInner.innerHTML = `
       <div style="text-align:center;">
-        <div style="font-size:44px;margin-bottom:8px;">${skill.icon}</div>
-        <div style="color:${color};font-size:13px;letter-spacing:2px;margin-bottom:4px;">${skill.label}</div>
-        <div style="color:${color}88;font-size:9px;letter-spacing:3px;">${RARITY_LABELS[skill.rarity].toUpperCase()}</div>
+        <div style="font-size:48px;margin-bottom:8px;">${skill.icon}</div>
+        <div style="color:${cat.color};font-size:13px;letter-spacing:2px;margin-bottom:4px;">${skill.label}</div>
+        <div style="color:${color};font-size:9px;letter-spacing:3px;">${skill.tipo.toUpperCase()}</div>
       </div>
 
-      <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
-        <div style="color:#555;font-size:8px;letter-spacing:2px;margin-bottom:6px;">RAMA</div>
-        <div style="color:${n.subtype.color};font-size:10px;">${n.subtype.icon} ${n.subtype.label}</div>
+      <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;">
+        <div style="color:#555;font-size:8px;letter-spacing:2px;margin-bottom:6px;">CATEGORÍA</div>
+        <div style="color:${cat.color};font-size:10px;">${cat.icon} ${cat.label}</div>
       </div>
 
-      <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;display:flex;flex-direction:column;gap:6px;">
+      <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;">
+        <div style="color:#555;font-size:8px;letter-spacing:2px;margin-bottom:6px;">LIMITANTE</div>
+        <div style="color:#ff8866;font-size:10px;line-height:1.4;">⚠ ${skill.limitante}</div>
+      </div>
+
+      <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;justify-content:space-between;">
+          <span style="color:#555;font-size:9px;">NIVEL REQUERIDO</span>
+          <span style="color:#88ccff;font-size:10px;">${NIVEL_REQUIRED[skill.tipo] === 0 ? 'Disponible' : `Mundo ${NIVEL_REQUIRED[skill.tipo]}`}</span>
+        </div>
         <div style="display:flex;justify-content:space-between;">
           <span style="color:#555;font-size:9px;">COSTE</span>
-          <span style="color:#c9a84c;font-size:10px;">${skill.cost} ✦</span>
+          <span style="color:#ffdd88;font-size:10px;">${skill.cost === 0 ? 'Gratis' : `${skill.cost} pts`}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;">
-          <span style="color:#555;font-size:9px;">RECARGA</span>
-          <span style="color:#4488ff;font-size:10px;">${skill.cooldown}s</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;">
-          <span style="color:#555;font-size:9px;">XP REQUERIDA</span>
-          <span style="color:#888;font-size:10px;">${xpNeeded}</span>
-        </div>
-        ${trialLvl > 0 ? `
-        <div style="display:flex;justify-content:space-between;">
-          <span style="color:#555;font-size:9px;">MISIÓN</span>
-          <span style="color:${missionDone ? '#4cff88' : '#ff6644'};font-size:10px;">
-            ${missionDone ? '✓ Completada' : 'Pendiente'}
-          </span>
-        </div>` : ''}
       </div>
 
-      ${xpNeeded > 0 ? `
-      <div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-          <span style="color:#555;font-size:8px;letter-spacing:1px;">PROGRESO XP</span>
-          <span style="color:#888;font-size:8px;">${Math.round(xpPct)}%</span>
-        </div>
-        <div style="background:rgba(255,255,255,0.06);border-radius:3px;height:3px;overflow:hidden;">
-          <div style="background:linear-gradient(90deg,${color}88,${color});height:100%;width:${xpPct}%;border-radius:3px;"></div>
-        </div>
-      </div>` : ''}
-
-      ${mission ? `
-      <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-          <span style="font-size:14px;">${mission.icon}</span>
-          <span style="color:${missionDone ? '#4cff88' : mission.color};font-size:9px;letter-spacing:2px;">
-            ${missionDone ? '✓ MISIÓN COMPLETADA' : mission.label.toUpperCase()}
-          </span>
-        </div>
-        ${mission.objectives.map(obj => {
-          const current = window._branchMissions?.getObjectiveProgress(this._weapon, n.subtypeId, obj.id) ?? 0;
-          const pct     = Math.min((current / obj.target) * 100, 100);
-          return `
-            <div style="margin-bottom:8px;">
-              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-                <span style="color:#555;font-size:8px;">${obj.label}</span>
-                <span style="color:#888;font-size:8px;">${Math.min(current, obj.target)} / ${obj.target}</span>
-              </div>
-              <div style="background:rgba(255,255,255,0.06);border-radius:3px;height:3px;overflow:hidden;">
-                <div style="background:${missionDone ? '#4cff88' : mission.color};height:100%;width:${pct}%;border-radius:3px;"></div>
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>` : ''}
-
-      <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;">
+      <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;">
         ${statusHtml}
       </div>
 
       <div style="margin-top:auto;padding-top:8px;">
-        ${actionsHtml}
+        ${actionHtml}
       </div>
     `;
 
-    const unlockBtn   = this._panelInner.querySelector('[data-action="unlock"]');
-    const activateBtn = this._panelInner.querySelector('[data-action="activate"]');
+    // Eventos
+    const unlockBtn = this._panelInner.querySelector('[data-action="unlock"]');
+    const equipBtn  = this._panelInner.querySelector('[data-action="equip"]');
 
     if (unlockBtn) {
       unlockBtn.addEventListener('click', () => {
-        if (this._skillPoints < cost) return;
-        this._skillPoints -= cost;
-        this._unlockedSkills[skill.id] = true;
-        this._progression.passTrialForSkill(skill.id);
-        this._selectedNode = null;
+        if (this._skillPoints < skill.cost) return;
+        this._skillPoints          -= skill.cost;
+        this._unlocked[skill.id]    = true;
+        this._selectedNode          = null;
         this._renderTree();
-        const updated = this._nodes.find(n => n.skill.id === skill.id);
+        const updated = this._nodes.find(nd => nd.skill.id === skill.id);
         if (updated) { this._selectedNode = updated; this._showPanel(updated); }
-        this._showUnlockFeedback(skill);
+        this._showFeedback(skill, cat.color);
       });
     }
 
-    if (activateBtn && !isActive) {
-      activateBtn.addEventListener('click', () => {
-        this._progression.setActiveSubtype(this._weapon, n.subtypeId);
-        this._renderTree();
+    if (equipBtn) {
+      equipBtn.addEventListener('click', () => {
+        // Conectar con skillSystem si está disponible
+        window._skillSystem?.equipSkill?.(skill.id);
+        this._showFeedback(skill, cat.color, 'EQUIPADA');
       });
     }
   }
@@ -614,27 +730,18 @@ export class SkillTree {
     this._panelInner.innerHTML = '';
   }
 
-  _showUnlockFeedback(skill) {
-    const color = RARITY_COLORS[skill.rarity];
-    const el    = document.createElement('div');
+  _showFeedback(skill, color, msg = 'DESBLOQUEADA') {
+    const el = document.createElement('div');
     Object.assign(el.style, {
-      position     : 'fixed',
-      top          : '20%',
-      left         : '50%',
-      transform    : 'translateX(-50%) scale(0.85)',
-      fontFamily   : "'Cinzel',serif",
-      textAlign    : 'center',
-      background   : 'rgba(4,4,10,0.97)',
-      border       : `1px solid ${color}55`,
-      borderRadius : '8px',
-      padding      : '14px 28px',
-      zIndex       : '600',
-      pointerEvents: 'none',
-      boxShadow    : `0 0 24px ${color}44`,
-      transition   : 'transform 0.35s ease, opacity 0.35s ease',
-      opacity      : '0',
+      position: 'fixed', top: '20%', left: '50%',
+      transform: 'translateX(-50%) scale(0.85)',
+      fontFamily: "'Cinzel',serif", textAlign: 'center',
+      background: 'rgba(4,4,10,0.97)', border: `1px solid ${color}55`,
+      borderRadius: '8px', padding: '14px 28px', zIndex: '600',
+      pointerEvents: 'none', boxShadow: `0 0 24px ${color}44`,
+      transition: 'transform 0.35s ease, opacity 0.35s ease', opacity: '0',
     });
-    el.innerHTML = `${skill.icon} HABILIDAD DESBLOQUEADA<br>
+    el.innerHTML = `${skill.icon} HABILIDAD ${msg}<br>
       <span style="font-size:10px;color:#888;">${skill.label}</span>`;
     document.body.appendChild(el);
     requestAnimationFrame(() => {
