@@ -391,8 +391,7 @@ window._mikaProgression = mikaProgression;
     } else {
       buildCamera.showBtn();
     }
-
-    setProgress(89, 'UI...');
+setProgress(89, 'UI...');
     const skillTree   = new SkillTree(progression);
     window._skillTree = skillTree;
     const skillBar    = new SkillBar(skills, progression);
@@ -400,11 +399,17 @@ window._mikaProgression = mikaProgression;
     const subtypeMenu = new SubtypeMenu(progression, skillBar);
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
 
+    const mapUI = new MapUI(player);
+    window._mapUI = mapUI;
+    setInterval(() => mapUI.update(), 500);
+
     const radialMenu = new RadialMenu([
-  { icon: '⚔️', label: 'Habilidades', action: () => skillTree.open(combat._weaponType ?? 'katana'), locked: false },
-  { icon: '🗺️', label: 'Mapa',        action: () => mapUI.toggle(),              locked: false },
-  { icon: '📖', label: 'Guías',        action: () => console.log('próximamente'), locked: true  },
-]);
+      { icon: '⚔️', label: 'Habilidades', action: () => skillTree.open(combat._weaponType ?? 'katana'), locked: false },
+      { icon: '🗺️', label: 'Mapa',        action: () => mapUI.toggle(),              locked: false },
+      { icon: '📖', label: 'Guías',        action: () => console.log('próximamente'), locked: true  },
+    ]);
+   
+
 
     const pauseMenu = new PauseMenu({
       onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
