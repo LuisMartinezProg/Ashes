@@ -5,6 +5,7 @@ import { KatanaWeapon } from './weapons/katana.js';
 import { SwordWeapon  } from './weapons/sword.js';
 import { MagicWeapon  } from './weapons/magic.js';
 import { BowWeapon    } from './weapons/bow.js';
+import { BranchMissionSystem } from './branchMissions.js';
 
 const ATTACK_RANGE   = 2.5;
 const COMBO_WINDOW   = 600;
@@ -22,6 +23,7 @@ export class CombatSystem {
     this._scene       = null;
     this._weaponType  = 'katana';
     this._progression = null;
+    this._missions    = null;
 
     this.weapon   = new KatanaWeapon(playerGroup);
     this.comboMax = this.weapon.comboMax;
@@ -43,6 +45,15 @@ export class CombatSystem {
 
   setProgression(progression) {
     this._progression = progression;
+
+    // Inicializar sistema de misiones al tener progression
+    this._missions = new BranchMissionSystem(progression);
+    window._branchMissions = this._missions;
+
+    this._missions.onMissionComplete = (weapon, subtypeId, mission) => {
+      console.log(`[Misión completada] ${mission.label}`);
+      window._skillTree?.open(weapon);
+    };
   }
 
   setWeapon(type) {
@@ -69,6 +80,13 @@ export class CombatSystem {
     this.comboCount = 0;
     this.attacking  = false;
     console.log(`[Combat] Arma equipada: ${type}`);
+  }
+
+  // ── Jefe derrotado ────────────────────────────────────────────────────────
+  // Llamar esto desde donde manejes la muerte de jefes
+
+  registerBossKill(weapon, subtypeId) {
+    this._missions?.registerBossKill(weapon, subtypeId);
   }
 
   registerEnemy(enemy)   { this.enemies.push(enemy); }
@@ -104,22 +122,43 @@ export class CombatSystem {
   _executeAttack(hitIndex) {
     this.attacking = true;
 
-    const isRanged = RANGED_WEAPONS.has(this._weaponType);
+    const isRanged  = RANGED_WEAPONS.has(this._weaponType);
+    const subtypeId = this._progression?.getActiveSubtype(this._weaponType) ?? null;
 
     if (isRanged) {
       this.weapon.execute(hitIndex, this.enemies);
       this._triggerShake(0.5);
+
+      // Registrar daño de rango en misiones
+      if (subtypeId && this._missions) {
+        const estimatedDmg = this.weapon.getDamage?.(hitIndex) ?? 0;
+        this._missions.registerDamage(this._weaponType, subtypeId, estimatedDmg);
+      }
+
     } else {
       this.weapon.execute(hitIndex);
       const target = this.closestEnemyInRange();
+
       if (target) {
         let dmg = this.weapon.getDamage(hitIndex);
+
         if (this._progression) {
           const fusion = this._progression.getActiveFusion(this._weaponType);
           if (fusion) dmg = Math.floor(dmg * 1.25);
         }
+
         target.takeDamage(dmg);
         this._triggerShake(1.0);
+
+        // Registrar daño en misiones
+        if (subtypeId && this._missions) {
+          this._missions.registerDamage(this._weaponType, subtypeId, dmg);
+        }
+
+        // Registrar kill si el enemigo muere
+        if (target.isDead?.() && subtypeId && this._missions) {
+          this._missions.registerKill(this._weaponType, subtypeId);
+        }
 
         // Efectos de fusión
         if (this._progression) {
@@ -128,8 +167,8 @@ export class CombatSystem {
           if (school === 'fire'  || school === 'fuego')  target.applyBurn?.(5, 3);
           if (school === 'ice'   || school === 'hielo')  target.applySlow?.(0.4, 2);
           if (school === 'viento') {
-            const dx = this.player.position.x - target.mesh.position.x;
-            const dz = this.player.position.z - target.mesh.position.z;
+            const dx  = this.player.position.x - target.mesh.position.x;
+            const dz  = this.player.position.z - target.mesh.position.z;
             const len = Math.sqrt(dx*dx + dz*dz);
             if (len > 0) {
               this.player.position.x += (dx/len) * 1.5;
@@ -171,4 +210,4 @@ export class CombatSystem {
     this.camera.position.x += this._shakeOffsetX;
     this.camera.position.y += this._shakeOffsetY;
   }
-    }
+}
