@@ -406,7 +406,7 @@ async function boot() {
     setInterval(() => mapUI.update(), 500);
 
     const radialMenu = new RadialMenu([
-      { icon: '⚔️', label: 'Habilidades', action: () => skillTree.open(combat._weaponType ?? 'katana'), locked: false },
+      { icon: '⚔️', label: 'Habilidades', action: () => skillTree.open(combat._weaponType ?? 'sword'), locked: false },
       { icon: '🗺️', label: 'Mapa',        action: () => mapUI.toggle(),              locked: false },
       { icon: '📖', label: 'Guías',        action: () => console.log('próximamente'), locked: true  },
     ]);
