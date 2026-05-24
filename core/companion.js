@@ -3,26 +3,25 @@ import * as THREE from 'three';
 import { SkillSystem } from './skillSystem.js';
 
 const MOVE_SPEED   = 4.5;
-const FOLLOW_DIST  = 3.5;  // distancia a la que sigue al jugador
-const ATTACK_RANGE = 12.0; // rango para atacar enemigos
+const SPRINT_SPEED = 8.0;
+const FOLLOW_DIST  = 3.5;
+const ATTACK_RANGE = 12.0;
 const GROUND_Y     = 0.0;
 
 export class Companion {
   constructor(scene, playerPosition) {
-    this.scene       = scene;
-    this.hp          = 80;
-    this.maxHp       = 80;
-    this.facingAngle = 0;
-    this._moveDir    = new THREE.Vector3();
+    this.scene        = scene;
+    this.hp           = 80;
+    this.maxHp        = 80;
+    this.facingAngle  = 0;
+    this._moveDir     = new THREE.Vector3();
     this._attackTimer = 0;
-    this._enemies    = [];
-    this.isActive    = false; // true = controlado por jugador
-
-    // Referencia a posición del jugador para IA
-    this._playerPos  = playerPosition;
+    this._enemies     = [];
+    this.isActive     = false;
+    this._sprinting   = false;
+    this._playerPos   = playerPosition;
 
     this.root = new THREE.Group();
-    // Spawnea cerca del jugador
     this.root.position.set(
       playerPosition.x + 1.5,
       GROUND_Y,
@@ -32,18 +31,15 @@ export class Companion {
     this.root.visible = false;
     this._buildMesh();
 
-    // Su propio SkillSystem con arco
-    this.skillSystem = new SkillSystem(scene, this.root);
-    this.activeSubtype = 'precision'; // subtipo activo de Mika
-    this.activeSkillId = 'piercing_shot'; // habilidad activa
+    this.skillSystem   = new SkillSystem(scene, this.root);
+    this.activeSubtype = 'precision';
+    this.activeSkillId = 'piercing_shot';
 
-    // Callbacks
-    this.onDamage      = null;
-    this.onSkillCast   = null; // (skillId, element) — para partyManager
+    this.onDamage    = null;
+    this.onSkillCast = null;
   }
 
   _buildMesh() {
-    // Mika — esfera rosa/coral con aura
     const mat = new THREE.MeshStandardMaterial({
       color            : 0xff88aa,
       transparent      : true,
@@ -65,7 +61,6 @@ export class Companion {
     halo.position.y = 0.6;
     this.root.add(halo);
 
-    // Indicador de nombre flotante
     this._nameTag = document.createElement('div');
     Object.assign(this._nameTag.style, {
       position     : 'fixed',
@@ -84,24 +79,17 @@ export class Companion {
     this.bodyMesh = sphere;
   }
 
-  // Llamado desde partyManager al cambiar a Mika
-  activate() {
-    this.isActive = true;
-    this.bodyMesh.material.emissiveIntensity = 0.9;
-  }
+  activate()   { this.isActive = true;  this.bodyMesh.material.emissiveIntensity = 0.9; }
+  deactivate() { this.isActive = false; this.bodyMesh.material.emissiveIntensity = 0.5; }
 
-  // Llamado al cambiar de vuelta al protagonista
-  deactivate() {
-    this.isActive = false;
-    this.bodyMesh.material.emissiveIntensity = 0.5;
-  }
+  setSprinting(val) { this._sprinting = val; }
+  isSprinting()     { return this._sprinting; }
 
   registerEnemies(list) {
     this._enemies = list;
     this.skillSystem.registerEnemies(list);
   }
 
-  // Lanza la habilidad activa de Mika (llamado por partyManager o jugador)
   castSkill() {
     const result = this.skillSystem.castSkill(this.activeSkillId);
     if (result && this.onSkillCast) {
@@ -125,15 +113,15 @@ export class Companion {
     if (this.onDamage) this.onDamage(this.hp, this.maxHp);
   }
 
-  get position() { return this.root.position; }
-get chestPosition() {
-  return new THREE.Vector3(
-    this.root.position.x,
-    this.root.position.y + 0.8,
-    this.root.position.z
-  );
-}
-  // ── Update ────────────────────────────────────────────────────────────────
+  get position()      { return this.root.position; }
+  get chestPosition() {
+    return new THREE.Vector3(
+      this.root.position.x,
+      this.root.position.y + 0.8,
+      this.root.position.z
+    );
+  }
+
   update(delta, joystickInput, camera) {
     if (this.isActive) {
       this._updateControlled(delta, joystickInput, camera);
@@ -141,18 +129,13 @@ get chestPosition() {
       this._updateAI(delta);
     }
 
-    // Bob flotante
     const t = performance.now() * 0.001;
     this.bodyMesh.position.y = 0.6 + Math.sin(t * 2.0 + 1.5) * 0.06;
 
-    // Actualizar SkillSystem
     this.skillSystem.update(delta);
-
-    // Actualizar nametag
     this._updateNameTag(camera);
   }
 
-  // Controlado por el jugador — mismo sistema que player.js
   _updateControlled(delta, joystickInput, camera) {
     const { dx, dy } = joystickInput;
     const moving = Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01;
@@ -173,7 +156,8 @@ get chestPosition() {
       const len = this._moveDir.length();
       if (len > 0.001) {
         this._moveDir.divideScalar(len);
-        this.root.position.addScaledVector(this._moveDir, MOVE_SPEED * Math.min(len, 1) * delta);
+        const speed = (this._sprinting ? SPRINT_SPEED : MOVE_SPEED) * Math.min(len, 1) * delta;
+        this.root.position.addScaledVector(this._moveDir, speed);
         this.root.position.y = GROUND_Y;
 
         const targetAngle = Math.atan2(this._moveDir.x, this._moveDir.z);
@@ -186,7 +170,6 @@ get chestPosition() {
     }
   }
 
-  // IA — sigue al jugador y ataca enemigos cercanos
   _updateAI(delta) {
     const px = this._playerPos.x;
     const pz = this._playerPos.z;
@@ -194,7 +177,6 @@ get chestPosition() {
     const dz = pz - this.root.position.z;
     const distToPlayer = Math.sqrt(dx*dx + dz*dz);
 
-    // Seguir al jugador si está lejos
     if (distToPlayer > FOLLOW_DIST) {
       const speed = Math.min(MOVE_SPEED * delta, distToPlayer - FOLLOW_DIST + 0.01);
       const nx = dx / distToPlayer;
@@ -211,13 +193,12 @@ get chestPosition() {
       this.root.rotation.y = this.facingAngle;
     }
 
-    // Atacar enemigo más cercano automáticamente
     this._attackTimer -= delta;
     if (this._attackTimer <= 0) {
       const target = this._findNearestEnemy();
       if (target) {
         this.castSkill();
-        this._attackTimer = 3.5; // ataca cada 3.5s en IA
+        this._attackTimer = 3.5;
       } else {
         this._attackTimer = 1.0;
       }
@@ -237,21 +218,22 @@ get chestPosition() {
   }
 
   _updateNameTag(camera) {
-  if (!camera || !this.root.visible) {
-    this._nameTag.style.display = 'none';
-    return;
+    if (!camera || !this.root.visible) {
+      this._nameTag.style.display = 'none';
+      return;
+    }
+    const pos = this.root.position.clone().add(new THREE.Vector3(0, 1.8, 0));
+    pos.project(camera);
+    if (pos.z > 1) { this._nameTag.style.display = 'none'; return; }
+    const x = (pos.x *  0.5 + 0.5) * window.innerWidth;
+    const y = (pos.y * -0.5 + 0.5) * window.innerHeight;
+    this._nameTag.style.left    = `${x - 16}px`;
+    this._nameTag.style.top     = `${y}px`;
+    this._nameTag.style.display = 'block';
   }
-  const pos = this.root.position.clone().add(new THREE.Vector3(0, 1.8, 0));
-  pos.project(camera);
-  if (pos.z > 1) { this._nameTag.style.display = 'none'; return; }
-  const x = (pos.x *  0.5 + 0.5) * window.innerWidth;
-  const y = (pos.y * -0.5 + 0.5) * window.innerHeight;
-  this._nameTag.style.left    = `${x - 16}px`;
-  this._nameTag.style.top     = `${y}px`;
-  this._nameTag.style.display = 'block';
-  }
+
   destroy() {
     this.scene.remove(this.root);
     this._nameTag.remove();
   }
-          }
+}
