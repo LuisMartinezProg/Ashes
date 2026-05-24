@@ -20,7 +20,7 @@ export class SkillBar {
     this._container          = null;
     this._cooldowns          = {};
     this._enemyNear          = false;
-    this._activeProgression = skillsysystem; // ← no skillSystem
+    this._activeProgression = progression; // ← no skillSystem
     
     this._build();
     window.addEventListener('resize', () => this._rebuild());
