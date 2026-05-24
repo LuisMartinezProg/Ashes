@@ -198,8 +198,10 @@ export class SkillBar {
       this._attackBtn.style.transform = 'scale(0.88)';
       setTimeout(() => this._attackBtn.style.transform = 'scale(1)', 140);
     };
-    
-     this._sprintBtn.addEventListener('touchstart', (e) => {
+    this._sprintBtn = this._buildSmallBtn('🏃', sbSize, 'rgba(100,220,255,0.5)');
+this._placeFromBottomRight(this._sprintBtn, 755, 302, sbSize);
+
+this._sprintBtn.addEventListener('touchstart', (e) => {
   e.preventDefault();
   if (this._enemyNear) {
     window._parry?.attemptParry?.();
@@ -212,6 +214,7 @@ export class SkillBar {
     this._sprintBtn.style.transform   = 'scale(0.92)';
   }
 }, { passive: false });
+
 this._sprintBtn.addEventListener('touchend', () => {
   if (!this._enemyNear) {
     const activeChar = window._partyManager?.getActiveCharacter() ?? window._player;
@@ -220,6 +223,9 @@ this._sprintBtn.addEventListener('touchend', () => {
     this._sprintBtn.style.transform   = 'scale(1)';
   }
 });
+
+this._container.appendChild(this._sprintBtn);
+     
     this._container.appendChild(this._sprintBtn);
 
     this._buildBtn = this._buildSmallBtn('🏗️', sbSize, 'rgba(201,168,76,0.5)');
