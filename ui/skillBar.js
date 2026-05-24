@@ -198,10 +198,7 @@ export class SkillBar {
       this._attackBtn.style.transform = 'scale(0.88)';
       setTimeout(() => this._attackBtn.style.transform = 'scale(1)', 140);
     };
-    this._attackBtn.addEventListener('touchstart', onAtk, { passive: false });
-    this._attackBtn.addEventListener('mousedown',  onAtk);
-    this._container.appendChild(this._attackBtn);
-
+    
      this._sprintBtn.addEventListener('touchstart', (e) => {
   e.preventDefault();
   if (this._enemyNear) {
