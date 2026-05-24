@@ -202,27 +202,27 @@ export class SkillBar {
     this._attackBtn.addEventListener('mousedown',  onAtk);
     this._container.appendChild(this._attackBtn);
 
-    this._sprintBtn = this._buildSmallBtn('🏃', sbSize, 'rgba(100,220,255,0.5)');
-    this._placeFromBottomRight(this._sprintBtn, 755, 302, sbSize);
-    this._sprintBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (this._enemyNear) {
-        window._parry?.attemptParry?.();
-        this._sprintBtn.style.transform = 'scale(0.88)';
-        setTimeout(() => this._sprintBtn.style.transform = 'scale(1)', 180);
-      } else {
-        window._player?.setSprinting?.(true);
-        this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.9)';
-        this._sprintBtn.style.transform   = 'scale(0.92)';
-      }
-    }, { passive: false });
-    this._sprintBtn.addEventListener('touchend', () => {
-      if (!this._enemyNear) {
-        window._player?.setSprinting?.(false);
-        this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
-        this._sprintBtn.style.transform   = 'scale(1)';
-      }
-    });
+     this._sprintBtn.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (this._enemyNear) {
+    window._parry?.attemptParry?.();
+    this._sprintBtn.style.transform = 'scale(0.88)';
+    setTimeout(() => this._sprintBtn.style.transform = 'scale(1)', 180);
+  } else {
+    const activeChar = window._partyManager?.getActiveCharacter() ?? window._player;
+    activeChar?.setSprinting?.(true);
+    this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.9)';
+    this._sprintBtn.style.transform   = 'scale(0.92)';
+  }
+}, { passive: false });
+this._sprintBtn.addEventListener('touchend', () => {
+  if (!this._enemyNear) {
+    const activeChar = window._partyManager?.getActiveCharacter() ?? window._player;
+    activeChar?.setSprinting?.(false);
+    this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
+    this._sprintBtn.style.transform   = 'scale(1)';
+  }
+});
     this._container.appendChild(this._sprintBtn);
 
     this._buildBtn = this._buildSmallBtn('🏗️', sbSize, 'rgba(201,168,76,0.5)');
