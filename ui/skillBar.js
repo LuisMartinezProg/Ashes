@@ -224,8 +224,6 @@ this._sprintBtn.addEventListener('touchend', () => {
   }
 });
 
-this._container.appendChild(this._sprintBtn);
-     
     this._container.appendChild(this._sprintBtn);
 
     this._buildBtn = this._buildSmallBtn('🏗️', sbSize, 'rgba(201,168,76,0.5)');
