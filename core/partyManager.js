@@ -77,9 +77,7 @@ export class PartyManager {
     return true;
   }
 
-  castCompanionSkill() {
-    return this.companion.castSkill();
-  }
+  
 
   update(delta, joystickInput, camera) {
     if (this._switchTimer > 0) {
