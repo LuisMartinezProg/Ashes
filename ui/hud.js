@@ -22,7 +22,7 @@ export class HUD {
     this._camera           = null;
     this._partyEl          = null;
     this._partyManager     = null;
-    this._mikaSkillBtn     = null;
+    
 
     this._ARC_R   = 24;
     this._ARC_LEN = 2 * Math.PI * 24 * 0.75;
@@ -35,13 +35,14 @@ export class HUD {
   }
 
   // ── Party Manager ─────────────────────────────────────────────────────────
-
-  setPartyManager(pm) {
-    this._partyManager = pm;
-    pm.onSwitch   = (idx) => this._onPartySwitch(idx);
-    pm.onReaction = (name) => this._showReactionLabel(name);
-    pm.companion.onDamage = (hp, max) => this._updateMikaHp(hp, max);
-  }
+setPartyManager(pm) {
+  this._partyManager = pm;
+  pm.onSwitch   = (idx) => this._onPartySwitch(idx);
+  pm.onReaction = (name) => this._showReactionLabel(name);
+  pm.companion.onDamage = (hp, max) => this._updateMikaHp(hp, max);
+  this._onPartySwitch(0); // ← agregar esta línea
+}
+  
 
   // ── Party UI ──────────────────────────────────────────────────────────────
 
@@ -223,10 +224,7 @@ export class HUD {
           : 'linear-gradient(90deg,#aa2266,#ff88aa)';
     }
 
-    // Botón Mika — oculto cuando Mika está activa
-    if (this._mikaSkillBtn) {
-      this._mikaSkillBtn.style.display = idx === 1 ? 'none' : 'flex';
-    }
+    
 
     // Stamina — solo protagonista
     if (this._staminaEl) {
@@ -252,43 +250,7 @@ export class HUD {
 
   // ── Botón Mika ────────────────────────────────────────────────────────────
 
-  _buildMikaSkillBtn() {
-    this._mikaSkillBtn = document.createElement('button');
-    Object.assign(this._mikaSkillBtn.style, {
-      position      : 'fixed',
-      right         : '14px',
-      bottom        : '120px',
-      width         : '42px',
-      height        : '42px',
-      borderRadius  : '50%',
-      background    : 'radial-gradient(circle at 35% 35%, #ff88aa, #cc4477)',
-      border        : '2px solid #ff88aaaa',
-      color         : '#fff',
-      fontSize      : '18px',
-      display       : 'none',
-      alignItems    : 'center',
-      justifyContent: 'center',
-      cursor        : 'pointer',
-      pointerEvents : 'all',
-      zIndex        : '130',
-      boxShadow     : '0 0 8px #ff88aa66',
-      transition    : 'transform 0.1s',
-    });
-    this._mikaSkillBtn.textContent = '🏹';
-
-    const onTap = (e) => {
-      e.preventDefault();
-      if (!this._partyManager) return;
-      const ok = this._partyManager.castCompanionSkill();
-      if (ok) {
-        this._mikaSkillBtn.style.transform = 'scale(0.85)';
-        setTimeout(() => this._mikaSkillBtn.style.transform = 'scale(1)', 150);
-      }
-    };
-    this._mikaSkillBtn.addEventListener('touchstart', onTap, { passive: false });
-    this._mikaSkillBtn.addEventListener('click',      onTap);
-    this._container.appendChild(this._mikaSkillBtn);
-  }
+  
 
   // ── Reacción ──────────────────────────────────────────────────────────────
 
@@ -339,10 +301,7 @@ export class HUD {
 
   show() {
     this._container.style.display = 'block';
-    if (this._mikaSkillBtn) {
-      const idx = this._partyManager?.getActiveIdx() ?? 0;
-      this._mikaSkillBtn.style.display = idx === 0 ? 'flex' : 'none';
-    }
+    
   }
 
   hide() { this._container.style.display = 'none'; }
@@ -416,7 +375,7 @@ export class HUD {
     this._buildStamina();
     this._buildCollectBtn();
     this._buildParty();
-    this._buildMikaSkillBtn();
+    
     document.body.appendChild(this._container);
   }
 
