@@ -11,6 +11,7 @@ export class SkillBar {
     this.skillSystem         = skillSystem;
     this.progression         = progression;
     this._activeSkillSystem  = skillSystem;
+    this._activeProgression  = progression;
     this._weapon             = null;
     this._activeWeapon       = null;
     this._buttons            = [];
@@ -20,11 +21,12 @@ export class SkillBar {
     this._container          = null;
     this._cooldowns          = {};
     this._enemyNear          = false;
-    this._activeProgression = progression; // ← no skillSystem
-    
+    this._visible            = false;
+
     this._build();
-    window.addEventListener('resize', () => this._rebuild());
-    setInterval(() => this._checkEnemyProximity(), 500);
+    this._resizeHandler = () => this._rebuild();
+    window.addEventListener('resize', this._resizeHandler);
+    this._proximityInterval = setInterval(() => this._checkEnemyProximity(), 500);
   }
 
   setWeapon(type) {
@@ -39,42 +41,61 @@ export class SkillBar {
   }
 
   setActiveCharacter(idx, mikaSkillSystem, mikaProgression) {
-  if (idx === 1 && mikaSkillSystem) {
-    this._activeSkillSystem  = mikaSkillSystem;
-    this._activeWeapon       = 'bow';
-    this._activeProgression  = mikaProgression ?? this.progression;
-    if (this._attackBtn) this._attackBtn.textContent = '🏹';
-  } else {
-    this._activeSkillSystem  = this.skillSystem;
-    this._activeWeapon       = this._weapon;
-    this._activeProgression  = this.progression;
-    const icons = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
-    if (this._attackBtn) this._attackBtn.textContent = icons[this._weapon] ?? '⚔️';
+    if (idx === 1 && mikaSkillSystem) {
+      this._activeSkillSystem  = mikaSkillSystem;
+      this._activeWeapon       = 'bow';
+      this._activeProgression  = mikaProgression ?? this.progression;
+      if (this._attackBtn) this._attackBtn.textContent = '🏹';
+    } else {
+      this._activeSkillSystem  = this.skillSystem;
+      this._activeWeapon       = this._weapon;
+      this._activeProgression  = this.progression;
+      const icons = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
+      if (this._attackBtn) this._attackBtn.textContent = icons[this._weapon] ?? '⚔️';
+    }
+    this._buttons.forEach(b => { b.dataset.skillId = ''; b.style.display = 'none'; });
+    this.refresh();
   }
-  this._buttons.forEach(b => { b.dataset.skillId = ''; b.style.display = 'none'; });
-  this.refresh();
-  }
+
   refresh() {
-  const weapon = this._activeWeapon      ?? this._weapon;
-  const prog   = this._activeProgression ?? this.progression;
-  if (!weapon) return;
-  const skills = prog.getActiveSkills(weapon).slice(0, 3);
-  skills.forEach((sk, i) => {
-    this._updateButton(i, sk);
-    this._buttons[i].style.display = 'flex';
-  });
-  for (let i = skills.length; i < this._buttons.length; i++) {
-    this._buttons[i].style.display = 'none';
+    const weapon = this._activeWeapon ?? this._weapon;
+    const prog   = this._activeProgression ?? this.progression;
+    if (!weapon) return;
+    const skills = prog.getActiveSkills(weapon).slice(0, 3);
+    skills.forEach((sk, i) => {
+      this._updateButton(i, sk);
+      this._buttons[i].style.display = 'flex';
+    });
+    for (let i = skills.length; i < this._buttons.length; i++) {
+      this._buttons[i].style.display = 'none';
+    }
   }
-  }
+
   setCooldown(skillId, progress) {
     this._cooldowns[skillId] = progress;
     const btn = this._buttons.find(b => b.dataset.skillId === skillId);
     if (btn) this._applyCooldown(btn, progress);
   }
 
-  show() { if (this._container) this._container.style.display = 'block'; }
-  hide() { if (this._container) this._container.style.display = 'none'; }
+  show() {
+    if (this._container) {
+      this._container.style.display = 'block';
+      this._visible = true;
+    }
+  }
+
+  hide() {
+    if (this._container) {
+      this._container.style.display = 'none';
+      this._visible = false;
+    }
+  }
+
+  destroy() {
+    clearInterval(this._proximityInterval);
+    window.removeEventListener('resize', this._resizeHandler);
+    this._container?.remove();
+  }
 
   _checkEnemyProximity() {
     const playerPos = window._player?.root?.position;
@@ -106,14 +127,15 @@ export class SkillBar {
 
   _rebuild() {
     try {
+      const wasVisible = this._visible;
       if (this._container) this._container.remove();
       this._buttons   = [];
       this._attackBtn = null;
       this._sprintBtn = null;
       this._buildBtn  = null;
       this._build();
-      if (this._weapon) this.refresh();
-      this.show();
+      if (this._weapon || this._activeWeapon) this.refresh();
+      if (wasVisible) this.show();
     } catch(e) {
       console.error('[SkillBar._rebuild]', e);
     }
@@ -192,38 +214,43 @@ export class SkillBar {
       zIndex        : '121',
     });
     this._placeFromBottomRight(this._attackBtn, 679, 379, atkSize);
+
+    // FIX: onAtk ahora está correctamente conectado al botón
     const onAtk = (e) => {
       e.preventDefault();
       window._combat?.triggerAttack?.();
       this._attackBtn.style.transform = 'scale(0.88)';
       setTimeout(() => this._attackBtn.style.transform = 'scale(1)', 140);
     };
+    this._attackBtn.addEventListener('touchstart', onAtk, { passive: false });
+    this._attackBtn.addEventListener('click', onAtk);
+    this._container.appendChild(this._attackBtn);
+
     this._sprintBtn = this._buildSmallBtn('🏃', sbSize, 'rgba(100,220,255,0.5)');
-this._placeFromBottomRight(this._sprintBtn, 755, 302, sbSize);
+    this._placeFromBottomRight(this._sprintBtn, 755, 302, sbSize);
 
-this._sprintBtn.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  if (this._enemyNear) {
-    window._parry?.attemptParry?.();
-    this._sprintBtn.style.transform = 'scale(0.88)';
-    setTimeout(() => this._sprintBtn.style.transform = 'scale(1)', 180);
-  } else {
-    const activeChar = window._partyManager?.getActiveCharacter() ?? window._player;
-    activeChar?.setSprinting?.(true);
-    this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.9)';
-    this._sprintBtn.style.transform   = 'scale(0.92)';
-  }
-}, { passive: false });
+    this._sprintBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (this._enemyNear) {
+        window._parry?.attemptParry?.();
+        this._sprintBtn.style.transform = 'scale(0.88)';
+        setTimeout(() => this._sprintBtn.style.transform = 'scale(1)', 180);
+      } else {
+        const activeChar = window._partyManager?.getActiveCharacter() ?? window._player;
+        activeChar?.setSprinting?.(true);
+        this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.9)';
+        this._sprintBtn.style.transform   = 'scale(0.92)';
+      }
+    }, { passive: false });
 
-this._sprintBtn.addEventListener('touchend', () => {
-  if (!this._enemyNear) {
-    const activeChar = window._partyManager?.getActiveCharacter() ?? window._player;
-    activeChar?.setSprinting?.(false);
-    this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
-    this._sprintBtn.style.transform   = 'scale(1)';
-  }
-});
-
+    this._sprintBtn.addEventListener('touchend', () => {
+      if (!this._enemyNear) {
+        const activeChar = window._partyManager?.getActiveCharacter() ?? window._player;
+        activeChar?.setSprinting?.(false);
+        this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
+        this._sprintBtn.style.transform   = 'scale(1)';
+      }
+    });
     this._container.appendChild(this._sprintBtn);
 
     this._buildBtn = this._buildSmallBtn('🏗️', sbSize, 'rgba(201,168,76,0.5)');
