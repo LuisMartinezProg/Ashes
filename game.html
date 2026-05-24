@@ -98,7 +98,7 @@ import { BuildZone }        from './core/buildZone.js';
 import { Companion }        from './core/companion.js';
 import { PartyManager }     from './core/partyManager.js';
 import { createMikaProgression } from './core/mikaProgression.js';
-  
+
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -142,7 +142,7 @@ async function boot() {
     setProgress(57, 'Progression...');
     const progression = new Progression();
     const mikaProgression = createMikaProgression();
-window._mikaProgression = mikaProgression;
+    window._mikaProgression = mikaProgression;
 
     setProgress(59, 'Companion...');
     const companion = new Companion(scene, player.root.position);
@@ -391,7 +391,8 @@ window._mikaProgression = mikaProgression;
     } else {
       buildCamera.showBtn();
     }
-setProgress(89, 'UI...');
+
+    setProgress(89, 'UI...');
     const skillTree   = new SkillTree(progression);
     window._skillTree = skillTree;
     const skillBar    = new SkillBar(skills, progression);
@@ -399,6 +400,7 @@ setProgress(89, 'UI...');
     const subtypeMenu = new SubtypeMenu(progression, skillBar);
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
 
+    // ← mapUI aquí, antes del radialMenu
     const mapUI = new MapUI(player);
     window._mapUI = mapUI;
     setInterval(() => mapUI.update(), 500);
@@ -408,8 +410,6 @@ setProgress(89, 'UI...');
       { icon: '🗺️', label: 'Mapa',        action: () => mapUI.toggle(),              locked: false },
       { icon: '📖', label: 'Guías',        action: () => console.log('próximamente'), locked: true  },
     ]);
-   
-
 
     const pauseMenu = new PauseMenu({
       onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
@@ -432,11 +432,6 @@ setProgress(89, 'UI...');
     subtypeMenu.setWeapon(weaponType);
     fusionMenu.setWeapon(weaponType);
     progression.fusionUnlocked = true;
-
-    setProgress(93, 'MapUI...');
-    const mapUI = new MapUI(player);
-    window._mapUI = mapUI;
-    setInterval(() => mapUI.update(), 500);
 
     const pauseBtn = document.createElement('button');
     pauseBtn.textContent = '☰';
