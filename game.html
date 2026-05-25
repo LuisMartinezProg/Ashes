@@ -98,7 +98,9 @@ import { BuildZone }        from './core/buildZone.js';
 import { Companion }        from './core/companion.js';
 import { PartyManager }     from './core/partyManager.js';
 import { createMikaProgression } from './core/mikaProgression.js';
-
+import { KeyboardControls } from './core/keyboardControls.js';
+import { KeybindMenu }      from './ui/keybindMenu.js';
+  
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -417,7 +419,10 @@ async function boot() {
       onResume  : () => pauseMenu.close(),
       getFusionUnlocked: () => progression.fusionUnlocked,
     });
-
+    const keyboardControls = new KeyboardControls();
+window._keyboard = keyboardControls;
+const keybindMenu = new KeybindMenu(keyboardControls);
+window._keybindMenu = keybindMenu;
     setProgress(91, 'weapon...');
     const charData   = JSON.parse(localStorage.getItem('ashesCharacter') || '{}');
     const weaponType = charData.weapon || 'sword';
