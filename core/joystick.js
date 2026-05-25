@@ -55,11 +55,19 @@ export class VirtualJoystick {
   }
 
   _bindEvents() {
-    this.canvas.addEventListener('touchstart',  this._onStart.bind(this), { passive: false });
-    this.canvas.addEventListener('touchmove',   this._onMove.bind(this),  { passive: false });
-    this.canvas.addEventListener('touchend',    this._onEnd.bind(this),   { passive: false });
-    this.canvas.addEventListener('touchcancel', this._onEnd.bind(this),   { passive: false });
+    // Touch
+    this.canvas.addEventListener('touchstart',  this._onStart.bind(this),     { passive: false });
+    this.canvas.addEventListener('touchmove',   this._onMove.bind(this),      { passive: false });
+    this.canvas.addEventListener('touchend',    this._onEnd.bind(this),       { passive: false });
+    this.canvas.addEventListener('touchcancel', this._onEnd.bind(this),       { passive: false });
+
+    // Mouse (PC)
+    this.canvas.addEventListener('mousedown',   this._onMouseDown.bind(this));
+    window.addEventListener('mousemove',        this._onMouseMove.bind(this));
+    window.addEventListener('mouseup',          this._onMouseUp.bind(this));
   }
+
+  // ── Touch ─────────────────────────────────────────────────────────────────
 
   _onStart(e) {
     e.preventDefault();
@@ -113,6 +121,47 @@ export class VirtualJoystick {
     }
   }
 
+  // ── Mouse (PC) ────────────────────────────────────────────────────────────
+
+  _onMouseDown(e) {
+    if (this.active) return;
+    this.active  = true;
+    this.touchId = 'mouse';
+    this.stickX  = this.baseX;
+    this.stickY  = this.baseY;
+    this._draw();
+  }
+
+  _onMouseMove(e) {
+    if (!this.active || this.touchId !== 'mouse') return;
+    const rect = this.canvas.getBoundingClientRect();
+    const rawX = e.clientX - rect.left;
+    const rawY = e.clientY - rect.top;
+    const ddx  = rawX - this.baseX;
+    const ddy  = rawY - this.baseY;
+    const dist = Math.sqrt(ddx * ddx + ddy * ddy);
+    const clamp = Math.min(dist, this.radius);
+    const angle = Math.atan2(ddy, ddx);
+    this.stickX = this.baseX + Math.cos(angle) * clamp;
+    this.stickY = this.baseY + Math.sin(angle) * clamp;
+    this.dx = dist > 8 ? Math.cos(angle) * Math.min(dist / this.radius, 1) : 0;
+    this.dy = dist > 8 ? Math.sin(angle) * Math.min(dist / this.radius, 1) : 0;
+    this._draw();
+  }
+
+  _onMouseUp(e) {
+    if (this.touchId !== 'mouse') return;
+    this.active  = false;
+    this.touchId = null;
+    this.dx      = 0;
+    this.dy      = 0;
+    this.stickX  = this.baseX;
+    this.stickY  = this.baseY;
+    this._draw();
+  }
+
+  // ── Draw ──────────────────────────────────────────────────────────────────
+
   _draw() {
     const dpr = window.devicePixelRatio || 1;
     const ctx = this.ctx;
@@ -122,7 +171,6 @@ export class VirtualJoystick {
     const by = this.baseY * dpr;
     const r  = this.radius * dpr;
 
-    // Anillo exterior
     ctx.beginPath();
     ctx.arc(bx, by, r, 0, Math.PI * 2);
     ctx.strokeStyle = 'rgba(255,255,255,0.22)';
@@ -131,13 +179,11 @@ export class VirtualJoystick {
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.fill();
 
-    // Flechas direccionales
-    this._drawArrow(ctx, bx, by - r * 0.65, 0,            dpr);
-    this._drawArrow(ctx, bx, by + r * 0.65, Math.PI,      dpr);
+    this._drawArrow(ctx, bx, by - r * 0.65, 0,             dpr);
+    this._drawArrow(ctx, bx, by + r * 0.65, Math.PI,       dpr);
     this._drawArrow(ctx, bx + r * 0.65, by, Math.PI * 0.5, dpr);
     this._drawArrow(ctx, bx - r * 0.65, by, -Math.PI * 0.5, dpr);
 
-    // Stick
     const sx = this.stickX * dpr;
     const sy = this.stickY * dpr;
     const sr = this.radius * 0.38 * dpr;
