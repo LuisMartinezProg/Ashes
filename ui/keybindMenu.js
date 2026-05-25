@@ -1,21 +1,25 @@
 // ui/keybindMenu.js — Menú de keybindings | Ashes of the Reborn
 
 const ACTION_LABELS = {
-  attack : '⚔️ Atacar',
-  skill1 : '🔮 Habilidad 1',
-  skill2 : '🔮 Habilidad 2',
-  skill3 : '🔮 Habilidad 3',
-  sprint : '🏃 Sprint',
-  switch : '🔄 Cambiar personaje',
-  map    : '🗺️ Mapa',
+  Adelante  : '⬆️ Adelante',
+  Atrás     : '⬇️ Atrás',
+  Izquierda : '⬅️ Izquierda',
+  Derecha   : '➡️ Derecha',
+  sprint    : '🏃 Sprint',
+  attack    : '⚔️ Atacar',
+  skill1    : '🔮 Habilidad 1',
+  skill2    : '🔮 Habilidad 2',
+  skill3    : '🔮 Habilidad 3',
+  switch    : '🔄 Cambiar personaje',
+  map       : '🗺️ Mapa',
 };
 
 export class KeybindMenu {
   constructor(keyboardControls) {
-    this._kb       = keyboardControls;
-    this._waiting  = null; // acción esperando tecla
-    this._overlay  = null;
-    this._rows     = {};
+    this._kb      = keyboardControls;
+    this._waiting = null;
+    this._overlay = null;
+    this._rows    = {};
     this._build();
   }
 
@@ -41,9 +45,9 @@ export class KeybindMenu {
       justifyContent: 'center',
       zIndex        : '500',
       pointerEvents : 'all',
+      overflowY     : 'auto',
     });
 
-    // Título
     const title = document.createElement('div');
     Object.assign(title.style, {
       fontFamily   : "'Cinzel', serif",
@@ -55,7 +59,18 @@ export class KeybindMenu {
     title.textContent = 'CONTROLES';
     this._overlay.appendChild(title);
 
-    // Tabla de binds
+    // Nota de mouse
+    const mouseNote = document.createElement('div');
+    Object.assign(mouseNote.style, {
+      fontFamily   : 'monospace',
+      fontSize     : '10px',
+      color        : 'rgba(201,168,76,0.6)',
+      marginBottom : '16px',
+      letterSpacing: '1px',
+    });
+    mouseNote.textContent = '🖱️ Click derecho + arrastrar = rotar cámara';
+    this._overlay.appendChild(mouseNote);
+
     const table = document.createElement('div');
     Object.assign(table.style, {
       display      : 'flex',
@@ -67,13 +82,13 @@ export class KeybindMenu {
     for (const [action, label] of Object.entries(ACTION_LABELS)) {
       const row = document.createElement('div');
       Object.assign(row.style, {
-        display        : 'flex',
-        justifyContent : 'space-between',
-        alignItems     : 'center',
-        background     : 'rgba(255,255,255,0.04)',
-        borderRadius   : '8px',
-        padding        : '8px 14px',
-        border         : '1px solid rgba(201,168,76,0.15)',
+        display       : 'flex',
+        justifyContent: 'space-between',
+        alignItems    : 'center',
+        background    : 'rgba(255,255,255,0.04)',
+        borderRadius  : '8px',
+        padding       : '8px 14px',
+        border        : '1px solid rgba(201,168,76,0.15)',
       });
 
       const actionLabel = document.createElement('div');
@@ -87,17 +102,17 @@ export class KeybindMenu {
 
       const keyBtn = document.createElement('button');
       Object.assign(keyBtn.style, {
-        fontFamily   : 'monospace',
-        fontSize     : '11px',
-        color        : '#fff',
-        background   : 'rgba(255,255,255,0.08)',
-        border       : '1px solid rgba(255,255,255,0.2)',
-        borderRadius : '6px',
-        padding      : '4px 12px',
-        cursor       : 'pointer',
-        minWidth     : '80px',
-        textAlign    : 'center',
-        transition   : 'background 0.15s, border 0.15s',
+        fontFamily  : 'monospace',
+        fontSize    : '11px',
+        color       : '#fff',
+        background  : 'rgba(255,255,255,0.08)',
+        border      : '1px solid rgba(255,255,255,0.2)',
+        borderRadius: '6px',
+        padding     : '4px 12px',
+        cursor      : 'pointer',
+        minWidth    : '80px',
+        textAlign   : 'center',
+        transition  : 'background 0.15s, border 0.15s',
       });
 
       keyBtn.addEventListener('click', () => this._startListening(action, keyBtn));
@@ -110,11 +125,10 @@ export class KeybindMenu {
 
     this._overlay.appendChild(table);
 
-    // Botones reset y cerrar
     const btnRow = document.createElement('div');
     Object.assign(btnRow.style, {
-      display : 'flex',
-      gap     : '12px',
+      display  : 'flex',
+      gap      : '12px',
       marginTop: '24px',
     });
 
@@ -132,7 +146,7 @@ export class KeybindMenu {
       letterSpacing: '2px',
     });
     resetBtn.addEventListener('click', () => {
-      this._kb.resetDefaults();
+      this._kb.resetDefaults(); // ← nombre correcto
       this._refresh();
     });
 
@@ -155,13 +169,12 @@ export class KeybindMenu {
     btnRow.appendChild(closeBtn);
     this._overlay.appendChild(btnRow);
 
-    // Hint
     const hint = document.createElement('div');
     Object.assign(hint.style, {
-      fontFamily  : 'monospace',
-      fontSize    : '9px',
-      color       : 'rgba(255,255,255,0.3)',
-      marginTop   : '16px',
+      fontFamily   : 'monospace',
+      fontSize     : '9px',
+      color        : 'rgba(255,255,255,0.3)',
+      marginTop    : '16px',
       letterSpacing: '1px',
     });
     hint.textContent = 'Haz click en un botón y presiona la tecla que quieres asignar';
@@ -169,14 +182,10 @@ export class KeybindMenu {
 
     document.body.appendChild(this._overlay);
 
-    // Escuchar tecla cuando se está esperando
     window.addEventListener('keydown', (e) => {
       if (!this._waiting) return;
       e.preventDefault();
-      if (e.code === 'Escape') {
-        this._cancelListening();
-        return;
-      }
+      if (e.code === 'Escape') { this._cancelListening(); return; }
       this._kb.setBind(this._waiting, e.code);
       this._refresh();
       this._waiting = null;
@@ -185,7 +194,6 @@ export class KeybindMenu {
 
   _startListening(action, btn) {
     this._waiting = action;
-    // Resaltar botón esperando
     Object.values(this._rows).forEach(b => {
       b.style.background = 'rgba(255,255,255,0.08)';
       b.style.border     = '1px solid rgba(255,255,255,0.2)';
@@ -224,8 +232,6 @@ export class KeybindMenu {
       .replace('AltLeft', 'Alt')
       .replace('AltRight', 'Alt')
       .replace('Space', 'Espacio')
-      .replace('Enter', 'Enter')
-      .replace('Backspace', '⌫')
       .replace('ArrowUp', '↑')
       .replace('ArrowDown', '↓')
       .replace('ArrowLeft', '←')
