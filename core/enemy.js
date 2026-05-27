@@ -10,7 +10,7 @@ const ATTACK_RANGE    = 1.4;
 const ATTACK_COOLDOWN = 1.2;
 const ATTACK_DAMAGE   = 8;
 const PATROL_WAIT     = 1.5;
-const RESPAWN_TIME    = 30; // segundos
+const RESPAWN_TIME    = 30;
 
 const SPAWN_POINTS = [
   { x:  12, z:  5  },
@@ -39,6 +39,7 @@ export class Enemy {
     this.onDeath  = null;
     this._burnDPS    = 0;
     this._burnTimer  = 0;
+    this._burnAccum  = 0;
     this._slowFactor = 1;
     this._slowTimer  = 0;
     this._spawnPos    = { x: position.x, z: position.z };
@@ -66,8 +67,6 @@ export class Enemy {
     scene.add(this.mesh);
   }
 
-  // ── Build mesh ───────────────────────────────────────────────────────────
-
   _buildMesh(position) {
     this.mesh = new THREE.Group();
 
@@ -86,20 +85,28 @@ export class Enemy {
     this._materials = [bodyMat, headMat];
   }
 
-  // ── API pública ──────────────────────────────────────────────────────────
-
   isDead() { return this.dead; }
-// ── Efectos de fusión ─────────────────────────────────────────────────────
 
   applyBurn(dps, duration) {
-    this._burnDPS      = dps;
-    this._burnTimer    = duration;
+    this._burnDPS   = dps;
+    this._burnTimer = duration;
   }
 
   applySlow(factor, duration) {
-    this._slowFactor   = factor;
-    this._slowTimer    = duration;
+    this._slowFactor = factor;
+    this._slowTimer  = duration;
   }
+
+  // ── Personaje activo ─────────────────────────────────────────────────────
+  _getActiveTarget() {
+    return window._partyManager?.getActiveCharacter() ?? this.player;
+  }
+
+  _getActivePosition() {
+    const t = this._getActiveTarget();
+    return t.root?.position ?? t.position;
+  }
+
   takeDamage(amount) {
     if (this.dead) return;
     this.hp = Math.max(0, this.hp - amount);
@@ -118,21 +125,14 @@ export class Enemy {
     if (this._dying) { this._updateDeathAnim(delta); return; }
     if (this.dead)   return;
 
-    // Quemadura
     if (this._burnTimer > 0) {
-  this._burnTimer -= delta;
-  this._burnAccum = (this._burnAccum ?? 0) + this._burnDPS * delta;
-  if (this._burnAccum >= 1) {
-    this.takeDamage(Math.floor(this._burnAccum));
-    this._burnAccum = 0;
-  }
-      
-    // Ralentizar
-    if (this._slowTimer > 0) {
-      this._slowTimer -= delta;
-      if (this._slowTimer <= 0) this._slowFactor = 1;
-    }
-for (const mat of this._materials) mat.color.setHex(0xff6600);
+      this._burnTimer -= delta;
+      this._burnAccum += this._burnDPS * delta;
+      if (this._burnAccum >= 1) {
+        this.takeDamage(Math.floor(this._burnAccum));
+        this._burnAccum = 0;
+      }
+      for (const mat of this._materials) mat.color.setHex(0xff6600);
       setTimeout(() => {
         if (!this.dead) {
           this._materials[0]?.color.setHex(0xcc2222);
@@ -141,7 +141,12 @@ for (const mat of this._materials) mat.color.setHex(0xff6600);
       }, 100);
       if (this._burnTimer <= 0) this._burnDPS = 0;
     }
-    
+
+    if (this._slowTimer > 0) {
+      this._slowTimer -= delta;
+      if (this._slowTimer <= 0) this._slowFactor = 1;
+    }
+
     switch (this._state) {
       case STATE.PATROL:  this._updatePatrol(delta);  break;
       case STATE.WAITING: this._updateWaiting(delta); break;
@@ -149,8 +154,6 @@ for (const mat of this._materials) mat.color.setHex(0xff6600);
       case STATE.ATTACK:  this._updateAttack(delta);  break;
     }
   }
-
-  // ── Estados ──────────────────────────────────────────────────────────────
 
   _updatePatrol(delta) {
     const target = this._waypoints[this._waypointIdx];
@@ -165,7 +168,7 @@ for (const mat of this._materials) mat.color.setHex(0xff6600);
 
     this._moveTo(target, PATROL_SPEED, delta);
 
-    if (this._playerInRange(DETECT_RANGE)) {
+    if (this._distTo(this._getActivePosition()) <= DETECT_RANGE) {
       this._state = STATE.CHASE;
     }
   }
@@ -173,7 +176,7 @@ for (const mat of this._materials) mat.color.setHex(0xff6600);
   _updateWaiting(delta) {
     this._waitTimer -= delta;
 
-    if (this._playerInRange(DETECT_RANGE)) {
+    if (this._distTo(this._getActivePosition()) <= DETECT_RANGE) {
       this._state = STATE.CHASE;
       return;
     }
@@ -184,56 +187,52 @@ for (const mat of this._materials) mat.color.setHex(0xff6600);
   }
 
   _updateChase(delta) {
-    if (!this.player) return;
+    const activePos = this._getActivePosition();
 
-    const playerPos = this.player.root.position;
-
-    if (!this._playerInRange(DETECT_RANGE * 1.5)) {
+    if (this._distTo(activePos) > DETECT_RANGE * 1.5) {
       this._state = STATE.PATROL;
       return;
     }
 
-    if (this._playerInRange(ATTACK_RANGE)) {
+    if (this._distTo(activePos) <= ATTACK_RANGE) {
       this._state       = STATE.ATTACK;
       this._attackTimer = 0;
       return;
     }
 
-    this._moveTo(playerPos, CHASE_SPEED, delta);
+    this._moveTo(activePos, CHASE_SPEED * this._slowFactor, delta);
   }
 
   _updateAttack(delta) {
-    if (!this.player) return;
+    const activePos = this._getActivePosition();
 
-    if (!this._playerInRange(ATTACK_RANGE * 1.3)) {
+    if (this._distTo(activePos) > ATTACK_RANGE * 1.3) {
       this._state = STATE.CHASE;
       return;
     }
 
     this._attackTimer -= delta;
-
     if (this._attackTimer <= 0) {
       this._attackTimer = ATTACK_COOLDOWN;
       this._doAttack();
     }
 
-    this._lookAt(this.player.root.position);
+    this._lookAt(activePos);
   }
 
   _doAttack() {
-    if (!this.player || this.player.isDead?.()) return;
-    this.player.takeDamage(ATTACK_DAMAGE);
+    const target = this._getActiveTarget();
+    if (!target) return;
+    target.takeDamage?.(ATTACK_DAMAGE);
 
     for (const mat of this._materials) mat.color.setHex(0xff6600);
     setTimeout(() => {
       if (!this.dead) {
-        this._materials[0].color.setHex(0xcc2222);
-        this._materials[1].color.setHex(0xdd3333);
+        this._materials[0]?.color.setHex(0xcc2222);
+        this._materials[1]?.color.setHex(0xdd3333);
       }
     }, 80);
   }
-
-  // ── Movimiento ───────────────────────────────────────────────────────────
 
   _moveTo(target, speed, delta) {
     if (!this.mesh) return;
@@ -242,7 +241,7 @@ for (const mat of this._materials) mat.color.setHex(0xff6600);
     const dz   = target.z - pos.z;
     const dist = Math.sqrt(dx*dx + dz*dz);
     if (dist < 0.01) return;
-    const step = Math.min(speed * this._slowFactor * delta, dist);
+    const step = Math.min(speed * delta, dist);
     pos.x += (dx / dist) * step;
     pos.z += (dz / dist) * step;
     this._lookAt(target);
@@ -264,20 +263,13 @@ for (const mat of this._materials) mat.color.setHex(0xff6600);
     return Math.sqrt(dx*dx + dz*dz);
   }
 
-  _playerInRange(range) {
-    if (!this.player) return false;
-    return this._distTo(this.player.root.position) <= range;
-  }
-
-  // ── Daño / Muerte / Respawn ───────────────────────────────────────────────
-
   _flashDamage() {
     clearTimeout(this._flashTimeout);
     for (const mat of this._materials) mat.color.setHex(0xffffff);
     this._flashTimeout = setTimeout(() => {
       if (!this.dead) {
-        this._materials[0].color.setHex(0xcc2222);
-        this._materials[1].color.setHex(0xdd3333);
+        this._materials[0]?.color.setHex(0xcc2222);
+        this._materials[1]?.color.setHex(0xdd3333);
       }
     }, 120);
   }
@@ -302,27 +294,23 @@ for (const mat of this._materials) mat.color.setHex(0xff6600);
       this.scene.remove(this.mesh);
       this.mesh          = null;
       this._respawnTimer = RESPAWN_TIME;
-      console.log(`[Enemy] Respawn en ${RESPAWN_TIME}s`);
     }
   }
 
   _respawn() {
-    this.hp    = ENEMY_MAX_HP;
-    this.dead  = false;
+    this.hp           = ENEMY_MAX_HP;
+    this.dead         = false;
     this._dying       = false;
     this._dyingTimer  = 0;
     this._attackTimer = 0;
     this._waitTimer   = 0;
     this._waypointIdx = 0;
+    this._burnAccum   = 0;
     this._state       = STATE.PATROL;
-
     this._buildMesh(this._spawnPos);
     this.scene.add(this.mesh);
-    console.log(`[Enemy] Respawneado en (${this._spawnPos.x}, ${this._spawnPos.z})`);
   }
 }
-
-// ── SPAWN ────────────────────────────────────────────────────────────────────
 
 export function spawnEnemies(scene, player, customPoints = null) {
   const points = customPoints ?? SPAWN_POINTS;
