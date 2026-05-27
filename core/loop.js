@@ -1,3 +1,4 @@
+// core/loop.js
 import * as THREE          from 'three';
 import { Player }          from './player.js';
 import { VirtualJoystick } from './joystick.js';
@@ -39,6 +40,11 @@ export function startLoop(scene, camera, renderer) {
   requestAnimationFrame(_tick);
 }
 
+function _getActivePosition() {
+  const active = window._partyManager?.getActiveCharacter();
+  return active?.root?.position ?? active?.position ?? _player.root.position;
+}
+
 function _tick(timestamp) {
   if (!_running) return;
   requestAnimationFrame(_tick);
@@ -58,15 +64,12 @@ function _tick(timestamp) {
   if (!buildCamActive) {
     const input = _joystick.getInput();
 
-    // ── PartyManager toma control del update de personajes ──
     if (window._partyManager) {
       window._partyManager.update(delta, input, _camera);
     } else {
-      // Fallback sin partyManager
       _player.update(delta, input, _camera);
     }
 
-    // Alimentar joystick global para companion/partyManager
     window._setJoystick?.(input.dx, input.dy);
 
     if (_triggers) _triggers.update(_player.root.position);
@@ -93,7 +96,7 @@ function _tick(timestamp) {
 }
 
 function _checkResourceProximity() {
-  const pos = _player.root.position;
+  const pos = _getActivePosition();
   let found = null;
   let minDist = Infinity;
 
