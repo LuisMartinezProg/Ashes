@@ -100,7 +100,7 @@ import { PartyManager }     from './core/partyManager.js';
 import { createMikaProgression } from './core/mikaProgression.js';
 import { KeyboardControls } from './core/keyboardControls.js';
 import { KeybindMenu }      from './ui/keybindMenu.js';
-  
+
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -402,18 +402,23 @@ async function boot() {
     const subtypeMenu = new SubtypeMenu(progression, skillBar);
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
 
-    // ← mapUI aquí, antes del radialMenu
     const mapUI = new MapUI(player);
     window._mapUI = mapUI;
     setInterval(() => mapUI.update(), 500);
 
-    
+    // ── KeyboardControls antes del radialMenu ─────────────────────────────
+    const keyboardControls = new KeyboardControls();
+    window._keyboard = keyboardControls;
+    const keybindMenu = new KeybindMenu(keyboardControls);
+    window._keybindMenu = keybindMenu;
+
+    const isPC = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const radialMenu = new RadialMenu([
-  { icon: '⚔️', label: 'Habilidades', action: () => skillTree.open(),       locked: false },
-  { icon: '🗺️', label: 'Mapa',        action: () => mapUI.toggle(),         locked: false },
-  { icon: '⌨️', label: 'Controles',   action: () => keybindMenu.open(),     locked: false },
-  { icon: '📖', label: 'Guías',        action: () => console.log('próximo'), locked: true  },
-]);
+      { icon: '⚔️', label: 'Habilidades', action: () => skillTree.open(),       locked: false },
+      { icon: '🗺️', label: 'Mapa',        action: () => mapUI.toggle(),         locked: false },
+      ...(isPC ? [{ icon: '⌨️', label: 'Controles', action: () => keybindMenu.open(), locked: false }] : []),
+      { icon: '📖', label: 'Guías',       action: () => console.log('próximo'), locked: true  },
+    ]);
 
     const pauseMenu = new PauseMenu({
       onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
@@ -421,10 +426,7 @@ async function boot() {
       onResume  : () => pauseMenu.close(),
       getFusionUnlocked: () => progression.fusionUnlocked,
     });
-    const keyboardControls = new KeyboardControls();
-window._keyboard = keyboardControls;
-const keybindMenu = new KeybindMenu(keyboardControls);
-window._keybindMenu = keybindMenu;
+
     setProgress(91, 'weapon...');
     const charData   = JSON.parse(localStorage.getItem('ashesCharacter') || '{}');
     const weaponType = charData.weapon || 'sword';
