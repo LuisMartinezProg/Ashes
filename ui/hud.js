@@ -22,7 +22,6 @@ export class HUD {
     this._camera           = null;
     this._partyEl          = null;
     this._partyManager     = null;
-    
 
     this._ARC_R   = 24;
     this._ARC_LEN = 2 * Math.PI * 24 * 0.75;
@@ -35,14 +34,13 @@ export class HUD {
   }
 
   // ── Party Manager ─────────────────────────────────────────────────────────
-setPartyManager(pm) {
-  this._partyManager = pm;
-  pm.onSwitch   = (idx) => this._onPartySwitch(idx);
-  pm.onReaction = (name) => this._showReactionLabel(name);
-  pm.companion.onDamage = (hp, max) => this._updateMikaHp(hp, max);
-  this._onPartySwitch(0); // ← agregar esta línea
-}
-  
+  setPartyManager(pm) {
+    this._partyManager = pm;
+    pm.onSwitch   = (idx) => this._onPartySwitch(idx);
+    pm.onReaction = (name) => this._showReactionLabel(name);
+    pm.companion.onDamage = (hp, max) => this._updateMikaHp(hp, max);
+    this._onPartySwitch(0);
+  }
 
   // ── Party UI ──────────────────────────────────────────────────────────────
 
@@ -75,7 +73,6 @@ setPartyManager(pm) {
       alignItems   : 'center',
       gap          : '5px',
       cursor       : 'pointer',
-      transition   : 'transform 0.15s',
       background   : 'rgba(0,0,0,0.5)',
       borderRadius : '20px',
       padding      : '3px 8px 3px 3px',
@@ -205,8 +202,7 @@ setPartyManager(pm) {
       }
     }, 100);
 
-    // Barra HP central
-    const color = colors[idx];
+    // Barra HP central — color y nombre
     if (this._playerHpFill) {
       this._playerHpFill.style.background =
         idx === 0
@@ -215,7 +211,7 @@ setPartyManager(pm) {
     }
     if (this._playerHpName) {
       this._playerHpName.textContent = names[idx];
-      this._playerHpName.style.color = color;
+      this._playerHpName.style.color = colors[idx];
     }
     if (this._energyFill) {
       this._energyFill.style.background =
@@ -224,11 +220,26 @@ setPartyManager(pm) {
           : 'linear-gradient(90deg,#aa2266,#ff88aa)';
     }
 
-    
-
     // Stamina — solo protagonista
     if (this._staminaEl) {
       this._staminaEl.style.display = idx === 0 ? 'block' : 'none';
+    }
+
+    // ── Sincronizar HP central con el personaje que entra ──────────────────
+    if (idx === 0) {
+      const p = window._player;
+      if (p && this._playerHpFill) {
+        const pct = Math.max(0, p.hp / p.maxHp) * 100;
+        this._playerHpFill.style.width = `${pct}%`;
+        if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(p.hp)}/${p.maxHp}`;
+      }
+    } else {
+      const m = this._partyManager?.companion;
+      if (m && this._playerHpFill) {
+        const pct = Math.max(0, m.hp / m.maxHp) * 100;
+        this._playerHpFill.style.width = `${pct}%`;
+        if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(m.hp)}/${m.maxHp}`;
+      }
     }
   }
 
@@ -247,10 +258,6 @@ setPartyManager(pm) {
     const pct = Math.max(0, hp / max) * 100;
     this._p1Card.hpFill.style.width = `${pct}%`;
   }
-
-  // ── Botón Mika ────────────────────────────────────────────────────────────
-
-  
 
   // ── Reacción ──────────────────────────────────────────────────────────────
 
@@ -299,11 +306,7 @@ setPartyManager(pm) {
 
   setCamera(camera) { this._camera = camera; }
 
-  show() {
-    this._container.style.display = 'block';
-    
-  }
-
+  show() { this._container.style.display = 'block'; }
   hide() { this._container.style.display = 'none'; }
 
   setWeaponIcon(type) {
@@ -375,7 +378,6 @@ setPartyManager(pm) {
     this._buildStamina();
     this._buildCollectBtn();
     this._buildParty();
-    
     document.body.appendChild(this._container);
   }
 
@@ -394,7 +396,6 @@ setPartyManager(pm) {
       minWidth     : '130px',
     });
 
-    // Nombre
     this._playerHpName = document.createElement('div');
     Object.assign(this._playerHpName.style, {
       color        : '#88aaff',
@@ -405,7 +406,6 @@ setPartyManager(pm) {
     });
     this._playerHpName.textContent = 'KAEL';
 
-    // HP
     const hpTrack = this._makeTrack('9px', '#220000');
     this._playerHpFill = this._makeFill('linear-gradient(90deg,#aa0000,#ff4444)');
     hpTrack.appendChild(this._playerHpFill);
@@ -419,7 +419,6 @@ setPartyManager(pm) {
     });
     this._playerHpText.textContent = '100/100';
 
-    // Energía
     const enTrack = this._makeTrack('5px', '#1a1a2e');
     this._energyFill = this._makeFill('linear-gradient(90deg,#2244cc,#66aaff)');
     enTrack.appendChild(this._energyFill);
