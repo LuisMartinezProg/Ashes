@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dungeon Import Test</title>
+  <style>
+    body { background: #0a0a10; color: #ccc; font-family: monospace; padding: 20px; }
+    h2 { color: #C9A84C; }
+    .ok  { color: #44ff88; }
+    .err { color: #ff4444; }
+    .mod { margin: 4px 0; font-size: 13px; }
+  </style>
+</head>
+<body>
+<h2>🏰 Dungeon Import Test</h2>
+<div id="out"></div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+const modules = [
+  ['DungeonGenerator',  '/Ashes/core/dungeons/DungeonGenerator.js'],
+  ['DungeonRoom',       '/Ashes/core/dungeons/DungeonRoom.js'],
+  ['DungeonGuard',      '/Ashes/core/dungeons/enemies/DungeonGuard.js'],
+  ['RuneWarden',        '/Ashes/core/dungeons/enemies/RuneWarden.js'],
+  ['AncientSentinel',   '/Ashes/core/dungeons/enemies/AncientSentinel.js'],
+  ['Malachar',          '/Ashes/core/dungeons/bosses/Malachar.js'],
+  ['Veyris',            '/Ashes/core/dungeons/bosses/Veyris.js'],
+  ['Khazeron',          '/Ashes/core/dungeons/bosses/Khazeron.js'],
+  ['PlatformLevel',     '/Ashes/core/dungeons/levels/PlatformLevel.js'],
+  ['PuzzleLevel',       '/Ashes/core/dungeons/levels/PuzzleLevel.js'],
+  ['DungeonManager',    '/Ashes/core/dungeons/DungeonManager.js'],
+];
+
+const out = document.getElementById('out');
+let ok = 0, fail = 0;
+
+for (const [name, path] of modules) {
+  const div = document.createElement('div');
+  div.className = 'mod';
+  try {
+    await import(path);
+    div.innerHTML = `<span class="ok">✅ ${name}</span>`;
+    ok++;
+  } catch(e) {
+    div.innerHTML = `<span class="err">❌ ${name}</span> — ${e.message}`;
+    fail++;
+  }
+  out.appendChild(div);
+}
+
+const s = document.createElement('div');
+s.style = 'margin-top:16px;border-top:1px solid #333;padding-top:10px;';
+s.innerHTML = `<span class="ok">✅ ${ok}</span> &nbsp; <span class="err">❌ ${fail}</span>`;
+out.appendChild(s);
+</script>
+</body>
+</html>
