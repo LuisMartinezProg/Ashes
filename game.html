@@ -100,6 +100,7 @@ import { PartyManager }     from './core/partyManager.js';
 import { createMikaProgression } from './core/mikaProgression.js';
 import { KeyboardControls } from './core/keyboardControls.js';
 import { KeybindMenu }      from './ui/keybindMenu.js';
+import { DungeonManager }   from './core/dungeons/DungeonManager.js';
 
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -154,6 +155,21 @@ async function boot() {
     const partyManager = new PartyManager(scene, player, companion);
     partyManager.setSkillSystems(skills, companion.skillSystem);
     window._partyManager = partyManager;
+
+    setProgress(62, 'DungeonManager...');
+    const dungeonManager = new DungeonManager(scene, player);
+    dungeonManager.onEnter  = (def) => {
+      console.log(`[Dungeon] Entrando: ${def.name}`);
+    };
+    dungeonManager.onExit   = () => {
+      console.log('[Dungeon] Saliendo');
+    };
+    dungeonManager.onReward = (reward) => {
+      if (reward.xp)          progression.addXP(combat._weaponType ?? 'katana', reward.xp);
+      if (reward.magicEnergy) progression.addMagicEnergy?.(reward.magicEnergy);
+      localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
+    };
+    window._dungeonManager = dungeonManager;
 
     setProgress(63, 'NarrativeSystem...');
     const narrative = new NarrativeSystem();
@@ -406,7 +422,6 @@ async function boot() {
     window._mapUI = mapUI;
     setInterval(() => mapUI.update(), 500);
 
-    // ── KeyboardControls antes del radialMenu ─────────────────────────────
     const keyboardControls = new KeyboardControls();
     window._keyboard = keyboardControls;
     const keybindMenu = new KeybindMenu(keyboardControls);
@@ -470,6 +485,17 @@ async function boot() {
         skillBar._buildBtn.style.display = inside ? 'flex' : 'none';
       }
     }, 500);
+
+    // ── Loop del DungeonManager ───────────────────────────────────────────
+    let _lastDungeonTime = performance.now();
+    function _dungeonLoop() {
+      const now   = performance.now();
+      const delta = Math.min((now - _lastDungeonTime) * 0.001, 0.05);
+      _lastDungeonTime = now;
+      dungeonManager.update(delta, camera);
+      requestAnimationFrame(_dungeonLoop);
+    }
+    requestAnimationFrame(_dungeonLoop);
 
     setInterval(() => hud.updateEnemyBar(player.root.position), 300);
     setInterval(() => {
