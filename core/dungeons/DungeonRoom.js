@@ -329,9 +329,10 @@ export class DungeonRoom {
 
   _launchArrows(fromX, fromZ) {
     const directions = [
-      [1,0],[−1,0],[0,1],[0,−1],
-      [0.7,0.7],[−0.7,0.7],[0.7,−0.7],[−0.7,−0.7],
-    ];
+    
+[1,0],[-1,0],[0,1],[0,-1],
+[0.7,0.7],[-0.7,0.7],[0.7,-0.7],[-0.7,-0.7],
+      ];
     for (const [dx, dz] of directions) {
       const geo = new THREE.CylinderGeometry(0.05, 0.05, 0.8, 6);
       const mat = new THREE.MeshBasicMaterial({ color: 0xff8800 });
