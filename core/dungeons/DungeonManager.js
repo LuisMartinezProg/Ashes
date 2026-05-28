@@ -1,5 +1,15 @@
 // core/dungeons/DungeonManager.js — Ashes of the Reborn | Valiant Gaming
 import * as THREE from 'three';
+import { DungeonGenerator } from './DungeonGenerator.js';
+import { DungeonRoom }      from './DungeonRoom.js';
+import { DungeonGuard }     from './enemies/DungeonGuard.js';
+import { RuneWarden }       from './enemies/RuneWarden.js';
+import { AncientSentinel }  from './enemies/AncientSentinel.js';
+import { Malachar }         from './bosses/Malachar.js';
+import { Veyris }           from './bosses/Veyris.js';
+import { Khazeron }         from './bosses/Khazeron.js';
+import { PlatformLevel }    from './levels/PlatformLevel.js';
+import { PuzzleLevel }      from './levels/PuzzleLevel.js';
 
 const DUNGEON_DEFS = [
   {
@@ -9,8 +19,7 @@ const DUNGEON_DEFS = [
     color    : 0x8B7355,
     glowColor: 0xC9A84C,
     boss     : 'malachar',
-    enemies  : ['dungeon_guard', 'rune_warden', 'ancient_sentinel'],
-    reward   : { etherFragments: 30, material: 'hierro', amount: 20 },
+    reward   : { etherFragments: 30, material: 'hierro',  amount: 20 },
   },
   {
     id       : 'crystal',
@@ -19,7 +28,6 @@ const DUNGEON_DEFS = [
     color    : 0x88ccff,
     glowColor: 0x44aaff,
     boss     : 'veyris',
-    enemies  : ['dungeon_guard', 'rune_warden', 'ancient_sentinel'],
     reward   : { etherFragments: 50, material: 'mineral', amount: 15 },
   },
   {
@@ -29,97 +37,81 @@ const DUNGEON_DEFS = [
     color    : 0x2a0a3a,
     glowColor: 0x9933ff,
     boss     : 'khazeron',
-    enemies  : ['dungeon_guard', 'rune_warden', 'ancient_sentinel'],
     reward   : { etherFragments: 80, material: 'mineral', amount: 30 },
   },
 ];
 
-const ENTER_RANGE  = 5;
-const CHECK_RATE   = 0.4;
+const ENTER_RANGE = 5;
+const CHECK_RATE  = 0.4;
 
 export class DungeonManager {
   constructor(scene, player) {
-    this.scene    = scene;
-    this.player   = player;
-    this._dungeons = [];
-    this._active   = null;
-    this._checkTimer = 0;
-    this._etherFragments = 0;
+    this.scene   = scene;
+    this.player  = player;
 
-    this.onEnter  = null; // (dungeonDef)
+    this._portals        = [];
+    this._active         = null;
+    this._activeRooms    = [];
+    this._activeEnemies  = [];
+    this._activePlatform = null;
+    this._activePuzzle   = null;
+    this._generator      = null;
+    this._checkTimer     = 0;
+    this._etherFragments = 0;
+    this._currentLevel   = 1;
+
+    this.onEnter  = null;
     this.onExit   = null;
-    this.onReward = null; // (reward)
+    this.onReward = null;
 
     this._buildPortals();
     this._buildUI();
   }
 
-  // ── Portales en el mundo ──────────────────────────────────────────────────
+  // ── Portales ──────────────────────────────────────────────────────────────
 
   _buildPortals() {
     for (const def of DUNGEON_DEFS) {
       const group = new THREE.Group();
       group.position.set(def.position.x, 0, def.position.z);
 
-      // Base del portal
       const baseGeo = new THREE.CylinderGeometry(2.5, 2.8, 0.3, 16);
-      const baseMat = new THREE.MeshStandardMaterial({
-        color    : def.color,
-        roughness: 0.6,
-        metalness: 0.3,
-      });
-      const base = new THREE.Mesh(baseGeo, baseMat);
+      const baseMat = new THREE.MeshStandardMaterial({ color: def.color, roughness: 0.6, metalness: 0.3 });
+      const base    = new THREE.Mesh(baseGeo, baseMat);
       base.position.y = 0.15;
       group.add(base);
 
-      // Arco del portal
       const archGeo = new THREE.TorusGeometry(2.2, 0.22, 10, 32, Math.PI);
       const archMat = new THREE.MeshStandardMaterial({
-        color    : def.glowColor,
-        emissive : def.glowColor,
-        emissiveIntensity: 0.8,
-        roughness: 0.2,
-        metalness: 0.6,
+        color: def.glowColor, emissive: def.glowColor,
+        emissiveIntensity: 0.8, roughness: 0.2, metalness: 0.6,
       });
       const arch = new THREE.Mesh(archGeo, archMat);
       arch.position.y = 2.2;
       arch.rotation.z = Math.PI;
       group.add(arch);
 
-      // Interior del portal
       const portalGeo = new THREE.CircleGeometry(2.0, 32);
       const portalMat = new THREE.MeshBasicMaterial({
-        color      : def.glowColor,
-        transparent: true,
-        opacity    : 0.3,
-        side       : THREE.DoubleSide,
+        color: def.glowColor, transparent: true, opacity: 0.3, side: THREE.DoubleSide,
       });
       const portal = new THREE.Mesh(portalGeo, portalMat);
       portal.position.y = 2.2;
       portal.rotation.y = Math.PI / 2;
       group.add(portal);
 
-      // Luz puntual
       const light = new THREE.PointLight(def.glowColor, 2, 12);
       light.position.y = 2;
       group.add(light);
 
-      // Label flotante
       const label = this._makeLabel(def.name);
       group.add(label);
 
       this.scene.add(group);
-
-      this._dungeons.push({
-        def,
-        group,
-        arch,
-        portal,
-        portalMat,
-        light,
-        label,
-        cleared  : false,
-        _pulse   : Math.random() * Math.PI * 2,
+      this._portals.push({
+        def, group, arch, portal, portalMat, light, label,
+        cleared: false,
+        _pulse : Math.random() * Math.PI * 2,
       });
     }
   }
@@ -129,25 +121,22 @@ export class DungeonManager {
     canvas.width  = 256;
     canvas.height = 64;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle    = 'rgba(0,0,0,0)';
+    ctx.fillStyle = 'rgba(0,0,0,0)';
     ctx.fillRect(0, 0, 256, 64);
     ctx.font         = 'bold 22px monospace';
     ctx.fillStyle    = '#C9A84C';
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(name, 128, 32);
-
     const tex  = new THREE.CanvasTexture(canvas);
     const geo  = new THREE.PlaneGeometry(4, 1);
     const mat  = new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide });
     const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.y   = 5.2;
-    mesh.rotation.y   = 0;
-    mesh._billboard   = true;
+    mesh.position.y = 5.2;
     return mesh;
   }
 
-  // ── UI de Fragmentos de Éter ──────────────────────────────────────────────
+  // ── UI ────────────────────────────────────────────────────────────────────
 
   _buildUI() {
     this._etherEl = document.createElement('div');
@@ -167,7 +156,6 @@ export class DungeonManager {
     this._etherEl.textContent = '✦ 0';
     document.body.appendChild(this._etherEl);
 
-    // Botón entrar
     this._enterBtn = document.createElement('button');
     Object.assign(this._enterBtn.style, {
       position      : 'fixed',
@@ -194,6 +182,50 @@ export class DungeonManager {
     this._enterBtn.addEventListener('click',      () => this._enterDungeon());
     this._enterBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this._enterDungeon(); }, { passive: false });
     document.body.appendChild(this._enterBtn);
+
+    // Botón salir
+    this._exitBtn = document.createElement('button');
+    Object.assign(this._exitBtn.style, {
+      position      : 'fixed',
+      top           : '60px',
+      left          : '14px',
+      display       : 'none',
+      alignItems    : 'center',
+      justifyContent: 'center',
+      fontFamily    : 'monospace',
+      fontSize      : '10px',
+      letterSpacing : '1px',
+      color         : '#ff8888',
+      background    : 'rgba(10,8,20,0.85)',
+      border        : '1px solid rgba(255,100,100,0.3)',
+      borderRadius  : '16px',
+      padding       : '6px 14px',
+      cursor        : 'pointer',
+      pointerEvents : 'all',
+      zIndex        : '150',
+      whiteSpace    : 'nowrap',
+    });
+    this._exitBtn.textContent = '← Salir';
+    this._exitBtn.addEventListener('click',      () => this.exitDungeon());
+    this._exitBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.exitDungeon(); }, { passive: false });
+    document.body.appendChild(this._exitBtn);
+
+    // HUD de nivel actual
+    this._levelEl = document.createElement('div');
+    Object.assign(this._levelEl.style, {
+      position     : 'fixed',
+      top          : '60px',
+      left         : '50%',
+      transform    : 'translateX(-50%)',
+      fontFamily   : 'monospace',
+      fontSize     : '10px',
+      color        : '#C9A84C',
+      letterSpacing: '2px',
+      pointerEvents: 'none',
+      zIndex       : '120',
+      display      : 'none',
+    });
+    document.body.appendChild(this._levelEl);
   }
 
   // ── Update ────────────────────────────────────────────────────────────────
@@ -202,34 +234,49 @@ export class DungeonManager {
     this._checkTimer += delta;
 
     // Animar portales
-    for (const d of this._dungeons) {
+    for (const d of this._portals) {
       d._pulse += delta * 1.8;
       const pulse = Math.sin(d._pulse) * 0.5 + 0.5;
-      d.portalMat.opacity     = 0.2 + pulse * 0.25;
-      d.light.intensity       = 1.5 + pulse * 1.5;
+      d.portalMat.opacity               = 0.2 + pulse * 0.25;
+      d.light.intensity                 = 1.5 + pulse * 1.5;
       d.arch.material.emissiveIntensity = 0.5 + pulse * 0.5;
-
-      // Billboard label
-      if (camera && d.label) {
-        d.label.lookAt(camera.position);
-      }
+      if (camera && d.label) d.label.lookAt(camera.position);
     }
 
-    // Chequear proximidad
+    // Chequear proximidad a portales
     if (this._checkTimer >= CHECK_RATE) {
       this._checkTimer = 0;
-      this._checkProximity();
+      if (!this._active) this._checkProximity();
+    }
+
+    // Update salas activas
+    if (this._active) {
+      for (const room of this._activeRooms) {
+        const pos = window._partyManager?.getActiveCharacter()?.root?.position
+                 ?? this.player.root.position;
+        room.checkActivation(pos);
+        room.update(delta);
+      }
+
+      // Update enemigos de mazmorra
+      for (const e of this._activeEnemies) {
+        if (e && typeof e.isDead === 'function') e.update(delta);
+      }
+
+      // Update nivel especial activo
+      if (this._activePlatform) this._activePlatform.update(delta);
+      if (this._activePuzzle)   this._activePuzzle.update(delta);
     }
   }
 
   _checkProximity() {
     const pos = window._partyManager?.getActiveCharacter()?.root?.position
-              ?? this.player.root.position;
+             ?? this.player.root.position;
 
     let nearest = null;
     let minDist  = Infinity;
 
-    for (const d of this._dungeons) {
+    for (const d of this._portals) {
       const dx   = pos.x - d.def.position.x;
       const dz   = pos.z - d.def.position.z;
       const dist = Math.sqrt(dx*dx + dz*dz);
@@ -240,30 +287,212 @@ export class DungeonManager {
     }
 
     if (nearest && nearest !== this._nearDungeon) {
-      this._nearDungeon = nearest;
+      this._nearDungeon            = nearest;
       this._enterBtn.style.display = 'flex';
       this._enterBtn.textContent   = `⚔ Entrar — ${nearest.def.name}`;
     } else if (!nearest && this._nearDungeon) {
-      this._nearDungeon = null;
+      this._nearDungeon            = null;
       this._enterBtn.style.display = 'none';
     }
   }
 
-  // ── Entrar / Salir ────────────────────────────────────────────────────────
+  // ── Entrar ────────────────────────────────────────────────────────────────
 
   _enterDungeon() {
     if (!this._nearDungeon || this._active) return;
     this._active = this._nearDungeon;
     this._enterBtn.style.display = 'none';
+    this._exitBtn.style.display  = 'flex';
     this._etherEl.style.display  = 'block';
+    this._currentLevel = 1;
+    this._updateLevelHUD();
+
+    // Teletransportar al jugador a la entrada
+    const origin = {
+      x: this._active.def.position.x,
+      z: this._active.def.position.z - 10,
+    };
+    const activeChar = window._partyManager?.getActiveCharacter()
+                    ?? this.player;
+    if (activeChar.root) {
+      activeChar.root.position.set(origin.x, 0, origin.z);
+    }
+
+    // Generar mazmorra
+    this._generator = new DungeonGenerator(
+      this.scene,
+      this._active.def,
+      this._currentLevel
+    );
+    const result = this._generator.generate(
+      this._active.def.position.x,
+      this._active.def.position.z - 20
+    );
+
+    // Crear salas
+    this._activeRooms   = [];
+    this._activeEnemies = [];
+
+    for (const roomData of result.rooms) {
+      const room = new DungeonRoom(
+        this.scene,
+        roomData,
+        this._active.def,
+        this._currentLevel
+      );
+
+      // Spawner de enemigos
+      room.setupCombat((position, level, mode) => {
+        return this._spawnDungeonEnemy(position, level, mode);
+      });
+
+      // Niveles especiales en las primeras 2 salas
+      if (roomData.type === 'platform') {
+        room.setupPlatforms();
+        this._activePlatform = new PlatformLevel(this.scene, {
+          x: roomData.center.x,
+          z: roomData.center.z,
+        });
+        this._activePlatform.activate();
+        this._activePlatform.onComplete = () => {
+          this._currentLevel = 2;
+          this._updateLevelHUD();
+          this.giveLevelReward(1);
+        };
+        this._activePlatform.onFail = () => {
+          this._showFloating('Intenta de nuevo', '#ff8888');
+        };
+      }
+
+      if (roomData.type === 'puzzle') {
+        room.setupPuzzle();
+        this._activePuzzle = new PuzzleLevel(this.scene, {
+          x: roomData.center.x,
+          z: roomData.center.z,
+        });
+        this._activePuzzle.activate();
+        this._activePuzzle.onComplete = () => {
+          this._currentLevel = 3;
+          this._updateLevelHUD();
+          this.giveLevelReward(2);
+        };
+        this._activePuzzle.onFail = () => {
+          this._showFloating('¡Demasiados errores!', '#ff4444');
+        };
+        this._activePuzzle.onSpawnEnemy = (position, tier) => {
+          return this._spawnDungeonEnemy(position, tier, 'puzzle');
+        };
+      }
+
+      // Recompensa al limpiar sala de combate
+      room.onClear((clearedRoom) => {
+        if (clearedRoom.type === 'combat' || clearedRoom.type === 'boss') {
+          this.giveLevelReward(this._currentLevel);
+          this._currentLevel = Math.min(this._currentLevel + 1, 8);
+          this._updateLevelHUD();
+        }
+        if (clearedRoom.type === 'boss') {
+          this.giveBossReward(this._active.def.id);
+        }
+      });
+
+      this._activeRooms.push(room);
+    }
+
     if (this.onEnter) this.onEnter(this._active.def);
   }
 
+  // ── Salir ─────────────────────────────────────────────────────────────────
+
   exitDungeon() {
     if (!this._active) return;
+
+    // Destruir todo lo generado
+    if (this._generator)      this._generator.destroy();
+    if (this._activePlatform) this._activePlatform.destroy();
+    if (this._activePuzzle)   this._activePuzzle.destroy();
+
+    for (const room of this._activeRooms) room.destroy();
+    for (const e of this._activeEnemies) {
+      if (e.mesh) this.scene.remove(e.mesh);
+    }
+
+    this._generator      = null;
+    this._activePlatform = null;
+    this._activePuzzle   = null;
+    this._activeRooms    = [];
+    this._activeEnemies  = [];
+
+    // Teletransportar al jugador fuera
+    const activeChar = window._partyManager?.getActiveCharacter()
+                    ?? this.player;
+    if (activeChar.root) {
+      activeChar.root.position.set(
+        this._active.def.position.x,
+        0,
+        this._active.def.position.z + 8
+      );
+    }
+
+    this._exitBtn.style.display  = 'none';
+    this._etherEl.style.display  = 'none';
+    this._levelEl.style.display  = 'none';
     this._active = null;
-    this._etherEl.style.display = 'none';
+
     if (this.onExit) this.onExit();
+  }
+
+  // ── Spawn enemigos ────────────────────────────────────────────────────────
+
+  _spawnDungeonEnemy(position, level, mode) {
+    let enemy;
+
+    if (mode === 'puzzle') {
+      // Enemigos de penalización por error
+      const tier = Math.min(level, 3);
+      if (tier <= 1)      enemy = new DungeonGuard(this.scene, position, this.player);
+      else if (tier === 2) enemy = new RuneWarden(this.scene, position, this.player);
+      else                 enemy = new AncientSentinel(this.scene, position, this.player);
+    } else {
+      // Enemigos de combate normales escalados por nivel
+      const roll = Math.random();
+      if (level <= 3) {
+        enemy = new DungeonGuard(this.scene, position, this.player);
+      } else if (level <= 5) {
+        enemy = roll < 0.5
+          ? new DungeonGuard(this.scene, position, this.player)
+          : new RuneWarden(this.scene, position, this.player);
+      } else {
+        if (roll < 0.3)      enemy = new DungeonGuard(this.scene, position, this.player);
+        else if (roll < 0.65) enemy = new RuneWarden(this.scene, position, this.player);
+        else                  enemy = new AncientSentinel(this.scene, position, this.player);
+      }
+    }
+
+    if (enemy) {
+      this._activeEnemies.push(enemy);
+      window._combat?.registerEnemy?.(enemy);
+      enemy.onDeath = () => {
+        window._prog?.addXP?.(window._combat?._weaponType ?? 'katana', 30 + level * 5);
+      };
+    }
+
+    return enemy ?? null;
+  }
+
+  _spawnBoss(position) {
+    if (!this._active) return null;
+    let boss;
+    switch (this._active.def.boss) {
+      case 'malachar': boss = new Malachar(this.scene, position, this.player); break;
+      case 'veyris':   boss = new Veyris(this.scene, position, this.player);   break;
+      case 'khazeron': boss = new Khazeron(this.scene, position, this.player); break;
+      default: return null;
+    }
+    this._activeEnemies.push(boss);
+    window._combat?.registerEnemy?.(boss);
+    boss.onDeath = () => this.giveBossReward(this._active.def.id);
+    return boss;
   }
 
   // ── Recompensas ───────────────────────────────────────────────────────────
@@ -277,12 +506,8 @@ export class DungeonManager {
     if (reward.material && reward.amount) {
       window._building?.addMaterial?.(reward.material, reward.amount);
     }
-    if (reward.xp) {
-      window._prog?.addXP?.(window._combat?._weaponType ?? 'katana', reward.xp);
-    }
-    if (reward.magicEnergy) {
-      window._prog?.addMagicEnergy?.(reward.magicEnergy);
-    }
+    if (reward.xp)          window._prog?.addXP?.(window._combat?._weaponType ?? 'katana', reward.xp);
+    if (reward.magicEnergy) window._prog?.addMagicEnergy?.(reward.magicEnergy);
     if (this.onReward) this.onReward(reward);
   }
 
@@ -292,27 +517,35 @@ export class DungeonManager {
     const material = level >= 6 ? 'mineral' : level >= 4 ? 'hierro' : 'piedra';
     const amount   = 3  + level * 2;
     this.giveReward({ xp, magicEnergy: energy, material, amount });
-    this._showFloating(`Nivel ${level} completado — +${amount} ${material}`);
+    this._showFloating(`Nivel ${level} — +${amount} ${material} +${xp} XP`, '#C9A84C');
   }
 
   giveBossReward(dungeonId) {
     const def = DUNGEON_DEFS.find(d => d.id === dungeonId);
     if (!def) return;
     this.giveReward(def.reward);
-    this._showFloating(`¡Jefe derrotado! +${def.reward.etherFragments} ✦`, '#cc88ff');
-    if (this._active) {
-      this._active.cleared = true;
-      this._active.portalMat.color.setHex(0x444444);
-      this._active.light.color.setHex(0x888888);
+    this._showFloating(`¡${def.name} conquistada! +${def.reward.etherFragments} ✦`, '#cc88ff');
+    const portal = this._portals.find(p => p.def.id === dungeonId);
+    if (portal) {
+      portal.cleared = true;
+      portal.portalMat.color.setHex(0x444444);
+      portal.light.color.setHex(0x888888);
     }
   }
 
-  getEtherFragments() { return this._etherFragments; }
+  getEtherFragments()  { return this._etherFragments; }
   spendEther(amount) {
     if (this._etherFragments < amount) return false;
     this._etherFragments -= amount;
     this._etherEl.textContent = `✦ ${this._etherFragments}`;
     return true;
+  }
+
+  // ── HUD ───────────────────────────────────────────────────────────────────
+
+  _updateLevelHUD() {
+    this._levelEl.style.display  = 'block';
+    this._levelEl.textContent    = `NIVEL ${this._currentLevel} / 8`;
   }
 
   // ── VFX ──────────────────────────────────────────────────────────────────
@@ -325,20 +558,20 @@ export class DungeonManager {
   _showFloating(text, color = '#C9A84C') {
     const el = document.createElement('div');
     Object.assign(el.style, {
-      position    : 'fixed',
-      left        : '50%',
-      top         : '30%',
-      transform   : 'translateX(-50%)',
-      fontFamily  : "'Cinzel',serif",
-      fontSize    : '14px',
+      position     : 'fixed',
+      left         : '50%',
+      top          : '30%',
+      transform    : 'translateX(-50%)',
+      fontFamily   : "'Cinzel',serif",
+      fontSize     : '14px',
       letterSpacing: '2px',
       color,
-      textShadow  : `0 0 12px ${color}`,
+      textShadow   : `0 0 12px ${color}`,
       pointerEvents: 'none',
-      zIndex      : '300',
-      opacity     : '1',
-      transition  : 'top 1s ease, opacity 1s ease',
-      whiteSpace  : 'nowrap',
+      zIndex       : '300',
+      opacity      : '1',
+      transition   : 'top 1s ease, opacity 1s ease',
+      whiteSpace   : 'nowrap',
     });
     el.textContent = text;
     document.body.appendChild(el);
@@ -350,8 +583,11 @@ export class DungeonManager {
   }
 
   destroy() {
-    for (const d of this._dungeons) this.scene.remove(d.group);
+    this.exitDungeon();
+    for (const d of this._portals) this.scene.remove(d.group);
     this._enterBtn.remove();
+    this._exitBtn.remove();
     this._etherEl.remove();
+    this._levelEl.remove();
   }
 }
