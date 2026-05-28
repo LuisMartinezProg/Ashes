@@ -25,7 +25,7 @@ const DUNGEON_DEFS = [
     id       : 'crystal',
     name     : 'Caverna de Cristal',
     position : { x: -30, z: -160 },
-    color    : 0x88ccff,
+    color    : 0x445566,
     glowColor: 0x44aaff,
     boss     : 'veyris',
     reward   : { etherFragments: 50, material: 'mineral', amount: 15 },
@@ -34,15 +34,16 @@ const DUNGEON_DEFS = [
     id       : 'fortress',
     name     : 'Fortaleza Oscura',
     position : { x: 30,  z: -200 },
-    color    : 0x2a0a3a,
+    color    : 0x1a0a2a,
     glowColor: 0x9933ff,
     boss     : 'khazeron',
     reward   : { etherFragments: 80, material: 'mineral', amount: 30 },
   },
 ];
 
-const ENTER_RANGE = 5;
-const CHECK_RATE  = 0.4;
+const ENTER_RANGE   = 5;
+const STAIR_RANGE   = 2.5;
+const CHECK_RATE    = 0.4;
 
 export class DungeonManager {
   constructor(scene, player) {
@@ -59,6 +60,8 @@ export class DungeonManager {
     this._checkTimer     = 0;
     this._etherFragments = 0;
     this._currentLevel   = 1;
+    this._stairPos       = null; // posición de la escalera al siguiente piso
+    this._stairReady     = false;
 
     this.onEnter  = null;
     this.onExit   = null;
@@ -68,7 +71,7 @@ export class DungeonManager {
     this._buildUI();
   }
 
-  // ── Portales ──────────────────────────────────────────────────────────────
+  // ── Portales en el mundo ──────────────────────────────────────────────────
 
   _buildPortals() {
     for (const def of DUNGEON_DEFS) {
@@ -141,91 +144,78 @@ export class DungeonManager {
   _buildUI() {
     this._etherEl = document.createElement('div');
     Object.assign(this._etherEl.style, {
-      position     : 'fixed',
-      top          : '44px',
-      right        : '8px',
-      fontFamily   : 'monospace',
-      fontSize     : '10px',
-      color        : '#cc88ff',
-      letterSpacing: '1px',
-      pointerEvents: 'none',
-      zIndex       : '120',
-      display      : 'none',
-      textShadow   : '0 0 8px #9933ff',
+      position     : 'fixed', top: '44px', right: '8px',
+      fontFamily   : 'monospace', fontSize: '10px',
+      color        : '#cc88ff', letterSpacing: '1px',
+      pointerEvents: 'none', zIndex: '120',
+      display      : 'none', textShadow: '0 0 8px #9933ff',
     });
     this._etherEl.textContent = '✦ 0';
     document.body.appendChild(this._etherEl);
 
     this._enterBtn = document.createElement('button');
     Object.assign(this._enterBtn.style, {
-      position      : 'fixed',
-      bottom        : '200px',
-      left          : '50%',
-      transform     : 'translateX(-50%)',
-      display       : 'none',
-      alignItems    : 'center',
-      justifyContent: 'center',
-      fontFamily    : "'Cinzel',serif",
-      fontSize      : '12px',
-      letterSpacing : '2px',
-      color         : '#C9A84C',
+      position      : 'fixed', bottom: '200px', left: '50%',
+      transform     : 'translateX(-50%)', display: 'none',
+      alignItems    : 'center', justifyContent: 'center',
+      fontFamily    : "'Cinzel',serif", fontSize: '12px',
+      letterSpacing : '2px', color: '#C9A84C',
       background    : 'rgba(10,8,20,0.92)',
       border        : '1px solid rgba(201,168,76,0.5)',
-      borderRadius  : '24px',
-      padding       : '10px 28px',
-      cursor        : 'pointer',
-      pointerEvents : 'all',
-      zIndex        : '150',
-      whiteSpace    : 'nowrap',
+      borderRadius  : '24px', padding: '10px 28px',
+      cursor        : 'pointer', pointerEvents: 'all',
+      zIndex        : '150', whiteSpace: 'nowrap',
     });
     this._enterBtn.textContent = '⚔ Entrar a la Mazmorra';
     this._enterBtn.addEventListener('click',      () => this._enterDungeon());
     this._enterBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this._enterDungeon(); }, { passive: false });
     document.body.appendChild(this._enterBtn);
 
-    // Botón salir
     this._exitBtn = document.createElement('button');
     Object.assign(this._exitBtn.style, {
-      position      : 'fixed',
-      top           : '60px',
-      left          : '14px',
-      display       : 'none',
-      alignItems    : 'center',
-      justifyContent: 'center',
-      fontFamily    : 'monospace',
-      fontSize      : '10px',
-      letterSpacing : '1px',
-      color         : '#ff8888',
+      position      : 'fixed', top: '60px', left: '14px',
+      display       : 'none', alignItems: 'center', justifyContent: 'center',
+      fontFamily    : 'monospace', fontSize: '10px',
+      letterSpacing : '1px', color: '#ff8888',
       background    : 'rgba(10,8,20,0.85)',
       border        : '1px solid rgba(255,100,100,0.3)',
-      borderRadius  : '16px',
-      padding       : '6px 14px',
-      cursor        : 'pointer',
-      pointerEvents : 'all',
-      zIndex        : '150',
-      whiteSpace    : 'nowrap',
+      borderRadius  : '16px', padding: '6px 14px',
+      cursor        : 'pointer', pointerEvents: 'all',
+      zIndex        : '150', whiteSpace: 'nowrap',
     });
     this._exitBtn.textContent = '← Salir';
     this._exitBtn.addEventListener('click',      () => this.exitDungeon());
     this._exitBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.exitDungeon(); }, { passive: false });
     document.body.appendChild(this._exitBtn);
 
-    // HUD de nivel actual
     this._levelEl = document.createElement('div');
     Object.assign(this._levelEl.style, {
-      position     : 'fixed',
-      top          : '60px',
-      left         : '50%',
+      position     : 'fixed', top: '60px', left: '50%',
       transform    : 'translateX(-50%)',
-      fontFamily   : 'monospace',
-      fontSize     : '10px',
-      color        : '#C9A84C',
-      letterSpacing: '2px',
-      pointerEvents: 'none',
-      zIndex       : '120',
-      display      : 'none',
+      fontFamily   : 'monospace', fontSize: '10px',
+      color        : '#C9A84C', letterSpacing: '2px',
+      pointerEvents: 'none', zIndex: '120', display: 'none',
     });
     document.body.appendChild(this._levelEl);
+
+    // Botón bajar escalera
+    this._stairBtn = document.createElement('button');
+    Object.assign(this._stairBtn.style, {
+      position      : 'fixed', bottom: '200px', left: '50%',
+      transform     : 'translateX(-50%)', display: 'none',
+      alignItems    : 'center', justifyContent: 'center',
+      fontFamily    : "'Cinzel',serif", fontSize: '12px',
+      letterSpacing : '2px', color: '#C9A84C',
+      background    : 'rgba(10,8,20,0.92)',
+      border        : '1px solid rgba(201,168,76,0.5)',
+      borderRadius  : '24px', padding: '10px 28px',
+      cursor        : 'pointer', pointerEvents: 'all',
+      zIndex        : '150', whiteSpace: 'nowrap',
+    });
+    this._stairBtn.textContent = '▼ Bajar al siguiente piso';
+    this._stairBtn.addEventListener('click',      () => this._descend());
+    this._stairBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this._descend(); }, { passive: false });
+    document.body.appendChild(this._stairBtn);
   }
 
   // ── Update ────────────────────────────────────────────────────────────────
@@ -233,39 +223,47 @@ export class DungeonManager {
   update(delta, camera) {
     this._checkTimer += delta;
 
-    // Animar portales
-    for (const d of this._portals) {
-      d._pulse += delta * 1.8;
-      const pulse = Math.sin(d._pulse) * 0.5 + 0.5;
-      d.portalMat.opacity               = 0.2 + pulse * 0.25;
-      d.light.intensity                 = 1.5 + pulse * 1.5;
-      d.arch.material.emissiveIntensity = 0.5 + pulse * 0.5;
-      if (camera && d.label) d.label.lookAt(camera.position);
+    // Animar portales — solo si mundo visible
+    if (!this._active) {
+      for (const d of this._portals) {
+        d._pulse += delta * 1.8;
+        const pulse = Math.sin(d._pulse) * 0.5 + 0.5;
+        d.portalMat.opacity               = 0.2 + pulse * 0.25;
+        d.light.intensity                 = 1.5 + pulse * 1.5;
+        d.arch.material.emissiveIntensity = 0.5 + pulse * 0.5;
+        if (camera && d.label) d.label.lookAt(camera.position);
+      }
     }
 
-    // Chequear proximidad a portales
+    // Proximidad a portales
     if (this._checkTimer >= CHECK_RATE) {
       this._checkTimer = 0;
       if (!this._active) this._checkProximity();
+      else               this._checkStairProximity();
     }
 
-    // Update salas activas
+    // Update interior mazmorra
     if (this._active) {
+      const pos = window._partyManager?.getActiveCharacter()?.root?.position
+               ?? this.player.root.position;
+
       for (const room of this._activeRooms) {
-        const pos = window._partyManager?.getActiveCharacter()?.root?.position
-                 ?? this.player.root.position;
         room.checkActivation(pos);
         room.update(delta);
       }
 
-      // Update enemigos de mazmorra
       for (const e of this._activeEnemies) {
         if (e && typeof e.isDead === 'function') e.update(delta);
       }
 
-      // Update nivel especial activo
       if (this._activePlatform) this._activePlatform.update(delta);
       if (this._activePuzzle)   this._activePuzzle.update(delta);
+
+      // Disparadores de pared
+      if (this._generator) {
+        this._generator.updateShooters(delta);
+        this._generator.updateArrows(delta);
+      }
     }
   }
 
@@ -280,10 +278,7 @@ export class DungeonManager {
       const dx   = pos.x - d.def.position.x;
       const dz   = pos.z - d.def.position.z;
       const dist = Math.sqrt(dx*dx + dz*dz);
-      if (dist < ENTER_RANGE && dist < minDist) {
-        minDist  = dist;
-        nearest  = d;
-      }
+      if (dist < ENTER_RANGE && dist < minDist) { minDist = dist; nearest = d; }
     }
 
     if (nearest && nearest !== this._nearDungeon) {
@@ -296,57 +291,75 @@ export class DungeonManager {
     }
   }
 
+  _checkStairProximity() {
+    if (!this._stairPos || !this._stairReady) return;
+    const pos = window._partyManager?.getActiveCharacter()?.root?.position
+             ?? this.player.root.position;
+    const dx   = pos.x - this._stairPos.x;
+    const dz   = pos.z - this._stairPos.z;
+    const dist = Math.sqrt(dx*dx + dz*dz);
+
+    if (dist < STAIR_RANGE) {
+      this._stairBtn.style.display = 'flex';
+    } else {
+      this._stairBtn.style.display = 'none';
+    }
+  }
+
   // ── Entrar ────────────────────────────────────────────────────────────────
 
   _enterDungeon() {
     if (!this._nearDungeon || this._active) return;
-    this._active = this._nearDungeon;
+    this._active       = this._nearDungeon;
+    this._currentLevel = 1;
+
+    // ── SCENE SWAP — ocultar mundo ──
+    if (window._worldGroup) window._worldGroup.visible = false;
+
     this._enterBtn.style.display = 'none';
     this._exitBtn.style.display  = 'flex';
     this._etherEl.style.display  = 'block';
-    this._currentLevel = 1;
     this._updateLevelHUD();
 
-    // Teletransportar al jugador a la entrada
-    const origin = {
-      x: this._active.def.position.x,
-      z: this._active.def.position.z - 10,
-    };
-    const activeChar = window._partyManager?.getActiveCharacter()
-                    ?? this.player;
+    // Teletransportar jugador a entrada
+    const activeChar = window._partyManager?.getActiveCharacter() ?? this.player;
     if (activeChar.root) {
-      activeChar.root.position.set(origin.x, 0, origin.z);
+      activeChar.root.position.set(
+        this._active.def.position.x,
+        0,
+        this._active.def.position.z - 8
+      );
     }
 
-    // Generar mazmorra
-    this._generator = new DungeonGenerator(
-      this.scene,
-      this._active.def,
-      this._currentLevel
-    );
-    const result = this._generator.generate(
+    this._generateFloor(this._currentLevel);
+    if (this.onEnter) this.onEnter(this._active.def);
+  }
+
+  // ── Generar piso ──────────────────────────────────────────────────────────
+
+  _generateFloor(level) {
+    // Destruir piso anterior si existe
+    this._destroyFloor();
+
+    this._generator = new DungeonGenerator(this.scene, this._active.def, level);
+    const result    = this._generator.generate(
       this._active.def.position.x,
       this._active.def.position.z - 20
     );
 
-    // Crear salas
     this._activeRooms   = [];
     this._activeEnemies = [];
+    this._stairPos      = null;
+    this._stairReady    = false;
+    this._stairBtn.style.display = 'none';
 
     for (const roomData of result.rooms) {
-      const room = new DungeonRoom(
-        this.scene,
-        roomData,
-        this._active.def,
-        this._currentLevel
-      );
+      const room = new DungeonRoom(this.scene, roomData, this._active.def, level);
 
-      // Spawner de enemigos
-      room.setupCombat((position, level, mode) => {
-        return this._spawnDungeonEnemy(position, level, mode);
+      room.setupCombat((position, lvl, mode) => {
+        return this._spawnDungeonEnemy(position, lvl, mode);
       });
 
-      // Niveles especiales en las primeras 2 salas
       if (roomData.type === 'platform') {
         room.setupPlatforms();
         this._activePlatform = new PlatformLevel(this.scene, {
@@ -355,9 +368,10 @@ export class DungeonManager {
         });
         this._activePlatform.activate();
         this._activePlatform.onComplete = () => {
-          this._currentLevel = 2;
-          this._updateLevelHUD();
-          this.giveLevelReward(1);
+          this.giveLevelReward(level);
+          this._stairPos   = { x: roomData.center.x, z: roomData.center.z + 8 };
+          this._stairReady = true;
+          this._showFloating('¡Nivel superado! Baja las escaleras', '#44ff88');
         };
         this._activePlatform.onFail = () => {
           this._showFloating('Intenta de nuevo', '#ff8888');
@@ -372,9 +386,10 @@ export class DungeonManager {
         });
         this._activePuzzle.activate();
         this._activePuzzle.onComplete = () => {
-          this._currentLevel = 3;
-          this._updateLevelHUD();
-          this.giveLevelReward(2);
+          this.giveLevelReward(level);
+          this._stairPos   = { x: roomData.center.x, z: roomData.center.z + 8 };
+          this._stairReady = true;
+          this._showFloating('¡Acertijo resuelto! Baja las escaleras', '#aa88ff');
         };
         this._activePuzzle.onFail = () => {
           this._showFloating('¡Demasiados errores!', '#ff4444');
@@ -384,12 +399,18 @@ export class DungeonManager {
         };
       }
 
-      // Recompensa al limpiar sala de combate
+      // Sala de combate — escalera aparece al limpiarla
       room.onClear((clearedRoom) => {
-        if (clearedRoom.type === 'combat' || clearedRoom.type === 'boss') {
-          this.giveLevelReward(this._currentLevel);
-          this._currentLevel = Math.min(this._currentLevel + 1, 8);
-          this._updateLevelHUD();
+        if (clearedRoom.type === 'combat') {
+          this.giveLevelReward(level);
+          if (level < 8) {
+            this._stairPos   = {
+              x: clearedRoom.center.x,
+              z: clearedRoom.center.z + 6,
+            };
+            this._stairReady = true;
+            this._showFloating(`Piso ${level} limpio — sigue adelante`, '#C9A84C');
+          }
         }
         if (clearedRoom.type === 'boss') {
           this.giveBossReward(this._active.def.id);
@@ -399,7 +420,23 @@ export class DungeonManager {
       this._activeRooms.push(room);
     }
 
-    if (this.onEnter) this.onEnter(this._active.def);
+    // Teletransportar al inicio del piso
+    const startRoom  = result.start;
+    const activeChar = window._partyManager?.getActiveCharacter() ?? this.player;
+    if (activeChar.root && startRoom) {
+      activeChar.root.position.set(startRoom.center.x, 0, startRoom.center.z);
+    }
+  }
+
+  // ── Descender al siguiente piso ───────────────────────────────────────────
+
+  _descend() {
+    if (!this._stairReady) return;
+    this._stairBtn.style.display = 'none';
+    this._currentLevel           = Math.min(this._currentLevel + 1, 8);
+    this._updateLevelHUD();
+    this._generateFloor(this._currentLevel);
+    this._showFloating(`Piso ${this._currentLevel}`, '#C9A84C');
   }
 
   // ── Salir ─────────────────────────────────────────────────────────────────
@@ -407,7 +444,36 @@ export class DungeonManager {
   exitDungeon() {
     if (!this._active) return;
 
-    // Destruir todo lo generado
+    this._destroyFloor();
+
+    // ── SCENE SWAP — restaurar mundo ──
+    if (window._worldGroup) window._worldGroup.visible = true;
+
+    // Restaurar niebla exterior
+    this.scene.fog = new THREE.FogExp2(0x3A5A40, 0.014);
+
+    // Teletransportar jugador fuera
+    const activeChar = window._partyManager?.getActiveCharacter() ?? this.player;
+    if (activeChar.root) {
+      activeChar.root.position.set(
+        this._active.def.position.x,
+        0,
+        this._active.def.position.z + 8
+      );
+    }
+
+    this._exitBtn.style.display  = 'none';
+    this._etherEl.style.display  = 'none';
+    this._levelEl.style.display  = 'none';
+    this._stairBtn.style.display = 'none';
+    this._active = null;
+
+    if (this.onExit) this.onExit();
+  }
+
+  // ── Destruir piso actual ──────────────────────────────────────────────────
+
+  _destroyFloor() {
     if (this._generator)      this._generator.destroy();
     if (this._activePlatform) this._activePlatform.destroy();
     if (this._activePuzzle)   this._activePuzzle.destroy();
@@ -422,24 +488,6 @@ export class DungeonManager {
     this._activePuzzle   = null;
     this._activeRooms    = [];
     this._activeEnemies  = [];
-
-    // Teletransportar al jugador fuera
-    const activeChar = window._partyManager?.getActiveCharacter()
-                    ?? this.player;
-    if (activeChar.root) {
-      activeChar.root.position.set(
-        this._active.def.position.x,
-        0,
-        this._active.def.position.z + 8
-      );
-    }
-
-    this._exitBtn.style.display  = 'none';
-    this._etherEl.style.display  = 'none';
-    this._levelEl.style.display  = 'none';
-    this._active = null;
-
-    if (this.onExit) this.onExit();
   }
 
   // ── Spawn enemigos ────────────────────────────────────────────────────────
@@ -448,13 +496,11 @@ export class DungeonManager {
     let enemy;
 
     if (mode === 'puzzle') {
-      // Enemigos de penalización por error
       const tier = Math.min(level, 3);
-      if (tier <= 1)      enemy = new DungeonGuard(this.scene, position, this.player);
+      if (tier <= 1)       enemy = new DungeonGuard(this.scene, position, this.player);
       else if (tier === 2) enemy = new RuneWarden(this.scene, position, this.player);
       else                 enemy = new AncientSentinel(this.scene, position, this.player);
     } else {
-      // Enemigos de combate normales escalados por nivel
       const roll = Math.random();
       if (level <= 3) {
         enemy = new DungeonGuard(this.scene, position, this.player);
@@ -463,7 +509,7 @@ export class DungeonManager {
           ? new DungeonGuard(this.scene, position, this.player)
           : new RuneWarden(this.scene, position, this.player);
       } else {
-        if (roll < 0.3)      enemy = new DungeonGuard(this.scene, position, this.player);
+        if (roll < 0.3)       enemy = new DungeonGuard(this.scene, position, this.player);
         else if (roll < 0.65) enemy = new RuneWarden(this.scene, position, this.player);
         else                  enemy = new AncientSentinel(this.scene, position, this.player);
       }
@@ -491,7 +537,7 @@ export class DungeonManager {
     }
     this._activeEnemies.push(boss);
     window._combat?.registerEnemy?.(boss);
-    boss.onDeath = () => this.giveBossReward(this._active.def.id);
+    boss.onDeath = () => this.giveBossReward(this._active?.def.id);
     return boss;
   }
 
@@ -517,7 +563,7 @@ export class DungeonManager {
     const material = level >= 6 ? 'mineral' : level >= 4 ? 'hierro' : 'piedra';
     const amount   = 3  + level * 2;
     this.giveReward({ xp, magicEnergy: energy, material, amount });
-    this._showFloating(`Nivel ${level} — +${amount} ${material} +${xp} XP`, '#C9A84C');
+    this._showFloating(`+${amount} ${material}  +${xp} XP`, '#C9A84C');
   }
 
   giveBossReward(dungeonId) {
@@ -533,7 +579,7 @@ export class DungeonManager {
     }
   }
 
-  getEtherFragments()  { return this._etherFragments; }
+  getEtherFragments() { return this._etherFragments; }
   spendEther(amount) {
     if (this._etherFragments < amount) return false;
     this._etherFragments -= amount;
@@ -544,8 +590,8 @@ export class DungeonManager {
   // ── HUD ───────────────────────────────────────────────────────────────────
 
   _updateLevelHUD() {
-    this._levelEl.style.display  = 'block';
-    this._levelEl.textContent    = `NIVEL ${this._currentLevel} / 8`;
+    this._levelEl.style.display = 'block';
+    this._levelEl.textContent   = `PISO ${this._currentLevel} / 8`;
   }
 
   // ── VFX ──────────────────────────────────────────────────────────────────
@@ -558,19 +604,13 @@ export class DungeonManager {
   _showFloating(text, color = '#C9A84C') {
     const el = document.createElement('div');
     Object.assign(el.style, {
-      position     : 'fixed',
-      left         : '50%',
-      top          : '30%',
+      position     : 'fixed', left: '50%', top: '30%',
       transform    : 'translateX(-50%)',
-      fontFamily   : "'Cinzel',serif",
-      fontSize     : '14px',
-      letterSpacing: '2px',
-      color,
+      fontFamily   : "'Cinzel',serif", fontSize: '14px',
+      letterSpacing: '2px', color,
       textShadow   : `0 0 12px ${color}`,
-      pointerEvents: 'none',
-      zIndex       : '300',
-      opacity      : '1',
-      transition   : 'top 1s ease, opacity 1s ease',
+      pointerEvents: 'none', zIndex: '300',
+      opacity      : '1', transition: 'top 1s ease, opacity 1s ease',
       whiteSpace   : 'nowrap',
     });
     el.textContent = text;
@@ -589,5 +629,6 @@ export class DungeonManager {
     this._exitBtn.remove();
     this._etherEl.remove();
     this._levelEl.remove();
+    this._stairBtn.remove();
   }
 }
