@@ -162,14 +162,16 @@ function buildDungeonEntrance(parent, scene, cfg) {
 
   // Apertura oscura
   const caveMat  = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide });
-  const caveHole = new THREE.Mesh(new THREE.EllipseGeometry(2.2, 3.0, 16), caveMat);
+  const caveHole = new THREE.Mesh(new THREE.CircleGeometry(2.2, 16), caveMat);
+  caveHole.scale.y = 3.0 / 2.2;
   caveHole.position.set(x, 3.0, z - 5.5);
   caveHole.rotation.x = -0.1;
   parent.add(caveHole);
 
   // Brillo interior
   const glowMat  = new THREE.MeshBasicMaterial({ color: glow, transparent: true, opacity: 0.18, side: THREE.DoubleSide });
-  const glowMesh = new THREE.Mesh(new THREE.EllipseGeometry(1.8, 2.6, 16), glowMat);
+  const glowMesh = new THREE.Mesh(new THREE.CircleGeometry(1.8, 16), glowMat);
+  glowMesh.scale.y = 2.6 / 1.8;
   glowMesh.position.set(x, 3.0, z - 5.3);
   glowMesh.rotation.x = -0.1;
   parent.add(glowMesh);
