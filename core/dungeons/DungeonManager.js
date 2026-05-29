@@ -314,8 +314,8 @@ export class DungeonManager {
     this._currentLevel = 1;
 
     // ── SCENE SWAP — ocultar mundo ──
-    if (window._worldGroup) window._worldGroup.visible = false;
-
+    
+    if (window._worldGroup) this.scene.remove(window._worldGroup);
     this._enterBtn.style.display = 'none';
     this._exitBtn.style.display  = 'flex';
     this._etherEl.style.display  = 'block';
@@ -447,7 +447,7 @@ export class DungeonManager {
     this._destroyFloor();
 
     // ── SCENE SWAP — restaurar mundo ──
-    if (window._worldGroup) window._worldGroup.visible = true;
+    if (window._worldGroup) this.scene.add(window._worldGroup);
 
     // Restaurar niebla exterior
     this.scene.fog = new THREE.FogExp2(0x3A5A40, 0.014);
