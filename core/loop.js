@@ -77,10 +77,12 @@ function _tick(timestamp) {
   }
 
   if (_skillSystem) _skillSystem.update(delta);
-
+if (!window._dungeonManager?._active) {
   for (const e of _enemies) {
     if (e && typeof e.isDead === 'function') e.update(delta);
   }
+}
+  
 
   if (_combatSystem) _combatSystem.update(delta);
 
