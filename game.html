@@ -101,7 +101,8 @@ import { createMikaProgression } from './core/mikaProgression.js';
 import { KeyboardControls } from './core/keyboardControls.js';
 import { KeybindMenu }      from './ui/keybindMenu.js';
 import { DungeonManager }   from './core/dungeons/DungeonManager.js';
-
+import { registerLODObjects, updateWorldLOD } from './core/worldLOD.js';
+  
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -489,11 +490,12 @@ async function boot() {
     // ── Loop del DungeonManager ───────────────────────────────────────────
     let _lastDungeonTime = performance.now();
     function _dungeonLoop() {
-      const now   = performance.now();
-      const delta = Math.min((now - _lastDungeonTime) * 0.001, 0.05);
-      _lastDungeonTime = now;
-      dungeonManager.update(delta, camera);
-      requestAnimationFrame(_dungeonLoop);
+  const now   = performance.now();
+  const delta = Math.min((now - _lastDungeonTime) * 0.001, 0.05);
+  _lastDungeonTime = now;
+  dungeonManager.update(delta, camera);
+  if (window._player) updateWorldLOD(window._player.root.position);
+  requestAnimationFrame(_dungeonLoop);
     }
     requestAnimationFrame(_dungeonLoop);
 
