@@ -3,7 +3,7 @@ import * as THREE          from 'three';
 import { Player }          from './player.js';
 import { VirtualJoystick } from './joystick.js';
 import { ThirdPersonCamera } from './camera.js';
-import { FOREST_RESOURCES } from './scene.js';
+import { FOREST_RESOURCES, SCENE_ANIMATABLES } from './scene.js';
 
 const FRAME_CAP       = 1 / 20;
 const COLLECT_RANGE   = 3.5;
@@ -116,14 +116,20 @@ function _checkResourceProximity() {
 }
 
 function _animateScene(timestamp) {
-  const particles = _scene.getObjectByName('ambient_particles');
-  if (particles) {
-    const pos = particles.geometry.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      pos.setY(i, pos.getY(i) + 0.004);
-      if (pos.getY(i) > 10) pos.setY(i, 0);
+  const t = timestamp * 0.001;
+
+  for (const fn of SCENE_ANIMATABLES) fn(t);
+
+  if (!window._dungeonManager?._active) {
+    const particles = _scene.getObjectByName('ambient_particles');
+    if (particles) {
+      const pos = particles.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        pos.setY(i, pos.getY(i) + 0.004);
+        if (pos.getY(i) > 10) pos.setY(i, 0);
+      }
+      pos.needsUpdate = true;
     }
-    pos.needsUpdate = true;
   }
 }
 
