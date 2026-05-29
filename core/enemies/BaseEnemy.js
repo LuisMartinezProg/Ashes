@@ -34,7 +34,7 @@ export class BaseEnemy {
     this._materials    = [];
 
     this._buildMesh(position);
-    scene.add(this.mesh);
+    this.scene.add(this.mesh);
   }
 
   _buildMesh(pos) {}
