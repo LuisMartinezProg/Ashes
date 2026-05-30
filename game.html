@@ -104,6 +104,7 @@ import { DungeonManager }   from './core/dungeons/DungeonManager.js';
 import { registerLODObjects, updateWorldLOD } from './core/worldLOD.js';
 import { InventoryUI } from './ui/inventory.js';
 import { ITEMS, rollDrops } from './data/items.js';
+import { CharacterMenu } from './ui/characterMenu.js';
   
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -426,6 +427,8 @@ async function boot() {
     window._skillTree = skillTree;
     const skillBar    = new SkillBar(skills, progression);
     window._skillBar  = skillBar;
+    const characterMenu = new CharacterMenu(progression, skillBar);
+    window._characterMenu = characterMenu;
     const inventoryUI = new InventoryUI();
     window._inventory = inventoryUI;
     window._itemDrops = { ITEMS, rollDrops };
@@ -444,12 +447,11 @@ async function boot() {
 
     const isPC = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const radialMenu = new RadialMenu([
-      { icon: '⚔️', label: 'Habilidades', action: () => skillTree.open(),       locked: false },
-      { icon: '🗺️', label: 'Mapa',        action: () => mapUI.toggle(),         locked: false },
-      ...(isPC ? [{ icon: '⌨️', label: 'Controles', action: () => keybindMenu.open(), locked: false }] : []),
-      { icon: '📖', label: 'Guías',       action: () => console.log('próximo'), locked: true  },
-      { icon: '🎒', label: 'Inventario', action: () => inventoryUI.open(), locked: false },
-    ]);
+  { icon: '👤', label: 'Personaje',  action: () => characterMenu.open(),  locked: false },
+  { icon: '🗺️', label: 'Mapa',       action: () => mapUI.toggle(),        locked: false },
+  { icon: '🎒', label: 'Inventario', action: () => inventoryUI.open(),    locked: false },
+  { icon: '📖', label: 'Guías',      action: () => console.log('próximo'),locked: true  },
+]);
 
     const pauseMenu = new PauseMenu({
       onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
