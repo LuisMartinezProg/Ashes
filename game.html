@@ -103,6 +103,7 @@ import { KeybindMenu }      from './ui/keybindMenu.js';
 import { DungeonManager }   from './core/dungeons/DungeonManager.js';
 import { registerLODObjects, updateWorldLOD } from './core/worldLOD.js';
 import { InventoryUI } from './ui/inventory.js';
+import { ITEMS, rollDrops } from './data/items.js';
   
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -121,12 +122,12 @@ async function boot() {
     const { scene, camera, renderer } = await initScene();
     await new Promise(r => setTimeout(r, 100));
     // ── Dungeon Scene ─────────────────────────────────────────────
-const dungeonScene = new THREE.Scene();
-dungeonScene.background = new THREE.Color(0x0a0a12);
-dungeonScene.fog = new THREE.FogExp2(0x0a0a12, 0.025);
-window._dungeonScene = dungeonScene;
-window._worldScene   = scene;
-window._activeScene  = scene;
+    const dungeonScene = new THREE.Scene();
+    dungeonScene.background = new THREE.Color(0x0a0a12);
+    dungeonScene.fog = new THREE.FogExp2(0x0a0a12, 0.025);
+    window._dungeonScene = dungeonScene;
+    window._worldScene   = scene;
+    window._activeScene  = scene;
 // ─────────────────────────────────────────────────────────────
     
     setProgress(25, 'BuildCamera / BuildZone...');
@@ -427,6 +428,7 @@ window._activeScene  = scene;
     window._skillBar  = skillBar;
     const inventoryUI = new InventoryUI();
     window._inventory = inventoryUI;
+    window._itemDrops = { ITEMS, rollDrops };
     inventoryUI.syncMaterials(building);
     const subtypeMenu = new SubtypeMenu(progression, skillBar);
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
