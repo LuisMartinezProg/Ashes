@@ -133,9 +133,11 @@ export class Player {
   get chestPosition() { return this.root.position.clone().add(new THREE.Vector3(0, 1.0, 0)); }
 
   takeDamage(amount) {
-    this.hp = Math.max(0, this.hp - amount);
-    if (this.onDamage) this.onDamage(this.hp, this.maxHp);
+  // Reducir daño por DEF del nivel
+  const def = window._prog?.getStats?.()?.def ?? 5;
+  const reduced = Math.max(1, Math.floor(amount * (1 - def / (def + 50))));
+  this.hp = Math.max(0, this.hp - reduced);
+  if (this.onDamage) this.onDamage(this.hp, this.maxHp);
   }
-
   destroy() { this.scene.remove(this.root); }
 }
