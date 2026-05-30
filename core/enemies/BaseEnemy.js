@@ -163,15 +163,29 @@ export class BaseEnemy {
     this._onDrop?.();
     if (this.onDeath) this.onDeath();
   }
+_onDrop() {
+  const drops = this._config.drops ?? {};
+  if (drops.madera)      window._building?.addMaterial?.('madera',  drops.madera);
+  if (drops.piedra)      window._building?.addMaterial?.('piedra',  drops.piedra);
+  if (drops.hierro)      window._building?.addMaterial?.('hierro',  drops.hierro);
+  if (drops.magicEnergy) window._prog?.addMagicEnergy?.(drops.magicEnergy);
+  if (drops.xp)          window._prog?.addXP?.(window._combat?._weaponType ?? 'katana', drops.xp);
 
-  _onDrop() {
-    const drops = this._config.drops ?? {};
-    if (drops.madera)      window._building?.addMaterial?.('madera',  drops.madera);
-    if (drops.piedra)      window._building?.addMaterial?.('piedra',  drops.piedra);
-    if (drops.hierro)      window._building?.addMaterial?.('hierro',  drops.hierro);
-    if (drops.magicEnergy) window._prog?.addMagicEnergy?.(drops.magicEnergy);
-    if (drops.xp)          window._prog?.addXP?.(window._combat?._weaponType ?? 'katana', drops.xp);
+  // Drops de inventario
+  if (window._inventory && window._itemDrops) {
+    const { rollDrops, ITEMS } = window._itemDrops;
+    const enemyType = this.constructor.name;
+    const rolled = rollDrops(enemyType);
+    for (const drop of rolled) {
+      const itemDef = ITEMS[drop.id];
+      if (itemDef) {
+        window._inventory.addItem({ ...itemDef, qty: drop.qty });
+        window._inventory.showDropNotification?.(itemDef.name, drop.qty, itemDef.icon);
+      }
+    }
   }
+}
+  
 
   _updateDeathAnim(delta) {
     if (!this.mesh) return;
