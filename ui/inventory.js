@@ -20,8 +20,6 @@ export class InventoryUI {
     this._buildUI();
   }
 
-  // ── Construir UI ──────────────────────────────────────────────────────────
-
   _buildUI() {
     this._overlay = document.createElement('div');
     Object.assign(this._overlay.style, {
@@ -36,7 +34,6 @@ export class InventoryUI {
       overflowY     : 'auto',
     });
 
-    // Header
     const header = document.createElement('div');
     Object.assign(header.style, {
       width         : '100%',
@@ -59,11 +56,11 @@ export class InventoryUI {
 
     const closeBtn = document.createElement('button');
     Object.assign(closeBtn.style, {
-      background  : 'none',
-      border      : 'none',
-      color       : '#C9A84C',
-      fontSize    : '20px',
-      cursor      : 'pointer',
+      background   : 'none',
+      border       : 'none',
+      color        : '#C9A84C',
+      fontSize     : '20px',
+      cursor       : 'pointer',
       pointerEvents: 'all',
     });
     closeBtn.textContent = '✕';
@@ -72,7 +69,6 @@ export class InventoryUI {
 
     header.append(title, closeBtn);
 
-    // Tabs
     this._tabBar = document.createElement('div');
     Object.assign(this._tabBar.style, {
       width         : '100%',
@@ -87,18 +83,18 @@ export class InventoryUI {
     for (const sec of SECTIONS) {
       const tab = document.createElement('button');
       Object.assign(tab.style, {
-        flex          : '1',
-        padding       : '8px 4px',
-        borderRadius  : '10px',
-        border        : '1px solid rgba(201,168,76,0.3)',
-        background    : 'rgba(201,168,76,0.06)',
-        color         : 'rgba(201,168,76,0.6)',
-        fontFamily    : 'monospace',
-        fontSize      : '10px',
-        letterSpacing : '1px',
-        cursor        : 'pointer',
-        pointerEvents : 'all',
-        transition    : 'all 0.2s',
+        flex         : '1',
+        padding      : '8px 4px',
+        borderRadius : '10px',
+        border       : '1px solid rgba(201,168,76,0.3)',
+        background   : 'rgba(201,168,76,0.06)',
+        color        : 'rgba(201,168,76,0.6)',
+        fontFamily   : 'monospace',
+        fontSize     : '10px',
+        letterSpacing: '1px',
+        cursor       : 'pointer',
+        pointerEvents: 'all',
+        transition   : 'all 0.2s',
       });
       tab.textContent = SECTION_LABELS[sec];
       tab.addEventListener('click', () => this._switchSection(sec));
@@ -107,32 +103,29 @@ export class InventoryUI {
       this._tabBar.appendChild(tab);
     }
 
-    // Grid de items
     this._grid = document.createElement('div');
     Object.assign(this._grid.style, {
-      width        : '100%',
-      maxWidth     : '420px',
-      display      : 'grid',
+      width              : '100%',
+      maxWidth           : '420px',
+      display            : 'grid',
       gridTemplateColumns: 'repeat(4, 1fr)',
-      gap          : '8px',
-      padding      : '12px 16px',
+      gap                : '8px',
+      padding            : '12px 16px',
     });
 
-    // Empty state
     this._emptyMsg = document.createElement('div');
     Object.assign(this._emptyMsg.style, {
-      width        : '100%',
-      maxWidth     : '420px',
-      textAlign    : 'center',
-      fontFamily   : 'monospace',
-      fontSize     : '11px',
-      color        : 'rgba(201,168,76,0.3)',
-      padding      : '40px 0',
-      display      : 'none',
+      width     : '100%',
+      maxWidth  : '420px',
+      textAlign : 'center',
+      fontFamily: 'monospace',
+      fontSize  : '11px',
+      color     : 'rgba(201,168,76,0.3)',
+      padding   : '40px 0',
+      display   : 'none',
     });
     this._emptyMsg.textContent = 'Sin items';
 
-    // Tooltip
     this._tooltip = document.createElement('div');
     Object.assign(this._tooltip.style, {
       position     : 'fixed',
@@ -155,11 +148,8 @@ export class InventoryUI {
     this._switchSection('materiales');
   }
 
-  // ── Secciones ─────────────────────────────────────────────────────────────
-
   _switchSection(sec) {
     this._section = sec;
-
     for (const [s, tab] of Object.entries(this._tabs)) {
       const active = s === sec;
       tab.style.background = active ? 'rgba(201,168,76,0.18)' : 'rgba(201,168,76,0.06)';
@@ -168,28 +158,21 @@ export class InventoryUI {
         ? '1px solid rgba(201,168,76,0.6)'
         : '1px solid rgba(201,168,76,0.2)';
     }
-
     this._renderGrid();
   }
-
-  // ── Render grid ───────────────────────────────────────────────────────────
 
   _renderGrid() {
     this._grid.innerHTML = '';
     const items = this._items[this._section];
-
     if (items.length === 0) {
       this._emptyMsg.style.display = 'block';
       this._grid.style.display     = 'none';
       return;
     }
-
     this._emptyMsg.style.display = 'none';
     this._grid.style.display     = 'grid';
-
     for (const item of items) {
-      const slot = this._buildSlot(item);
-      this._grid.appendChild(slot);
+      this._grid.appendChild(this._buildSlot(item));
     }
   }
 
@@ -215,11 +198,11 @@ export class InventoryUI {
 
     const name = document.createElement('div');
     Object.assign(name.style, {
-      fontFamily : 'monospace',
-      fontSize   : '9px',
-      color      : '#C9A84C',
-      textAlign  : 'center',
-      lineHeight : '1.2',
+      fontFamily: 'monospace',
+      fontSize  : '9px',
+      color     : '#C9A84C',
+      textAlign : 'center',
+      lineHeight: '1.2',
     });
     name.textContent = item.name;
 
@@ -240,22 +223,19 @@ export class InventoryUI {
     if (item.equipped) {
       const eq = document.createElement('div');
       Object.assign(eq.style, {
-        position    : 'absolute',
-        top         : '3px',
-        right       : '4px',
-        fontSize    : '8px',
-        color       : '#44ff88',
+        position : 'absolute',
+        top      : '3px',
+        right    : '4px',
+        fontSize : '8px',
+        color    : '#44ff88',
       });
       eq.textContent = '✓';
       slot.appendChild(eq);
     }
 
     slot.append(icon, name);
-
-    // Tooltip en tap
     slot.addEventListener('click', (e) => this._showTooltip(item, e));
     slot.addEventListener('touchstart', (e) => { e.preventDefault(); this._showTooltip(item, e); }, { passive: false });
-
     return slot;
   }
 
@@ -269,43 +249,63 @@ export class InventoryUI {
     }
   }
 
-  // ── Tooltip ───────────────────────────────────────────────────────────────
-
   _showTooltip(item, e) {
     const lines = [item.name];
-    if (item.desc)   lines.push(item.desc);
-    if (item.stats)  {
+    if (item.desc)  lines.push(item.desc);
+    if (item.stats) {
       for (const [k, v] of Object.entries(item.stats)) {
         lines.push(`${k}: +${v}`);
       }
     }
     if (item.rarity) lines.push(`[${item.rarity}]`);
-
     this._tooltip.innerHTML = lines.map((l, i) =>
       `<div style="opacity:${i===0?1:0.7};margin-bottom:2px">${l}</div>`
     ).join('');
-
     const rect = e.target.getBoundingClientRect();
     this._tooltip.style.display = 'block';
     this._tooltip.style.left    = Math.min(rect.left, window.innerWidth - 220) + 'px';
     this._tooltip.style.top     = (rect.top - 10) + 'px';
-
     setTimeout(() => { this._tooltip.style.display = 'none'; }, 2000);
   }
 
-  // ── API pública ───────────────────────────────────────────────────────────
+  showDropNotification(name, qty, icon = '📦') {
+    const el = document.createElement('div');
+    Object.assign(el.style, {
+      position     : 'fixed',
+      bottom       : '180px',
+      left         : '50%',
+      transform    : 'translateX(-50%)',
+      background   : 'rgba(4,4,10,0.88)',
+      border       : '1px solid rgba(201,168,76,0.4)',
+      borderRadius : '20px',
+      padding      : '6px 16px',
+      fontFamily   : 'monospace',
+      fontSize     : '11px',
+      color        : '#C9A84C',
+      pointerEvents: 'none',
+      zIndex       : '350',
+      opacity      : '1',
+      transition   : 'opacity 0.8s, bottom 0.8s',
+      whiteSpace   : 'nowrap',
+    });
+    el.textContent = `${icon} +${qty} ${name}`;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.opacity = '0';
+      el.style.bottom  = '220px';
+    }));
+    setTimeout(() => el.remove(), 900);
+  }
 
   addItem(item) {
     const sec = item.section ?? 'materiales';
     if (!this._items[sec]) return;
-
     const existing = this._items[sec].find(i => i.id === item.id);
     if (existing) {
       existing.qty = (existing.qty ?? 1) + (item.qty ?? 1);
     } else {
       this._items[sec].push({ qty: 1, ...item });
     }
-
     if (this._open && this._section === sec) this._renderGrid();
   }
 
@@ -340,11 +340,10 @@ export class InventoryUI {
 
   syncMaterials(buildingSystem) {
     if (!buildingSystem) return;
-    const mats = ['madera', 'piedra', 'hierro', 'mineral'];
-    for (const mat of mats) {
+    const icons = { madera:'🪵', piedra:'🪨', hierro:'⚙️', mineral:'💎' };
+    for (const mat of ['madera', 'piedra', 'hierro', 'mineral']) {
       const qty = buildingSystem.getMaterial?.(mat) ?? 0;
       if (qty <= 0) continue;
-      const icons = { madera:'🪵', piedra:'🪨', hierro:'⚙️', mineral:'💎' };
       this.addItem({
         id     : mat,
         name   : mat.charAt(0).toUpperCase() + mat.slice(1),
@@ -364,8 +363,8 @@ export class InventoryUI {
 
   close() {
     this._open = false;
-    this._overlay.style.display  = 'none';
-    this._tooltip.style.display  = 'none';
+    this._overlay.style.display = 'none';
+    this._tooltip.style.display = 'none';
   }
 
   isOpen() { return this._open; }
