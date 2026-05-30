@@ -119,7 +119,15 @@ async function boot() {
     setProgress(20, 'initScene...');
     const { scene, camera, renderer } = await initScene();
     await new Promise(r => setTimeout(r, 100));
-
+    // ── Dungeon Scene ─────────────────────────────────────────────
+const dungeonScene = new THREE.Scene();
+dungeonScene.background = new THREE.Color(0x0a0a12);
+dungeonScene.fog = new THREE.FogExp2(0x0a0a12, 0.025);
+window._dungeonScene = dungeonScene;
+window._worldScene   = scene;
+window._activeScene  = scene;
+// ─────────────────────────────────────────────────────────────
+    
     setProgress(25, 'BuildCamera / BuildZone...');
     const buildCamera = new BuildCamera(camera, renderer);
     const buildZone   = new BuildZone(scene);
