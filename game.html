@@ -51,8 +51,7 @@
 <script type="module">
 import * as THREE from 'three';
 import { initScene }        from './core/scene.js';
-import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies,
-         setNPCs, setDialogueUI, setTriggers, setResourceCallback } from './core/loop.js';
+import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies,setNPCs, setDialogueUI, setTriggers, setResourceCallback } from './core/loop.js';
 import { initResize }       from './core/resize.js';
 import { CombatSystem }     from './core/combat.js';
 import { spawnEnemies }     from './core/enemy.js';
@@ -103,6 +102,7 @@ import { KeyboardControls } from './core/keyboardControls.js';
 import { KeybindMenu }      from './ui/keybindMenu.js';
 import { DungeonManager }   from './core/dungeons/DungeonManager.js';
 import { registerLODObjects, updateWorldLOD } from './core/worldLOD.js';
+import { InventoryUI } from './ui/inventory.js';
   
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -425,6 +425,9 @@ window._activeScene  = scene;
     window._skillTree = skillTree;
     const skillBar    = new SkillBar(skills, progression);
     window._skillBar  = skillBar;
+    const inventoryUI = new InventoryUI();
+    window._inventory = inventoryUI;
+    inventoryUI.syncMaterials(building);
     const subtypeMenu = new SubtypeMenu(progression, skillBar);
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
 
@@ -443,6 +446,7 @@ window._activeScene  = scene;
       { icon: '🗺️', label: 'Mapa',        action: () => mapUI.toggle(),         locked: false },
       ...(isPC ? [{ icon: '⌨️', label: 'Controles', action: () => keybindMenu.open(), locked: false }] : []),
       { icon: '📖', label: 'Guías',       action: () => console.log('próximo'), locked: true  },
+      { icon: '🎒', label: 'Inventario', action: () => inventoryUI.open(), locked: false },
     ]);
 
     const pauseMenu = new PauseMenu({
