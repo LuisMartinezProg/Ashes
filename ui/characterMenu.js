@@ -1,25 +1,13 @@
 // ui/characterMenu.js — Ashes of the Reborn | Valiant Gaming
 
-const TABS = ['personaje', 'equipamiento', 'habilidades'];
-const TAB_LABELS = {
-  personaje    : '👤 Personaje',
-  equipamiento : '⚔️ Equipo',
-  habilidades  : '✨ Habilidades',
-};
-
-const SLOT_LABELS = {
-  arma     : '⚔️ Arma',
-  armadura : '🛡️ Armadura',
-  accesorio: '💍 Accesorio',
-};
-
 export class CharacterMenu {
   constructor(progression, skillBar) {
-    this._progression = progression;
-    this._skillBar    = skillBar;
-    this._open        = false;
-    this._tab         = 'personaje';
-    this._equipped    = { arma: null, armadura: null, accesorio: null };
+    this._progression  = progression;
+    this._skillBar     = skillBar;
+    this._open         = false;
+    this._activeChar   = 0; // 0 = Kael, 1 = Mika
+    this._equipped     = { arma: null, armadura: null, accesorio: null };
+    this._subMenu      = null;
     this._buildUI();
   }
 
@@ -29,516 +17,589 @@ export class CharacterMenu {
     this._overlay = document.createElement('div');
     Object.assign(this._overlay.style, {
       position      : 'fixed', inset: '0',
-      background    : 'rgba(4,4,10,0.95)',
-      zIndex        : '400',
-      display       : 'none',
+      background    : 'rgba(4,4,10,0.96)',
+      zIndex        : '400', display: 'none',
       flexDirection : 'column',
-      alignItems    : 'center',
-      paddingTop    : '16px',
-      overflowY     : 'auto',
     });
 
-    // Header
-    const header = document.createElement('div');
-    Object.assign(header.style, {
-      width         : '100%',
-      maxWidth      : '420px',
-      display       : 'flex',
-      alignItems    : 'center',
-      justifyContent: 'space-between',
-      padding       : '0 16px 12px',
-      borderBottom  : '1px solid rgba(201,168,76,0.2)',
+    // ── Fila superior ─────────────────────────────────────────────────────
+    const top = document.createElement('div');
+    Object.assign(top.style, {
+      display   : 'flex',
+      flex      : '1',
+      overflow  : 'hidden',
     });
 
-    const title = document.createElement('div');
-    Object.assign(title.style, {
-      fontFamily   : "'Cinzel',serif",
-      fontSize     : '14px',
-      letterSpacing: '3px',
-      color        : '#C9A84C',
+    // Columna izquierda — selector personajes
+    this._leftCol = document.createElement('div');
+    Object.assign(this._leftCol.style, {
+      width          : '72px',
+      display        : 'flex',
+      flexDirection  : 'column',
+      alignItems     : 'center',
+      paddingTop     : '16px',
+      gap            : '10px',
+      borderRight    : '1px solid rgba(201,168,76,0.15)',
+      background     : 'rgba(0,0,0,0.3)',
     });
-    title.textContent = 'PERSONAJE';
 
+    // Columna centro — avatar
+    this._centerCol = document.createElement('div');
+    Object.assign(this._centerCol.style, {
+      flex           : '1',
+      display        : 'flex',
+      alignItems     : 'center',
+      justifyContent : 'center',
+    });
+
+    // Columna derecha — stats
+    this._rightCol = document.createElement('div');
+    Object.assign(this._rightCol.style, {
+      width          : '200px',
+      display        : 'flex',
+      flexDirection  : 'column',
+      justifyContent : 'center',
+      padding        : '16px 14px',
+      borderLeft     : '1px solid rgba(201,168,76,0.15)',
+      background     : 'rgba(0,0,0,0.3)',
+    });
+
+    top.append(this._leftCol, this._centerCol, this._rightCol);
+
+    // ── Fila inferior — botones ───────────────────────────────────────────
+    const bottom = document.createElement('div');
+    Object.assign(bottom.style, {
+      display        : 'flex',
+      justifyContent : 'center',
+      alignItems     : 'center',
+      gap            : '12px',
+      padding        : '12px 16px',
+      borderTop      : '1px solid rgba(201,168,76,0.2)',
+      background     : 'rgba(0,0,0,0.4)',
+    });
+
+    const bottomBtns = [
+      { label: '📊 Atributos',  action: () => this._openSub('atributos')  },
+      { label: '⚔️ Equipo',     action: () => this._openSub('equipo')     },
+      { label: '✨ Habilidades', action: () => this._openSub('habilidades')},
+      { label: '📖 Talentos',   action: () => this._openSub('talentos')   },
+    ];
+
+    for (const { label, action } of bottomBtns) {
+      const btn = document.createElement('button');
+      Object.assign(btn.style, {
+        flex         : '1',
+        maxWidth     : '120px',
+        padding      : '10px 8px',
+        borderRadius : '10px',
+        border       : '1px solid rgba(201,168,76,0.35)',
+        background   : 'rgba(201,168,76,0.08)',
+        color        : '#C9A84C',
+        fontFamily   : 'monospace',
+        fontSize     : '10px',
+        letterSpacing: '0.5px',
+        cursor       : 'pointer',
+        pointerEvents: 'all',
+        transition   : 'all 0.15s',
+      });
+      btn.textContent = label;
+      btn.addEventListener('click', action);
+      btn.addEventListener('touchstart', (e) => { e.preventDefault(); action(); }, { passive: false });
+      btn.addEventListener('mouseenter', () => {
+        btn.style.background = 'rgba(201,168,76,0.18)';
+        btn.style.border     = '1px solid rgba(201,168,76,0.6)';
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.background = 'rgba(201,168,76,0.08)';
+        btn.style.border     = '1px solid rgba(201,168,76,0.35)';
+      });
+      bottom.appendChild(btn);
+    }
+
+    // Botón cerrar
     const closeBtn = document.createElement('button');
     Object.assign(closeBtn.style, {
-      background   : 'none', border: 'none',
-      color        : '#C9A84C', fontSize: '20px',
-      cursor       : 'pointer', pointerEvents: 'all',
+      position     : 'absolute',
+      top          : '10px',
+      right        : '14px',
+      background   : 'none',
+      border       : 'none',
+      color        : '#C9A84C',
+      fontSize     : '22px',
+      cursor       : 'pointer',
+      pointerEvents: 'all',
+      zIndex       : '401',
     });
     closeBtn.textContent = '✕';
     closeBtn.addEventListener('click', () => this.close());
     closeBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.close(); }, { passive: false });
-    header.append(title, closeBtn);
 
-    // Tabs
-    const tabBar = document.createElement('div');
-    Object.assign(tabBar.style, {
-      width  : '100%', maxWidth: '420px',
-      display: 'flex', padding: '10px 8px', gap: '6px',
-    });
-
-    this._tabs = {};
-    for (const tab of TABS) {
-      const btn = document.createElement('button');
-      Object.assign(btn.style, {
-        flex         : '1', padding: '8px 4px',
-        borderRadius : '10px',
-        border       : '1px solid rgba(201,168,76,0.3)',
-        background   : 'rgba(201,168,76,0.06)',
-        color        : 'rgba(201,168,76,0.6)',
-        fontFamily   : 'monospace', fontSize: '9px',
-        letterSpacing: '1px', cursor: 'pointer',
-        pointerEvents: 'all', transition: 'all 0.2s',
-      });
-      btn.textContent = TAB_LABELS[tab];
-      btn.addEventListener('click', () => this._switchTab(tab));
-      btn.addEventListener('touchstart', (e) => { e.preventDefault(); this._switchTab(tab); }, { passive: false });
-      this._tabs[tab] = btn;
-      tabBar.appendChild(btn);
-    }
-
-    // Contenido
-    this._content = document.createElement('div');
-    Object.assign(this._content.style, {
-      width   : '100%', maxWidth: '420px',
-      padding : '12px 16px', flex: '1',
-    });
-
-    // Tooltip
-    this._tooltip = document.createElement('div');
-    Object.assign(this._tooltip.style, {
-      position     : 'fixed',
-      background   : 'rgba(4,4,10,0.97)',
-      border       : '1px solid rgba(201,168,76,0.4)',
-      borderRadius : '10px', padding: '10px 14px',
-      fontFamily   : 'monospace', fontSize: '11px',
-      color        : '#C9A84C', zIndex: '500',
-      display      : 'none', maxWidth: '200px',
-      pointerEvents: 'none',
-    });
-
-    this._overlay.append(header, tabBar, this._content);
-    document.body.append(this._overlay, this._tooltip);
-    this._switchTab('personaje');
+    this._overlay.style.position = 'fixed';
+    this._overlay.appendChild(closeBtn);
+    this._overlay.append(top, bottom);
+    document.body.appendChild(this._overlay);
   }
 
-  // ── Tabs ──────────────────────────────────────────────────────────────────
+  // ── Render contenido ──────────────────────────────────────────────────────
 
-  _switchTab(tab) {
-    this._tab = tab;
-    for (const [t, btn] of Object.entries(this._tabs)) {
-      const active = t === tab;
-      btn.style.background = active ? 'rgba(201,168,76,0.18)' : 'rgba(201,168,76,0.06)';
-      btn.style.color      = active ? '#C9A84C' : 'rgba(201,168,76,0.5)';
-      btn.style.border     = active
-        ? '1px solid rgba(201,168,76,0.6)'
-        : '1px solid rgba(201,168,76,0.2)';
-    }
-    this._content.innerHTML = '';
-    if (tab === 'personaje')    this._renderPersonaje();
-    if (tab === 'equipamiento') this._renderEquipamiento();
-    if (tab === 'habilidades')  this._renderHabilidades();
+  _render() {
+    this._renderLeft();
+    this._renderCenter();
+    this._renderRight();
   }
 
-  // ── Tab Personaje ─────────────────────────────────────────────────────────
-
-  _renderPersonaje() {
-    const prog  = this._progression;
-    const level = prog.getLevel();
-    const stats = prog.getStats();
-    const xp    = prog.getTotalXP();
-    const next  = prog.getXPForNextLevel();
-    const pct   = Math.round(prog.getXPProgress() * 100);
-
-    // Selector de personaje
-    const charRow = document.createElement('div');
-    Object.assign(charRow.style, {
-      display: 'flex', gap: '10px',
-      marginBottom: '16px',
-    });
-
-    ['Kael', 'Mika'].forEach((name, idx) => {
+  _renderLeft() {
+    this._leftCol.innerHTML = '';
+    const chars = [
+      { name: 'Kael', icon: '⚔️', idx: 0 },
+      { name: 'Mika', icon: '🏹', idx: 1 },
+    ];
+    for (const c of chars) {
       const card = document.createElement('div');
-      const isActive = (window._partyManager?.getActiveIndex?.() ?? 0) === idx;
+      const active = this._activeChar === c.idx;
       Object.assign(card.style, {
-        flex         : '1', padding: '10px',
-        borderRadius : '12px', textAlign: 'center',
-        border       : isActive
-          ? '1px solid rgba(201,168,76,0.8)'
-          : '1px solid rgba(201,168,76,0.2)',
-        background   : isActive
-          ? 'rgba(201,168,76,0.12)'
-          : 'rgba(201,168,76,0.04)',
-        cursor       : 'pointer', pointerEvents: 'all',
+        width        : '52px',
+        height       : '52px',
+        borderRadius : '50%',
+        border       : active
+          ? '2px solid #C9A84C'
+          : '2px solid rgba(201,168,76,0.2)',
+        background   : active
+          ? 'rgba(201,168,76,0.18)'
+          : 'rgba(201,168,76,0.05)',
+        display      : 'flex',
+        flexDirection: 'column',
+        alignItems   : 'center',
+        justifyContent: 'center',
+        cursor       : 'pointer',
+        pointerEvents: 'all',
+        transition   : 'all 0.2s',
+        boxShadow    : active ? '0 0 12px rgba(201,168,76,0.4)' : 'none',
       });
 
-      const avatar = document.createElement('div');
-      avatar.style.fontSize = '32px';
-      avatar.textContent = idx === 0 ? '⚔️' : '🏹';
+      const iconEl = document.createElement('div');
+      iconEl.style.fontSize = '20px';
+      iconEl.textContent = c.icon;
 
       const nameEl = document.createElement('div');
       Object.assign(nameEl.style, {
-        fontFamily: "'Cinzel',serif", fontSize: '11px',
-        color     : '#C9A84C', marginTop: '4px',
-        letterSpacing: '1px',
+        fontFamily: 'monospace',
+        fontSize  : '7px',
+        color     : active ? '#C9A84C' : 'rgba(201,168,76,0.5)',
+        marginTop : '2px',
       });
-      nameEl.textContent = name;
+      nameEl.textContent = c.name;
 
-      const hpEl = document.createElement('div');
-      Object.assign(hpEl.style, {
-        fontFamily: 'monospace', fontSize: '9px',
-        color     : 'rgba(255,255,255,0.5)', marginTop: '2px',
-      });
-      const char = idx === 0
-        ? window._player
-        : window._companion;
-      hpEl.textContent = char
-        ? `HP ${char.hp ?? '?'}/${char.maxHp ?? '?'}`
-        : 'HP —';
+      card.append(iconEl, nameEl);
 
-      card.append(avatar, nameEl, hpEl);
-      card.addEventListener('click', () => {
-        window._partyManager?.switchTo?.(idx);
-        this._renderPersonaje();
-      });
+      card.addEventListener('click', () => this._selectChar(c.idx));
       card.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        window._partyManager?.switchTo?.(idx);
-        this._renderPersonaje();
+        this._selectChar(c.idx);
       }, { passive: false });
-      charRow.appendChild(card);
+
+      this._leftCol.appendChild(card);
+    }
+  }
+
+  _renderCenter() {
+    this._centerCol.innerHTML = '';
+    const avatars = ['⚔️', '🏹'];
+    const names   = ['KAEL', 'MIKA'];
+
+    const wrap = document.createElement('div');
+    Object.assign(wrap.style, {
+      display       : 'flex',
+      flexDirection : 'column',
+      alignItems    : 'center',
+      gap           : '8px',
     });
 
-    // Nivel y XP
-    const levelRow = document.createElement('div');
-    Object.assign(levelRow.style, {
-      display       : 'flex',
-      justifyContent: 'space-between',
-      alignItems    : 'center',
-      marginBottom  : '6px',
+    const avatar = document.createElement('div');
+    Object.assign(avatar.style, {
+      fontSize  : '80px',
+      lineHeight: '1',
+      filter    : 'drop-shadow(0 0 20px rgba(201,168,76,0.5))',
     });
+    avatar.textContent = avatars[this._activeChar];
+
+    const nameEl = document.createElement('div');
+    Object.assign(nameEl.style, {
+      fontFamily   : "'Cinzel',serif",
+      fontSize     : '16px',
+      letterSpacing: '4px',
+      color        : '#C9A84C',
+    });
+    nameEl.textContent = names[this._activeChar];
+
+    // Barra XP
+    const prog    = this._progression;
+    const level   = prog.getLevel();
+    const pct     = Math.round(prog.getXPProgress() * 100);
+    const xp      = prog.getTotalXP();
+    const next    = prog.getXPForNextLevel();
 
     const levelEl = document.createElement('div');
     Object.assign(levelEl.style, {
-      fontFamily   : "'Cinzel',serif",
-      fontSize     : '18px', color: '#C9A84C',
-      letterSpacing: '2px',
+      fontFamily   : 'monospace',
+      fontSize     : '11px',
+      color        : 'rgba(201,168,76,0.7)',
+      letterSpacing: '1px',
     });
-    levelEl.textContent = `NIVEL ${level}`;
+    levelEl.textContent = `Nivel ${level}  ${xp}/${next ?? '—'} XP`;
 
-    const xpEl = document.createElement('div');
-    Object.assign(xpEl.style, {
-      fontFamily: 'monospace', fontSize: '9px',
-      color     : 'rgba(201,168,76,0.6)',
-    });
-    xpEl.textContent = next ? `${xp} / ${next} XP` : 'NIVEL MÁX';
-
-    levelRow.append(levelEl, xpEl);
-
-    // Barra XP
     const xpBarWrap = document.createElement('div');
     Object.assign(xpBarWrap.style, {
-      width       : '100%', height: '4px',
+      width       : '160px',
+      height      : '3px',
       background  : 'rgba(201,168,76,0.15)',
-      borderRadius: '2px', marginBottom: '16px',
+      borderRadius: '2px',
       overflow    : 'hidden',
     });
-    const xpBarFill = document.createElement('div');
-    Object.assign(xpBarFill.style, {
-      height     : '100%', width: `${pct}%`,
-      background : 'linear-gradient(90deg, #7A6030, #C9A84C)',
-      borderRadius: '2px',
-      boxShadow  : '0 0 6px rgba(201,168,76,0.5)',
-      transition : 'width 0.4s ease',
+    const xpFill = document.createElement('div');
+    Object.assign(xpFill.style, {
+      height    : '100%',
+      width     : `${pct}%`,
+      background: 'linear-gradient(90deg,#7A6030,#C9A84C)',
+      transition: 'width 0.4s ease',
     });
-    xpBarWrap.appendChild(xpBarFill);
+    xpBarWrap.appendChild(xpFill);
 
-    // Stats
-    const statsGrid = document.createElement('div');
-    Object.assign(statsGrid.style, {
-      display             : 'grid',
-      gridTemplateColumns : '1fr 1fr',
-      gap                 : '8px',
-    });
-
-    const statDefs = [
-      { label: '❤️ HP',    value: `${window._player?.hp ?? stats.maxHp} / ${stats.maxHp}` },
-      { label: '⚔️ ATK',   value: stats.atk },
-      { label: '🛡️ DEF',   value: stats.def },
-      { label: '💨 VEL',   value: stats.speed.toFixed(1) },
-      { label: '✦ Éter',   value: window._dungeonManager?.getEtherFragments?.() ?? 0 },
-      { label: '⭐ Rep',    value: prog.getReputation() },
-    ];
-
-    for (const { label, value } of statDefs) {
-      const cell = document.createElement('div');
-      Object.assign(cell.style, {
-        background  : 'rgba(201,168,76,0.06)',
-        border      : '1px solid rgba(201,168,76,0.15)',
-        borderRadius: '8px', padding: '8px 10px',
-        display     : 'flex', justifyContent: 'space-between',
-        alignItems  : 'center',
-      });
-      const lbl = document.createElement('span');
-      Object.assign(lbl.style, {
-        fontFamily: 'monospace', fontSize: '9px',
-        color     : 'rgba(201,168,76,0.7)',
-      });
-      lbl.textContent = label;
-
-      const val = document.createElement('span');
-      Object.assign(val.style, {
-        fontFamily: 'monospace', fontSize: '11px',
-        color     : '#C9A84C', fontWeight: 'bold',
-      });
-      val.textContent = value;
-      cell.append(lbl, val);
-      statsGrid.appendChild(cell);
-    }
-
-    this._content.append(charRow, levelRow, xpBarWrap, statsGrid);
+    wrap.append(avatar, nameEl, levelEl, xpBarWrap);
+    this._centerCol.appendChild(wrap);
   }
 
-  // ── Tab Equipamiento ──────────────────────────────────────────────────────
+  _renderRight() {
+    this._rightCol.innerHTML = '';
+    const prog   = this._progression;
+    const stats  = prog.getStats();
+    const eff    = window._effectiveStats ?? stats;
+    const char   = this._activeChar === 0 ? window._player : window._companion;
 
-  _renderEquipamiento() {
-    const slots = ['arma', 'armadura', 'accesorio'];
+    const statDefs = [
+      { icon: '❤️', label: 'HP',   value: `${char?.hp ?? '?'} / ${eff.maxHp ?? stats.maxHp}` },
+      { icon: '⚔️', label: 'ATK',  value: eff.atk  ?? stats.atk },
+      { icon: '🛡️', label: 'DEF',  value: eff.def  ?? stats.def },
+      { icon: '💨', label: 'VEL',  value: (stats.speed ?? 5).toFixed(1) },
+      { icon: '✦',  label: 'ÉTER', value: window._dungeonManager?.getEtherFragments?.() ?? 0 },
+      { icon: '⭐', label: 'REP',  value: prog.getReputation() },
+    ];
 
-    // Stats totales del equipo
-    const totalStats = { ATK: 0, DEF: 0, HP: 0, MAGIA: 0, VEL: 0 };
-    for (const slot of slots) {
-      const item = this._equipped[slot];
-      if (item?.stats) {
-        for (const [k, v] of Object.entries(item.stats)) {
-          if (totalStats[k] !== undefined) totalStats[k] += v;
-        }
-      }
+    for (const { icon, label, value } of statDefs) {
+      const row = document.createElement('div');
+      Object.assign(row.style, {
+        display       : 'flex',
+        justifyContent: 'space-between',
+        alignItems    : 'center',
+        padding       : '5px 0',
+        borderBottom  : '1px solid rgba(201,168,76,0.08)',
+      });
+
+      const left = document.createElement('div');
+      Object.assign(left.style, {
+        fontFamily: 'monospace',
+        fontSize  : '10px',
+        color     : 'rgba(201,168,76,0.65)',
+      });
+      left.textContent = `${icon} ${label}`;
+
+      const right = document.createElement('div');
+      Object.assign(right.style, {
+        fontFamily: 'monospace',
+        fontSize  : '11px',
+        color     : '#C9A84C',
+        fontWeight: 'bold',
+      });
+      right.textContent = value;
+
+      row.append(left, right);
+      this._rightCol.appendChild(row);
     }
+  }
 
-    // Slots de equipo
+  // ── Selector personaje ────────────────────────────────────────────────────
+
+  _selectChar(idx) {
+    if (this._activeChar === idx) return;
+    this._activeChar = idx;
+    window._partyManager?.switchTo?.(idx);
+    // Solo actualiza contenido, NO reabre el menú
+    this._renderLeft();
+    this._renderCenter();
+    this._renderRight();
+  }
+
+  // ── Submenús ──────────────────────────────────────────────────────────────
+
+  _openSub(type) {
+    if (this._subMenu) { this._subMenu.remove(); this._subMenu = null; }
+
+    const panel = document.createElement('div');
+    Object.assign(panel.style, {
+      position     : 'fixed', inset: '0',
+      background   : 'rgba(4,4,10,0.97)',
+      zIndex       : '500',
+      display      : 'flex',
+      flexDirection: 'column',
+      alignItems   : 'center',
+      paddingTop   : '16px',
+      overflowY    : 'auto',
+    });
+
+    // Header submenú
+    const header = document.createElement('div');
+    Object.assign(header.style, {
+      width         : '100%',
+      maxWidth      : '500px',
+      display       : 'flex',
+      justifyContent: 'space-between',
+      alignItems    : 'center',
+      padding       : '0 16px 12px',
+      borderBottom  : '1px solid rgba(201,168,76,0.2)',
+    });
+
+    const titles = {
+      atributos  : '📊 ATRIBUTOS',
+      equipo     : '⚔️ EQUIPO',
+      habilidades: '✨ HABILIDADES',
+      talentos   : '📖 TALENTOS',
+    };
+
+    const titleEl = document.createElement('div');
+    Object.assign(titleEl.style, {
+      fontFamily   : "'Cinzel',serif",
+      fontSize     : '13px',
+      letterSpacing: '3px',
+      color        : '#C9A84C',
+    });
+    titleEl.textContent = titles[type] ?? type.toUpperCase();
+
+    const backBtn = document.createElement('button');
+    Object.assign(backBtn.style, {
+      background: 'none', border: 'none',
+      color: '#C9A84C', fontSize: '20px',
+      cursor: 'pointer', pointerEvents: 'all',
+    });
+    backBtn.textContent = '←';
+    backBtn.addEventListener('click', () => { panel.remove(); this._subMenu = null; });
+    backBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault(); panel.remove(); this._subMenu = null;
+    }, { passive: false });
+
+    header.append(titleEl, backBtn);
+
+    const body = document.createElement('div');
+    Object.assign(body.style, {
+      width  : '100%', maxWidth: '500px',
+      padding: '16px',
+    });
+
+    if (type === 'atributos')   this._fillAtributos(body);
+    if (type === 'equipo')      this._fillEquipo(body, panel);
+    if (type === 'habilidades') this._fillHabilidades(body);
+    if (type === 'talentos')    this._fillTalentos(body);
+
+    panel.append(header, body);
+    document.body.appendChild(panel);
+    this._subMenu = panel;
+  }
+
+  // ── Atributos ─────────────────────────────────────────────────────────────
+
+  _fillAtributos(body) {
+    const prog  = this._progression;
+    const stats = prog.getStats();
+    const eff   = window._effectiveStats ?? stats;
+    const char  = this._activeChar === 0 ? window._player : window._companion;
+
+    const defs = [
+      { icon:'❤️', label:'HP Máx',    value: eff.maxHp ?? stats.maxHp },
+      { icon:'❤️', label:'HP Actual', value: char?.hp ?? '?' },
+      { icon:'⚔️', label:'ATK',       value: eff.atk  ?? stats.atk },
+      { icon:'🛡️', label:'DEF',       value: eff.def  ?? stats.def },
+      { icon:'💨', label:'VEL',       value: (stats.speed ?? 5).toFixed(1) },
+      { icon:'✦',  label:'Éter',      value: window._dungeonManager?.getEtherFragments?.() ?? 0 },
+      { icon:'⭐', label:'Reputación',value: prog.getReputation() },
+      { icon:'🪄', label:'Energía Mágica', value: prog.getMagicEnergy() },
+    ];
+
+    for (const { icon, label, value } of defs) {
+      const row = document.createElement('div');
+      Object.assign(row.style, {
+        display       : 'flex',
+        justifyContent: 'space-between',
+        padding       : '10px 12px',
+        borderRadius  : '8px',
+        marginBottom  : '6px',
+        background    : 'rgba(201,168,76,0.05)',
+        border        : '1px solid rgba(201,168,76,0.1)',
+      });
+      row.innerHTML = `
+        <span style="font-family:monospace;font-size:11px;color:rgba(201,168,76,0.7)">${icon} ${label}</span>
+        <span style="font-family:monospace;font-size:12px;color:#C9A84C;font-weight:bold">${value}</span>
+      `;
+      body.appendChild(row);
+    }
+  }
+
+  // ── Equipo ────────────────────────────────────────────────────────────────
+
+  _fillEquipo(body, panel) {
+    const slots = ['arma', 'armadura', 'accesorio'];
+    const slotLabels = { arma:'⚔️ Arma', armadura:'🛡️ Armadura', accesorio:'💍 Accesorio' };
+
     for (const slot of slots) {
       const item = this._equipped[slot];
       const row  = document.createElement('div');
       Object.assign(row.style, {
-        display      : 'flex', gap: '10px',
-        alignItems   : 'center', marginBottom: '10px',
-        padding      : '10px 12px', borderRadius: '12px',
+        display      : 'flex', alignItems: 'center',
+        gap          : '12px', padding: '12px',
+        borderRadius : '12px', marginBottom: '10px',
         border       : '1px solid rgba(201,168,76,0.2)',
         background   : 'rgba(201,168,76,0.04)',
-        cursor       : 'pointer', pointerEvents: 'all',
       });
 
-      const slotIcon = document.createElement('div');
-      slotIcon.style.fontSize = '22px';
-      slotIcon.textContent = item ? (item.icon ?? '📦') : SLOT_LABELS[slot];
+      const iconEl = document.createElement('div');
+      iconEl.style.fontSize = '28px';
+      iconEl.textContent = item?.icon ?? slotLabels[slot].split(' ')[0];
 
       const info = document.createElement('div');
       info.style.flex = '1';
+      info.innerHTML = `
+        <div style="font-family:monospace;font-size:11px;color:${item ? '#C9A84C' : 'rgba(201,168,76,0.3)'}">
+          ${item ? item.name : `— ${slotLabels[slot]}`}
+        </div>
+        <div style="font-family:monospace;font-size:9px;color:rgba(255,255,255,0.4);margin-top:3px">
+          ${item?.stats ? Object.entries(item.stats).map(([k,v])=>`${k}+${v}`).join(' ') : 'Sin equipo'}
+        </div>
+      `;
 
-      const nameEl = document.createElement('div');
-      Object.assign(nameEl.style, {
-        fontFamily: 'monospace', fontSize: '10px',
-        color     : item ? '#C9A84C' : 'rgba(201,168,76,0.3)',
-      });
-      nameEl.textContent = item ? item.name : `— ${SLOT_LABELS[slot]}`;
-
-      const statsEl = document.createElement('div');
-      Object.assign(statsEl.style, {
-        fontFamily: 'monospace', fontSize: '9px',
-        color     : 'rgba(255,255,255,0.4)', marginTop: '2px',
-      });
-      statsEl.textContent = item?.stats
-        ? Object.entries(item.stats).map(([k,v]) => `${k}+${v}`).join(' ')
-        : 'Sin equipo';
-
-      info.append(nameEl, statsEl);
-
-      const changeBtn = document.createElement('button');
-      Object.assign(changeBtn.style, {
+      const btn = document.createElement('button');
+      Object.assign(btn.style, {
         background  : 'rgba(201,168,76,0.1)',
         border      : '1px solid rgba(201,168,76,0.3)',
-        borderRadius: '8px', padding: '4px 8px',
+        borderRadius: '8px', padding: '6px 10px',
         color       : '#C9A84C', fontFamily: 'monospace',
-        fontSize    : '9px', cursor: 'pointer',
-        pointerEvents: 'all',
+        fontSize    : '9px', cursor: 'pointer', pointerEvents: 'all',
       });
-      changeBtn.textContent = 'Cambiar';
-      changeBtn.addEventListener('click', () => this._openSlotPicker(slot));
-      changeBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this._openSlotPicker(slot); }, { passive: false });
+      btn.textContent = 'Cambiar';
+      btn.addEventListener('click', () => this._openSlotPicker(slot, panel));
+      btn.addEventListener('touchstart', (e) => {
+        e.preventDefault(); this._openSlotPicker(slot, panel);
+      }, { passive: false });
 
-      row.append(slotIcon, info, changeBtn);
-      this._content.appendChild(row);
+      row.append(iconEl, info, btn);
+      body.appendChild(row);
     }
 
-    // Stats totales del equipo
+    // Bonus total
     const sep = document.createElement('div');
-    Object.assign(sep.style, {
-      borderTop  : '1px solid rgba(201,168,76,0.15)',
-      margin     : '8px 0', paddingTop: '10px',
-      fontFamily : 'monospace', fontSize: '9px',
-      color      : 'rgba(201,168,76,0.5)',
-      letterSpacing: '1px',
-    });
-    sep.textContent = 'BONUS DE EQUIPO';
-    this._content.appendChild(sep);
+    sep.style.cssText = 'border-top:1px solid rgba(201,168,76,0.15);margin:8px 0;padding-top:10px;font-family:monospace;font-size:9px;color:rgba(201,168,76,0.5);letter-spacing:1px';
+    sep.textContent = 'BONUS TOTAL DE EQUIPO';
+    body.appendChild(sep);
 
-    const bonusGrid = document.createElement('div');
-    Object.assign(bonusGrid.style, {
-      display             : 'grid',
-      gridTemplateColumns : 'repeat(3, 1fr)',
-      gap                 : '6px',
-    });
-
-    for (const [stat, val] of Object.entries(totalStats)) {
-      if (val === 0) continue;
-      const cell = document.createElement('div');
-      Object.assign(cell.style, {
-        background  : 'rgba(201,168,76,0.06)',
-        border      : '1px solid rgba(201,168,76,0.15)',
-        borderRadius: '8px', padding: '6px',
-        textAlign   : 'center', fontFamily: 'monospace',
-      });
-      cell.innerHTML = `<div style="font-size:9px;color:rgba(201,168,76,0.6)">${stat}</div>
-                        <div style="font-size:12px;color:#C9A84C;font-weight:bold">+${val}</div>`;
-      bonusGrid.appendChild(cell);
+    const total = { ATK:0, DEF:0, HP:0, MAGIA:0 };
+    for (const item of Object.values(this._equipped)) {
+      if (!item?.stats) continue;
+      for (const [k,v] of Object.entries(item.stats)) {
+        if (total[k] !== undefined) total[k] += v;
+      }
     }
-    this._content.appendChild(bonusGrid);
+
+    const bonusRow = document.createElement('div');
+    bonusRow.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+    for (const [stat, val] of Object.entries(total)) {
+      if (!val) continue;
+      const cell = document.createElement('div');
+      cell.style.cssText = 'background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:6px 10px;font-family:monospace;font-size:10px;color:#C9A84C';
+      cell.textContent = `${stat} +${val}`;
+      bonusRow.appendChild(cell);
+    }
+    body.appendChild(bonusRow);
   }
 
-  _openSlotPicker(slot) {
+  _openSlotPicker(slot, parentPanel) {
     const inv = window._inventory;
     if (!inv) return;
-
     const items = inv._items.equipos.filter(i => i.slot === slot);
 
     const picker = document.createElement('div');
     Object.assign(picker.style, {
-      position  : 'fixed', inset: '0',
-      background: 'rgba(4,4,10,0.97)',
-      zIndex    : '600', display: 'flex',
+      position     : 'fixed', inset: '0',
+      background   : 'rgba(4,4,10,0.98)',
+      zIndex       : '600', display: 'flex',
       flexDirection: 'column', alignItems: 'center',
-      paddingTop: '20px',
+      paddingTop   : '20px',
     });
 
-    const pickerTitle = document.createElement('div');
-    Object.assign(pickerTitle.style, {
-      fontFamily   : "'Cinzel',serif", fontSize: '13px',
-      color        : '#C9A84C', letterSpacing: '2px',
-      marginBottom : '16px',
-    });
-    pickerTitle.textContent = `ELEGIR ${SLOT_LABELS[slot].toUpperCase()}`;
+    const titleEl = document.createElement('div');
+    titleEl.style.cssText = "font-family:'Cinzel',serif;font-size:13px;color:#C9A84C;letter-spacing:2px;margin-bottom:16px";
+    titleEl.textContent = `ELEGIR ${slot.toUpperCase()}`;
 
     const list = document.createElement('div');
-    Object.assign(list.style, {
-      width  : '100%', maxWidth: '380px',
-      padding: '0 16px', overflowY: 'auto',
-    });
-
-    if (items.length === 0) {
-      const empty = document.createElement('div');
-      Object.assign(empty.style, {
-        textAlign : 'center', fontFamily: 'monospace',
-        fontSize  : '11px', color: 'rgba(201,168,76,0.3)',
-        padding   : '40px 0',
-      });
-      empty.textContent = 'Sin items disponibles';
-      list.appendChild(empty);
-    }
+    list.style.cssText = 'width:100%;max-width:400px;padding:0 16px;overflow-y:auto;flex:1';
 
     // Opción desequipar
-    const unequipRow = this._buildPickerRow(null, slot, picker);
-    list.appendChild(unequipRow);
+    [null, ...items].forEach(item => {
+      const row = document.createElement('div');
+      Object.assign(row.style, {
+        display      : 'flex', alignItems: 'center',
+        gap          : '12px', padding: '10px 12px',
+        borderRadius : '10px', marginBottom: '8px',
+        border       : item
+          ? '1px solid rgba(201,168,76,0.2)'
+          : '1px solid rgba(255,80,80,0.2)',
+        background   : 'rgba(201,168,76,0.04)',
+        cursor       : 'pointer', pointerEvents: 'all',
+      });
 
-    for (const item of items) {
-      const row = this._buildPickerRow(item, slot, picker);
+      row.innerHTML = `
+        <div style="font-size:22px">${item?.icon ?? '✕'}</div>
+        <div style="flex:1">
+          <div style="font-family:monospace;font-size:10px;color:${item ? '#C9A84C' : 'rgba(255,100,100,0.8)'}">
+            ${item ? item.name : 'Desequipar'}
+          </div>
+          <div style="font-family:monospace;font-size:9px;color:rgba(255,255,255,0.4);margin-top:2px">
+            ${item?.stats ? Object.entries(item.stats).map(([k,v])=>`${k}+${v}`).join(' ') : ''}
+          </div>
+        </div>
+      `;
+
+      const equip = () => {
+        this._equipped[slot] = item ?? null;
+        this._applyEquipStats();
+        picker.remove();
+        // Refrescar panel de equipo sin cerrar submenú
+        parentPanel.querySelector('div:nth-child(2)').innerHTML = '';
+        const newBody = parentPanel.querySelector('div:nth-child(2)');
+        this._fillEquipo(newBody, parentPanel);
+        this._renderRight();
+      };
+      row.addEventListener('click', equip);
+      row.addEventListener('touchstart', (e) => { e.preventDefault(); equip(); }, { passive: false });
       list.appendChild(row);
-    }
+    });
 
     const cancelBtn = document.createElement('button');
-    Object.assign(cancelBtn.style, {
-      marginTop   : '16px', padding: '10px 28px',
-      borderRadius: '20px',
-      border      : '1px solid rgba(201,168,76,0.3)',
-      background  : 'rgba(10,8,20,0.9)', color: '#C9A84C',
-      fontFamily  : 'monospace', fontSize: '11px',
-      cursor      : 'pointer', pointerEvents: 'all',
-    });
-    cancelBtn.textContent = 'Cancelar';
+    cancelBtn.style.cssText = 'margin:16px;padding:10px 28px;border-radius:20px;border:1px solid rgba(201,168,76,0.3);background:rgba(10,8,20,0.9);color:#C9A84C;font-family:monospace;font-size:11px;cursor:pointer;pointer-events:all';
+    cancelBtn.textContent = '← Volver';
     cancelBtn.addEventListener('click', () => picker.remove());
     cancelBtn.addEventListener('touchstart', (e) => { e.preventDefault(); picker.remove(); }, { passive: false });
 
-    picker.append(pickerTitle, list, cancelBtn);
+    picker.append(titleEl, list, cancelBtn);
     document.body.appendChild(picker);
   }
 
-  _buildPickerRow(item, slot, picker) {
-    const row = document.createElement('div');
-    Object.assign(row.style, {
-      display      : 'flex', alignItems: 'center',
-      gap          : '10px', padding: '10px 12px',
-      borderRadius : '10px', marginBottom: '8px',
-      border       : item
-        ? '1px solid rgba(201,168,76,0.2)'
-        : '1px solid rgba(255,80,80,0.2)',
-      background   : 'rgba(201,168,76,0.04)',
-      cursor       : 'pointer', pointerEvents: 'all',
-    });
-
-    const icon = document.createElement('div');
-    icon.style.fontSize = '22px';
-    icon.textContent = item ? (item.icon ?? '📦') : '✕';
-
-    const info = document.createElement('div');
-    info.style.flex = '1';
-
-    const nameEl = document.createElement('div');
-    Object.assign(nameEl.style, {
-      fontFamily: 'monospace', fontSize: '10px',
-      color     : item ? '#C9A84C' : 'rgba(255,100,100,0.8)',
-    });
-    nameEl.textContent = item ? item.name : 'Desequipar';
-
-    const statsEl = document.createElement('div');
-    Object.assign(statsEl.style, {
-      fontFamily: 'monospace', fontSize: '9px',
-      color     : 'rgba(255,255,255,0.4)', marginTop: '2px',
-    });
-    statsEl.textContent = item?.stats
-      ? Object.entries(item.stats).map(([k,v]) => `${k}+${v}`).join(' ')
-      : '';
-
-    info.append(nameEl, statsEl);
-    row.append(icon, info);
-
-    const equip = () => {
-      this._equipped[slot] = item ?? null;
-      this._applyEquipStats();
-      picker.remove();
-      this._renderEquipamiento();
-    };
-    row.addEventListener('click', equip);
-    row.addEventListener('touchstart', (e) => { e.preventDefault(); equip(); }, { passive: false });
-
-    return row;
-  }
-
   _applyEquipStats() {
-    const base  = this._progression.getStats();
-    let atk     = base.atk;
-    let def     = base.def;
-    let maxHp   = base.maxHp;
-
+    const base = this._progression.getStats();
+    let atk = base.atk, def = base.def, maxHp = base.maxHp;
     for (const item of Object.values(this._equipped)) {
       if (!item?.stats) continue;
-      if (item.stats.ATK)   atk   += item.stats.ATK;
-      if (item.stats.DEF)   def   += item.stats.DEF;
-      if (item.stats.HP)    maxHp += item.stats.HP;
+      if (item.stats.ATK) atk   += item.stats.ATK;
+      if (item.stats.DEF) def   += item.stats.DEF;
+      if (item.stats.HP)  maxHp += item.stats.HP;
     }
-
-    // Guardar stats efectivos
     window._effectiveStats = { atk, def, maxHp };
-
-    // Aplicar HP al jugador
     const player = window._player;
     if (player) {
       player.maxHp = maxHp;
@@ -547,37 +608,22 @@ export class CharacterMenu {
     }
   }
 
-  // ── Tab Habilidades ───────────────────────────────────────────────────────
+  // ── Habilidades ───────────────────────────────────────────────────────────
 
-  _renderHabilidades() {
-    const weapon = window._partyManager?.getActiveCharacter() === window._companion
-      ? 'bow'
-      : window._combat?._weaponType ?? 'katana';
+  _fillHabilidades(body) {
+    const weapon = this._activeChar === 1 ? 'bow' : (window._combat?._weaponType ?? 'katana');
+    const skills = this._progression.getActiveSkills(weapon);
+    const icons  = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
 
-    const prog   = this._progression;
-    const skills = prog.getActiveSkills(weapon);
+    const label = document.createElement('div');
+    label.style.cssText = 'font-family:monospace;font-size:9px;color:rgba(201,168,76,0.5);letter-spacing:2px;margin-bottom:12px';
+    label.textContent = `${icons[weapon] ?? '⚔️'} ${weapon.toUpperCase()}`;
+    body.appendChild(label);
 
-    if (skills.length === 0) {
-      const empty = document.createElement('div');
-      Object.assign(empty.style, {
-        textAlign : 'center', fontFamily: 'monospace',
-        fontSize  : '11px', color: 'rgba(201,168,76,0.3)',
-        padding   : '40px 0',
-      });
-      empty.textContent = 'Sin habilidades activas';
-      this._content.appendChild(empty);
+    if (!skills.length) {
+      body.innerHTML += '<div style="text-align:center;font-family:monospace;font-size:11px;color:rgba(201,168,76,0.3);padding:40px 0">Sin habilidades activas</div>';
       return;
     }
-
-    const weaponLabel = document.createElement('div');
-    Object.assign(weaponLabel.style, {
-      fontFamily   : 'monospace', fontSize: '9px',
-      color        : 'rgba(201,168,76,0.5)', letterSpacing: '2px',
-      marginBottom : '10px',
-    });
-    const icons = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
-    weaponLabel.textContent = `${icons[weapon] ?? '⚔️'} ${weapon.toUpperCase()}`;
-    this._content.appendChild(weaponLabel);
 
     for (const skill of skills) {
       const row = document.createElement('div');
@@ -585,79 +631,92 @@ export class CharacterMenu {
         display      : 'flex', gap: '12px', alignItems: 'center',
         padding      : '10px 12px', borderRadius: '12px',
         marginBottom : '8px',
-        border       : skill.available
-          ? '1px solid rgba(201,168,76,0.3)'
-          : '1px solid rgba(255,255,255,0.08)',
-        background   : skill.available
-          ? 'rgba(201,168,76,0.06)'
-          : 'rgba(255,255,255,0.02)',
+        border       : `1px solid ${skill.available ? 'rgba(201,168,76,0.3)' : 'rgba(255,255,255,0.08)'}`,
+        background   : skill.available ? 'rgba(201,168,76,0.06)' : 'rgba(255,255,255,0.02)',
         opacity      : skill.available ? '1' : '0.5',
       });
 
-      const iconEl = document.createElement('div');
-      iconEl.style.cssText = 'font-size:28px;min-width:36px;text-align:center;';
-      iconEl.textContent = skill.icon ?? '✨';
+      row.innerHTML = `
+        <div style="font-size:28px;min-width:36px;text-align:center">${skill.icon ?? '✨'}</div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+            <span style="font-family:monospace;font-size:11px;color:#C9A84C">${skill.name ?? skill.id}</span>
+            <span style="font-family:monospace;font-size:8px;padding:2px 6px;border-radius:4px;background:rgba(201,168,76,0.12);color:#C9A84C">${(skill.rarity ?? 'common').toUpperCase()}</span>
+          </div>
+          <div style="font-family:monospace;font-size:9px;color:rgba(255,255,255,0.45);line-height:1.4">${skill.description ?? skill.desc ?? '—'}</div>
+          <div style="font-family:monospace;font-size:8px;color:${skill.available ? '#44ff88' : 'rgba(255,100,100,0.7)'};margin-top:3px">
+            ${skill.available ? '✓ Disponible' : `Requiere ${skill.xpRequired} XP`}
+          </div>
+        </div>
+      `;
+      body.appendChild(row);
+    }
+  }
 
-      const info = document.createElement('div');
-      info.style.flex = '1';
+  // ── Talentos ──────────────────────────────────────────────────────────────
 
-      const nameRow = document.createElement('div');
-      Object.assign(nameRow.style, {
-        display       : 'flex', justifyContent: 'space-between',
-        alignItems    : 'center', marginBottom: '3px',
+  _fillTalentos(body) {
+    const chars = [
+      {
+        name  : 'Kael',
+        icon  : '⚔️',
+        skills: [
+          { name: 'Ataque Normal',   desc: 'Combo de golpes con el arma equipada.',        icon: '⚔️' },
+          { name: 'Habilidad Élite', desc: 'Ejecuta una técnica especial del arma.',       icon: '✦'  },
+          { name: 'Ultimate',        desc: 'Libera el poder oscuro prestado. -50% ATK.',   icon: '🌑' },
+        ],
+      },
+      {
+        name  : 'Mika',
+        icon  : '🏹',
+        skills: [
+          { name: 'Ataque a Distancia', desc: 'Dispara flechas precisas al enemigo.',      icon: '🏹' },
+          { name: 'Trampa de Viento',   desc: 'Coloca una trampa que ralentiza enemigos.', icon: '🌀' },
+          { name: 'Lluvia de Flechas',  desc: 'Lanza múltiples flechas en área.',          icon: '⬆️' },
+        ],
+      },
+    ];
+
+    const char = chars[this._activeChar];
+
+    const nameEl = document.createElement('div');
+    nameEl.style.cssText = "font-family:'Cinzel',serif;font-size:13px;color:#C9A84C;letter-spacing:2px;margin-bottom:14px";
+    nameEl.textContent = `${char.icon} ${char.name.toUpperCase()}`;
+    body.appendChild(nameEl);
+
+    for (const skill of char.skills) {
+      const row = document.createElement('div');
+      Object.assign(row.style, {
+        display      : 'flex', gap: '12px', alignItems: 'center',
+        padding      : '12px', borderRadius: '12px',
+        marginBottom : '10px',
+        border       : '1px solid rgba(201,168,76,0.2)',
+        background   : 'rgba(201,168,76,0.05)',
       });
-
-      const nameEl = document.createElement('div');
-      Object.assign(nameEl.style, {
-        fontFamily: 'monospace', fontSize: '11px', color: '#C9A84C',
-      });
-      nameEl.textContent = skill.name ?? skill.id;
-
-      const rarityEl = document.createElement('div');
-      Object.assign(rarityEl.style, {
-        fontFamily  : 'monospace', fontSize: '8px',
-        padding     : '2px 6px', borderRadius: '4px',
-        background  : 'rgba(201,168,76,0.12)',
-        color       : '#C9A84C', letterSpacing: '1px',
-      });
-      rarityEl.textContent = (skill.rarity ?? 'common').toUpperCase();
-
-      nameRow.append(nameEl, rarityEl);
-
-      const descEl = document.createElement('div');
-      Object.assign(descEl.style, {
-        fontFamily: 'monospace', fontSize: '9px',
-        color     : 'rgba(255,255,255,0.45)', lineHeight: '1.4',
-      });
-      descEl.textContent = skill.description ?? skill.desc ?? '—';
-
-      const reqEl = document.createElement('div');
-      Object.assign(reqEl.style, {
-        fontFamily : 'monospace', fontSize: '8px',
-        color      : skill.available ? '#44ff88' : 'rgba(255,100,100,0.7)',
-        marginTop  : '3px',
-      });
-      reqEl.textContent = skill.available
-        ? '✓ Disponible'
-        : `Requiere ${skill.xpRequired} XP`;
-
-      info.append(nameRow, descEl, reqEl);
-      row.append(iconEl, info);
-      this._content.appendChild(row);
+      row.innerHTML = `
+        <div style="font-size:28px;min-width:36px;text-align:center">${skill.icon}</div>
+        <div>
+          <div style="font-family:monospace;font-size:11px;color:#C9A84C;margin-bottom:4px">${skill.name}</div>
+          <div style="font-family:monospace;font-size:9px;color:rgba(255,255,255,0.5);line-height:1.4">${skill.desc}</div>
+        </div>
+      `;
+      body.appendChild(row);
     }
   }
 
   // ── API pública ───────────────────────────────────────────────────────────
 
-  open(tab = 'personaje') {
+  open() {
+    if (this._open) return;
     this._open = true;
     this._overlay.style.display = 'flex';
-    this._switchTab(tab);
+    this._render();
   }
 
   close() {
     this._open = false;
     this._overlay.style.display = 'none';
+    if (this._subMenu) { this._subMenu.remove(); this._subMenu = null; }
   }
 
   isOpen() { return this._open; }
