@@ -142,10 +142,13 @@ export class CombatSystem {
       if (target) {
         let dmg = this.weapon.getDamage(hitIndex);
 
-        if (this._progression) {
-          const fusion = this._progression.getActiveFusion(this._weaponType);
-          if (fusion) dmg = Math.floor(dmg * 1.25);
-        }
+if (this._progression) {
+  const fusion = this._progression.getActiveFusion(this._weaponType);
+  if (fusion) dmg = Math.floor(dmg * 1.25);
+  // ATK bonus por nivel
+  const stats = this._progression.getStats();
+  dmg = Math.floor(dmg * (1 + (stats.atk - 10) / 100));
+}
 
         target.takeDamage(dmg);
         this._triggerShake(1.0);
