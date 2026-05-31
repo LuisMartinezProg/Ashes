@@ -143,12 +143,10 @@ class ProgressionBase {
         player.onDamage?.(player.hp, player.maxHp);
       }
     } else if (this._charId === 'mika') {
-      const companion = window._companion;
-      if (companion) {
-        companion.maxHp = stats.maxHp;
-        companion.hp    = Math.min(companion.hp + 20, companion.maxHp);
-        companion.onDamage?.(companion.hp, companion.maxHp);
-      }
+  const companion = window._companion;
+  if (companion) {
+    companion.syncStatsFromProgression();
+  }
     }
   }
 
