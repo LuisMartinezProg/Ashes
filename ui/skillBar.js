@@ -141,12 +141,13 @@ export class SkillBar {
     }
   }
 _scale() {
-  const isPC = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  if (isPC) return 0.75; // 25% más pequeño en PC
+  const uiScale = window._uiScale ?? 1;
+  const isPC    = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (isPC) return 0.75 * uiScale;
   const isLandscape = window.innerWidth > window.innerHeight;
-  return isLandscape
+  return (isLandscape
     ? window.innerHeight / 450
-    : window.innerWidth  / 480;
+    : window.innerWidth  / 480) * uiScale;
 }
   
   _placeFromBottomRight(el, hx, hy, size) {
