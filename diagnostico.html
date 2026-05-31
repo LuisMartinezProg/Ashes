@@ -356,7 +356,14 @@
   <button class="btn btn-secondary" onclick="exportLog()">⬇ Exportar log</button>
   <button class="btn btn-secondary" onclick="toggleAll()">⊞ Expandir / Colapsar</button>
 </div>
-
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
 <script>
 const MANIFEST = [
   {
@@ -402,22 +409,28 @@ const MANIFEST = [
   {
     id: 'uiExist', icon: '🎮', label: 'UI — Existente',
     files: [
-      { path: './ui/hud.js',          exp: 'HUD' },
-      { path: './ui/weaponSelect.js', exp: 'showWeaponSelect' },
-      { path: './ui/dialogue.js',     exp: 'DialogueUI' },
-      { path: './ui/shop.js',         exp: 'ShopUI' },
-      { path: './ui/skillBar.js',     exp: 'SkillBar' },
-      { path: './ui/subtypeMenu.js',  exp: 'SubtypeMenu' },
-      { path: './ui/pauseMenu.js',    exp: 'PauseMenu' },
-      { path: './ui/fusionMenu.js',   exp: 'FusionMenu' },
+      { path: './ui/hud.js',            exp: 'HUD' },
+      { path: './ui/weaponSelect.js',   exp: 'showWeaponSelect' },
+      { path: './ui/dialogue.js',       exp: 'DialogueUI' },
+      { path: './ui/shop.js',           exp: 'ShopUI' },
+      { path: './ui/skillBar.js',       exp: 'SkillBar' },
+      { path: './ui/subtypeMenu.js',    exp: 'SubtypeMenu' },
+      { path: './ui/pauseMenu.js',      exp: 'PauseMenu' },
+      { path: './ui/fusionMenu.js',     exp: 'FusionMenu' },
+      { path: './ui/characterMenu.js',  exp: 'CharacterMenu' },
+      { path: './ui/inventory.js',      exp: 'InventoryUI' },
+      { path: './ui/keybindMenu.js',    exp: 'KeybindMenu' },
+      { path: './ui/mapUI.js',          exp: 'MapUI' },
     ]
   },
   {
-    id: 'ui8', icon: '🎮', label: 'UI — Fase 8+',
+    id: 'uiFuture', icon: '🎮', label: 'UI — Futuro',
     files: [
-      { path: './ui/buildMenu.js',  exp: 'BuildMenu' },
-      { path: './ui/skillTree.js',  exp: 'SkillTree' },
-      { path: './ui/radialMenu.js', exp: 'RadialMenu' },
+      { path: './ui/relationBar.js', exp: 'RelationBar', pending: true },
+      { path: './ui/craftMenu.js',   exp: 'CraftMenu',   pending: true },
+    ]
+  },
+  { path: './ui/radialMenu.js', exp: 'RadialMenu' },
     ]
   },
   {
