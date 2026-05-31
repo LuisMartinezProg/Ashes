@@ -450,7 +450,7 @@ async function boot() {
   { icon: '👤', label: 'Personaje',  action: () => characterMenu.open(),  locked: false },
   { icon: '🗺️', label: 'Mapa',       action: () => mapUI.toggle(),        locked: false },
   { icon: '🎒', label: 'Inventario', action: () => inventoryUI.open(),    locked: false },
-  { icon: '📖', label: 'Guías',      action: () => console.log('próximo'),locked: true  },
+  { icon: '⌨️', label: 'Controles',  action: () => keybindMenu.open(),    locked: false },
 ]);
 
     const pauseMenu = new PauseMenu({
