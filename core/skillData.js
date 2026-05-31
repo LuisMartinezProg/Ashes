@@ -1,209 +1,715 @@
 // core/skillData.js — Ashes of the Reborn | Valiant Gaming
 
-export const SKILL_DATA = {
+// ── Estructura del árbol por personaje/arma ───────────────────────────────
+// Cada arma tiene 5 capas: basico, nv1 (x3), nv2 (x3), nv3 (x3), arcano (x3 elige 1)
+// Loadout activo: 1 básico (siempre) + 1 de nv1/nv2/nv3 + 1 arcano
 
-  magic: {
-    label: 'Magia',
-    subtypes: {
-      fire: {
-        label: 'Fuego',
-        icon: '🔥',
-        color: '#ff4400',
-        skills: [
-          { id: 'fireball',      rarity: 'common',    label: 'Bola de Fuego',    icon: '🔥', cost: 30, cooldown: 5  },
-          { id: 'fire_burst',    rarity: 'rare',      label: 'Explosión Ígnea',  icon: '💥', cost: 45, cooldown: 8  },
-          { id: 'fire_pillar',   rarity: 'epic',      label: 'Pilar de Llamas',  icon: '🌋', cost: 60, cooldown: 12 },
-          { id: 'inferno',       rarity: 'legendary', label: 'Infierno',         icon: '☄️', cost: 80, cooldown: 20 },
-        ],
-      },
-      ice: {
-        label: 'Hielo',
-        icon: '❄️',
-        color: '#88ccff',
-        skills: [
-          { id: 'ice_shard',     rarity: 'common',    label: 'Fragmento de Hielo', icon: '❄️', cost: 30, cooldown: 5  },
-          { id: 'ice_spike',     rarity: 'rare',      label: 'Lanza de Hielo',     icon: '🧊', cost: 45, cooldown: 8  },
-          { id: 'blizzard',      rarity: 'epic',      label: 'Ventisca',           icon: '🌨️', cost: 60, cooldown: 12 },
-          { id: 'absolute_zero', rarity: 'legendary', label: 'Cero Absoluto',      icon: '💠', cost: 80, cooldown: 20 },
-        ],
-      },
-      plant: {
-        label: 'Planta',
-        icon: '🌿',
-        color: '#44cc44',
-        skills: [
-          { id: 'thorn',         rarity: 'common',    label: 'Espina',               icon: '🌿', cost: 30, cooldown: 5  },
-          { id: 'vine_whip',     rarity: 'rare',      label: 'Látigo de Enredadera', icon: '🍃', cost: 45, cooldown: 8  },
-          { id: 'spore_cloud',   rarity: 'epic',      label: 'Nube de Esporas',      icon: '🌸', cost: 60, cooldown: 12 },
-          { id: 'world_tree',    rarity: 'legendary', label: 'Árbol del Mundo',      icon: '🌳', cost: 80, cooldown: 20 },
-        ],
-      },
-      wind: {
-        label: 'Viento',
-        icon: '🌪️',
-        color: '#aaeeff',
-        skills: [
-          { id: 'gust',          rarity: 'common',    label: 'Ráfaga',              icon: '💨', cost: 30, cooldown: 5  },
-          { id: 'wind_blade',    rarity: 'rare',      label: 'Cuchilla de Viento',  icon: '🌀', cost: 45, cooldown: 8  },
-          { id: 'tornado',       rarity: 'epic',      label: 'Tornado',             icon: '🌪️', cost: 60, cooldown: 12 },
-          { id: 'storm_god',     rarity: 'legendary', label: 'Dios de la Tormenta', icon: '⚡', cost: 80, cooldown: 20 },
-        ],
-      },
+export const WEAPON_TREES = {
+
+  // ── KAEL — KATANA ─────────────────────────────────────────────
+  kael_katana: {
+    label : 'Katana',
+    icon  : '🗡️',
+    color : '#e8c9a0',
+    layers: {
+      basico: [
+        {
+          id         : 'golpe_basico',
+          name       : 'Golpe Básico',
+          icon       : '⚔️',
+          desc       : 'Combo de tres golpes rápidos con la katana.',
+          effect     : { type: 'damage', multiplier: 1.0 },
+          cost       : { xp: 0, cristales: 0 },
+          unlocked   : true,
+        },
+      ],
+      nv1: [
+        {
+          id         : 'corte_doble',
+          name       : 'Corte Doble',
+          icon       : '✂️',
+          desc       : 'Dos tajos en cruz que infligen sangrado.',
+          effect     : { type: 'damage', multiplier: 1.4, apply: 'bleed', duration: 3 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+        {
+          id         : 'dash_katana',
+          name       : 'Dash',
+          icon       : '💨',
+          desc       : 'Avanza rápidamente hacia el enemigo.',
+          effect     : { type: 'mobility', distance: 3.5 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+        {
+          id         : 'parada_perfecta',
+          name       : 'Parada Perfecta',
+          icon       : '🛡️',
+          desc       : 'Bloquea un ataque y contraataca al instante.',
+          effect     : { type: 'parry', counterMultiplier: 1.8 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+      ],
+      nv2: [
+        {
+          id         : 'golpe_giratorio',
+          name       : 'Golpe Giratorio',
+          icon       : '🌀',
+          desc       : 'Giro de 360° que golpea a todos los enemigos cercanos.',
+          effect     : { type: 'damage_aoe', multiplier: 1.2, radius: 2.5 },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+        {
+          id         : 'paso_fantasma',
+          name       : 'Paso Fantasma',
+          icon       : '👻',
+          desc       : 'Atraviesa enemigos dejando una estela de daño.',
+          effect     : { type: 'mobility_damage', multiplier: 0.8, distance: 5 },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+        {
+          id         : 'contraataque',
+          name       : 'Contraataque',
+          icon       : '↩️',
+          desc       : 'Al recibir daño, responde con un golpe automático.',
+          effect     : { type: 'reactive', multiplier: 1.5 },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+      ],
+      nv3: [
+        {
+          id         : 'golpe_cargado',
+          name       : 'Golpe Cargado',
+          icon       : '⚡',
+          desc       : 'Carga energía y libera un golpe devastador.',
+          effect     : { type: 'damage', multiplier: 2.5, chargeTime: 1.2 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+        {
+          id         : 'esquiva_avanzada',
+          name       : 'Esquiva Avanzada',
+          icon       : '🌬️',
+          desc       : 'Esquiva con invencibilidad breve y posiciona para contraatacar.',
+          effect     : { type: 'mobility', iframes: 0.4, counterWindow: 0.6 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+        {
+          id         : 'absorcion_dano',
+          name       : 'Absorción de Daño',
+          icon       : '🌑',
+          desc       : 'Convierte el 15% del daño recibido en HP.',
+          effect     : { type: 'passive', absorbPct: 0.15 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+      ],
+      arcano: [
+        {
+          id         : 'devastacion',
+          name       : 'Devastación',
+          icon       : '💥',
+          desc       : 'Libera toda la energía acumulada en un golpe que ignora DEF.',
+          effect     : { type: 'damage', multiplier: 4.0, ignoresDef: true },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+        {
+          id         : 'torbellino_oscuro',
+          name       : 'Torbellino Oscuro',
+          icon       : '🌪️',
+          desc       : 'Torbellino de sombras que drena vida de todos los enemigos cercanos.',
+          effect     : { type: 'damage_aoe_drain', multiplier: 2.0, radius: 4, drainPct: 0.3 },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+        {
+          id         : 'filo_del_vacio',
+          name       : 'Filo del Vacío',
+          icon       : '🕳️',
+          desc       : 'Un tajo que abre una grieta dimensional, dañando al enemigo dos veces.',
+          effect     : { type: 'damage_double', multiplier: 1.8 },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+      ],
     },
   },
 
-  katana: {
-    label: 'Katana',
-    subtypes: {
-      speed: {
-        label: 'Velocidad',
-        icon: '⚡',
-        color: '#e8c9a0',
-        skills: [
-          { id: 'quick_slash',   rarity: 'common',    label: 'Tajo Rápido',    icon: '🗡️', cost: 20, cooldown: 3  },
-          { id: 'flash_step',    rarity: 'rare',      label: 'Paso Relámpago', icon: '💫', cost: 35, cooldown: 6  },
-          { id: 'blade_dance',   rarity: 'epic',      label: 'Danza de Hojas', icon: '✨', cost: 50, cooldown: 10 },
-          { id: 'thousand_cuts', rarity: 'legendary', label: 'Mil Cortes',     icon: '🌟', cost: 70, cooldown: 18 },
-        ],
-      },
-      shadow: {
-        label: 'Sombra',
-        icon: '🌑',
-        color: '#8855cc',
-        skills: [
-          { id: 'shadow_slash', rarity: 'common',    label: 'Tajo Sombrío',    icon: '🌑', cost: 25, cooldown: 4  },
-          { id: 'nightfall',    rarity: 'rare',      label: 'Caída Nocturna',  icon: '🌒', cost: 35, cooldown: 7  },
-          { id: 'void_step',    rarity: 'epic',      label: 'Paso del Vacío',  icon: '👤', cost: 45, cooldown: 12 },
-          { id: 'shadow_realm', rarity: 'legendary', label: 'Reino de Sombras',icon: '🕳️', cost: 60, cooldown: 25 },
-        ],
-      },
-      storm: {
-        label: 'Tormenta',
-        icon: '⛈️',
-        color: '#6699ff',
-        skills: [
-          { id: 'thunder_slash',  rarity: 'common',    label: 'Tajo Trueno',          icon: '⚡', cost: 25, cooldown: 4  },
-          { id: 'static_field',   rarity: 'rare',      label: 'Campo Estático',       icon: '🌩️', cost: 35, cooldown: 7  },
-          { id: 'thunder_storm',  rarity: 'epic',      label: 'Tormenta Eléctrica',   icon: '⛈️', cost: 50, cooldown: 15 },
-          { id: 'god_of_thunder', rarity: 'legendary', label: 'Dios del Trueno',      icon: '🌪️', cost: 70, cooldown: 30 },
-        ],
-      },
-      honor: {
-        label: 'Honor',
-        icon: '⚔️',
-        color: '#ffdd88',
-        skills: [
-          { id: 'last_stand',     rarity: 'common',    label: 'Último Bastión',   icon: '👑', cost: 30, cooldown: 10 },
-          { id: 'martyr',         rarity: 'rare',      label: 'Mártir',           icon: '✝️', cost: 35, cooldown: 8  },
-          { id: 'sacred_blade',   rarity: 'epic',      label: 'Hoja Sagrada',     icon: '🏯', cost: 50, cooldown: 16 },
-          { id: 'legendary_stand',rarity: 'legendary', label: 'Bastión Legendario',icon: '🌟', cost: 70, cooldown: 35 },
-        ],
-      },
+  // ── KAEL — SWORD ─────────────────────────────────────────────
+  kael_sword: {
+    label : 'Espada',
+    icon  : '⚔️',
+    color : '#ffcc44',
+    layers: {
+      basico: [
+        {
+          id         : 'golpe_basico',
+          name       : 'Golpe Básico',
+          icon       : '⚔️',
+          desc       : 'Combo de dos golpes contundentes con la espada.',
+          effect     : { type: 'damage', multiplier: 1.0 },
+          cost       : { xp: 0, cristales: 0 },
+          unlocked   : true,
+        },
+      ],
+      nv1: [
+        {
+          id         : 'estocada',
+          name       : 'Estocada',
+          icon       : '🗡️',
+          desc       : 'Embestida hacia adelante que perfora la defensa.',
+          effect     : { type: 'damage', multiplier: 1.6, piercesDef: 0.3 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+        {
+          id         : 'bloqueo',
+          name       : 'Bloqueo',
+          icon       : '🛡️',
+          desc       : 'Reduce el daño recibido un 50% por 2 segundos.',
+          effect     : { type: 'defense', damageReduction: 0.5, duration: 2 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+        {
+          id         : 'rodar',
+          name       : 'Rodar',
+          icon       : '🔄',
+          desc       : 'Rueda lateralmente esquivando ataques.',
+          effect     : { type: 'mobility', iframes: 0.3 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+      ],
+      nv2: [
+        {
+          id         : 'corte_doble_espada',
+          name       : 'Corte Doble',
+          icon       : '✂️',
+          desc       : 'Dos golpes amplios que cubren un arco de 180°.',
+          effect     : { type: 'damage_arc', multiplier: 1.3, angle: 180 },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+        {
+          id         : 'postura_defensiva',
+          name       : 'Postura Defensiva',
+          icon       : '🏰',
+          desc       : 'Aumenta DEF un 30% y reduce velocidad un 20% por 5s.',
+          effect     : { type: 'buff', defBonus: 0.3, speedPenalty: 0.2, duration: 5 },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+        {
+          id         : 'deslizamiento',
+          name       : 'Deslizamiento',
+          icon       : '💫',
+          desc       : 'Deslizamiento rápido que evita proyectiles.',
+          effect     : { type: 'mobility', distance: 4, projectileImmune: true },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+      ],
+      nv3: [
+        {
+          id         : 'golpe_cargado_espada',
+          name       : 'Golpe Cargado',
+          icon       : '⚡',
+          desc       : 'Golpe de tierra que crea una onda de choque.',
+          effect     : { type: 'damage_aoe', multiplier: 2.2, radius: 3 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+        {
+          id         : 'contraataque_espada',
+          name       : 'Contraataque',
+          icon       : '↩️',
+          desc       : 'Bloquea y responde con un golpe que aturde al enemigo.',
+          effect     : { type: 'parry', counterMultiplier: 2.0, stunDuration: 1.5 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+        {
+          id         : 'escudo_energia',
+          name       : 'Escudo de Energía',
+          icon       : '✨',
+          desc       : 'Barrera que absorbe hasta 80 de daño.',
+          effect     : { type: 'shield', absorbAmount: 80 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+      ],
+      arcano: [
+        {
+          id         : 'devastacion_espada',
+          name       : 'Devastación',
+          icon       : '💥',
+          desc       : 'Golpe que destruye la postura del enemigo e ignora DEF.',
+          effect     : { type: 'damage', multiplier: 4.0, ignoresDef: true },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+        {
+          id         : 'juicio_acero',
+          name       : 'Juicio de Acero',
+          icon       : '⚖️',
+          desc       : 'Golpe sagrado que hace más daño cuanto más HP tenga el enemigo.',
+          effect     : { type: 'damage_scaling_enemy_hp', baseMultiplier: 2.0, maxMultiplier: 5.0 },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+        {
+          id         : 'bastion_inquebrantable',
+          name       : 'Bastión Inquebrantable',
+          icon       : '🏯',
+          desc       : 'Durante 8s eres invulnerable pero no puedes moverte.',
+          effect     : { type: 'defense', invulnerable: true, duration: 8, immobilized: true },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+      ],
     },
   },
 
-  sword: {
-    label: 'Espada',
-    subtypes: {
-      strength: {
-        label: 'Fuerza',
-        icon: '💪',
-        color: '#ffcc44',
-        skills: [
-          { id: 'cleave',        rarity: 'common',    label: 'Barrido',            icon: '⚔️', cost: 25, cooldown: 4  },
-          { id: 'shockwave',     rarity: 'rare',      label: 'Onda de Choque',     icon: '💥', cost: 40, cooldown: 7  },
-          { id: 'titan_strike',  rarity: 'epic',      label: 'Golpe Titán',        icon: '🗿', cost: 55, cooldown: 11 },
-          { id: 'earth_shatter', rarity: 'legendary', label: 'Rompe Tierra',       icon: '🌍', cost: 75, cooldown: 19 },
-        ],
-      },
-      defense: {
-        label: 'Defensa',
-        icon: '🛡️',
-        color: '#cccccc',
-        skills: [
-          { id: 'shield_bash',   rarity: 'common',    label: 'Golpe de Escudo',    icon: '🛡️', cost: 20, cooldown: 3  },
-          { id: 'fortify',       rarity: 'rare',      label: 'Fortificar',         icon: '🏰', cost: 35, cooldown: 6  },
-          { id: 'iron_wall',     rarity: 'epic',      label: 'Muro de Hierro',     icon: '⚙️', cost: 50, cooldown: 10 },
-          { id: 'aegis',         rarity: 'legendary', label: 'Égida',              icon: '✨', cost: 70, cooldown: 18 },
-        ],
-      },
-      battle: {
-        label: 'Batalla',
-        icon: '🔱',
-        color: '#ff6633',
-        skills: [
-          { id: 'war_cry',        rarity: 'common',    label: 'Grito de Guerra',    icon: '📯', cost: 35, cooldown: 12 },
-          { id: 'rally',          rarity: 'rare',      label: 'Reunir Fuerzas',     icon: '🔱', cost: 45, cooldown: 14 },
-          { id: 'berserker_rage', rarity: 'epic',      label: 'Furia Berserker',    icon: '😤', cost: 60, cooldown: 18 },
-          { id: 'warlord',        rarity: 'legendary', label: 'Señor de la Guerra', icon: '👑', cost: 80, cooldown: 25 },
-        ],
-      },
-      execution: {
-        label: 'Ejecución',
-        icon: '💀',
-        color: '#cc2222',
-        skills: [
-          { id: 'execute',       rarity: 'common',    label: 'Ejecución',    icon: '💀', cost: 35, cooldown: 8  },
-          { id: 'decapitate',    rarity: 'rare',      label: 'Decapitar',    icon: '🗡️', cost: 50, cooldown: 12 },
-          { id: 'guillotine',    rarity: 'epic',      label: 'Guillotina',   icon: '⚰️', cost: 65, cooldown: 16 },
-          { id: 'death_blow',    rarity: 'legendary', label: 'Golpe Mortal', icon: '☠️', cost: 85, cooldown: 22 },
-        ],
-      },
+  // ── KAEL — MAGIC ─────────────────────────────────────────────
+  kael_magic: {
+    label : 'Magia',
+    icon  : '🔮',
+    color : '#aa44ff',
+    layers: {
+      basico: [
+        {
+          id         : 'explosion_magica',
+          name       : 'Explosión Mágica',
+          icon       : '💥',
+          desc       : 'Proyectil de energía arcana que explota al impacto.',
+          effect     : { type: 'damage', multiplier: 1.0, isProjectile: true },
+          cost       : { xp: 0, cristales: 0 },
+          unlocked   : true,
+        },
+      ],
+      nv1: [
+        {
+          id         : 'rafaga_energia',
+          name       : 'Ráfaga de Energía',
+          icon       : '⚡',
+          desc       : 'Tres proyectiles rápidos en abanico.',
+          effect     : { type: 'damage_multi', projectiles: 3, multiplier: 0.7 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+        {
+          id         : 'barrera_magica',
+          name       : 'Barrera Mágica',
+          icon       : '🔵',
+          desc       : 'Escudo arcano que absorbe 60 de daño.',
+          effect     : { type: 'shield', absorbAmount: 60 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+        {
+          id         : 'sprint_magico',
+          name       : 'Sprint Mágico',
+          icon       : '🌟',
+          desc       : 'Velocidad aumentada un 40% por 3 segundos.',
+          effect     : { type: 'buff', speedBonus: 0.4, duration: 3 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+      ],
+      nv2: [
+        {
+          id         : 'proyectil_veloz',
+          name       : 'Proyectil Veloz',
+          icon       : '🎯',
+          desc       : 'Proyectil de alta velocidad que perfora enemigos.',
+          effect     : { type: 'damage_pierce', multiplier: 1.5, pierceCount: 3 },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+        {
+          id         : 'escudo_energia_magic',
+          name       : 'Escudo de Energía',
+          icon       : '✨',
+          desc       : 'Cúpula de energía que refleja proyectiles.',
+          effect     : { type: 'shield_reflect', duration: 3 },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+        {
+          id         : 'teletransporte_corto',
+          name       : 'Teletransporte Corto',
+          icon       : '🌀',
+          desc       : 'Se teletransporta detrás del enemigo más cercano.',
+          effect     : { type: 'teleport', range: 6 },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+      ],
+      nv3: [
+        {
+          id         : 'golpe_cargado_magic',
+          name       : 'Golpe Cargado',
+          icon       : '🌋',
+          desc       : 'Acumula energía y lanza una explosión masiva en área.',
+          effect     : { type: 'damage_aoe', multiplier: 3.0, radius: 5 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+        {
+          id         : 'reflejo_proyectil',
+          name       : 'Reflejo de Proyectil',
+          icon       : '↗️',
+          desc       : 'Devuelve el próximo proyectil recibido al enemigo.',
+          effect     : { type: 'reactive_projectile', multiplier: 2.0 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+        {
+          id         : 'debilitamiento',
+          name       : 'Debilitamiento',
+          icon       : '💀',
+          desc       : 'Reduce ATK y DEF del enemigo un 25% por 8 segundos.',
+          effect     : { type: 'debuff', atkReduction: 0.25, defReduction: 0.25, duration: 8 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+      ],
+      arcano: [
+        {
+          id         : 'devastacion_magic',
+          name       : 'Devastación',
+          icon       : '☄️',
+          desc       : 'Meteorito arcano que cae sobre todos los enemigos en pantalla.',
+          effect     : { type: 'damage_all', multiplier: 3.5 },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+        {
+          id         : 'nova_arcana',
+          name       : 'Nova Arcana',
+          icon       : '🌠',
+          desc       : 'Explosión de energía pura que paraliza y daña en área.',
+          effect     : { type: 'damage_aoe_stun', multiplier: 2.5, radius: 6, stunDuration: 2 },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+        {
+          id         : 'singularidad',
+          name       : 'Singularidad',
+          icon       : '🕳️',
+          desc       : 'Crea un agujero negro que atrae y aplasta a todos los enemigos.',
+          effect     : { type: 'damage_pull_aoe', multiplier: 3.0, radius: 8, pullForce: 5 },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+      ],
     },
   },
 
-  bow: {
-    label: 'Arco',
-    subtypes: {
-      precision: {
-        label: 'Precisión',
-        icon: '🎯',
-        color: '#6dcc8a',
-        skills: [
-          { id: 'piercing_shot', rarity: 'common',    label: 'Flecha Perforante', icon: '🏹', cost: 25, cooldown: 4  },
-          { id: 'snipe',         rarity: 'rare',      label: 'Francotirador',     icon: '🎯', cost: 40, cooldown: 7  },
-          { id: 'bullseye',      rarity: 'epic',      label: 'Diana',             icon: '👁️', cost: 55, cooldown: 11 },
-          { id: 'divine_arrow',  rarity: 'legendary', label: 'Flecha Divina',     icon: '✨', cost: 75, cooldown: 19 },
-        ],
-      },
-      poison: {
-        label: 'Veneno',
-        icon: '☠️',
-        color: '#88cc44',
-        skills: [
-          { id: 'poison_arrow',  rarity: 'common',    label: 'Flecha Venenosa', icon: '☠️', cost: 25, cooldown: 4  },
-          { id: 'plague_shot',   rarity: 'rare',      label: 'Disparo Plaga',   icon: '🤢', cost: 40, cooldown: 7  },
-          { id: 'toxic_cloud',   rarity: 'epic',      label: 'Nube Tóxica',     icon: '💀', cost: 55, cooldown: 11 },
-          { id: 'death_plague',  rarity: 'legendary', label: 'Plaga Mortal',    icon: '🦠', cost: 75, cooldown: 19 },
-        ],
-      },
-      rain: {
-        label: 'Lluvia',
-        icon: '🌧️',
-        color: '#4488ff',
-        skills: [
-          { id: 'rain_of_arrows', rarity: 'common',    label: 'Lluvia de Flechas',   icon: '🌧️', cost: 40, cooldown: 8  },
-          { id: 'storm_volley',   rarity: 'rare',      label: 'Andanada Tormenta',   icon: '⛈️', cost: 55, cooldown: 12 },
-          { id: 'arrow_storm',    rarity: 'epic',      label: 'Tormenta de Flechas', icon: '🌪️', cost: 70, cooldown: 16 },
-          { id: 'sky_collapse',   rarity: 'legendary', label: 'Colapso del Cielo',   icon: '☄️', cost: 90, cooldown: 22 },
-        ],
-      },
-      agility: {
-        label: 'Agilidad',
-        icon: '💨',
-        color: '#aaeeff',
-        skills: [
-          { id: 'back_step',     rarity: 'common',    label: 'Paso Atrás',        icon: '💨', cost: 25, cooldown: 5  },
-          { id: 'roll_shot',     rarity: 'rare',      label: 'Disparo en Rodada', icon: '🌀', cost: 40, cooldown: 8  },
-          { id: 'phantom_step',  rarity: 'epic',      label: 'Paso Fantasma',     icon: '👻', cost: 55, cooldown: 12 },
-          { id: 'void_dance',    rarity: 'legendary', label: 'Danza del Vacío',   icon: '🕳️', cost: 75, cooldown: 18 },
-        ],
-      },
+  // ── KAEL — BOW ───────────────────────────────────────────────
+  kael_bow: {
+    label : 'Arco',
+    icon  : '🏹',
+    color : '#6dcc8a',
+    layers: {
+      basico: [
+        {
+          id         : 'proyectil_veloz_bow',
+          name       : 'Proyectil Veloz',
+          icon       : '🏹',
+          desc       : 'Disparo preciso de alta velocidad.',
+          effect     : { type: 'damage', multiplier: 1.0, isProjectile: true },
+          cost       : { xp: 0, cristales: 0 },
+          unlocked   : true,
+        },
+      ],
+      nv1: [
+        {
+          id         : 'lluvia_flechas',
+          name       : 'Lluvia de Flechas',
+          icon       : '🌧️',
+          desc       : 'Lanza cinco flechas en arco que caen sobre el área.',
+          effect     : { type: 'damage_aoe', multiplier: 0.6, projectiles: 5, radius: 3 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+        {
+          id         : 'rodar_bow',
+          name       : 'Rodar',
+          icon       : '🔄',
+          desc       : 'Rueda lateralmente mientras dispara una flecha.',
+          effect     : { type: 'mobility_damage', iframes: 0.3, multiplier: 0.8 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+        {
+          id         : 'trampa',
+          name       : 'Trampa',
+          icon       : '🪤',
+          desc       : 'Coloca una trampa que inmoviliza al primer enemigo que la pisa.',
+          effect     : { type: 'trap', immobilizeDuration: 3, triggerRadius: 1 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+      ],
+      nv2: [
+        {
+          id         : 'golpe_cargado_bow',
+          name       : 'Golpe Cargado',
+          icon       : '🎯',
+          desc       : 'Flecha cargada que perfora hasta 5 enemigos en línea.',
+          effect     : { type: 'damage_pierce', multiplier: 2.0, pierceCount: 5 },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+        {
+          id         : 'dash_bow',
+          name       : 'Dash',
+          icon       : '💨',
+          desc       : 'Retroceso rápido creando distancia del enemigo.',
+          effect     : { type: 'mobility', distance: 4, direction: 'backward' },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+        {
+          id         : 'vision_tactica',
+          name       : 'Visión Táctica',
+          icon       : '👁️',
+          desc       : 'Revela la posición de todos los enemigos por 10 segundos.',
+          effect     : { type: 'utility', revealDuration: 10 },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+      ],
+      nv3: [
+        {
+          id         : 'rafaga_energia_bow',
+          name       : 'Ráfaga de Energía',
+          icon       : '⚡',
+          desc       : 'Dispara diez flechas energéticas en todas direcciones.',
+          effect     : { type: 'damage_radial', projectiles: 10, multiplier: 0.9 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+        {
+          id         : 'paso_fantasma_bow',
+          name       : 'Paso Fantasma',
+          icon       : '👻',
+          desc       : 'Se vuelve intangible por 2s y sus flechas atraviesan todo.',
+          effect     : { type: 'mobility_buff', intangible: true, duration: 2, piercingShots: true },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+        {
+          id         : 'marcado',
+          name       : 'Marcado',
+          icon       : '🔴',
+          desc       : 'Marca al enemigo: recibe 50% más de daño por 6 segundos.',
+          effect     : { type: 'debuff', damageAmp: 0.5, duration: 6 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+      ],
+      arcano: [
+        {
+          id         : 'devastacion_bow',
+          name       : 'Devastación',
+          icon       : '💥',
+          desc       : 'Flecha que explota al impacto dañando a todos en área.',
+          effect     : { type: 'damage_aoe', multiplier: 4.0, radius: 5 },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+        {
+          id         : 'tiro_espectral',
+          name       : 'Tiro Espectral',
+          icon       : '👻',
+          desc       : 'Flecha espectral que ignora DEF y atraviesa paredes.',
+          effect     : { type: 'damage', multiplier: 3.5, ignoresDef: true, wallPierce: true },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+        {
+          id         : 'tormenta_flechas_bow',
+          name       : 'Tormenta de Flechas',
+          icon       : '🌪️',
+          desc       : 'Invoca una tormenta de 20 flechas sobre todos los enemigos.',
+          effect     : { type: 'damage_all', projectiles: 20, multiplier: 0.8 },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+      ],
     },
   },
 
+  // ── MIKA — BOW ───────────────────────────────────────────────
+  mika_bow: {
+    label : 'Arco de Mika',
+    icon  : '🏹',
+    color : '#ff88aa',
+    layers: {
+      basico: [
+        {
+          id         : 'proyectil_veloz_mika',
+          name       : 'Proyectil Veloz',
+          icon       : '🏹',
+          desc       : 'Disparo preciso con el arco de Mika.',
+          effect     : { type: 'damage', multiplier: 1.0, isProjectile: true },
+          cost       : { xp: 0, cristales: 0 },
+          unlocked   : true,
+        },
+      ],
+      nv1: [
+        {
+          id         : 'lluvia_flechas_mika',
+          name       : 'Lluvia de Flechas',
+          icon       : '🌧️',
+          desc       : 'Dispara múltiples flechas que caen en área.',
+          effect     : { type: 'damage_aoe', multiplier: 0.6, projectiles: 5, radius: 3 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+        {
+          id         : 'esquiva_avanzada_mika',
+          name       : 'Esquiva Avanzada',
+          icon       : '💨',
+          desc       : 'Esquiva ágil con invencibilidad y disparo automático.',
+          effect     : { type: 'mobility_damage', iframes: 0.5, multiplier: 0.9 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+        {
+          id         : 'seneuelo',
+          name       : 'Señuelo',
+          icon       : '🪆',
+          desc       : 'Lanza un señuelo que atrae la atención de los enemigos por 4s.',
+          effect     : { type: 'utility', tauntDuration: 4, tauntRadius: 6 },
+          cost       : { xp: 100, cristales: 2 },
+          unlocked   : false,
+        },
+      ],
+      nv2: [
+        {
+          id         : 'rafaga_energia_mika',
+          name       : 'Ráfaga de Energía',
+          icon       : '⚡',
+          desc       : 'Ráfaga de flechas eléctricas que paralizan al impacto.',
+          effect     : { type: 'damage_multi', projectiles: 4, multiplier: 0.8, apply: 'stun', stunDuration: 0.5 },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+        {
+          id         : 'marcado_mika',
+          name       : 'Marcado',
+          icon       : '🔴',
+          desc       : 'Marca al objetivo: recibe 40% más de daño por 8 segundos.',
+          effect     : { type: 'debuff', damageAmp: 0.4, duration: 8 },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+        {
+          id         : 'vision_tactica_mika',
+          name       : 'Visión Táctica',
+          icon       : '👁️',
+          desc       : 'Revela posición de enemigos y aumenta precisión por 12s.',
+          effect     : { type: 'utility', revealDuration: 12, accuracyBonus: 0.2 },
+          cost       : { xp: 300, cristales: 4 },
+          unlocked   : false,
+        },
+      ],
+      nv3: [
+        {
+          id         : 'golpe_cargado_mika',
+          name       : 'Golpe Cargado',
+          icon       : '🎯',
+          desc       : 'Flecha cargada de máximo poder que aturde al impacto.',
+          effect     : { type: 'damage', multiplier: 2.8, stunDuration: 2 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+        {
+          id         : 'zona_peligro',
+          name       : 'Zona de Peligro',
+          icon       : '⚠️',
+          desc       : 'Crea una zona que ralentiza y daña a los enemigos dentro.',
+          effect     : { type: 'zone', radius: 4, slowPct: 0.4, tickDamage: 0.3, duration: 6 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+        {
+          id         : 'coordinacion',
+          name       : 'Coordinación',
+          icon       : '🤝',
+          desc       : 'Sincroniza con Kael: el siguiente ataque de Kael hace 80% más de daño.',
+          effect     : { type: 'buff_ally', damageAmp: 0.8, duration: 5 },
+          cost       : { xp: 600, cristales: 6 },
+          unlocked   : false,
+        },
+      ],
+      arcano: [
+        {
+          id         : 'tormenta_flechas_mika',
+          name       : 'Tormenta de Flechas',
+          icon       : '🌪️',
+          desc       : 'Invoca una tormenta de flechas sobre el campo de batalla.',
+          effect     : { type: 'damage_all', projectiles: 20, multiplier: 0.8 },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+        {
+          id         : 'purificacion',
+          name       : 'Purificación',
+          icon       : '✨',
+          desc       : 'Cura a Kael y Mika un 40% de HP y elimina estados negativos.',
+          effect     : { type: 'heal_party', healPct: 0.4, cleanse: true },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+        {
+          id         : 'flecha_destino',
+          name       : 'Flecha del Destino',
+          icon       : '🌟',
+          desc       : 'Flecha guiada que siempre impacta y hace daño crítico garantizado.',
+          effect     : { type: 'damage', multiplier: 5.0, guaranteed_crit: true, homing: true },
+          cost       : { xp: 1200, cristales: 10 },
+          unlocked   : false,
+        },
+      ],
+    },
+  },
 };
 
+// ── Helpers ───────────────────────────────────────────────────────────────
+
+export function getTreeKey(charId, weapon) {
+  return `${charId}_${weapon}`;
+}
+
+export function getTree(charId, weapon) {
+  return WEAPON_TREES[getTreeKey(charId, weapon)] ?? null;
+}
+
+export function getLayerOrder() {
+  return ['basico', 'nv1', 'nv2', 'nv3', 'arcano'];
+}
+
+// Cristal requerido por arma
+export const WEAPON_CRYSTAL_MAP = {
+  katana: 'cristalKatana',
+  sword : 'cristalEspada',
+  magic : 'cristalMagia',
+  bow   : 'cristalArco',
+};
+
+// Colores de rareza (mantenidos para compatibilidad)
 export const RARITY_COLORS = {
   common   : '#aaaaaa',
   rare     : '#4488ff',
@@ -216,4 +722,12 @@ export const DEFAULT_UNLOCKED = {
   katana: ['speed', 'shadow', 'storm', 'honor'],
   sword : ['strength', 'defense', 'battle', 'execution'],
   bow   : ['precision', 'poison', 'rain', 'agility'],
+};
+
+// SKILL_DATA mantenido para compatibilidad con sistemas existentes
+export const SKILL_DATA = {
+  magic : { label: 'Magia',  subtypes: {} },
+  katana: { label: 'Katana', subtypes: {} },
+  sword : { label: 'Espada', subtypes: {} },
+  bow   : { label: 'Arco',   subtypes: {} },
 };
