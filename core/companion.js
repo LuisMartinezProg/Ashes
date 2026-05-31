@@ -20,7 +20,7 @@ export class Companion {
     this._playerPos  = playerPosition;
 
     // Stats iniciales desde ProgressionMika si ya existe, si no fallback seguro
-    const mikaStats  = window._progressionMika?.getStats?.() ?? { maxHp: 80 };
+    const mikaStats  = window._mikaProgression?.getStats?.() ?? { maxHp: 80 };
     this.maxHp       = mikaStats.maxHp;
     this.hp          = this.maxHp;
 
@@ -44,7 +44,7 @@ export class Companion {
 
   // Siempre lee stats en vivo desde ProgressionMika
   getStats() {
-    return window._progressionMika?.getStats?.() ?? {
+    return window._mikaProgression?.getStats?.() ?? {
       maxHp: this.maxHp,
       atk  : 7,
       def  : 3,
@@ -52,7 +52,6 @@ export class Companion {
       range: 8,
     };
   }
-
   // Sincroniza maxHp con el nivel actual de Mika (llamar tras level up)
   syncStatsFromProgression() {
     const stats  = this.getStats();
