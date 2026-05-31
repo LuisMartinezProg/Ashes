@@ -6,9 +6,28 @@ export class CharacterMenu {
     this._skillBar     = skillBar;
     this._open         = false;
     this._activeChar   = 0;
-    this._equipped     = { arma: null, armadura: null, accesorio: null };
+    this._equippedKael = { arma: null, armadura: null, accesorio: null };
+    this._equippedMika = { arma: null, armadura: null, accesorio: null };
     this._subMenu      = null;
     this._buildUI();
+  }
+
+  // ── Helper: progression del personaje activo ──────────────────────────────
+  _getProgression() {
+    return this._activeChar === 1
+      ? (window._mikaProgression ?? this._progression)
+      : this._progression;
+  }
+
+  _getEquipped() {
+    return this._activeChar === 1 ? this._equippedMika : this._equippedKael;
+  }
+
+  // ── Getter de effective stats según personaje ─────────────────────────────
+  _getEffective() {
+    return this._activeChar === 1
+      ? (window._effectiveStatsMika ?? this._getProgression().getStats())
+      : (window._effectiveStats     ?? this._progression.getStats());
   }
 
   _buildUI() {
@@ -187,7 +206,8 @@ export class CharacterMenu {
     this._centerCol.innerHTML = '';
     const avatars = ['⚔️', '🏹'];
     const names   = ['KAEL', 'MIKA'];
-    const level   = this._progression.getLevel();
+    const prog    = this._getProgression();
+    const level   = prog.getLevel();
 
     const wrap = document.createElement('div');
     Object.assign(wrap.style, {
@@ -229,19 +249,24 @@ export class CharacterMenu {
 
   _renderRight() {
     this._rightCol.innerHTML = '';
-    const prog  = this._progression;
+    const prog  = this._getProgression();
     const stats = prog.getStats();
-    const eff   = window._effectiveStats ?? stats;
+    const eff   = this._getEffective();
     const char  = this._activeChar === 0 ? window._player : window._companion;
 
     const statDefs = [
-      { icon: '❤️', label: 'HP',   value: `${char?.hp ?? '?'} / ${eff.maxHp ?? stats.maxHp}` },
+      { icon: '❤️', label: 'HP',   value: `${Math.ceil(char?.hp ?? 0)} / ${eff.maxHp ?? stats.maxHp}` },
       { icon: '⚔️', label: 'ATK',  value: eff.atk  ?? stats.atk  },
       { icon: '🛡️', label: 'DEF',  value: eff.def  ?? stats.def  },
       { icon: '💨', label: 'VEL',  value: (stats.speed ?? 5).toFixed(1) },
       { icon: '✦',  label: 'ÉTER', value: window._dungeonManager?.getEtherFragments?.() ?? 0 },
       { icon: '⭐', label: 'REP',  value: prog.getReputation() },
     ];
+
+    // Stat exclusivo de Mika
+    if (this._activeChar === 1 && stats.range !== undefined) {
+      statDefs.splice(4, 0, { icon: '🏹', label: 'RANGO', value: stats.range.toFixed(1) });
+    }
 
     for (const { icon, label, value } of statDefs) {
       const row = document.createElement('div');
@@ -344,21 +369,28 @@ export class CharacterMenu {
   }
 
   _fillAtributos(body) {
-    const prog  = this._progression;
+    const prog  = this._getProgression();
     const stats = prog.getStats();
-    const eff   = window._effectiveStats ?? stats;
+    const eff   = this._getEffective();
     const char  = this._activeChar === 0 ? window._player : window._companion;
 
     const defs = [
       { icon:'❤️', label:'HP Máx',        value: eff.maxHp ?? stats.maxHp },
-      { icon:'❤️', label:'HP Actual',      value: char?.hp ?? '?' },
+      { icon:'❤️', label:'HP Actual',      value: Math.ceil(char?.hp ?? 0) },
       { icon:'⚔️', label:'ATK',            value: eff.atk  ?? stats.atk },
       { icon:'🛡️', label:'DEF',            value: eff.def  ?? stats.def },
       { icon:'💨', label:'VEL',            value: (stats.speed ?? 5).toFixed(1) },
+    ];
+
+    if (this._activeChar === 1 && stats.range !== undefined) {
+      defs.push({ icon:'🏹', label:'Rango', value: stats.range.toFixed(1) });
+    }
+
+    defs.push(
       { icon:'✦',  label:'Éter',           value: window._dungeonManager?.getEtherFragments?.() ?? 0 },
       { icon:'⭐', label:'Reputación',     value: prog.getReputation() },
       { icon:'🪄', label:'Energía Mágica', value: prog.getMagicEnergy() },
-    ];
+    );
 
     for (const { icon, label, value } of defs) {
       const row = document.createElement('div');
@@ -378,29 +410,27 @@ export class CharacterMenu {
       body.appendChild(row);
     }
 
-    // ── Separador XP ──────────────────────────────────────────────────────
     const sep = document.createElement('div');
     Object.assign(sep.style, {
-      borderTop    : '1px solid rgba(201,168,76,0.15)',
-      marginTop    : '10px',
-      paddingTop   : '12px',
+      borderTop : '1px solid rgba(201,168,76,0.15)',
+      marginTop : '10px',
+      paddingTop: '12px',
     });
     body.appendChild(sep);
 
-    const level  = prog.getLevel();
+    const level    = prog.getLevel();
     const maxLevel = 20;
-    const atMax  = level >= maxLevel;
-    const xp     = prog.getTotalXP();
-    const next   = prog.getXPForNextLevel();
-    const pct    = Math.round(prog.getXPProgress() * 100);
+    const atMax    = level >= maxLevel;
+    const xp       = prog.getTotalXP();
+    const next     = prog.getXPForNextLevel();
+    const pct      = Math.round(prog.getXPProgress() * 100);
 
-    // Fila XP: texto + barra + botón [+]
     const xpRow = document.createElement('div');
     Object.assign(xpRow.style, {
-      display      : 'flex',
-      alignItems   : 'center',
-      gap          : '8px',
-      marginBottom : '4px',
+      display     : 'flex',
+      alignItems  : 'center',
+      gap         : '8px',
+      marginBottom: '4px',
     });
 
     const xpLabel = document.createElement('div');
@@ -432,28 +462,27 @@ export class CharacterMenu {
     });
     xpBarWrap.appendChild(xpFill);
 
-    // Botón [+]
     const plusBtn = document.createElement('button');
     Object.assign(plusBtn.style, {
-      width        : '22px',
-      height       : '22px',
-      borderRadius : '50%',
-      border       : atMax
+      width         : '22px',
+      height        : '22px',
+      borderRadius  : '50%',
+      border        : atMax
         ? '1px solid rgba(201,168,76,0.15)'
         : '1px solid rgba(201,168,76,0.6)',
-      background   : atMax
+      background    : atMax
         ? 'rgba(201,168,76,0.04)'
         : 'rgba(201,168,76,0.15)',
-      color        : atMax ? 'rgba(201,168,76,0.2)' : '#C9A84C',
-      fontSize     : '14px',
-      lineHeight   : '1',
-      cursor       : atMax ? 'default' : 'pointer',
-      pointerEvents: 'all',
-      display      : 'flex',
-      alignItems   : 'center',
+      color         : atMax ? 'rgba(201,168,76,0.2)' : '#C9A84C',
+      fontSize      : '14px',
+      lineHeight    : '1',
+      cursor        : atMax ? 'default' : 'pointer',
+      pointerEvents : 'all',
+      display       : 'flex',
+      alignItems    : 'center',
       justifyContent: 'center',
-      flexShrink   : '0',
-      transition   : 'all 0.15s',
+      flexShrink    : '0',
+      transition    : 'all 0.15s',
     });
     plusBtn.textContent = '+';
 
@@ -476,17 +505,18 @@ export class CharacterMenu {
   }
 
   _openLevelUpPanel(parentBody) {
-    // Evitar duplicados
     const existing = document.getElementById('_levelup_panel');
     if (existing) existing.remove();
 
-    const prog       = this._progression;
+    const prog       = this._getProgression();
     const level      = prog.getLevel();
     const maxLevel   = 20;
     const nucleoCost = 1 + Math.floor(level / 5);
     const inv        = window._inventory;
     const nucleoQty  = inv?._items?.materiales?.find?.(i => i.id === 'nucleoArcano')?.qty ?? 0;
     const canConfirm = nucleoQty >= nucleoCost;
+
+    const charName = this._activeChar === 1 ? 'MIKA' : 'KAEL';
 
     const panel = document.createElement('div');
     panel.id = '_levelup_panel';
@@ -509,7 +539,6 @@ export class CharacterMenu {
       boxShadow    : '0 0 40px rgba(201,168,76,0.2)',
     });
 
-    // Título
     const titleEl = document.createElement('div');
     Object.assign(titleEl.style, {
       fontFamily   : "'Cinzel',serif",
@@ -518,9 +547,8 @@ export class CharacterMenu {
       color        : '#C9A84C',
       textAlign    : 'center',
     });
-    titleEl.textContent = `SUBIR A NIVEL ${level + 1}`;
+    titleEl.textContent = `${charName} — NIVEL ${level + 1}`;
 
-    // Fila material
     const matRow = document.createElement('div');
     Object.assign(matRow.style, {
       display       : 'flex',
@@ -550,7 +578,6 @@ export class CharacterMenu {
 
     matRow.append(matLeft, matRight);
 
-    // Aviso si no alcanza
     const warnEl = document.createElement('div');
     Object.assign(warnEl.style, {
       fontFamily: 'monospace',
@@ -561,21 +588,20 @@ export class CharacterMenu {
     });
     warnEl.textContent = 'Núcleos insuficientes';
 
-    // Botones
     const btnRow = document.createElement('div');
     Object.assign(btnRow.style, { display: 'flex', gap: '10px', width: '100%' });
 
     const cancelBtn = document.createElement('button');
     Object.assign(cancelBtn.style, {
-      flex        : '1',
-      padding     : '10px',
-      borderRadius: '10px',
-      border      : '1px solid rgba(201,168,76,0.2)',
-      background  : 'rgba(201,168,76,0.05)',
-      color       : 'rgba(201,168,76,0.6)',
-      fontFamily  : 'monospace',
-      fontSize    : '10px',
-      cursor      : 'pointer',
+      flex         : '1',
+      padding      : '10px',
+      borderRadius : '10px',
+      border       : '1px solid rgba(201,168,76,0.2)',
+      background   : 'rgba(201,168,76,0.05)',
+      color        : 'rgba(201,168,76,0.6)',
+      fontFamily   : 'monospace',
+      fontSize     : '10px',
+      cursor       : 'pointer',
       pointerEvents: 'all',
     });
     cancelBtn.textContent = 'Cancelar';
@@ -584,37 +610,36 @@ export class CharacterMenu {
 
     const confirmBtn = document.createElement('button');
     Object.assign(confirmBtn.style, {
-      flex        : '1',
-      padding     : '10px',
-      borderRadius: '10px',
-      border      : canConfirm
+      flex         : '1',
+      padding      : '10px',
+      borderRadius : '10px',
+      border       : canConfirm
         ? '1px solid rgba(201,168,76,0.7)'
         : '1px solid rgba(201,168,76,0.15)',
-      background  : canConfirm
+      background   : canConfirm
         ? 'linear-gradient(135deg,rgba(122,96,48,0.6),rgba(201,168,76,0.3))'
         : 'rgba(201,168,76,0.04)',
-      color       : canConfirm ? '#ffe8a0' : 'rgba(201,168,76,0.25)',
-      fontFamily  : 'monospace',
-      fontSize    : '10px',
-      cursor      : canConfirm ? 'pointer' : 'default',
+      color        : canConfirm ? '#ffe8a0' : 'rgba(201,168,76,0.25)',
+      fontFamily   : 'monospace',
+      fontSize     : '10px',
+      cursor       : canConfirm ? 'pointer' : 'default',
       pointerEvents: 'all',
-      transition  : 'all 0.15s',
+      transition   : 'all 0.15s',
     });
     confirmBtn.textContent = '⬆ Confirmar';
 
     if (canConfirm) {
       const doLevelUp = () => {
-        // Gastar núcleos
         const mat = inv._items.materiales.find(i => i.id === 'nucleoArcano');
         if (mat) mat.qty -= nucleoCost;
 
-        // Dar XP exacto para subir un nivel
         const needed = prog.getXPForNextLevel() - prog.getTotalXP();
-        if (needed > 0) prog.addXP(window._combat?._weaponType ?? 'katana', needed);
+        if (needed > 0) {
+          const weapon = this._activeChar === 1 ? 'bow' : (window._combat?._weaponType ?? 'katana');
+          prog.addXP(weapon, needed);
+        }
 
         panel.remove();
-
-        // Refrescar atributos y vista principal
         parentBody.innerHTML = '';
         this._fillAtributos(parentBody);
         this._renderCenter();
@@ -640,9 +665,10 @@ export class CharacterMenu {
   _fillEquipo(body, panel) {
     const slots      = ['arma', 'armadura', 'accesorio'];
     const slotLabels = { arma:'⚔️ Arma', armadura:'🛡️ Armadura', accesorio:'💍 Accesorio' };
+    const equipped   = this._getEquipped();
 
     for (const slot of slots) {
-      const item = this._equipped[slot];
+      const item = equipped[slot];
       const row  = document.createElement('div');
       Object.assign(row.style, {
         display     : 'flex', alignItems: 'center',
@@ -689,7 +715,7 @@ export class CharacterMenu {
     body.appendChild(sep);
 
     const total = { ATK:0, DEF:0, HP:0, MAGIA:0 };
-    for (const item of Object.values(this._equipped)) {
+    for (const item of Object.values(equipped)) {
       if (!item?.stats) continue;
       for (const [k,v] of Object.entries(item.stats)) {
         if (total[k] !== undefined) total[k] += v;
@@ -751,7 +777,7 @@ export class CharacterMenu {
         </div>
       `;
       const equip = () => {
-        this._equipped[slot] = item ?? null;
+        this._getEquipped()[slot] = item ?? null;
         this._applyEquipStats();
         picker.remove();
         const newBody = parentPanel.querySelector('div:nth-child(2)');
@@ -775,26 +801,41 @@ export class CharacterMenu {
   }
 
   _applyEquipStats() {
-    const base = this._progression.getStats();
+    const prog    = this._getProgression();
+    const base    = prog.getStats();
+    const equipped = this._getEquipped();
     let atk = base.atk, def = base.def, maxHp = base.maxHp;
-    for (const item of Object.values(this._equipped)) {
+
+    for (const item of Object.values(equipped)) {
       if (!item?.stats) continue;
       if (item.stats.ATK) atk   += item.stats.ATK;
       if (item.stats.DEF) def   += item.stats.DEF;
       if (item.stats.HP)  maxHp += item.stats.HP;
     }
-    window._effectiveStats = { atk, def, maxHp };
-    const player = window._player;
-    if (player) {
-      player.maxHp = maxHp;
-      player.hp    = Math.min(player.hp, maxHp);
-      player.onDamage?.(player.hp, player.maxHp);
+
+    if (this._activeChar === 1) {
+      window._effectiveStatsMika = { atk, def, maxHp };
+      const companion = window._companion;
+      if (companion) {
+        companion.maxHp = maxHp;
+        companion.hp    = Math.min(companion.hp, maxHp);
+        companion.onDamage?.(companion.hp, companion.maxHp);
+      }
+    } else {
+      window._effectiveStats = { atk, def, maxHp };
+      const player = window._player;
+      if (player) {
+        player.maxHp = maxHp;
+        player.hp    = Math.min(player.hp, maxHp);
+        player.onDamage?.(player.hp, player.maxHp);
+      }
     }
   }
 
   _fillHabilidades(body) {
+    const prog   = this._getProgression();
     const weapon = this._activeChar === 1 ? 'bow' : (window._combat?._weaponType ?? 'katana');
-    const skills = this._progression.getActiveSkills(weapon);
+    const skills = prog.getActiveSkills(weapon);
     const icons  = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
 
     const label = document.createElement('div');
