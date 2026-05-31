@@ -140,14 +140,15 @@ export class SkillBar {
       console.error('[SkillBar._rebuild]', e);
     }
   }
-
-  _scale() {
-    const isLandscape = window.innerWidth > window.innerHeight;
-    return isLandscape
-      ? window.innerHeight / 450
-      : window.innerWidth  / 480;
-  }
-
+_scale() {
+  const isPC = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (isPC) return 0.75; // 25% más pequeño en PC
+  const isLandscape = window.innerWidth > window.innerHeight;
+  return isLandscape
+    ? window.innerHeight / 450
+    : window.innerWidth  / 480;
+}
+  
   _placeFromBottomRight(el, hx, hy, size) {
     const s = this._scale();
     const right  = Math.round((BASE_W - hx) * s) - size / 2;
