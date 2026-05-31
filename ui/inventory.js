@@ -171,11 +171,22 @@ export class InventoryUI {
     }
     this._emptyMsg.style.display = 'none';
     this._grid.style.display     = 'grid';
-    for (const item of items) {
-      this._grid.appendChild(this._buildSlot(item));
+
+    // Consumibles usan layout de lista para mostrar botón Usar
+    if (this._section === 'consumibles') {
+      this._grid.style.gridTemplateColumns = '1fr';
+      for (const item of items) {
+        this._grid.appendChild(this._buildConsumibleRow(item));
+      }
+    } else {
+      this._grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+      for (const item of items) {
+        this._grid.appendChild(this._buildSlot(item));
+      }
     }
   }
 
+  // ── Slot estándar (materiales / equipos) ──────────────────────────────────
   _buildSlot(item) {
     const slot = document.createElement('div');
     Object.assign(slot.style, {
@@ -223,11 +234,8 @@ export class InventoryUI {
     if (item.equipped) {
       const eq = document.createElement('div');
       Object.assign(eq.style, {
-        position : 'absolute',
-        top      : '3px',
-        right    : '4px',
-        fontSize : '8px',
-        color    : '#44ff88',
+        position: 'absolute', top: '3px', right: '4px',
+        fontSize: '8px', color: '#44ff88',
       });
       eq.textContent = '✓';
       slot.appendChild(eq);
@@ -237,6 +245,258 @@ export class InventoryUI {
     slot.addEventListener('click', (e) => this._showTooltip(item, e));
     slot.addEventListener('touchstart', (e) => { e.preventDefault(); this._showTooltip(item, e); }, { passive: false });
     return slot;
+  }
+
+  // ── Fila de consumible con botón Usar ─────────────────────────────────────
+  _buildConsumibleRow(item) {
+    const row = document.createElement('div');
+    Object.assign(row.style, {
+      display     : 'flex',
+      alignItems  : 'center',
+      gap         : '12px',
+      padding     : '10px 14px',
+      borderRadius: '12px',
+      border      : `1px solid ${this._rarityColor(item.rarity)}`,
+      background  : 'rgba(201,168,76,0.04)',
+      marginBottom: '2px',
+    });
+
+    const iconEl = document.createElement('div');
+    iconEl.style.fontSize = '28px';
+    iconEl.style.minWidth = '36px';
+    iconEl.style.textAlign = 'center';
+    iconEl.textContent = item.icon ?? '🧪';
+
+    const info = document.createElement('div');
+    info.style.flex = '1';
+
+    const nameLine = document.createElement('div');
+    Object.assign(nameLine.style, {
+      fontFamily: 'monospace', fontSize: '11px', color: '#C9A84C',
+    });
+    nameLine.textContent = item.name;
+
+    const descLine = document.createElement('div');
+    Object.assign(descLine.style, {
+      fontFamily: 'monospace', fontSize: '9px',
+      color: 'rgba(255,255,255,0.45)', marginTop: '2px', lineHeight: '1.3',
+    });
+    descLine.textContent = item.desc ?? '';
+
+    const qtyLine = document.createElement('div');
+    Object.assign(qtyLine.style, {
+      fontFamily: 'monospace', fontSize: '9px',
+      color: 'rgba(201,168,76,0.5)', marginTop: '3px',
+    });
+    qtyLine.textContent = `x${item.qty ?? 1}`;
+
+    info.append(nameLine, descLine, qtyLine);
+
+    // ── Botón Usar ────────────────────────────────────────────────────────
+    const useBtn = document.createElement('button');
+    Object.assign(useBtn.style, {
+      padding      : '8px 14px',
+      borderRadius : '10px',
+      border       : '1px solid rgba(201,168,76,0.5)',
+      background   : 'rgba(201,168,76,0.12)',
+      color        : '#C9A84C',
+      fontFamily   : 'monospace',
+      fontSize     : '10px',
+      cursor       : 'pointer',
+      pointerEvents: 'all',
+      whiteSpace   : 'nowrap',
+      transition   : 'all 0.15s',
+      flexShrink   : '0',
+    });
+    useBtn.textContent = 'Usar';
+
+    useBtn.addEventListener('mouseenter', () => {
+      useBtn.style.background = 'rgba(201,168,76,0.25)';
+      useBtn.style.border     = '1px solid rgba(201,168,76,0.8)';
+    });
+    useBtn.addEventListener('mouseleave', () => {
+      useBtn.style.background = 'rgba(201,168,76,0.12)';
+      useBtn.style.border     = '1px solid rgba(201,168,76,0.5)';
+    });
+
+    const doUse = () => this._useConsumible(item, qtyLine, useBtn, row);
+    useBtn.addEventListener('click', doUse);
+    useBtn.addEventListener('touchstart', (e) => { e.preventDefault(); doUse(); }, { passive: false });
+
+    row.append(iconEl, info, useBtn);
+    return row;
+  }
+
+  // ── Lógica de uso de consumibles ──────────────────────────────────────────
+  _useConsumible(item, qtyEl, btn, rowEl) {
+    if (!item.effect) return;
+    if ((item.qty ?? 1) <= 0) return;
+
+    const effect = item.effect;
+    let used = false;
+
+    if (effect.type === 'heal') {
+      const target = this._getHealTarget();
+      if (target) {
+        const before = target.hp;
+        target.hp = Math.min(target.hp + effect.value, target.maxHp);
+        target.onDamage?.(target.hp, target.maxHp);
+        this._showUseNotification(item.icon, item.name, `+${Math.ceil(target.hp - before)} HP`);
+        used = true;
+      }
+    } else if (effect.type === 'mana') {
+      const prog = window._prog;
+      if (prog) {
+        prog.addMagicEnergy(effect.value);
+        this._showUseNotification(item.icon, item.name, `+${effect.value} Maná`);
+        used = true;
+      }
+    } else if (effect.type === 'buff') {
+      used = this._applyBuff(effect, item.icon, item.name);
+    }
+
+    if (!used) return;
+
+    // Descontar del inventario
+    item.qty = (item.qty ?? 1) - 1;
+
+    if (item.qty <= 0) {
+      // Eliminar del array y del DOM
+      this._items.consumibles = this._items.consumibles.filter(i => i.id !== item.id);
+      rowEl.style.transition = 'opacity 0.3s';
+      rowEl.style.opacity    = '0';
+      setTimeout(() => {
+        rowEl.remove();
+        if (this._items.consumibles.length === 0) {
+          this._emptyMsg.style.display = 'block';
+          this._grid.style.display     = 'none';
+        }
+      }, 300);
+    } else {
+      qtyEl.textContent = `x${item.qty}`;
+    }
+  }
+
+  // ── Objetivo de curación: personaje activo en el party ────────────────────
+  _getHealTarget() {
+    const active = window._partyManager?.getActiveCharacter?.();
+    if (active) return active;
+    return window._player ?? null;
+  }
+
+  // ── Aplicar buff temporal ─────────────────────────────────────────────────
+  _applyBuff(effect, icon, itemName) {
+    const prog = window._prog;
+    if (!prog) return false;
+
+    const base   = prog.getStats();
+    const eff    = window._effectiveStats ?? { ...base };
+    const player = window._player;
+
+    if (effect.stat === 'atk') {
+      const bonus = Math.floor((eff.atk ?? base.atk) * effect.value);
+      window._effectiveStats = { ...eff, atk: (eff.atk ?? base.atk) + bonus };
+      this._showUseNotification(icon, itemName, `ATK +${bonus} (${effect.duration}s)`);
+
+      setTimeout(() => {
+        const cur = window._effectiveStats ?? {};
+        window._effectiveStats = { ...cur, atk: Math.max((cur.atk ?? base.atk) - bonus, base.atk) };
+      }, effect.duration * 1000);
+
+    } else if (effect.stat === 'def') {
+      const bonus = Math.floor((eff.def ?? base.def) * effect.value);
+      window._effectiveStats = { ...eff, def: (eff.def ?? base.def) + bonus };
+      this._showUseNotification(icon, itemName, `DEF +${bonus} (${effect.duration}s)`);
+
+      setTimeout(() => {
+        const cur = window._effectiveStats ?? {};
+        window._effectiveStats = { ...cur, def: Math.max((cur.def ?? base.def) - bonus, base.def) };
+      }, effect.duration * 1000);
+    }
+
+    // Indicador visual de buff activo en HUD
+    this._showBuffIndicator(icon, itemName, effect.duration);
+    return true;
+  }
+
+  // ── Notificación de uso (esquina inferior) ────────────────────────────────
+  _showUseNotification(icon, name, detail) {
+    const el = document.createElement('div');
+    Object.assign(el.style, {
+      position     : 'fixed',
+      bottom       : '200px',
+      left         : '50%',
+      transform    : 'translateX(-50%)',
+      background   : 'rgba(4,4,10,0.92)',
+      border       : '1px solid rgba(201,168,76,0.5)',
+      borderRadius : '20px',
+      padding      : '8px 20px',
+      fontFamily   : 'monospace',
+      fontSize     : '11px',
+      color        : '#C9A84C',
+      pointerEvents: 'none',
+      zIndex       : '600',
+      opacity      : '1',
+      transition   : 'opacity 0.7s, bottom 0.7s',
+      whiteSpace   : 'nowrap',
+      textAlign    : 'center',
+    });
+    el.textContent = `${icon} ${name}  ${detail}`;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.style.opacity = '0';
+      el.style.bottom  = '240px';
+    }));
+    setTimeout(() => el.remove(), 750);
+  }
+
+  // ── Indicador de buff activo en pantalla ──────────────────────────────────
+  _showBuffIndicator(icon, name, duration) {
+    const id  = `_buff_${icon}`;
+    const old = document.getElementById(id);
+    if (old) old.remove();
+
+    const el = document.createElement('div');
+    el.id = id;
+    Object.assign(el.style, {
+      position     : 'fixed',
+      top          : '60px',
+      right        : '14px',
+      background   : 'rgba(4,4,10,0.88)',
+      border       : '1px solid rgba(201,168,76,0.4)',
+      borderRadius : '10px',
+      padding      : '6px 10px',
+      fontFamily   : 'monospace',
+      fontSize     : '10px',
+      color        : '#C9A84C',
+      pointerEvents: 'none',
+      zIndex       : '200',
+      display      : 'flex',
+      alignItems   : 'center',
+      gap          : '6px',
+    });
+
+    const iconEl = document.createElement('span');
+    iconEl.textContent = icon;
+
+    const timerEl = document.createElement('span');
+    timerEl.style.color = 'rgba(201,168,76,0.7)';
+
+    el.append(iconEl, timerEl);
+    document.body.appendChild(el);
+
+    let remaining = duration;
+    const tick = setInterval(() => {
+      remaining--;
+      timerEl.textContent = `${remaining}s`;
+      if (remaining <= 0) {
+        clearInterval(tick);
+        el.style.transition = 'opacity 0.5s';
+        el.style.opacity    = '0';
+        setTimeout(() => el.remove(), 500);
+      }
+    }, 1000);
+    timerEl.textContent = `${remaining}s`;
   }
 
   _rarityColor(rarity) {
