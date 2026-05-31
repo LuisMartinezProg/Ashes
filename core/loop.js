@@ -62,7 +62,13 @@ function _tick(timestamp) {
   const buildCamActive = window._buildCamera?._active;
 
   if (!buildCamActive) {
-    const input = _joystick.getInput();
+    const joyInput = _joystick.getInput();
+    const kbInput  = window._keyboard?.getInput?.() ?? { dx: 0, dy: 0 };
+
+    const input = {
+      dx: Math.abs(kbInput.dx) > 0.01 ? kbInput.dx : joyInput.dx,
+      dy: Math.abs(kbInput.dy) > 0.01 ? kbInput.dy : joyInput.dy,
+    };
 
     if (window._partyManager) {
       window._partyManager.update(delta, input, _camera);
@@ -71,6 +77,22 @@ function _tick(timestamp) {
     }
 
     window._setJoystick?.(input.dx, input.dy);
+
+    // Rotar cámara con mouse derecho en PC
+    const camRot = window._keyboard?.getCameraRotation?.() ?? 0;
+    if (Math.abs(camRot) > 0.001) _thirdCam.addYaw?.(camRot);
+
+    // Ataques y habilidades por teclado
+    if (window._keyboard) {
+      const kb    = window._keyboard;
+      const binds = kb.getBinds();
+      if (kb._keys[binds.attack]) window._combat?.triggerAttack?.();
+      if (kb._keys[binds.skill1]) window._skillSystem?.castByIndex?.(0);
+      if (kb._keys[binds.skill2]) window._skillSystem?.castByIndex?.(1);
+      if (kb._keys[binds.skill3]) window._skillSystem?.castByIndex?.(2);
+      if (kb._keys[binds.switch]) window._partyManager?.switchNext?.();
+      if (kb._keys[binds.map])    window._mapUI?.toggle?.();
+    }
 
     if (_triggers) _triggers.update(_player.root.position);
     _thirdCam.update(delta);
