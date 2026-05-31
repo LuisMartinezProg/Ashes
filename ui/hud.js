@@ -13,6 +13,7 @@ export class HUD {
     this._playerHpFill     = null;
     this._playerHpText     = null;
     this._playerHpName     = null;
+    this._levelLabel       = null;
     this._energyFill       = null;
     this._staminaEl        = null;
     this._staminaArc       = null;
@@ -33,7 +34,6 @@ export class HUD {
     }
   }
 
-  // ── Party Manager ─────────────────────────────────────────────────────────
   setPartyManager(pm) {
     this._partyManager = pm;
     pm.onSwitch   = (idx) => this._onPartySwitch(idx);
@@ -41,8 +41,6 @@ export class HUD {
     pm.companion.onDamage = (hp, max) => this._updateMikaHp(hp, max);
     this._onPartySwitch(0);
   }
-
-  // ── Party UI ──────────────────────────────────────────────────────────────
 
   _buildParty() {
     this._partyEl = document.createElement('div');
@@ -188,7 +186,6 @@ export class HUD {
       card.wrap.style.border       = `1px solid ${active ? color + '88' : 'rgba(255,255,255,0.1)'}`;
     });
 
-    // Cooldown en el que sale
     const prevIdx  = idx === 0 ? 1 : 0;
     const prevCard = cards[prevIdx];
     prevCard.coolOverlay.style.display = 'flex';
@@ -202,7 +199,6 @@ export class HUD {
       }
     }, 100);
 
-    // Barra HP central — color y nombre
     if (this._playerHpFill) {
       this._playerHpFill.style.background =
         idx === 0
@@ -219,13 +215,10 @@ export class HUD {
           ? 'linear-gradient(90deg,#2244cc,#66aaff)'
           : 'linear-gradient(90deg,#aa2266,#ff88aa)';
     }
-
-    // Stamina — solo protagonista
     if (this._staminaEl) {
       this._staminaEl.style.display = idx === 0 ? 'block' : 'none';
     }
 
-    // ── Sincronizar HP central con el personaje que entra ──────────────────
     if (idx === 0) {
       const p = window._player;
       if (p && this._playerHpFill) {
@@ -258,8 +251,6 @@ export class HUD {
     const pct = Math.max(0, hp / max) * 100;
     this._p1Card.hpFill.style.width = `${pct}%`;
   }
-
-  // ── Reacción ──────────────────────────────────────────────────────────────
 
   _showReactionLabel(name) {
     const labels = {
@@ -296,8 +287,6 @@ export class HUD {
     setTimeout(() => el.remove(), 900);
   }
 
-  // ── API pública ───────────────────────────────────────────────────────────
-
   setEnemies(list) {
     for (const el of this._enemyLabels.values()) el.remove();
     this._enemyLabels.clear();
@@ -305,10 +294,8 @@ export class HUD {
   }
 
   setCamera(camera) { this._camera = camera; }
-
   show() { this._container.style.display = 'block'; }
   hide() { this._container.style.display = 'none'; }
-
   setWeaponIcon(type) {
     if (window._skillBar) window._skillBar.setWeaponIcon(type);
   }
@@ -321,6 +308,10 @@ export class HUD {
       if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(hp)}/${max}`;
     }
     this.updateProtagonistHp(hp, max);
+  }
+
+  updateLevel(level) {
+    if (this._levelLabel) this._levelLabel.textContent = `Nv.${level}`;
   }
 
   updateStamina(stamina, max) {
@@ -361,8 +352,6 @@ export class HUD {
     if (!bossFound) this._bossBarEl.style.display = 'none';
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
-
   _build() {
     this._container = document.createElement('div');
     this._container.id = 'hud-combat';
@@ -396,45 +385,39 @@ export class HUD {
       minWidth     : '130px',
     });
 
+    // Fila nombre + nivel
+    const nameRow = document.createElement('div');
+    Object.assign(nameRow.style, {
+      display       : 'flex',
+      justifyContent: 'space-between',
+      alignItems    : 'center',
+    });
+
     this._playerHpName = document.createElement('div');
     Object.assign(this._playerHpName.style, {
       color        : '#88aaff',
       fontSize     : '8px',
       fontFamily   : 'monospace',
-      textAlign    : 'center',
       letterSpacing: '2px',
     });
-    const nameRow = document.createElement('div');
-Object.assign(nameRow.style, {
-  display       : 'flex',
-  justifyContent: 'space-between',
-  alignItems    : 'center',
-});
+    this._playerHpName.textContent = 'KAEL';
 
-this._playerHpName = document.createElement('div');
-Object.assign(this._playerHpName.style, {
-  color        : '#88aaff',
-  fontSize     : '8px',
-  fontFamily   : 'monospace',
-  letterSpacing: '2px',
-});
-this._playerHpName.textContent = 'KAEL';
+    this._levelLabel = document.createElement('div');
+    Object.assign(this._levelLabel.style, {
+      color        : 'rgba(201,168,76,0.8)',
+      fontSize     : '8px',
+      fontFamily   : 'monospace',
+      letterSpacing: '1px',
+    });
+    this._levelLabel.textContent = 'Nv.1';
 
-this._levelLabel = document.createElement('div');
-Object.assign(this._levelLabel.style, {
-  color        : 'rgba(201,168,76,0.8)',
-  fontSize     : '8px',
-  fontFamily   : 'monospace',
-  letterSpacing: '1px',
-});
-this._levelLabel.textContent = 'Nv.1';
-
-nameRow.append(this._playerHpName, this._levelLabel);
-block.appendChild(nameRow);
+    nameRow.append(this._playerHpName, this._levelLabel);
+    block.appendChild(nameRow);
 
     const hpTrack = this._makeTrack('9px', '#220000');
     this._playerHpFill = this._makeFill('linear-gradient(90deg,#aa0000,#ff4444)');
     hpTrack.appendChild(this._playerHpFill);
+
     this._playerHpText = document.createElement('div');
     Object.assign(this._playerHpText.style, {
       color        : 'rgba(255,180,180,0.8)',
@@ -449,7 +432,6 @@ block.appendChild(nameRow);
     this._energyFill = this._makeFill('linear-gradient(90deg,#2244cc,#66aaff)');
     enTrack.appendChild(this._energyFill);
 
-    block.appendChild(this._playerHpName);
     block.appendChild(hpTrack);
     block.appendChild(this._playerHpText);
     block.appendChild(enTrack);
@@ -603,8 +585,6 @@ block.appendChild(nameRow);
     document.body.appendChild(this._collectBtn);
   }
 
-  // ── Enemy labels ──────────────────────────────────────────────────────────
-
   _updateBossBar(e) {
     const pct = Math.max(0, e.hp / e.maxHp) * 100;
     this._bossFillEl.style.width = `${pct}%`;
@@ -686,8 +666,6 @@ block.appendChild(nameRow);
     return wrap;
   }
 
-  // ── Collect ───────────────────────────────────────────────────────────────
-
   showCollectBtn(resource) {
     if (!resource) { this._hideCollectBtn(); return; }
     const labels = { madera: '🪓 Talar', piedra: '⛏ Picar' };
@@ -744,8 +722,6 @@ block.appendChild(nameRow);
     }));
     setTimeout(() => el.remove(), 900);
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
 
   _makeTrack(height, bg) {
     const t = document.createElement('div');
