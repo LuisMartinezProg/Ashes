@@ -84,16 +84,42 @@ function _tick(timestamp) {
 
     // Ataques y habilidades por teclado
     if (window._keyboard) {
-      const kb    = window._keyboard;
-      const binds = kb.getBinds();
-      if (kb._keys[binds.attack]) window._combat?.triggerAttack?.();
-      if (kb._keys[binds.skill1]) window._skillSystem?.castByIndex?.(0);
-      if (kb._keys[binds.skill2]) window._skillSystem?.castByIndex?.(1);
-      if (kb._keys[binds.skill3]) window._skillSystem?.castByIndex?.(2);
-      if (kb._keys[binds.switch]) window._partyManager?.switchNext?.();
-      if (kb._keys[binds.map])    window._mapUI?.toggle?.();
-    }
+  const kb    = window._keyboard;
+  const binds = kb.getBinds();
 
+  if (kb._keys[binds.attack] && !kb._attackHeld) {
+    kb._attackHeld = true;
+    window._combat?.triggerAttack?.();
+  }
+  if (!kb._keys[binds.attack]) kb._attackHeld = false;
+
+  if (kb._keys[binds.skill1] && !kb._sk1Held) {
+    kb._sk1Held = true;
+    const id = window._skillBar?._buttons[0]?.dataset?.skillId;
+    if (id) window._skillSystem?.castSkill?.(id);
+  }
+  if (!kb._keys[binds.skill1]) kb._sk1Held = false;
+
+  if (kb._keys[binds.skill2] && !kb._sk2Held) {
+    kb._sk2Held = true;
+    const id = window._skillBar?._buttons[1]?.dataset?.skillId;
+    if (id) window._skillSystem?.castSkill?.(id);
+  }
+  if (!kb._keys[binds.skill2]) kb._sk2Held = false;
+
+  if (kb._keys[binds.skill3] && !kb._sk3Held) {
+    kb._sk3Held = true;
+    const id = window._skillBar?._buttons[2]?.dataset?.skillId;
+    if (id) window._skillSystem?.castSkill?.(id);
+  }
+  if (!kb._keys[binds.skill3]) kb._sk3Held = false;
+
+  if (kb._keys[binds.switch] && !kb._switchHeld) {
+    kb._switchHeld = true;
+    window._partyManager?.switchNext?.();
+  }
+  if (!kb._keys[binds.switch]) kb._switchHeld = false;
+    }
     if (_triggers) _triggers.update(_player.root.position);
     _thirdCam.update(delta);
   }
