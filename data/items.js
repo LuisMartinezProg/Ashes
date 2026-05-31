@@ -138,49 +138,136 @@ export const ITEMS = {
   },
 };
 
-// Drops por tipo de enemigo
 export const ENEMY_DROPS = {
-  DungeonGuard    : [
-    { item: 'hierro',     qty: [1,3],  chance: 0.7 },
-    { item: 'pocionVida', qty: [1,1],  chance: 0.3 },
+  // ── Mazmorras ─────────────────────────────────────────────────
+  DungeonGuard: [
+    { item: 'hierro',       qty: [1,3], chance: 0.7  },
+    { item: 'pocionVida',   qty: [1,1], chance: 0.3  },
     { item: 'espadaHierro', qty: [1,1], chance: 0.05 },
   ],
-  RuneWarden      : [
-    { item: 'mineral',    qty: [1,2],  chance: 0.6 },
-    { item: 'pocionMana', qty: [1,1],  chance: 0.4 },
+  RuneWarden: [
+    { item: 'mineral',      qty: [1,2], chance: 0.6  },
+    { item: 'pocionMana',   qty: [1,1], chance: 0.4  },
     { item: 'espadaRunica', qty: [1,1], chance: 0.04 },
   ],
-  AncientSentinel : [
-    { item: 'mineral',      qty: [2,4],  chance: 0.7 },
-    { item: 'elixirFuerza', qty: [1,1],  chance: 0.25 },
+  AncientSentinel: [
+    { item: 'mineral',        qty: [2,4], chance: 0.7  },
+    { item: 'elixirFuerza',   qty: [1,1], chance: 0.25 },
     { item: 'armaduraRunica', qty: [1,1], chance: 0.04 },
   ],
-  Malachar        : [
-    { item: 'etherFragmento', qty: [3,5], chance: 1.0 },
-    { item: 'katanaOscura',   qty: [1,1], chance: 0.15 },
-    { item: 'pocionVidaGrande', qty: [2,3], chance: 1.0 },
+  Malachar: [
+    { item: 'etherFragmento',   qty: [3,5], chance: 1.0  },
+    { item: 'katanaOscura',     qty: [1,1], chance: 0.15 },
+    { item: 'pocionVidaGrande', qty: [2,3], chance: 1.0  },
   ],
-  Veyris          : [
-    { item: 'etherFragmento', qty: [3,5], chance: 1.0 },
+  Veyris: [
+    { item: 'etherFragmento', qty: [3,5], chance: 1.0  },
     { item: 'bastónCristal',  qty: [1,1], chance: 0.15 },
-    { item: 'amuletoCristal', qty: [1,1], chance: 0.2 },
+    { item: 'amuletoCristal', qty: [1,1], chance: 0.2  },
   ],
-  Khazeron        : [
-    { item: 'etherFragmento', qty: [5,8], chance: 1.0 },
-    { item: 'mantoDeSombra',  qty: [1,1], chance: 0.2 },
+  Khazeron: [
+    { item: 'etherFragmento', qty: [5,8], chance: 1.0  },
+    { item: 'mantoDeSombra',  qty: [1,1], chance: 0.2  },
     { item: 'katanaOscura',   qty: [1,1], chance: 0.25 },
   ],
-  Wolf            : [
+
+  // ── Animales ──────────────────────────────────────────────────
+  Wolf: [
     { item: 'madera',     qty: [1,2], chance: 0.5 },
     { item: 'pocionVida', qty: [1,1], chance: 0.2 },
   ],
-  Bear            : [
-    { item: 'madera',     qty: [2,4], chance: 0.8 },
-    { item: 'piedra',     qty: [1,3], chance: 0.6 },
+  Bear: [
+    { item: 'madera',           qty: [2,4], chance: 0.8  },
+    { item: 'piedra',           qty: [1,3], chance: 0.6  },
     { item: 'pocionVidaGrande', qty: [1,1], chance: 0.15 },
   ],
-  default         : [
-    { item: 'piedra',     qty: [1,2], chance: 0.4 },
+
+  // ── Bosque ────────────────────────────────────────────────────
+  Mossling: [
+    { item: 'madera',     qty: [1,2], chance: 0.8  },
+    { item: 'piedra',     qty: [1,1], chance: 0.3  },
+    { item: 'pocionVida', qty: [1,1], chance: 0.15 },
+  ],
+  Firefly: [
+    { item: 'mineral',    qty: [1,1], chance: 0.4  },
+    { item: 'pocionMana', qty: [1,1], chance: 0.25 },
+  ],
+  CrystalSpider: [
+    { item: 'mineral',    qty: [1,2], chance: 0.6 },
+    { item: 'piedra',     qty: [1,2], chance: 0.5 },
+    { item: 'pocionVida', qty: [1,1], chance: 0.2 },
+  ],
+  Troll: [
+    { item: 'madera',           qty: [2,4], chance: 0.9 },
+    { item: 'piedra',           qty: [2,3], chance: 0.7 },
+    { item: 'hierro',           qty: [1,2], chance: 0.3 },
+    { item: 'pocionVidaGrande', qty: [1,1], chance: 0.1 },
+  ],
+
+  // ── Llanuras ──────────────────────────────────────────────────
+  EarthGolem: [
+    { item: 'piedra',        qty: [3,5], chance: 0.9 },
+    { item: 'hierro',        qty: [1,3], chance: 0.5 },
+    { item: 'elixirGuardia', qty: [1,1], chance: 0.1 },
+  ],
+  WanderingSpirit: [
+    { item: 'mineral',    qty: [1,2], chance: 0.5 },
+    { item: 'pocionMana', qty: [1,2], chance: 0.4 },
+  ],
+
+  // ── Camino ────────────────────────────────────────────────────
+  ShadowForest: [
+    { item: 'madera',     qty: [1,3], chance: 0.7 },
+    { item: 'pocionVida', qty: [1,1], chance: 0.2 },
+  ],
+  StoneSnake: [
+    { item: 'piedra', qty: [2,4], chance: 0.8 },
+    { item: 'hierro', qty: [1,2], chance: 0.4 },
+  ],
+  WarriorGhost: [
+    { item: 'hierro',       qty: [1,3], chance: 0.6  },
+    { item: 'elixirFuerza', qty: [1,1], chance: 0.12 },
+    { item: 'espadaHierro', qty: [1,1], chance: 0.04 },
+  ],
+  EliteMercenary: [
+    { item: 'hierro',           qty: [2,4], chance: 0.8  },
+    { item: 'pocionVidaGrande', qty: [1,1], chance: 0.2  },
+    { item: 'armaduraHierro',   qty: [1,1], chance: 0.05 },
+  ],
+  Bandit: [
+    { item: 'piedra',     qty: [1,2], chance: 0.5  },
+    { item: 'madera',     qty: [1,2], chance: 0.5  },
+    { item: 'pocionVida', qty: [1,1], chance: 0.25 },
+  ],
+
+  // ── Ejército Yami ─────────────────────────────────────────────
+  ShadowSoldier: [
+    { item: 'hierro',   qty: [1,2], chance: 0.6 },
+    { item: 'mineral',  qty: [1,1], chance: 0.3 },
+  ],
+  DarkArcher: [
+    { item: 'mineral',    qty: [1,2], chance: 0.5  },
+    { item: 'arcoElfico', qty: [1,1], chance: 0.03 },
+  ],
+  Berserker: [
+    { item: 'hierro',       qty: [2,4], chance: 0.8  },
+    { item: 'elixirFuerza', qty: [1,1], chance: 0.15 },
+  ],
+  YamiMage: [
+    { item: 'mineral',       qty: [2,3], chance: 0.7  },
+    { item: 'pocionMana',    qty: [1,2], chance: 0.5  },
+    { item: 'bastónCristal', qty: [1,1], chance: 0.03 },
+  ],
+  ShadowCaptain: [
+    { item: 'hierro',           qty: [3,5], chance: 0.9  },
+    { item: 'mineral',          qty: [2,3], chance: 0.7  },
+    { item: 'etherFragmento',   qty: [1,2], chance: 0.4  },
+    { item: 'mantoDeSombra',    qty: [1,1], chance: 0.06 },
+  ],
+
+  // ── Default ───────────────────────────────────────────────────
+  default: [
+    { item: 'piedra',     qty: [1,2], chance: 0.4  },
     { item: 'pocionVida', qty: [1,1], chance: 0.15 },
   ],
 };
