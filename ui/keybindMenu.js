@@ -179,7 +179,34 @@ export class KeybindMenu {
     });
     hint.textContent = 'Haz click en un botón y presiona la tecla que quieres asignar';
     this._overlay.appendChild(hint);
+    const sizeRow = document.createElement('div');
+Object.assign(sizeRow.style, {
+  display   : 'flex', alignItems: 'center',
+  gap       : '10px', marginTop: '16px',
+  fontFamily: 'monospace', fontSize: '10px',
+  color     : 'rgba(201,168,76,0.7)',
+});
+sizeRow.innerHTML = '<span>Tamaño UI</span>';
 
+const slider = document.createElement('input');
+slider.type  = 'range';
+slider.min   = '50';
+slider.max   = '120';
+slider.value = localStorage.getItem('ashes_ui_scale') ?? '100';
+Object.assign(slider.style, { flex: '1', accentColor: '#C9A84C' });
+
+const valLabel = document.createElement('span');
+valLabel.textContent = `${slider.value}%`;
+
+slider.addEventListener('input', () => {
+  valLabel.textContent  = `${slider.value}%`;
+  window._uiScale       = slider.value / 100;
+  localStorage.setItem('ashes_ui_scale', slider.value);
+  window._skillBar?._rebuild?.();
+});
+
+sizeRow.append(slider, valLabel);
+this._overlay.appendChild(sizeRow);
     document.body.appendChild(this._overlay);
 
     window.addEventListener('keydown', (e) => {
