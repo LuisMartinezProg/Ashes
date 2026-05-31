@@ -28,6 +28,11 @@ export const ITEMS = {
     section: 'materiales', rarity: 'epico',
     desc: 'Energía pura de otro plano.',
   },
+  nucleoArcano: {
+    id: 'nucleoArcano', name: 'Núcleo Arcano', icon: '🔮',
+    section: 'materiales', rarity: 'legendario',
+    desc: 'Cristal de poder condensado. Permite ascender de nivel.',
+  },
 
   // ── CONSUMIBLES ───────────────────────────────────────────────
   pocionVida: {
@@ -159,16 +164,19 @@ export const ENEMY_DROPS = {
     { item: 'etherFragmento',   qty: [3,5], chance: 1.0  },
     { item: 'katanaOscura',     qty: [1,1], chance: 0.15 },
     { item: 'pocionVidaGrande', qty: [2,3], chance: 1.0  },
+    { item: 'nucleoArcano', qty: [1,2], chance: 0.6 },
   ],
   Veyris: [
     { item: 'etherFragmento', qty: [3,5], chance: 1.0  },
     { item: 'bastónCristal',  qty: [1,1], chance: 0.15 },
     { item: 'amuletoCristal', qty: [1,1], chance: 0.2  },
+    { item: 'nucleoArcano', qty: [1,2], chance: 0.6 },
   ],
   Khazeron: [
     { item: 'etherFragmento', qty: [5,8], chance: 1.0  },
     { item: 'mantoDeSombra',  qty: [1,1], chance: 0.2  },
     { item: 'katanaOscura',   qty: [1,1], chance: 0.25 },
+    { item: 'nucleoArcano', qty: [1,2], chance: 0.6 },
   ],
 
   // ── Animales ──────────────────────────────────────────────────
@@ -263,6 +271,7 @@ export const ENEMY_DROPS = {
     { item: 'mineral',          qty: [2,3], chance: 0.7  },
     { item: 'etherFragmento',   qty: [1,2], chance: 0.4  },
     { item: 'mantoDeSombra',    qty: [1,1], chance: 0.06 },
+    { item: 'nucleoArcano', qty: [1,1], chance: 0.2 },
   ],
 
   // ── Default ───────────────────────────────────────────────────
