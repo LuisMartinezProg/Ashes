@@ -68,17 +68,20 @@ export class VirtualJoystick {
   }
 
   // ── Touch ─────────────────────────────────────────────────────────────────
-
-  _onStart(e) {
-    e.preventDefault();
-    if (this.active) return;
-    const touch = e.changedTouches[0];
-    this.active  = true;
-    this.touchId = touch.identifier;
-    this.stickX  = this.baseX;
-    this.stickY  = this.baseY;
-    this._draw();
-  }
+_onStart(e) {
+  e.preventDefault();
+  if (this.active) return;
+  const touch = e.changedTouches[0];
+  const rect  = this.canvas.getBoundingClientRect();
+  this.active  = true;
+  this.touchId = touch.identifier;
+  this.baseX   = touch.clientX - rect.left;
+  this.baseY   = touch.clientY - rect.top;
+  this.stickX  = this.baseX;
+  this.stickY  = this.baseY;
+  this._draw();
+}
+  
 
   _onMove(e) {
     e.preventDefault();
