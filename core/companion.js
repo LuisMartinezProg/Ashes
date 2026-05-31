@@ -10,16 +10,19 @@ const GROUND_Y     = 0.0;
 
 export class Companion {
   constructor(scene, playerPosition) {
-    this.scene        = scene;
-    this.hp           = 80;
-    this.maxHp        = 80;
-    this.facingAngle  = 0;
-    this._moveDir     = new THREE.Vector3();
+    this.scene       = scene;
+    this.facingAngle = 0;
+    this._moveDir    = new THREE.Vector3();
     this._attackTimer = 0;
-    this._enemies     = [];
-    this.isActive     = false;
-    this._sprinting   = false;
-    this._playerPos   = playerPosition;
+    this._enemies    = [];
+    this.isActive    = false;
+    this._sprinting  = false;
+    this._playerPos  = playerPosition;
+
+    // Stats iniciales desde ProgressionMika si ya existe, si no fallback seguro
+    const mikaStats  = window._progressionMika?.getStats?.() ?? { maxHp: 80 };
+    this.maxHp       = mikaStats.maxHp;
+    this.hp          = this.maxHp;
 
     this.root = new THREE.Group();
     this.root.position.set(
@@ -37,6 +40,30 @@ export class Companion {
 
     this.onDamage    = null;
     this.onSkillCast = null;
+  }
+
+  // Siempre lee stats en vivo desde ProgressionMika
+  getStats() {
+    return window._progressionMika?.getStats?.() ?? {
+      maxHp: this.maxHp,
+      atk  : 7,
+      def  : 3,
+      speed: 6,
+      range: 8,
+    };
+  }
+
+  // Sincroniza maxHp con el nivel actual de Mika (llamar tras level up)
+  syncStatsFromProgression() {
+    const stats  = this.getStats();
+    const prevMax = this.maxHp;
+    this.maxHp   = stats.maxHp;
+    // Si maxHp subió, añadir la diferencia al HP actual
+    if (this.maxHp > prevMax) {
+      this.hp = Math.min(this.hp + (this.maxHp - prevMax), this.maxHp);
+    }
+    this.hp = Math.min(this.hp, this.maxHp);
+    if (this.onDamage) this.onDamage(this.hp, this.maxHp);
   }
 
   _buildMesh() {
@@ -99,12 +126,15 @@ export class Companion {
   }
 
   setActiveSkill(skillId, subtype) {
-    this.activeSkillId  = skillId;
-    this.activeSubtype  = subtype;
+    this.activeSkillId = skillId;
+    this.activeSubtype = subtype;
   }
 
   takeDamage(amount) {
-    this.hp = Math.max(0, this.hp - amount);
+    // Reducir por DEF de Mika
+    const def    = this.getStats().def ?? 3;
+    const actual = Math.max(1, amount - Math.floor(def * 0.5));
+    this.hp      = Math.max(0, this.hp - actual);
     if (this.onDamage) this.onDamage(this.hp, this.maxHp);
   }
 
@@ -156,7 +186,8 @@ export class Companion {
       const len = this._moveDir.length();
       if (len > 0.001) {
         this._moveDir.divideScalar(len);
-        const speed = (this._sprinting ? SPRINT_SPEED : MOVE_SPEED) * Math.min(len, 1) * delta;
+        const spd = this.getStats().speed ?? MOVE_SPEED;
+        const speed = ((this._sprinting ? spd * 1.8 : spd) * Math.min(len, 1)) * delta;
         this.root.position.addScaledVector(this._moveDir, speed);
         this.root.position.y = GROUND_Y;
 
@@ -207,12 +238,13 @@ export class Companion {
 
   _findNearestEnemy() {
     let closest = null, minDist = Infinity;
+    const range = this.getStats().range ?? ATTACK_RANGE;
     for (const e of this._enemies) {
       if (e.isDead?.() || !e.mesh) continue;
       const dx = this.root.position.x - e.mesh.position.x;
       const dz = this.root.position.z - e.mesh.position.z;
       const d  = Math.sqrt(dx*dx + dz*dz);
-      if (d < minDist && d <= ATTACK_RANGE) { minDist = d; closest = e; }
+      if (d < minDist && d <= range) { minDist = d; closest = e; }
     }
     return closest;
   }
