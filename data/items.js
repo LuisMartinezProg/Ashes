@@ -33,6 +33,26 @@ export const ITEMS = {
     section: 'materiales', rarity: 'legendario',
     desc: 'Cristal de poder condensado. Permite ascender de nivel.',
   },
+  cristalKatana: {
+    id: 'cristalKatana', name: 'Cristal de Katana', icon: '🔷',
+    section: 'materiales', rarity: 'raro',
+    desc: 'Cristal afilado imbuido con el espíritu de la katana.',
+  },
+  cristalEspada: {
+    id: 'cristalEspada', name: 'Cristal de Espada', icon: '🔵',
+    section: 'materiales', rarity: 'raro',
+    desc: 'Cristal de acero forjado con honor de batalla.',
+  },
+  cristalMagia: {
+    id: 'cristalMagia', name: 'Cristal de Magia', icon: '🟣',
+    section: 'materiales', rarity: 'raro',
+    desc: 'Cristal imbuido con energía arcana pura.',
+  },
+  cristalArco: {
+    id: 'cristalArco', name: 'Cristal de Arco', icon: '🟢',
+    section: 'materiales', rarity: 'raro',
+    desc: 'Cristal ligero resonante con la precisión del arco.',
+  },
 
   // ── CONSUMIBLES ───────────────────────────────────────────────
   pocionVida: {
@@ -143,6 +163,13 @@ export const ITEMS = {
   },
 };
 
+export const WEAPON_CRYSTAL = {
+  katana: 'cristalKatana',
+  sword : 'cristalEspada',
+  magic : 'cristalMagia',
+  bow   : 'cristalArco',
+};
+
 export const ENEMY_DROPS = {
   // ── Mazmorras ─────────────────────────────────────────────────
   DungeonGuard: [
@@ -162,21 +189,29 @@ export const ENEMY_DROPS = {
   ],
   Malachar: [
     { item: 'etherFragmento',   qty: [3,5], chance: 1.0  },
+    { item: 'nucleoArcano',     qty: [1,2], chance: 0.6  },
     { item: 'katanaOscura',     qty: [1,1], chance: 0.15 },
     { item: 'pocionVidaGrande', qty: [2,3], chance: 1.0  },
-    { item: 'nucleoArcano', qty: [1,2], chance: 0.6 },
+    { item: 'cristalKatana',    qty: [2,3], chance: 0.8  },
+    { item: 'cristalEspada',    qty: [2,3], chance: 0.8  },
   ],
   Veyris: [
     { item: 'etherFragmento', qty: [3,5], chance: 1.0  },
+    { item: 'nucleoArcano',   qty: [1,2], chance: 0.6  },
     { item: 'bastónCristal',  qty: [1,1], chance: 0.15 },
     { item: 'amuletoCristal', qty: [1,1], chance: 0.2  },
-    { item: 'nucleoArcano', qty: [1,2], chance: 0.6 },
+    { item: 'cristalMagia',   qty: [2,3], chance: 0.8  },
+    { item: 'cristalArco',    qty: [2,3], chance: 0.8  },
   ],
   Khazeron: [
     { item: 'etherFragmento', qty: [5,8], chance: 1.0  },
+    { item: 'nucleoArcano',   qty: [1,2], chance: 0.6  },
     { item: 'mantoDeSombra',  qty: [1,1], chance: 0.2  },
     { item: 'katanaOscura',   qty: [1,1], chance: 0.25 },
-    { item: 'nucleoArcano', qty: [1,2], chance: 0.6 },
+    { item: 'cristalKatana',  qty: [3,5], chance: 1.0  },
+    { item: 'cristalEspada',  qty: [3,5], chance: 1.0  },
+    { item: 'cristalMagia',   qty: [3,5], chance: 1.0  },
+    { item: 'cristalArco',    qty: [3,5], chance: 1.0  },
   ],
 
   // ── Animales ──────────────────────────────────────────────────
@@ -250,28 +285,32 @@ export const ENEMY_DROPS = {
 
   // ── Ejército Yami ─────────────────────────────────────────────
   ShadowSoldier: [
-    { item: 'hierro',   qty: [1,2], chance: 0.6 },
-    { item: 'mineral',  qty: [1,1], chance: 0.3 },
+    { item: 'hierro',  qty: [1,2], chance: 0.6 },
+    { item: 'mineral', qty: [1,1], chance: 0.3 },
   ],
   DarkArcher: [
     { item: 'mineral',    qty: [1,2], chance: 0.5  },
+    { item: 'cristalArco',qty: [1,1], chance: 0.15 },
     { item: 'arcoElfico', qty: [1,1], chance: 0.03 },
   ],
   Berserker: [
-    { item: 'hierro',       qty: [2,4], chance: 0.8  },
-    { item: 'elixirFuerza', qty: [1,1], chance: 0.15 },
+    { item: 'hierro',        qty: [2,4], chance: 0.8  },
+    { item: 'elixirFuerza',  qty: [1,1], chance: 0.15 },
+    { item: 'cristalEspada', qty: [1,1], chance: 0.15 },
   ],
   YamiMage: [
     { item: 'mineral',       qty: [2,3], chance: 0.7  },
     { item: 'pocionMana',    qty: [1,2], chance: 0.5  },
+    { item: 'cristalMagia',  qty: [1,1], chance: 0.15 },
     { item: 'bastónCristal', qty: [1,1], chance: 0.03 },
   ],
   ShadowCaptain: [
-    { item: 'hierro',           qty: [3,5], chance: 0.9  },
-    { item: 'mineral',          qty: [2,3], chance: 0.7  },
-    { item: 'etherFragmento',   qty: [1,2], chance: 0.4  },
-    { item: 'mantoDeSombra',    qty: [1,1], chance: 0.06 },
-    { item: 'nucleoArcano', qty: [1,1], chance: 0.2 },
+    { item: 'hierro',        qty: [3,5], chance: 0.9  },
+    { item: 'mineral',       qty: [2,3], chance: 0.7  },
+    { item: 'etherFragmento',qty: [1,2], chance: 0.4  },
+    { item: 'nucleoArcano',  qty: [1,1], chance: 0.2  },
+    { item: 'cristalKatana', qty: [1,2], chance: 0.25 },
+    { item: 'mantoDeSombra', qty: [1,1], chance: 0.06 },
   ],
 
   // ── Default ───────────────────────────────────────────────────
