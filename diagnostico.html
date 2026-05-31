@@ -6,320 +6,70 @@
 <title>Diagnóstico — Ashes of the Reborn</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Cinzel:wght@400;700&display=swap');
-
   :root {
-    --bg: #080a0e;
-    --panel: #0d1117;
-    --border: #1e2a38;
-    --accent: #c8922a;
-    --accent2: #4a9eff;
-    --ok: #3ddc84;
-    --err: #ff4d4d;
-    --pending: #555e6e;
-    --text: #a8b8cc;
-    --text-bright: #dce8f5;
-    --mono: 'Share Tech Mono', monospace;
-    --serif: 'Cinzel', serif;
+    --bg: #080a0e; --panel: #0d1117; --border: #1e2a38;
+    --accent: #c8922a; --accent2: #4a9eff; --ok: #3ddc84;
+    --err: #ff4d4d; --pending: #555e6e; --text: #a8b8cc;
+    --text-bright: #dce8f5; --mono: 'Share Tech Mono', monospace; --serif: 'Cinzel', serif;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    min-height: 100vh;
-    padding: 24px 16px 48px;
+    background: var(--bg); color: var(--text); font-family: var(--mono);
+    min-height: 100vh; padding: 24px 16px 48px;
     background-image:
       radial-gradient(ellipse 80% 40% at 50% 0%, rgba(200,146,42,0.07) 0%, transparent 60%),
       repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(30,42,56,0.3) 40px),
       repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(30,42,56,0.15) 40px);
   }
-
-  header {
-    text-align: center;
-    margin-bottom: 32px;
-    position: relative;
-  }
-
-  .game-title {
-    font-family: var(--serif);
-    font-size: clamp(18px, 4vw, 28px);
-    color: var(--accent);
-    letter-spacing: 0.15em;
-    text-shadow: 0 0 30px rgba(200,146,42,0.4);
-    margin-bottom: 4px;
-  }
-
-  .diag-title {
-    font-size: 11px;
-    letter-spacing: 0.3em;
-    color: var(--pending);
-    text-transform: uppercase;
-  }
-
-  .timestamp {
-    font-size: 11px;
-    color: var(--pending);
-    margin-top: 8px;
-  }
-
-  .divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    margin: 16px 0 28px;
-    opacity: 0.4;
-  }
-
-  .summary-bar {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 28px;
-  }
-
-  .summary-chip {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-size: 13px;
-  }
-
-  .chip-num {
-    font-size: 20px;
-    font-weight: bold;
-  }
-
+  header { text-align: center; margin-bottom: 32px; position: relative; }
+  .game-title { font-family: var(--serif); font-size: clamp(18px,4vw,28px); color: var(--accent); letter-spacing: 0.15em; text-shadow: 0 0 30px rgba(200,146,42,0.4); margin-bottom: 4px; }
+  .diag-title { font-size: 11px; letter-spacing: 0.3em; color: var(--pending); text-transform: uppercase; }
+  .timestamp { font-size: 11px; color: var(--pending); margin-top: 8px; }
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); margin: 16px 0 28px; opacity: 0.4; }
+  .summary-bar { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
+  .summary-chip { display: flex; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 8px 16px; font-size: 13px; }
+  .chip-num { font-size: 20px; font-weight: bold; }
   .chip-ok .chip-num { color: var(--ok); }
   .chip-err .chip-num { color: var(--err); }
   .chip-pending .chip-num { color: var(--pending); }
   .chip-total .chip-num { color: var(--text-bright); }
-
-  .progress-wrap {
-    max-width: 600px;
-    margin: 0 auto 32px;
-  }
-
-  .progress-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    color: var(--pending);
-    margin-bottom: 6px;
-    letter-spacing: 0.1em;
-  }
-
-  .progress-track {
-    height: 6px;
-    background: var(--border);
-    border-radius: 3px;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent2), var(--ok));
-    border-radius: 3px;
-    transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
-    box-shadow: 0 0 8px rgba(61,220,132,0.4);
-  }
-
-  .sections {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    max-width: 700px;
-    margin: 0 auto;
-  }
-
-  .section {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    background: rgba(255,255,255,0.02);
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    user-select: none;
-  }
-
-  .section-header:hover {
-    background: rgba(255,255,255,0.04);
-  }
-
-  .section-title {
-    font-size: 12px;
-    letter-spacing: 0.15em;
-    color: var(--text-bright);
-  }
-
+  .progress-wrap { max-width: 600px; margin: 0 auto 32px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--pending); margin-bottom: 6px; letter-spacing: 0.1em; }
+  .progress-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--ok)); border-radius: 3px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); box-shadow: 0 0 8px rgba(61,220,132,0.4); }
+  .sections { display: flex; flex-direction: column; gap: 16px; max-width: 700px; margin: 0 auto; }
+  .section { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+  .section-header:hover { background: rgba(255,255,255,0.04); }
+  .section-title { font-size: 12px; letter-spacing: 0.15em; color: var(--text-bright); }
   .section-icon { margin-right: 8px; }
-
-  .section-stats {
-    display: flex;
-    gap: 10px;
-    font-size: 11px;
-  }
-
-  .stat-ok { color: var(--ok); }
-  .stat-err { color: var(--err); }
-  .stat-pending { color: var(--pending); }
-
-  .chevron {
-    font-size: 10px;
-    color: var(--pending);
-    transition: transform 0.2s;
-    margin-left: 10px;
-  }
-
+  .section-stats { display: flex; gap: 10px; font-size: 11px; }
+  .stat-ok { color: var(--ok); } .stat-err { color: var(--err); } .stat-pending { color: var(--pending); }
+  .chevron { font-size: 10px; color: var(--pending); transition: transform 0.2s; margin-left: 10px; }
   .section.collapsed .chevron { transform: rotate(-90deg); }
-
-  .file-list {
-    padding: 6px 0;
-  }
-
+  .file-list { padding: 6px 0; }
   .section.collapsed .file-list { display: none; }
-
-  .file-row {
-    display: flex;
-    align-items: center;
-    padding: 5px 14px;
-    gap: 10px;
-    font-size: 12px;
-    border-left: 2px solid transparent;
-    transition: background 0.15s;
-    opacity: 0;
-    transform: translateX(-6px);
-    animation: rowIn 0.25s forwards;
-  }
-
+  .file-row { display: flex; align-items: center; padding: 5px 14px; gap: 10px; font-size: 12px; border-left: 2px solid transparent; transition: background 0.15s; opacity: 0; transform: translateX(-6px); animation: rowIn 0.25s forwards; }
   .file-row:hover { background: rgba(255,255,255,0.025); }
-
-  @keyframes rowIn {
-    to { opacity: 1; transform: translateX(0); }
-  }
-
-  .status-icon {
-    width: 14px;
-    text-align: center;
-    font-size: 13px;
-    flex-shrink: 0;
-  }
-
-  .row-ok { border-left-color: var(--ok); }
-  .row-ok .status-icon { color: var(--ok); }
-
-  .row-err { border-left-color: var(--err); }
-  .row-err .status-icon { color: var(--err); }
-
-  .row-pending { border-left-color: var(--pending); }
-  .row-pending .status-icon { color: var(--pending); }
-  .row-pending { opacity: 0.5 !important; }
-
-  .file-path {
-    color: var(--text);
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .file-export {
-    color: var(--accent2);
-    font-size: 11px;
-    flex-shrink: 0;
-  }
-
-  .row-pending .file-export {
-    color: var(--pending);
-    font-style: italic;
-  }
-
+  @keyframes rowIn { to { opacity: 1; transform: translateX(0); } }
+  .status-icon { width: 14px; text-align: center; font-size: 13px; flex-shrink: 0; }
+  .row-ok { border-left-color: var(--ok); } .row-ok .status-icon { color: var(--ok); }
+  .row-err { border-left-color: var(--err); } .row-err .status-icon { color: var(--err); }
+  .row-pending { border-left-color: var(--pending); opacity: 0.5 !important; } .row-pending .status-icon { color: var(--pending); }
+  .file-path { color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-export { color: var(--accent2); font-size: 11px; flex-shrink: 0; }
+  .row-pending .file-export { color: var(--pending); font-style: italic; }
   .row-err .file-export { color: var(--err); }
-
-  .error-msg {
-    font-size: 10px;
-    color: var(--err);
-    padding: 3px 14px 3px 38px;
-    opacity: 0.8;
-    word-break: break-all;
-  }
-
-  .btn-row {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 28px;
-    flex-wrap: wrap;
-  }
-
-  .btn {
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    padding: 9px 20px;
-    border-radius: 4px;
-    border: 1px solid;
-    cursor: pointer;
-    transition: all 0.15s;
-    text-transform: uppercase;
-  }
-
-  .btn-primary {
-    background: rgba(200,146,42,0.12);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  .btn-primary:hover {
-    background: rgba(200,146,42,0.22);
-    box-shadow: 0 0 12px rgba(200,146,42,0.3);
-  }
-
-  .btn-secondary {
-    background: transparent;
-    border-color: var(--border);
-    color: var(--pending);
-  }
-  .btn-secondary:hover {
-    border-color: var(--text);
-    color: var(--text-bright);
-  }
-
-  .running-indicator {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
-    margin-right: 8px;
-    animation: pulse 1s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(200,146,42,0.5); }
-    50% { opacity: 0.6; box-shadow: 0 0 0 5px rgba(200,146,42,0); }
-  }
-
-  .status-line {
-    text-align: center;
-    font-size: 11px;
-    color: var(--pending);
-    margin-bottom: 20px;
-    min-height: 18px;
-  }
+  .error-msg { font-size: 10px; color: var(--err); padding: 3px 14px 3px 38px; opacity: 0.8; word-break: break-all; }
+  .btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 28px; flex-wrap: wrap; }
+  .btn { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; padding: 9px 20px; border-radius: 4px; border: 1px solid; cursor: pointer; transition: all 0.15s; text-transform: uppercase; }
+  .btn-primary { background: rgba(200,146,42,0.12); border-color: var(--accent); color: var(--accent); }
+  .btn-primary:hover { background: rgba(200,146,42,0.22); box-shadow: 0 0 12px rgba(200,146,42,0.3); }
+  .btn-secondary { background: transparent; border-color: var(--border); color: var(--pending); }
+  .btn-secondary:hover { border-color: var(--text); color: var(--text-bright); }
+  .running-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 8px; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(200,146,42,0.5); } 50% { opacity:0.6; box-shadow:0 0 0 5px rgba(200,146,42,0); } }
+  .status-line { text-align: center; font-size: 11px; color: var(--pending); margin-bottom: 20px; min-height: 18px; }
 </style>
 </head>
 <body>
@@ -329,10 +79,9 @@
   <div class="diag-title">Boot Diagnostics — Valiant Gaming</div>
   <div class="timestamp" id="ts"></div>
 </header>
-
 <div class="divider"></div>
 
-<div class="summary-bar" id="summaryBar">
+<div class="summary-bar">
   <div class="summary-chip chip-ok"><span class="chip-num" id="cntOk">0</span><span>OK</span></div>
   <div class="summary-chip chip-err"><span class="chip-num" id="cntErr">0</span><span>Error</span></div>
   <div class="summary-chip chip-pending"><span class="chip-num" id="cntPending">0</span><span>Pendiente</span></div>
@@ -348,7 +97,6 @@
 </div>
 
 <div class="status-line" id="statusLine"><span class="running-indicator"></span>Cargando módulos…</div>
-
 <div class="sections" id="sections"></div>
 
 <div class="btn-row">
@@ -356,6 +104,7 @@
   <button class="btn btn-secondary" onclick="exportLog()">⬇ Exportar log</button>
   <button class="btn btn-secondary" onclick="toggleAll()">⊞ Expandir / Colapsar</button>
 </div>
+
 <script type="importmap">
 {
   "imports": {
@@ -364,7 +113,8 @@
   }
 }
 </script>
-<script>
+
+<script type="module">
 const MANIFEST = [
   {
     id: 'core67', icon: '⚔️', label: 'Core — Fases 6–7',
@@ -381,62 +131,97 @@ const MANIFEST = [
   {
     id: 'core8', icon: '📖', label: 'Core — Fase 8 (Narrativa)',
     files: [
-      { path: './core/narrative.js',    exp: 'NarrativeSystem' },
-      { path: './core/triggers.js',     exp: 'WorldTriggers' },
-      { path: './core/parry.js',        exp: 'ParrySystem' },
-      { path: './data/storyEvents.js',  exp: 'STORY_EVENTS' },
-      { path: './data/dialogues.js',    exp: 'DIALOGUES' },
+      { path: './core/narrative.js',   exp: 'NarrativeSystem' },
+      { path: './core/triggers.js',    exp: 'WorldTriggers' },
+      { path: './core/parry.js',       exp: 'ParrySystem' },
+      { path: './data/storyEvents.js', exp: 'STORY_EVENTS' },
+      { path: './data/dialogues.js',   exp: 'DIALOGUES' },
     ]
   },
   {
     id: 'coreBuild', icon: '🏗', label: 'Core — Construcción',
     files: [
-      { path: './core/building.js',    exp: 'BuildingSystem' },
-      { path: './data/structures.js',  exp: 'STRUCTURES' },
-      { path: './data/skills.js',      exp: 'SKILLS' },
+      { path: './core/building.js',   exp: 'BuildingSystem' },
+      { path: './data/structures.js', exp: 'STRUCTURES' },
+      { path: './data/skills.js',     exp: 'SKILLS' },
+    ]
+  },
+  {
+    id: 'coreMain', icon: '⚙️', label: 'Core — Principal',
+    files: [
+      { path: './core/scene.js',                    exp: 'initScene' },
+      { path: './core/loop.js',                     exp: 'startLoop' },
+      { path: './core/combat.js',                   exp: 'CombatSystem' },
+      { path: './core/enemy.js',                    exp: 'spawnEnemies' },
+      { path: './core/npc.js',                      exp: 'spawnNPCs' },
+      { path: './core/inventory.js',                exp: 'inventory' },
+      { path: './core/companion.js',                exp: 'Companion' },
+      { path: './core/partyManager.js',             exp: 'PartyManager' },
+      { path: './core/mikaProgression.js',          exp: 'createMikaProgression' },
+      { path: './core/keyboardControls.js',         exp: 'KeyboardControls' },
+      { path: './core/buildCamera.js',              exp: 'BuildCamera' },
+      { path: './core/buildZone.js',                exp: 'BuildZone' },
+      { path: './core/worldLOD.js',                 exp: 'registerLODObjects' },
+      { path: './core/dungeons/DungeonManager.js',  exp: 'DungeonManager' },
+      { path: './data/items.js',                    exp: 'ITEMS' },
+    ]
+  },
+  {
+    id: 'coreEnemies', icon: '👹', label: 'Core — Enemigos',
+    files: [
+      { path: './core/enemies/wolf.js',            exp: 'Wolf' },
+      { path: './core/enemies/bear.js',            exp: 'Bear' },
+      { path: './core/enemies/Mossling.js',        exp: 'Mossling' },
+      { path: './core/enemies/Firefly.js',         exp: 'Firefly' },
+      { path: './core/enemies/CrystalSpider.js',   exp: 'CrystalSpider' },
+      { path: './core/enemies/Troll.js',           exp: 'Troll' },
+      { path: './core/enemies/EarthGolem.js',      exp: 'EarthGolem' },
+      { path: './core/enemies/WanderingSpirit.js', exp: 'WanderingSpirit' },
+      { path: './core/enemies/ShadowForest.js',    exp: 'ShadowForest' },
+      { path: './core/enemies/StoneSnake.js',      exp: 'StoneSnake' },
+      { path: './core/enemies/WarriorGhost.js',    exp: 'WarriorGhost' },
+      { path: './core/enemies/EliteMercenary.js',  exp: 'EliteMercenary' },
+      { path: './core/enemies/Bandit.js',          exp: 'Bandit' },
+      { path: './core/enemies/ShadowSoldier.js',   exp: 'ShadowSoldier' },
+      { path: './core/enemies/DarkArcher.js',      exp: 'DarkArcher' },
+      { path: './core/enemies/Berserker.js',       exp: 'Berserker' },
+      { path: './core/enemies/YamiMage.js',        exp: 'YamiMage' },
+      { path: './core/enemies/ShadowCaptain.js',   exp: 'ShadowCaptain' },
     ]
   },
   {
     id: 'coreFuture', icon: '🗺️', label: 'Core — Futuro',
     files: [
-      { path: './core/worldMap.js',   exp: 'WorldMap',   pending: true },
-      { path: './core/dayNight.js',   exp: 'DayNight',   pending: true },
-      { path: './core/weather.js',    exp: 'Weather',    pending: true },
-      { path: './core/relations.js',  exp: 'Relations',  pending: true },
-      { path: './core/cinematic.js',  exp: 'Cinematic',  pending: true },
+      { path: './core/worldMap.js',  exp: 'WorldMap',  pending: true },
+      { path: './core/dayNight.js',  exp: 'DayNight',  pending: true },
+      { path: './core/weather.js',   exp: 'Weather',   pending: true },
+      { path: './core/relations.js', exp: 'Relations', pending: true },
+      { path: './core/cinematic.js', exp: 'Cinematic', pending: true },
     ]
   },
   {
     id: 'uiExist', icon: '🎮', label: 'UI — Existente',
     files: [
-      { path: './ui/hud.js',            exp: 'HUD' },
-      { path: './ui/weaponSelect.js',   exp: 'showWeaponSelect' },
-      { path: './ui/dialogue.js',       exp: 'DialogueUI' },
-      { path: './ui/shop.js',           exp: 'ShopUI' },
-      { path: './ui/skillBar.js',       exp: 'SkillBar' },
-      { path: './ui/subtypeMenu.js',    exp: 'SubtypeMenu' },
-      { path: './ui/pauseMenu.js',      exp: 'PauseMenu' },
-      { path: './ui/fusionMenu.js',     exp: 'FusionMenu' },
-      { path: './ui/characterMenu.js',  exp: 'CharacterMenu' },
-      { path: './ui/inventory.js',      exp: 'InventoryUI' },
-      { path: './ui/keybindMenu.js',    exp: 'KeybindMenu' },
-      { path: './ui/mapUI.js',          exp: 'MapUI' },
+      { path: './ui/hud.js',           exp: 'HUD' },
+      { path: './ui/weaponSelect.js',  exp: 'showWeaponSelect' },
+      { path: './ui/dialogue.js',      exp: 'DialogueUI' },
+      { path: './ui/shop.js',          exp: 'ShopUI' },
+      { path: './ui/skillBar.js',      exp: 'SkillBar' },
+      { path: './ui/subtypeMenu.js',   exp: 'SubtypeMenu' },
+      { path: './ui/pauseMenu.js',     exp: 'PauseMenu' },
+      { path: './ui/fusionMenu.js',    exp: 'FusionMenu' },
+      { path: './ui/characterMenu.js', exp: 'CharacterMenu' },
+      { path: './ui/inventory.js',     exp: 'InventoryUI' },
+      { path: './ui/keybindMenu.js',   exp: 'KeybindMenu' },
+      { path: './ui/mapUI.js',         exp: 'MapUI' },
+      { path: './ui/buildMenu.js',     exp: 'BuildMenu' },
+      { path: './ui/skillTree.js',     exp: 'SkillTree' },
+      { path: './ui/radialMenu.js',    exp: 'RadialMenu' },
     ]
   },
   {
     id: 'uiFuture', icon: '🎮', label: 'UI — Futuro',
     files: [
-      { path: './ui/relationBar.js', exp: 'RelationBar', pending: true },
-      { path: './ui/craftMenu.js',   exp: 'CraftMenu',   pending: true },
-    ]
-  },
-  { path: './ui/radialMenu.js', exp: 'RadialMenu' },
-    ]
-  },
-  {
-    id: 'uiFuture', icon: '🎮', label: 'UI — Futuro',
-    files: [
-      { path: './ui/mapUI.js',       exp: 'MapUI',       pending: true },
       { path: './ui/relationBar.js', exp: 'RelationBar', pending: true },
       { path: './ui/craftMenu.js',   exp: 'CraftMenu',   pending: true },
     ]
@@ -453,10 +238,10 @@ const MANIFEST = [
   {
     id: 'skillsKatana', icon: '⚔️', label: 'Skills — Katana',
     files: [
-      { path: './skills/katana/quickSlash.js',    exp: 'QuickSlash' },
-      { path: './skills/katana/flashStep.js',     exp: 'FlashStep' },
-      { path: './skills/katana/bladeDance.js',    exp: 'BladeDance' },
-      { path: './skills/katana/thousandCuts.js',  exp: 'ThousandCuts' },
+      { path: './skills/katana/quickSlash.js',   exp: 'QuickSlash' },
+      { path: './skills/katana/flashStep.js',    exp: 'FlashStep' },
+      { path: './skills/katana/bladeDance.js',   exp: 'BladeDance' },
+      { path: './skills/katana/thousandCuts.js', exp: 'ThousandCuts' },
     ]
   },
   {
@@ -478,11 +263,11 @@ const MANIFEST = [
     ]
   },
   {
-    id: 'enemies', icon: '💀', label: 'Enemies — Futuro',
+    id: 'enemiesFuture', icon: '💀', label: 'Enemies — Futuro',
     files: [
-      { path: './core/enemies/bossSystem.js',  exp: 'BossSystem',  pending: true },
-      { path: './core/enemies/forestPack.js',  exp: 'ForestPack',  pending: true },
-      { path: './core/enemies/eliteEnemy.js',  exp: 'EliteEnemy',  pending: true },
+      { path: './core/enemies/bossSystem.js', exp: 'BossSystem', pending: true },
+      { path: './core/enemies/forestPack.js', exp: 'ForestPack', pending: true },
+      { path: './core/enemies/eliteEnemy.js', exp: 'EliteEnemy', pending: true },
     ]
   },
 ];
@@ -506,8 +291,8 @@ async function tryImport(path) {
 }
 
 function renderSection(sec, secResults) {
-  const ok = secResults.filter(r => r.status === 'ok').length;
-  const err = secResults.filter(r => r.status === 'error').length;
+  const ok   = secResults.filter(r => r.status === 'ok').length;
+  const err  = secResults.filter(r => r.status === 'error').length;
   const pend = secResults.filter(r => r.status === 'pending').length;
 
   const div = document.createElement('div');
@@ -515,8 +300,8 @@ function renderSection(sec, secResults) {
   div.id = 'sec-' + sec.id;
 
   const statsHtml = [
-    ok ? `<span class="stat-ok">✓${ok}</span>` : '',
-    err ? `<span class="stat-err">✗${err}</span>` : '',
+    ok   ? `<span class="stat-ok">✓${ok}</span>`       : '',
+    err  ? `<span class="stat-err">✗${err}</span>`     : '',
     pend ? `<span class="stat-pending">○${pend}</span>` : '',
   ].filter(Boolean).join(' ');
 
@@ -535,13 +320,13 @@ function renderSection(sec, secResults) {
 
   const fl = document.getElementById('fl-' + sec.id);
   secResults.forEach((r, i) => {
-    const row = document.createElement('div');
-    const cls = r.status === 'ok' ? 'row-ok' : r.status === 'error' ? 'row-err' : 'row-pending';
-    const icon = r.status === 'ok' ? '✓' : r.status === 'error' ? '✗' : '○';
+    const row      = document.createElement('div');
+    const cls      = r.status === 'ok' ? 'row-ok' : r.status === 'error' ? 'row-err' : 'row-pending';
+    const icon     = r.status === 'ok' ? '✓' : r.status === 'error' ? '✗' : '○';
     const expLabel = r.status === 'pending' ? 'PENDIENTE' : r.exp;
-    row.className = `file-row ${cls}`;
+    row.className  = `file-row ${cls}`;
     row.style.animationDelay = (i * 40) + 'ms';
-    row.innerHTML = `
+    row.innerHTML  = `
       <span class="status-icon">${icon}</span>
       <span class="file-path">${r.path}</span>
       <span class="file-export">${expLabel}</span>
@@ -557,37 +342,35 @@ function renderSection(sec, secResults) {
 }
 
 function updateSummary() {
-  const ok = results.filter(r => r.status === 'ok').length;
-  const err = results.filter(r => r.status === 'error').length;
-  const pend = results.filter(r => r.status === 'pending').length;
+  const ok    = results.filter(r => r.status === 'ok').length;
+  const err   = results.filter(r => r.status === 'error').length;
+  const pend  = results.filter(r => r.status === 'pending').length;
   const total = results.length;
-  document.getElementById('cntOk').textContent = ok;
-  document.getElementById('cntErr').textContent = err;
+  document.getElementById('cntOk').textContent      = ok;
+  document.getElementById('cntErr').textContent     = err;
   document.getElementById('cntPending').textContent = pend;
-  document.getElementById('cntTotal').textContent = total;
+  document.getElementById('cntTotal').textContent   = total;
   const loadable = total - pend;
   const pct = loadable > 0 ? Math.round((ok / loadable) * 100) : 0;
   document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressPct').textContent = pct + '%';
-  if (err === 0) {
-    document.getElementById('progressLabel').textContent = `${ok} módulos OK, ${pend} pendientes`;
-  } else {
-    document.getElementById('progressLabel').textContent = `${ok} OK · ${err} con error · ${pend} pendientes`;
-  }
+  document.getElementById('progressPct').textContent  = pct + '%';
+  document.getElementById('progressLabel').textContent = err === 0
+    ? `${ok} módulos OK, ${pend} pendientes`
+    : `${ok} OK · ${err} con error · ${pend} pendientes`;
 }
 
 async function runDiag() {
   results = [];
-  document.getElementById('sections').innerHTML = '';
-  document.getElementById('cntOk').textContent = 0;
-  document.getElementById('cntErr').textContent = 0;
+  document.getElementById('sections').innerHTML     = '';
+  document.getElementById('cntOk').textContent      = 0;
+  document.getElementById('cntErr').textContent     = 0;
   document.getElementById('cntPending').textContent = 0;
-  document.getElementById('cntTotal').textContent = 0;
+  document.getElementById('cntTotal').textContent   = 0;
   document.getElementById('progressFill').style.width = '0%';
-  document.getElementById('progressPct').textContent = '0%';
+  document.getElementById('progressPct').textContent  = '0%';
   document.getElementById('progressLabel').textContent = 'Iniciando…';
-  document.getElementById('statusLine').innerHTML = '<span class="running-indicator"></span>Ejecutando diagnóstico…';
-  document.getElementById('ts').textContent = 'Ejecutado: ' + ts();
+  document.getElementById('statusLine').innerHTML   = '<span class="running-indicator"></span>Ejecutando diagnóstico…';
+  document.getElementById('ts').textContent         = 'Ejecutado: ' + ts();
 
   for (const sec of MANIFEST) {
     const secResults = [];
@@ -596,7 +379,8 @@ async function runDiag() {
       if (f.pending) {
         r = { path: f.path, exp: f.exp, status: 'pending' };
       } else {
-        document.getElementById('statusLine').innerHTML = `<span class="running-indicator"></span>Cargando <span style="color:var(--accent2)">${f.path}</span>`;
+        document.getElementById('statusLine').innerHTML =
+          `<span class="running-indicator"></span>Cargando <span style="color:var(--accent2)">${f.path}</span>`;
         const res = await tryImport(f.path);
         if (res.ok) {
           const hasExport = f.exp in res.mod;
@@ -617,29 +401,27 @@ async function runDiag() {
   }
 
   const errCount = results.filter(r => r.status === 'error').length;
-  if (errCount === 0) {
-    document.getElementById('statusLine').innerHTML = '✓ Diagnóstico completado — Sin errores detectados';
-  } else {
-    document.getElementById('statusLine').innerHTML = `<span style="color:var(--err)">✗ ${errCount} error(es) encontrado(s)</span>`;
-  }
+  document.getElementById('statusLine').innerHTML = errCount === 0
+    ? '✓ Diagnóstico completado — Sin errores detectados'
+    : `<span style="color:var(--err)">✗ ${errCount} error(es) encontrado(s)</span>`;
 }
 
 function toggleSection(id) {
-  const el = document.getElementById('sec-' + id);
-  el.classList.toggle('collapsed');
+  document.getElementById('sec-' + id)?.classList.toggle('collapsed');
 }
 
-function toggleAll() {
+window.toggleSection = toggleSection;
+
+window.toggleAll = function() {
   allExpanded = !allExpanded;
   MANIFEST.forEach(s => {
     const el = document.getElementById('sec-' + s.id);
     if (!el) return;
-    if (allExpanded) el.classList.remove('collapsed');
-    else el.classList.add('collapsed');
+    allExpanded ? el.classList.remove('collapsed') : el.classList.add('collapsed');
   });
-}
+};
 
-function exportLog() {
+window.exportLog = function() {
   const lines = ['ASHES OF THE REBORN — Boot Diagnostics', ts(), ''];
   MANIFEST.forEach(sec => {
     lines.push('=== ' + sec.label + ' ===');
@@ -650,8 +432,8 @@ function exportLog() {
     });
     lines.push('');
   });
-  const ok = results.filter(r => r.status === 'ok').length;
-  const err = results.filter(r => r.status === 'error').length;
+  const ok   = results.filter(r => r.status === 'ok').length;
+  const err  = results.filter(r => r.status === 'error').length;
   const pend = results.filter(r => r.status === 'pending').length;
   lines.push(`RESUMEN: ${ok} OK · ${err} Error · ${pend} Pendiente · ${results.length} Total`);
   const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
@@ -659,7 +441,9 @@ function exportLog() {
   a.href = URL.createObjectURL(blob);
   a.download = 'ashes-boot-diag-' + Date.now() + '.txt';
   a.click();
-}
+};
+
+window.runDiag = runDiag;
 
 runDiag();
 </script>
