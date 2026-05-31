@@ -207,13 +207,13 @@ async function boot() {
     window._prog = progression;
     combat.setProgression(progression);
     buildZone.setProgression(progression);
-
     setProgress(69, 'ParrySystem...');
     const parry = new ParrySystem(player, combat);
     window._parry = parry;
 
     setProgress(71, 'HUD...');
     const hud = new HUD(combat, skills);
+    progression.onLevelUp = (level) => hud.updateLevel(level);
     hud.setPartyManager(partyManager);
     setResourceCallback((resource) => hud.showCollectBtn(resource));
 
@@ -466,6 +466,7 @@ async function boot() {
     combat.setWeapon(weaponType);
     hud.setWeaponIcon(weaponType);
     hud.show();
+    hud.updateLevel(progression.getLevel());
     hud.setCamera(camera);
     player.onStaminaUpdate = (stamina, max) => hud.updateStamina(stamina, max);
 
