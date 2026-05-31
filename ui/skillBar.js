@@ -1,27 +1,31 @@
 // ui/skillBar.js — Ashes of the Reborn | Valiant Gaming
-import { RARITY_COLORS } from '../core/skillData.js';
-
-const RARITY_LABELS = { common:'C', rare:'R', epic:'E', legendary:'L' };
 
 const BASE_W = 800;
 const BASE_H = 450;
 
+const LAYER_COLORS = {
+  basico: 'rgba(200,200,200,0.6)',
+  medio : 'rgba(100,180,255,0.8)',
+  arcano: 'rgba(180,80,255,0.9)',
+};
+
 export class SkillBar {
   constructor(skillSystem, progression) {
-    this.skillSystem         = skillSystem;
-    this.progression         = progression;
-    this._activeSkillSystem  = skillSystem;
-    this._activeProgression  = progression;
-    this._weapon             = null;
-    this._activeWeapon       = null;
-    this._buttons            = [];
-    this._attackBtn          = null;
-    this._sprintBtn          = null;
-    this._buildBtn           = null;
-    this._container          = null;
-    this._cooldowns          = {};
-    this._enemyNear          = false;
-    this._visible            = false;
+    this.skillSystem        = skillSystem;
+    this.progression        = progression;
+    this._activeSkillSystem = skillSystem;
+    this._activeProgression = progression;
+    this._activeCharId      = 'kael';
+    this._weapon            = null;
+    this._activeWeapon      = null;
+    this._buttons           = [];
+    this._attackBtn         = null;
+    this._sprintBtn         = null;
+    this._buildBtn          = null;
+    this._container         = null;
+    this._cooldowns         = {};
+    this._enemyNear         = false;
+    this._visible           = false;
 
     this._build();
     this._resizeHandler = () => this._rebuild();
@@ -42,14 +46,16 @@ export class SkillBar {
 
   setActiveCharacter(idx, mikaSkillSystem, mikaProgression) {
     if (idx === 1 && mikaSkillSystem) {
-      this._activeSkillSystem  = mikaSkillSystem;
-      this._activeWeapon       = 'bow';
-      this._activeProgression  = mikaProgression ?? this.progression;
+      this._activeSkillSystem = mikaSkillSystem;
+      this._activeWeapon      = 'bow';
+      this._activeCharId      = 'mika';
+      this._activeProgression = mikaProgression ?? this.progression;
       if (this._attackBtn) this._attackBtn.textContent = '🏹';
     } else {
-      this._activeSkillSystem  = this.skillSystem;
-      this._activeWeapon       = this._weapon;
-      this._activeProgression  = this.progression;
+      this._activeSkillSystem = this.skillSystem;
+      this._activeWeapon      = this._weapon;
+      this._activeCharId      = 'kael';
+      this._activeProgression = this.progression;
       const icons = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
       if (this._attackBtn) this._attackBtn.textContent = icons[this._weapon] ?? '⚔️';
     }
@@ -60,8 +66,13 @@ export class SkillBar {
   refresh() {
     const weapon = this._activeWeapon ?? this._weapon;
     const prog   = this._activeProgression ?? this.progression;
+    const charId = this._activeCharId ?? 'kael';
     if (!weapon) return;
-    const skills = prog.getActiveSkills(weapon).slice(0, 3);
+
+    const skills = prog.getActiveLoadoutSkills
+      ? prog.getActiveLoadoutSkills(charId, weapon)
+      : prog.getActiveSkills(weapon);
+
     skills.forEach((sk, i) => {
       this._updateButton(i, sk);
       this._buttons[i].style.display = 'flex';
@@ -99,7 +110,7 @@ export class SkillBar {
 
   _checkEnemyProximity() {
     const playerPos = window._player?.root?.position;
-    const enemies   = window._combat?._enemies ?? [];
+    const enemies   = window._enemies ?? [];
     if (!playerPos) return;
     let near = false;
     for (const e of enemies) {
@@ -117,11 +128,11 @@ export class SkillBar {
     if (this._enemyNear) {
       this._sprintBtn.textContent       = '🛡️';
       this._sprintBtn.style.borderColor = 'rgba(201,168,76,0.7)';
-      this._sprintBtn.title = 'Parry';
+      this._sprintBtn.title             = 'Parry';
     } else {
       this._sprintBtn.textContent       = '🏃';
       this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
-      this._sprintBtn.title = 'Sprint';
+      this._sprintBtn.title             = 'Sprint';
     }
   }
 
@@ -140,18 +151,19 @@ export class SkillBar {
       console.error('[SkillBar._rebuild]', e);
     }
   }
-_scale() {
-  const uiScale = window._uiScale ?? 1;
-  const isPC    = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  if (isPC) return 0.75 * uiScale;
-  const isLandscape = window.innerWidth > window.innerHeight;
-  return (isLandscape
-    ? window.innerHeight / 450
-    : window.innerWidth  / 480) * uiScale;
-}
-  
+
+  _scale() {
+    const uiScale = window._uiScale ?? 1;
+    const isPC    = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (isPC) return 0.75 * uiScale;
+    const isLandscape = window.innerWidth > window.innerHeight;
+    return (isLandscape
+      ? window.innerHeight / 450
+      : window.innerWidth  / 480) * uiScale;
+  }
+
   _placeFromBottomRight(el, hx, hy, size) {
-    const s = this._scale();
+    const s      = this._scale();
     const right  = Math.round((BASE_W - hx) * s) - size / 2;
     const bottom = Math.round((BASE_H - hy) * s) - size / 2;
     el.style.right  = `${right}px`;
@@ -179,6 +191,7 @@ _scale() {
     const skSize  = this._sz(58);
     const sbSize  = this._sz(48);
 
+    // 3 botones de habilidad: básico / medio / arcano
     const sk1 = this._buildSkillBtn(skSize);
     this._placeFromBottomRight(sk1, 558, 403, skSize);
     this._buttons.push(sk1);
@@ -194,6 +207,7 @@ _scale() {
     this._buttons.push(sk3);
     this._container.appendChild(sk3);
 
+    // Botón ataque principal
     this._attackBtn = document.createElement('button');
     this._attackBtn.textContent = '⚔️';
     Object.assign(this._attackBtn.style, {
@@ -217,7 +231,6 @@ _scale() {
     });
     this._placeFromBottomRight(this._attackBtn, 679, 379, atkSize);
 
-    // FIX: onAtk ahora está correctamente conectado al botón
     const onAtk = (e) => {
       e.preventDefault();
       window._combat?.triggerAttack?.();
@@ -228,6 +241,7 @@ _scale() {
     this._attackBtn.addEventListener('click', onAtk);
     this._container.appendChild(this._attackBtn);
 
+    // Botón sprint/parry
     this._sprintBtn = this._buildSmallBtn('🏃', sbSize, 'rgba(100,220,255,0.5)');
     this._placeFromBottomRight(this._sprintBtn, 755, 302, sbSize);
 
@@ -255,6 +269,7 @@ _scale() {
     });
     this._container.appendChild(this._sprintBtn);
 
+    // Botón construcción
     this._buildBtn = this._buildSmallBtn('🏗️', sbSize, 'rgba(201,168,76,0.5)');
     this._placeFromBottomRight(this._buildBtn, 755, 215, sbSize);
     this._buildBtn.style.color = '#C9A84C';
@@ -317,25 +332,36 @@ _scale() {
 
     const icon = document.createElement('div');
     icon.className = 'skill-icon';
-    icon.style.cssText = `font-size:${Math.round(size*0.45)}px;line-height:1;`;
+    icon.style.cssText = `font-size:${Math.round(size * 0.45)}px;line-height:1;pointer-events:none;`;
 
-    const rarity = document.createElement('div');
-    rarity.className = 'skill-rarity';
-    rarity.style.cssText = 'position:absolute;top:2px;left:4px;font-size:7px;font-family:monospace;font-weight:bold;';
+    const layerDot = document.createElement('div');
+    layerDot.className = 'skill-layer';
+    layerDot.style.cssText = `
+      position:absolute;bottom:3px;right:3px;
+      width:6px;height:6px;border-radius:50%;
+      background:rgba(200,200,200,0.6);
+      pointer-events:none;
+    `;
 
     const cooldown = document.createElement('div');
     cooldown.className = 'skill-cooldown';
-    cooldown.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:0%;background:rgba(0,0,0,0.65);transition:height 0.1s linear;pointer-events:none;';
+    cooldown.style.cssText = `
+      position:absolute;bottom:0;left:0;
+      width:100%;height:0%;
+      background:rgba(0,0,0,0.65);
+      transition:height 0.1s linear;
+      pointer-events:none;
+    `;
 
     wrap.appendChild(icon);
-    wrap.appendChild(rarity);
+    wrap.appendChild(layerDot);
     wrap.appendChild(cooldown);
 
     const onPress = (e) => {
       e.preventDefault();
       if (!wrap.dataset.skillId) return;
       const sys = this._activeSkillSystem ?? this.skillSystem;
-      sys.castSkill(wrap.dataset.skillId);
+      sys.castSkill?.(wrap.dataset.skillId);
       wrap.style.transform = 'scale(0.88)';
       setTimeout(() => wrap.style.transform = 'scale(1)', 140);
     };
@@ -348,20 +374,25 @@ _scale() {
     const btn = this._buttons[index];
     if (!btn) return;
     btn.dataset.skillId = skill.id;
-    btn.querySelector('.skill-icon').textContent = skill.icon;
-    const r = btn.querySelector('.skill-rarity');
-    r.textContent = RARITY_LABELS[skill.rarity];
-    r.style.color = RARITY_COLORS[skill.rarity];
-    btn.style.borderColor = skill.available ? RARITY_COLORS[skill.rarity] : 'rgba(255,255,255,0.1)';
-    btn.style.opacity     = skill.available ? '1' : '0.4';
+
+    btn.querySelector('.skill-icon').textContent = skill.icon ?? '✨';
+
+    // Color del borde según capa
+    const layer      = skill.layer ?? 'basico';
+    const layerColor = LAYER_COLORS[layer] ?? LAYER_COLORS.basico;
+    btn.style.borderColor = layerColor;
+    btn.style.opacity     = '1';
+
+    // Punto indicador de capa
+    const dot = btn.querySelector('.skill-layer');
+    if (dot) dot.style.background = layerColor;
+
     this._applyCooldown(btn, this._cooldowns[skill.id] ?? 1);
   }
 
   _applyCooldown(btn, progress) {
     const el = btn.querySelector('.skill-cooldown');
     if (el) el.style.height = `${(1 - progress) * 100}%`;
-    if (btn.style.opacity !== '0.4') {
-      btn.style.opacity = progress < 1 ? '0.55' : '1';
-    }
+    btn.style.opacity = progress < 1 ? '0.55' : '1';
   }
 }
