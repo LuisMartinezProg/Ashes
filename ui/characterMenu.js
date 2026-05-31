@@ -49,13 +49,13 @@ export class CharacterMenu {
 
     this._rightCol = document.createElement('div');
     Object.assign(this._rightCol.style, {
-      width        : '200px',
-      display      : 'flex',
-      flexDirection: 'column',
+      width         : '200px',
+      display       : 'flex',
+      flexDirection : 'column',
       justifyContent: 'center',
-      padding      : '16px 14px',
-      borderLeft   : '1px solid rgba(201,168,76,0.15)',
-      background   : 'rgba(0,0,0,0.3)',
+      padding       : '16px 14px',
+      borderLeft    : '1px solid rgba(201,168,76,0.15)',
+      background    : 'rgba(0,0,0,0.3)',
     });
 
     top.append(this._leftCol, this._centerCol, this._rightCol);
@@ -163,7 +163,7 @@ export class CharacterMenu {
         boxShadow      : active ? '0 0 12px rgba(201,168,76,0.4)' : 'none',
       });
 
-      const iconEl  = document.createElement('div');
+      const iconEl = document.createElement('div');
       iconEl.style.fontSize = '20px';
       iconEl.textContent    = c.icon;
 
@@ -187,20 +187,7 @@ export class CharacterMenu {
     this._centerCol.innerHTML = '';
     const avatars = ['⚔️', '🏹'];
     const names   = ['KAEL', 'MIKA'];
-    const prog    = this._progression;
-    const level   = prog.getLevel();
-    const pct     = Math.round(prog.getXPProgress() * 100);
-    const xp      = prog.getTotalXP();
-    const next    = prog.getXPForNextLevel();
-
-    // Costo por nivel: 1 Núcleo Arcano por nivel, +1 cada 5 niveles
-    const nucleoCost = 1 + Math.floor(level / 5);
-    const maxLevel   = 20;
-    const atMax      = level >= maxLevel;
-
-    const inv        = window._inventory;
-    const nucleoQty  = inv?._items?.materiales?.find?.(i => i.id === 'nucleoArcano')?.qty ?? 0;
-    const canLevelUp = !atMax && nucleoQty >= nucleoCost;
+    const level   = this._progression.getLevel();
 
     const wrap = document.createElement('div');
     Object.assign(wrap.style, {
@@ -210,156 +197,33 @@ export class CharacterMenu {
       gap          : '6px',
     });
 
-    // Avatar
     const avatar = document.createElement('div');
     Object.assign(avatar.style, {
-      fontSize  : '72px',
+      fontSize  : '80px',
       lineHeight: '1',
       filter    : 'drop-shadow(0 0 20px rgba(201,168,76,0.5))',
     });
     avatar.textContent = avatars[this._activeChar];
 
-    // Nombre
     const nameEl = document.createElement('div');
     Object.assign(nameEl.style, {
       fontFamily   : "'Cinzel',serif",
-      fontSize     : '15px',
+      fontSize     : '16px',
       letterSpacing: '4px',
       color        : '#C9A84C',
     });
     nameEl.textContent = names[this._activeChar];
 
-    // ── Bloque nivel ──────────────────────────────────────────────────────
-    const levelWrap = document.createElement('div');
-    Object.assign(levelWrap.style, {
-      display        : 'flex',
-      alignItems     : 'center',
-      justifyContent : 'center',
-      gap            : '8px',
-      marginTop      : '6px',
-    });
-
-    const levelBadge = document.createElement('div');
-    Object.assign(levelBadge.style, {
-      fontFamily   : "'Cinzel',serif",
-      fontSize     : '22px',
-      color        : '#C9A84C',
-      letterSpacing: '1px',
-      lineHeight   : '1',
-    });
-    levelBadge.textContent = atMax ? `Nv.${level} ★` : `Nv.${level}`;
-
-    // Botón subir nivel estilo Genshin
-    const lvlBtn = document.createElement('button');
-    Object.assign(lvlBtn.style, {
-      display        : 'flex',
-      alignItems     : 'center',
-      gap            : '4px',
-      padding        : '5px 12px',
-      borderRadius   : '20px',
-      border         : canLevelUp
-        ? '1px solid rgba(201,168,76,0.8)'
-        : '1px solid rgba(201,168,76,0.2)',
-      background     : canLevelUp
-        ? 'linear-gradient(135deg,rgba(122,96,48,0.6),rgba(201,168,76,0.3))'
-        : 'rgba(201,168,76,0.05)',
-      color          : canLevelUp ? '#ffe8a0' : 'rgba(201,168,76,0.3)',
-      fontFamily     : 'monospace',
-      fontSize       : '10px',
-      letterSpacing  : '1px',
-      cursor         : canLevelUp ? 'pointer' : 'default',
-      pointerEvents  : 'all',
-      transition     : 'all 0.2s',
-      boxShadow      : canLevelUp ? '0 0 10px rgba(201,168,76,0.3)' : 'none',
-    });
-    lvlBtn.innerHTML = atMax
-      ? '<span>NIVEL MÁX</span>'
-      : `<span>🔮 ×${nucleoCost}</span><span style="margin-left:2px">↑ SUBIR</span>`;
-
-    if (canLevelUp) {
-      const doLevelUp = () => {
-        // Gastar núcleos del inventario
-        if (inv) {
-          const mat = inv._items.materiales.find(i => i.id === 'nucleoArcano');
-          if (mat) mat.qty -= nucleoCost;
-        }
-        // Dar XP suficiente para subir exactamente un nivel
-        const needed = prog.getXPForNextLevel() - prog.getTotalXP();
-        if (needed > 0) prog.addXP(window._combat?._weaponType ?? 'katana', needed);
-        // Efecto visual en el botón
-        lvlBtn.style.transform  = 'scale(0.92)';
-        lvlBtn.style.background = 'linear-gradient(135deg,rgba(201,168,76,0.6),rgba(255,220,100,0.4))';
-        setTimeout(() => {
-          lvlBtn.style.transform = 'scale(1)';
-          this._renderCenter();
-          this._renderRight();
-          if (window._hud) window._hud.updateLevel(prog.getLevel());
-        }, 200);
-      };
-      lvlBtn.addEventListener('click', doLevelUp);
-      lvlBtn.addEventListener('touchstart', (e) => { e.preventDefault(); doLevelUp(); }, { passive: false });
-      lvlBtn.addEventListener('mouseenter', () => {
-        if (canLevelUp) lvlBtn.style.boxShadow = '0 0 18px rgba(201,168,76,0.6)';
-      });
-      lvlBtn.addEventListener('mouseleave', () => {
-        lvlBtn.style.boxShadow = '0 0 10px rgba(201,168,76,0.3)';
-      });
-    }
-
-    levelWrap.append(levelBadge, lvlBtn);
-
-    // ── Bloque XP ─────────────────────────────────────────────────────────
-    const xpWrap = document.createElement('div');
-    Object.assign(xpWrap.style, {
-      display      : 'flex',
-      flexDirection: 'column',
-      alignItems   : 'center',
-      gap          : '4px',
-      width        : '160px',
-    });
-
-    const xpLabel = document.createElement('div');
-    Object.assign(xpLabel.style, {
+    const levelEl = document.createElement('div');
+    Object.assign(levelEl.style, {
       fontFamily   : 'monospace',
-      fontSize     : '9px',
-      color        : 'rgba(201,168,76,0.5)',
-      letterSpacing: '1px',
+      fontSize     : '11px',
+      color        : 'rgba(201,168,76,0.6)',
+      letterSpacing: '2px',
     });
-    xpLabel.textContent = atMax ? 'NIVEL MÁXIMO' : `${xp} / ${next ?? '—'} XP`;
+    levelEl.textContent = `Nv.${level}`;
 
-    const xpBarWrap = document.createElement('div');
-    Object.assign(xpBarWrap.style, {
-      width       : '160px',
-      height      : '4px',
-      background  : 'rgba(201,168,76,0.12)',
-      borderRadius: '2px',
-      overflow    : 'hidden',
-    });
-    const xpFill = document.createElement('div');
-    Object.assign(xpFill.style, {
-      height    : '100%',
-      width     : atMax ? '100%' : `${pct}%`,
-      background: atMax
-        ? 'linear-gradient(90deg,#C9A84C,#ffe8a0)'
-        : 'linear-gradient(90deg,#7A6030,#C9A84C)',
-      transition: 'width 0.4s ease',
-    });
-    xpBarWrap.appendChild(xpFill);
-
-    // Núcleos disponibles
-    const nucleoInfo = document.createElement('div');
-    Object.assign(nucleoInfo.style, {
-      fontFamily   : 'monospace',
-      fontSize     : '8px',
-      color        : nucleoQty >= nucleoCost
-        ? 'rgba(201,168,76,0.6)'
-        : 'rgba(180,80,80,0.7)',
-      letterSpacing: '0.5px',
-    });
-    nucleoInfo.textContent = atMax ? '' : `🔮 Núcleos Arcanos: ${nucleoQty}`;
-
-    xpWrap.append(xpLabel, xpBarWrap, nucleoInfo);
-    wrap.append(avatar, nameEl, levelWrap, xpWrap);
+    wrap.append(avatar, nameEl, levelEl);
     this._centerCol.appendChild(wrap);
   }
 
@@ -486,14 +350,14 @@ export class CharacterMenu {
     const char  = this._activeChar === 0 ? window._player : window._companion;
 
     const defs = [
-      { icon:'❤️', label:'HP Máx',         value: eff.maxHp ?? stats.maxHp },
-      { icon:'❤️', label:'HP Actual',       value: char?.hp ?? '?' },
-      { icon:'⚔️', label:'ATK',             value: eff.atk  ?? stats.atk },
-      { icon:'🛡️', label:'DEF',             value: eff.def  ?? stats.def },
-      { icon:'💨', label:'VEL',             value: (stats.speed ?? 5).toFixed(1) },
-      { icon:'✦',  label:'Éter',            value: window._dungeonManager?.getEtherFragments?.() ?? 0 },
-      { icon:'⭐', label:'Reputación',      value: prog.getReputation() },
-      { icon:'🪄', label:'Energía Mágica',  value: prog.getMagicEnergy() },
+      { icon:'❤️', label:'HP Máx',        value: eff.maxHp ?? stats.maxHp },
+      { icon:'❤️', label:'HP Actual',      value: char?.hp ?? '?' },
+      { icon:'⚔️', label:'ATK',            value: eff.atk  ?? stats.atk },
+      { icon:'🛡️', label:'DEF',            value: eff.def  ?? stats.def },
+      { icon:'💨', label:'VEL',            value: (stats.speed ?? 5).toFixed(1) },
+      { icon:'✦',  label:'Éter',           value: window._dungeonManager?.getEtherFragments?.() ?? 0 },
+      { icon:'⭐', label:'Reputación',     value: prog.getReputation() },
+      { icon:'🪄', label:'Energía Mágica', value: prog.getMagicEnergy() },
     ];
 
     for (const { icon, label, value } of defs) {
@@ -513,6 +377,264 @@ export class CharacterMenu {
       `;
       body.appendChild(row);
     }
+
+    // ── Separador XP ──────────────────────────────────────────────────────
+    const sep = document.createElement('div');
+    Object.assign(sep.style, {
+      borderTop    : '1px solid rgba(201,168,76,0.15)',
+      marginTop    : '10px',
+      paddingTop   : '12px',
+    });
+    body.appendChild(sep);
+
+    const level  = prog.getLevel();
+    const maxLevel = 20;
+    const atMax  = level >= maxLevel;
+    const xp     = prog.getTotalXP();
+    const next   = prog.getXPForNextLevel();
+    const pct    = Math.round(prog.getXPProgress() * 100);
+
+    // Fila XP: texto + barra + botón [+]
+    const xpRow = document.createElement('div');
+    Object.assign(xpRow.style, {
+      display      : 'flex',
+      alignItems   : 'center',
+      gap          : '8px',
+      marginBottom : '4px',
+    });
+
+    const xpLabel = document.createElement('div');
+    Object.assign(xpLabel.style, {
+      fontFamily   : 'monospace',
+      fontSize     : '9px',
+      color        : 'rgba(201,168,76,0.55)',
+      letterSpacing: '1px',
+      whiteSpace   : 'nowrap',
+    });
+    xpLabel.textContent = atMax ? 'NV. MÁX' : `${xp} / ${next} XP`;
+
+    const xpBarWrap = document.createElement('div');
+    Object.assign(xpBarWrap.style, {
+      flex        : '1',
+      height      : '5px',
+      background  : 'rgba(201,168,76,0.12)',
+      borderRadius: '3px',
+      overflow    : 'hidden',
+    });
+    const xpFill = document.createElement('div');
+    Object.assign(xpFill.style, {
+      height    : '100%',
+      width     : atMax ? '100%' : `${pct}%`,
+      background: atMax
+        ? 'linear-gradient(90deg,#C9A84C,#ffe8a0)'
+        : 'linear-gradient(90deg,#7A6030,#C9A84C)',
+      transition: 'width 0.4s ease',
+    });
+    xpBarWrap.appendChild(xpFill);
+
+    // Botón [+]
+    const plusBtn = document.createElement('button');
+    Object.assign(plusBtn.style, {
+      width        : '22px',
+      height       : '22px',
+      borderRadius : '50%',
+      border       : atMax
+        ? '1px solid rgba(201,168,76,0.15)'
+        : '1px solid rgba(201,168,76,0.6)',
+      background   : atMax
+        ? 'rgba(201,168,76,0.04)'
+        : 'rgba(201,168,76,0.15)',
+      color        : atMax ? 'rgba(201,168,76,0.2)' : '#C9A84C',
+      fontSize     : '14px',
+      lineHeight   : '1',
+      cursor       : atMax ? 'default' : 'pointer',
+      pointerEvents: 'all',
+      display      : 'flex',
+      alignItems   : 'center',
+      justifyContent: 'center',
+      flexShrink   : '0',
+      transition   : 'all 0.15s',
+    });
+    plusBtn.textContent = '+';
+
+    if (!atMax) {
+      const openLevelPanel = () => this._openLevelUpPanel(body);
+      plusBtn.addEventListener('click', openLevelPanel);
+      plusBtn.addEventListener('touchstart', (e) => { e.preventDefault(); openLevelPanel(); }, { passive: false });
+      plusBtn.addEventListener('mouseenter', () => {
+        plusBtn.style.background = 'rgba(201,168,76,0.3)';
+        plusBtn.style.boxShadow  = '0 0 8px rgba(201,168,76,0.4)';
+      });
+      plusBtn.addEventListener('mouseleave', () => {
+        plusBtn.style.background = 'rgba(201,168,76,0.15)';
+        plusBtn.style.boxShadow  = 'none';
+      });
+    }
+
+    xpRow.append(xpLabel, xpBarWrap, plusBtn);
+    sep.appendChild(xpRow);
+  }
+
+  _openLevelUpPanel(parentBody) {
+    // Evitar duplicados
+    const existing = document.getElementById('_levelup_panel');
+    if (existing) existing.remove();
+
+    const prog       = this._progression;
+    const level      = prog.getLevel();
+    const maxLevel   = 20;
+    const nucleoCost = 1 + Math.floor(level / 5);
+    const inv        = window._inventory;
+    const nucleoQty  = inv?._items?.materiales?.find?.(i => i.id === 'nucleoArcano')?.qty ?? 0;
+    const canConfirm = nucleoQty >= nucleoCost;
+
+    const panel = document.createElement('div');
+    panel.id = '_levelup_panel';
+    Object.assign(panel.style, {
+      position     : 'fixed',
+      top          : '50%',
+      left         : '50%',
+      transform    : 'translate(-50%,-50%)',
+      background   : 'rgba(4,4,10,0.98)',
+      border       : '1px solid rgba(201,168,76,0.4)',
+      borderRadius : '16px',
+      padding      : '24px 28px',
+      zIndex       : '700',
+      minWidth     : '240px',
+      maxWidth     : '90vw',
+      display      : 'flex',
+      flexDirection: 'column',
+      alignItems   : 'center',
+      gap          : '14px',
+      boxShadow    : '0 0 40px rgba(201,168,76,0.2)',
+    });
+
+    // Título
+    const titleEl = document.createElement('div');
+    Object.assign(titleEl.style, {
+      fontFamily   : "'Cinzel',serif",
+      fontSize     : '13px',
+      letterSpacing: '3px',
+      color        : '#C9A84C',
+      textAlign    : 'center',
+    });
+    titleEl.textContent = `SUBIR A NIVEL ${level + 1}`;
+
+    // Fila material
+    const matRow = document.createElement('div');
+    Object.assign(matRow.style, {
+      display       : 'flex',
+      alignItems    : 'center',
+      justifyContent: 'space-between',
+      width         : '100%',
+      padding       : '10px 14px',
+      borderRadius  : '10px',
+      background    : 'rgba(201,168,76,0.06)',
+      border        : '1px solid rgba(201,168,76,0.15)',
+    });
+
+    const matLeft = document.createElement('div');
+    Object.assign(matLeft.style, { display: 'flex', alignItems: 'center', gap: '8px' });
+    matLeft.innerHTML = `
+      <span style="font-size:20px">🔮</span>
+      <span style="font-family:monospace;font-size:10px;color:#C9A84C">Núcleo Arcano</span>
+    `;
+
+    const matRight = document.createElement('div');
+    Object.assign(matRight.style, {
+      fontFamily: 'monospace',
+      fontSize  : '11px',
+      color     : canConfirm ? '#C9A84C' : '#ff6666',
+    });
+    matRight.textContent = `${nucleoQty} / ${nucleoCost}`;
+
+    matRow.append(matLeft, matRight);
+
+    // Aviso si no alcanza
+    const warnEl = document.createElement('div');
+    Object.assign(warnEl.style, {
+      fontFamily: 'monospace',
+      fontSize  : '9px',
+      color     : '#ff6666',
+      textAlign : 'center',
+      display   : canConfirm ? 'none' : 'block',
+    });
+    warnEl.textContent = 'Núcleos insuficientes';
+
+    // Botones
+    const btnRow = document.createElement('div');
+    Object.assign(btnRow.style, { display: 'flex', gap: '10px', width: '100%' });
+
+    const cancelBtn = document.createElement('button');
+    Object.assign(cancelBtn.style, {
+      flex        : '1',
+      padding     : '10px',
+      borderRadius: '10px',
+      border      : '1px solid rgba(201,168,76,0.2)',
+      background  : 'rgba(201,168,76,0.05)',
+      color       : 'rgba(201,168,76,0.6)',
+      fontFamily  : 'monospace',
+      fontSize    : '10px',
+      cursor      : 'pointer',
+      pointerEvents: 'all',
+    });
+    cancelBtn.textContent = 'Cancelar';
+    cancelBtn.addEventListener('click', () => panel.remove());
+    cancelBtn.addEventListener('touchstart', (e) => { e.preventDefault(); panel.remove(); }, { passive: false });
+
+    const confirmBtn = document.createElement('button');
+    Object.assign(confirmBtn.style, {
+      flex        : '1',
+      padding     : '10px',
+      borderRadius: '10px',
+      border      : canConfirm
+        ? '1px solid rgba(201,168,76,0.7)'
+        : '1px solid rgba(201,168,76,0.15)',
+      background  : canConfirm
+        ? 'linear-gradient(135deg,rgba(122,96,48,0.6),rgba(201,168,76,0.3))'
+        : 'rgba(201,168,76,0.04)',
+      color       : canConfirm ? '#ffe8a0' : 'rgba(201,168,76,0.25)',
+      fontFamily  : 'monospace',
+      fontSize    : '10px',
+      cursor      : canConfirm ? 'pointer' : 'default',
+      pointerEvents: 'all',
+      transition  : 'all 0.15s',
+    });
+    confirmBtn.textContent = '⬆ Confirmar';
+
+    if (canConfirm) {
+      const doLevelUp = () => {
+        // Gastar núcleos
+        const mat = inv._items.materiales.find(i => i.id === 'nucleoArcano');
+        if (mat) mat.qty -= nucleoCost;
+
+        // Dar XP exacto para subir un nivel
+        const needed = prog.getXPForNextLevel() - prog.getTotalXP();
+        if (needed > 0) prog.addXP(window._combat?._weaponType ?? 'katana', needed);
+
+        panel.remove();
+
+        // Refrescar atributos y vista principal
+        parentBody.innerHTML = '';
+        this._fillAtributos(parentBody);
+        this._renderCenter();
+        this._renderRight();
+      };
+      confirmBtn.addEventListener('click', doLevelUp);
+      confirmBtn.addEventListener('touchstart', (e) => { e.preventDefault(); doLevelUp(); }, { passive: false });
+      confirmBtn.addEventListener('mouseenter', () => {
+        confirmBtn.style.background = 'linear-gradient(135deg,rgba(201,168,76,0.5),rgba(255,220,100,0.3))';
+        confirmBtn.style.boxShadow  = '0 0 12px rgba(201,168,76,0.4)';
+      });
+      confirmBtn.addEventListener('mouseleave', () => {
+        confirmBtn.style.background = 'linear-gradient(135deg,rgba(122,96,48,0.6),rgba(201,168,76,0.3))';
+        confirmBtn.style.boxShadow  = 'none';
+      });
+    }
+
+    btnRow.append(cancelBtn, confirmBtn);
+    panel.append(titleEl, matRow, warnEl, btnRow);
+    document.body.appendChild(panel);
   }
 
   _fillEquipo(body, panel) {
@@ -732,7 +854,7 @@ export class CharacterMenu {
       },
     ];
 
-    const char = chars[this._activeChar];
+    const char   = chars[this._activeChar];
     const nameEl = document.createElement('div');
     nameEl.style.cssText = "font-family:'Cinzel',serif;font-size:13px;color:#C9A84C;letter-spacing:2px;margin-bottom:14px";
     nameEl.textContent   = `${char.icon} ${char.name.toUpperCase()}`;
@@ -769,6 +891,8 @@ export class CharacterMenu {
     this._open = false;
     this._overlay.style.display = 'none';
     if (this._subMenu) { this._subMenu.remove(); this._subMenu = null; }
+    const lp = document.getElementById('_levelup_panel');
+    if (lp) lp.remove();
   }
 
   isOpen() { return this._open; }
