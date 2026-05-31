@@ -125,15 +125,18 @@ _onStart(e) {
   }
 
   // ── Mouse (PC) ────────────────────────────────────────────────────────────
-
-  _onMouseDown(e) {
-    if (this.active) return;
-    this.active  = true;
-    this.touchId = 'mouse';
-    this.stickX  = this.baseX;
-    this.stickY  = this.baseY;
-    this._draw();
-  }
+_onMouseDown(e) {
+  if (this.active) return;
+  const rect = this.canvas.getBoundingClientRect();
+  this.active  = true;
+  this.touchId = 'mouse';
+  this.baseX   = e.clientX - rect.left;
+  this.baseY   = e.clientY - rect.top;
+  this.stickX  = this.baseX;
+  this.stickY  = this.baseY;
+  this._draw();
+}
+  
 
   _onMouseMove(e) {
     if (!this.active || this.touchId !== 'mouse') return;
