@@ -404,7 +404,33 @@ export class HUD {
       textAlign    : 'center',
       letterSpacing: '2px',
     });
-    this._playerHpName.textContent = 'KAEL';
+    const nameRow = document.createElement('div');
+Object.assign(nameRow.style, {
+  display       : 'flex',
+  justifyContent: 'space-between',
+  alignItems    : 'center',
+});
+
+this._playerHpName = document.createElement('div');
+Object.assign(this._playerHpName.style, {
+  color        : '#88aaff',
+  fontSize     : '8px',
+  fontFamily   : 'monospace',
+  letterSpacing: '2px',
+});
+this._playerHpName.textContent = 'KAEL';
+
+this._levelLabel = document.createElement('div');
+Object.assign(this._levelLabel.style, {
+  color        : 'rgba(201,168,76,0.8)',
+  fontSize     : '8px',
+  fontFamily   : 'monospace',
+  letterSpacing: '1px',
+});
+this._levelLabel.textContent = 'Nv.1';
+
+nameRow.append(this._playerHpName, this._levelLabel);
+block.appendChild(nameRow);
 
     const hpTrack = this._makeTrack('9px', '#220000');
     this._playerHpFill = this._makeFill('linear-gradient(90deg,#aa0000,#ff4444)');
