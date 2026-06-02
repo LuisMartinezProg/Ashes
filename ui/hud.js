@@ -246,15 +246,24 @@ export class HUD {
       }
     }
 
-    // ── Energía: Mika usa su propia progressionMika ───────────────────────
-    if (idx === 1 && window._mikaProgression) {
-      const mikaProg = window._mikaProgression;
-      mikaProg.onEnergyUpdate = (e, max) => this._updateEnergy(e, max);
-      const e   = mikaProg.getMagicEnergy();
-      const max = Math.max(mikaProg.getSkillSlots() * 200, 200);
-      this._updateEnergy(e, max);
-    } else if (idx === 0 && this.skills) {
-      this.skills.onEnergyUpdate = (e, max) => this._updateEnergy(e, max);
+    // ── Energía: desconectar/reconectar según personaje ───────────────────
+    if (idx === 1) {
+      if (this.skills) this.skills.onEnergyUpdate = null;
+      if (!this._mikaEnergy) this._mikaEnergy = 100;
+      if (!this._mikaEnergyMax) this._mikaEnergyMax = 100;
+      if (!this._mikaEnergyInterval) {
+        this._mikaEnergyInterval = setInterval(() => {
+          if (window._partyManager?.getActiveIdx() !== 1) return;
+          this._mikaEnergy = Math.min(this._mikaEnergyMax, (this._mikaEnergy ?? 0) + 3);
+          this._updateEnergy(this._mikaEnergy, this._mikaEnergyMax);
+        }, 1000);
+      }
+      this._updateEnergy(this._mikaEnergy, this._mikaEnergyMax);
+    } else {
+      if (this.skills) {
+        this.skills.onEnergyUpdate = (e, max) => this._updateEnergy(e, max);
+        this._updateEnergy(this.skills.energy, this.skills.maxEnergy);
+      }
     }
   }
 
