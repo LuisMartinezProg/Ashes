@@ -783,4 +783,12 @@ export class HUD {
     const pct = Math.max(0, energy / maxEnergy) * 100;
     this._energyFill.style.width = `${pct}%`;
   }
+
+  addMikaEnergy(amount) {
+    if (this._mikaEnergy === undefined) return;
+    this._mikaEnergy = Math.min(this._mikaEnergyMax, this._mikaEnergy + amount);
+    if (window._partyManager?.getActiveIdx() === 1) {
+      this._updateEnergy(this._mikaEnergy, this._mikaEnergyMax);
+    }
+  }
 }
