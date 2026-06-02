@@ -45,15 +45,40 @@ export class CombatSystem {
 
   setProgression(progression) {
     this._progression = progression;
-
-    // Inicializar sistema de misiones al tener progression
-    this._missions = new BranchMissionSystem(progression);
+    this._missions    = new BranchMissionSystem(progression);
     window._branchMissions = this._missions;
-
     this._missions.onMissionComplete = (weapon, subtypeId, mission) => {
       console.log(`[Misión completada] ${mission.label}`);
       window._skillTree?.open(weapon);
     };
+  }
+
+  // ── Progression del personaje activo en el party ──────────────────────────
+  _getActiveProgression() {
+    const active = window._partyManager?.getActiveCharacter?.();
+    if (active && active === window._companion) {
+      return window._mikaProgression ?? this._progression;
+    }
+    return this._progression;
+  }
+
+  // ── Personaje activo (objeto con hp/maxHp/onDamage) ───────────────────────
+  _getActiveCharacter() {
+    return window._partyManager?.getActiveCharacter?.()
+      ?? window._player
+      ?? null;
+  }
+
+  // ── Stats efectivos del personaje activo ──────────────────────────────────
+  _getEffectiveStats() {
+    const active = window._partyManager?.getActiveCharacter?.();
+    if (active && active === window._companion) {
+      return window._effectiveStatsMika
+        ?? window._mikaProgression?.getStats()
+        ?? this._progression.getStats();
+    }
+    return window._effectiveStats
+      ?? this._progression.getStats();
   }
 
   setWeapon(type) {
@@ -81,9 +106,6 @@ export class CombatSystem {
     this.attacking  = false;
     console.log(`[Combat] Arma equipada: ${type}`);
   }
-
-  // ── Jefe derrotado ────────────────────────────────────────────────────────
-  // Llamar esto desde donde manejes la muerte de jefes
 
   registerBossKill(weapon, subtypeId) {
     this._missions?.registerBossKill(weapon, subtypeId);
@@ -122,14 +144,15 @@ export class CombatSystem {
   _executeAttack(hitIndex) {
     this.attacking = true;
 
+    // ── Usar siempre la progression del personaje activo ──────────────────
+    const prog      = this._getActiveProgression();
     const isRanged  = RANGED_WEAPONS.has(this._weaponType);
-    const subtypeId = this._progression?.getActiveSubtype(this._weaponType) ?? null;
+    const subtypeId = prog.getActiveSubtype(this._weaponType) ?? null;
 
     if (isRanged) {
       this.weapon.execute(hitIndex, this.enemies);
       this._triggerShake(0.5);
 
-      // Registrar daño de rango en misiones
       if (subtypeId && this._missions) {
         const estimatedDmg = this.weapon.getDamage?.(hitIndex) ?? 0;
         this._missions.registerDamage(this._weaponType, subtypeId, estimatedDmg);
@@ -142,45 +165,49 @@ export class CombatSystem {
       if (target) {
         let dmg = this.weapon.getDamage(hitIndex);
 
-        if (this._progression) {
-  const bonus = this._progression.getWeaponDamageBonus(this._weaponType);
-  dmg = Math.floor(dmg * bonus);
-        }
+        // ── Bonus de arma según personaje activo ──────────────────────────
+        const weaponBonus = prog.getWeaponDamageBonus?.(this._weaponType);
+        if (weaponBonus) dmg = Math.floor(dmg * weaponBonus);
+
+        // ── DEF del enemigo vs ATK efectivo del personaje activo ──────────
+        const eff    = this._getEffectiveStats();
+        const atkMod = eff.atk ?? prog.getStats().atk;
+        const base   = prog.getStats().atk;
+        if (base > 0) dmg = Math.floor(dmg * (atkMod / base));
 
         target.takeDamage(dmg);
         this._triggerShake(1.0);
 
-        // Registrar daño en misiones
         if (subtypeId && this._missions) {
           this._missions.registerDamage(this._weaponType, subtypeId, dmg);
         }
 
-        // Registrar kill si el enemigo muere
         if (target.isDead?.() && subtypeId && this._missions) {
           this._missions.registerKill(this._weaponType, subtypeId);
         }
 
-        // Efectos de fusión
-        if (this._progression) {
-          const school = this._progression.getActiveSchool(this._weaponType)
-                      ?? this._progression.getActiveFusion(this._weaponType);
-          if (school === 'fire'  || school === 'fuego')  target.applyBurn?.(5, 3);
-          if (school === 'ice'   || school === 'hielo')  target.applySlow?.(0.4, 2);
-          if (school === 'viento') {
-            const dx  = this.player.position.x - target.mesh.position.x;
-            const dz  = this.player.position.z - target.mesh.position.z;
-            const len = Math.sqrt(dx*dx + dz*dz);
-            if (len > 0) {
-              this.player.position.x += (dx/len) * 1.5;
-              this.player.position.z += (dz/len) * 1.5;
-            }
+        // ── Efectos de fusión ─────────────────────────────────────────────
+        const school = prog.getActiveSchool(this._weaponType)
+                    ?? prog.getActiveFusion(this._weaponType);
+
+        if (school === 'fire'  || school === 'fuego')  target.applyBurn?.(5, 3);
+        if (school === 'ice'   || school === 'hielo')  target.applySlow?.(0.4, 2);
+        if (school === 'viento') {
+          const dx  = this.player.position.x - target.mesh.position.x;
+          const dz  = this.player.position.z - target.mesh.position.z;
+          const len = Math.sqrt(dx*dx + dz*dz);
+          if (len > 0) {
+            this.player.position.x += (dx/len) * 1.5;
+            this.player.position.z += (dz/len) * 1.5;
           }
-          if (school === 'soporte') {
-            const heal = Math.floor(dmg * 0.05);
-            if (window._player && heal > 0) {
-              window._player.hp = Math.min(window._player.maxHp, window._player.hp + heal);
-              window._player.onDamage?.(window._player.hp, window._player.maxHp);
-            }
+        }
+        if (school === 'soporte') {
+          // Curar al personaje activo, no siempre a Kael
+          const heal   = Math.floor(dmg * 0.05);
+          const active = this._getActiveCharacter();
+          if (active && heal > 0) {
+            active.hp = Math.min(active.maxHp, active.hp + heal);
+            active.onDamage?.(active.hp, active.maxHp);
           }
         }
       }
