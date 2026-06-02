@@ -217,7 +217,7 @@ export class HUD {
 
     // ── Stamina solo visible para Kael ────────────────────────────────────
     if (this._staminaEl) {
-      this._staminaEl.style.display = idx === 0 ? 'block' : 'none';
+  this._staminaEl.style.display = 'block';
     }
 
     // ── Nivel del personaje activo ────────────────────────────────────────
