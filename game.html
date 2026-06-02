@@ -227,6 +227,7 @@ async function boot() {
     setProgress(71, 'HUD...');
     const hud = new HUD(combat, skills);
     progression.onLevelUp = (level) => hud.updateLevel(level);
+    mikaProgression.onLevelUp = (level) => hud.updateMikaLevel(level);
     hud.setPartyManager(partyManager);
     setResourceCallback((resource) => hud.showCollectBtn(resource));
 
