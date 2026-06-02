@@ -109,7 +109,7 @@ export class ThirdPersonCamera {
 
   _applyDelta(dx, dy) {
     this.azimuth   -= dx * ROTATION_SENS;
-    this.elevation += dy * ROTATION_SENS;
+    this.elevation -= dy * ROTATION_SENS;
     this.elevation  = Math.max(MIN_ELEVATION, Math.min(MAX_ELEVATION, this.elevation));
   }
 
