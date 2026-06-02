@@ -25,6 +25,7 @@ export class SkillBar {
     this._container         = null;
     this._cooldowns         = {};
     this._enemyNear         = false;
+    this._sprinting         = false;
     this._visible           = false;
 
     this._build();
@@ -61,6 +62,8 @@ export class SkillBar {
     }
     this._buttons.forEach(b => { b.dataset.skillId = ''; b.style.display = 'none'; });
     this.refresh();
+    // Restaurar estado correcto del botón sprint tras cambio de personaje
+    this._updateActionBtn();
   }
 
   refresh() {
@@ -125,6 +128,8 @@ export class SkillBar {
 
   _updateActionBtn() {
     if (!this._sprintBtn) return;
+    // Si está sprintando no interrumpir visualmente
+    if (this._sprinting) return;
     if (this._enemyNear) {
       this._sprintBtn.textContent       = '🛡️';
       this._sprintBtn.style.borderColor = 'rgba(201,168,76,0.7)';
@@ -146,6 +151,8 @@ export class SkillBar {
       this._buildBtn  = null;
       this._build();
       if (this._weapon || this._activeWeapon) this.refresh();
+      // Restaurar estado del botón sprint después del rebuild
+      this._updateActionBtn();
       if (wasVisible) this.show();
     } catch(e) {
       console.error('[SkillBar._rebuild]', e);
@@ -191,7 +198,6 @@ export class SkillBar {
     const skSize  = this._sz(58);
     const sbSize  = this._sz(48);
 
-    // 3 botones de habilidad: básico / medio / arcano
     const sk1 = this._buildSkillBtn(skSize);
     this._placeFromBottomRight(sk1, 558, 403, skSize);
     this._buttons.push(sk1);
@@ -252,6 +258,7 @@ export class SkillBar {
         this._sprintBtn.style.transform = 'scale(0.88)';
         setTimeout(() => this._sprintBtn.style.transform = 'scale(1)', 180);
       } else {
+        this._sprinting = true;
         const activeChar = window._partyManager?.getActiveCharacter() ?? window._player;
         activeChar?.setSprinting?.(true);
         this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.9)';
@@ -260,11 +267,15 @@ export class SkillBar {
     }, { passive: false });
 
     this._sprintBtn.addEventListener('touchend', () => {
+      this._sprinting = false;
       if (!this._enemyNear) {
         const activeChar = window._partyManager?.getActiveCharacter() ?? window._player;
         activeChar?.setSprinting?.(false);
         this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
         this._sprintBtn.style.transform   = 'scale(1)';
+      } else {
+        // Volver a estado parry correcto al soltar
+        this._updateActionBtn();
       }
     });
     this._container.appendChild(this._sprintBtn);
@@ -374,19 +385,13 @@ export class SkillBar {
     const btn = this._buttons[index];
     if (!btn) return;
     btn.dataset.skillId = skill.id;
-
     btn.querySelector('.skill-icon').textContent = skill.icon ?? '✨';
-
-    // Color del borde según capa
     const layer      = skill.layer ?? 'basico';
     const layerColor = LAYER_COLORS[layer] ?? LAYER_COLORS.basico;
     btn.style.borderColor = layerColor;
     btn.style.opacity     = '1';
-
-    // Punto indicador de capa
     const dot = btn.querySelector('.skill-layer');
     if (dot) dot.style.background = layerColor;
-
     this._applyCooldown(btn, this._cooldowns[skill.id] ?? 1);
   }
 
