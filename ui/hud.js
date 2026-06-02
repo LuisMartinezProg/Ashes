@@ -199,50 +199,76 @@ export class HUD {
       }
     }, 100);
 
+    // ── Color de barra HP y energía según personaje activo ────────────────
     if (this._playerHpFill) {
-      this._playerHpFill.style.background =
-        idx === 0
-          ? 'linear-gradient(90deg,#aa0000,#ff4444)'
-          : 'linear-gradient(90deg,#aa0044,#ff88aa)';
+      this._playerHpFill.style.background = idx === 0
+        ? 'linear-gradient(90deg,#aa0000,#ff4444)'
+        : 'linear-gradient(90deg,#aa0044,#ff88aa)';
     }
     if (this._playerHpName) {
       this._playerHpName.textContent = names[idx];
       this._playerHpName.style.color = colors[idx];
     }
     if (this._energyFill) {
-      this._energyFill.style.background =
-        idx === 0
-          ? 'linear-gradient(90deg,#2244cc,#66aaff)'
-          : 'linear-gradient(90deg,#aa2266,#ff88aa)';
+      this._energyFill.style.background = idx === 0
+        ? 'linear-gradient(90deg,#2244cc,#66aaff)'
+        : 'linear-gradient(90deg,#aa2266,#ff88aa)';
     }
+
+    // ── Stamina solo visible para Kael ────────────────────────────────────
     if (this._staminaEl) {
       this._staminaEl.style.display = idx === 0 ? 'block' : 'none';
     }
 
+    // ── Nivel del personaje activo ────────────────────────────────────────
+    if (this._levelLabel) {
+      const prog = idx === 0
+        ? window._prog
+        : window._mikaProgression;
+      if (prog) this._levelLabel.textContent = `Nv.${prog.getLevel()}`;
+    }
+
+    // ── HP de la barra principal según personaje activo ───────────────────
     if (idx === 0) {
       const p = window._player;
-      if (p && this._playerHpFill) {
+      if (p) {
         const pct = Math.max(0, p.hp / p.maxHp) * 100;
-        this._playerHpFill.style.width = `${pct}%`;
+        if (this._playerHpFill) this._playerHpFill.style.width = `${pct}%`;
         if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(p.hp)}/${p.maxHp}`;
       }
     } else {
       const m = this._partyManager?.companion;
-      if (m && this._playerHpFill) {
-        const pct = Math.max(0, m.hp / m.maxHp) * 100;
-        this._playerHpFill.style.width = `${pct}%`;
-        if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(m.hp)}/${m.maxHp}`;
+      if (m) {
+        const maxHp = (window._effectiveStatsMika ?? window._mikaProgression?.getStats())?.maxHp ?? m.maxHp;
+        const pct   = Math.max(0, m.hp / maxHp) * 100;
+        if (this._playerHpFill) this._playerHpFill.style.width = `${pct}%`;
+        if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(m.hp)}/${maxHp}`;
       }
+    }
+
+    // ── Energía: Mika usa su propia progressionMika ───────────────────────
+    if (idx === 1 && window._mikaProgression) {
+      const mikaProg = window._mikaProgression;
+      mikaProg.onEnergyUpdate = (e, max) => this._updateEnergy(e, max);
+      const e   = mikaProg.getMagicEnergy();
+      const max = Math.max(mikaProg.getSkillSlots() * 200, 200);
+      this._updateEnergy(e, max);
+    } else if (idx === 0 && this.skills) {
+      this.skills.onEnergyUpdate = (e, max) => this._updateEnergy(e, max);
     }
   }
 
   _updateMikaHp(hp, max) {
     if (!this._p2Card) return;
-    const pct = Math.max(0, hp / max) * 100;
+
+    // Usar maxHp efectivo de Mika si está disponible
+    const effectiveMax = (window._effectiveStatsMika ?? window._mikaProgression?.getStats())?.maxHp ?? max;
+    const pct = Math.max(0, hp / effectiveMax) * 100;
     this._p2Card.hpFill.style.width = `${pct}%`;
+
     if (this._partyManager?.getActiveIdx() === 1) {
       if (this._playerHpFill) this._playerHpFill.style.width = `${pct}%`;
-      if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(hp)}/${max}`;
+      if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(hp)}/${effectiveMax}`;
     }
   }
 
@@ -302,16 +328,28 @@ export class HUD {
 
   updatePlayerHp(hp, max) {
     if (!this._playerHpFill) return;
+    // Actualizar barra principal solo si el personaje activo es Kael
     if (!this._partyManager || this._partyManager.getActiveIdx() === 0) {
       const pct = Math.max(0, hp / max) * 100;
       this._playerHpFill.style.width = `${pct}%`;
       if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(hp)}/${max}`;
     }
+    // Siempre actualizar la mini-card de Kael
     this.updateProtagonistHp(hp, max);
   }
 
   updateLevel(level) {
-    if (this._levelLabel) this._levelLabel.textContent = `Nv.${level}`;
+    // Solo actualizar si Kael es el activo, o si no hay partyManager todavía
+    if (!this._partyManager || this._partyManager.getActiveIdx() === 0) {
+      if (this._levelLabel) this._levelLabel.textContent = `Nv.${level}`;
+    }
+  }
+
+  // Llamar esto cuando Mika sube de nivel
+  updateMikaLevel(level) {
+    if (this._partyManager?.getActiveIdx() === 1) {
+      if (this._levelLabel) this._levelLabel.textContent = `Nv.${level}`;
+    }
   }
 
   updateStamina(stamina, max) {
@@ -385,7 +423,6 @@ export class HUD {
       minWidth     : '130px',
     });
 
-    // Fila nombre + nivel
     const nameRow = document.createElement('div');
     Object.assign(nameRow.style, {
       display       : 'flex',
@@ -742,6 +779,7 @@ export class HUD {
   }
 
   _updateEnergy(energy, maxEnergy) {
+    if (!this._energyFill) return;
     const pct = Math.max(0, energy / maxEnergy) * 100;
     this._energyFill.style.width = `${pct}%`;
   }
