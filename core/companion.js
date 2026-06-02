@@ -8,21 +8,27 @@ const FOLLOW_DIST  = 3.5;
 const ATTACK_RANGE = 12.0;
 const GROUND_Y     = 0.0;
 
+const JUMP_FORCE = 7.0;
+const GRAVITY    = -18.0;
+
 export class Companion {
   constructor(scene, playerPosition) {
-    this.scene       = scene;
-    this.facingAngle = 0;
-    this._moveDir    = new THREE.Vector3();
+    this.scene        = scene;
+    this.facingAngle  = 0;
+    this._moveDir     = new THREE.Vector3();
     this._attackTimer = 0;
-    this._enemies    = [];
-    this.isActive    = false;
-    this._sprinting  = false;
-    this._playerPos  = playerPosition;
+    this._enemies     = [];
+    this.isActive     = false;
+    this._sprinting   = false;
+    this._playerPos   = playerPosition;
 
-    // Stats iniciales desde ProgressionMika si ya existe, si no fallback seguro
-    const mikaStats  = window._mikaProgression?.getStats?.() ?? { maxHp: 80 };
-    this.maxHp       = mikaStats.maxHp;
-    this.hp          = this.maxHp;
+    this._velocityY   = 0;
+    this._onGround    = true;
+    this._jumpLocked  = false;
+
+    const mikaStats = window._mikaProgression?.getStats?.() ?? { maxHp: 80 };
+    this.maxHp      = mikaStats.maxHp;
+    this.hp         = this.maxHp;
 
     this.root = new THREE.Group();
     this.root.position.set(
@@ -42,7 +48,6 @@ export class Companion {
     this.onSkillCast = null;
   }
 
-  // Siempre lee stats en vivo desde ProgressionMika
   getStats() {
     return window._mikaProgression?.getStats?.() ?? {
       maxHp: this.maxHp,
@@ -52,12 +57,11 @@ export class Companion {
       range: 8,
     };
   }
-  // Sincroniza maxHp con el nivel actual de Mika (llamar tras level up)
+
   syncStatsFromProgression() {
-    const stats  = this.getStats();
+    const stats   = this.getStats();
     const prevMax = this.maxHp;
-    this.maxHp   = stats.maxHp;
-    // Si maxHp subió, añadir la diferencia al HP actual
+    this.maxHp    = stats.maxHp;
     if (this.maxHp > prevMax) {
       this.hp = Math.min(this.hp + (this.maxHp - prevMax), this.maxHp);
     }
@@ -108,8 +112,16 @@ export class Companion {
   activate()   { this.isActive = true;  this.bodyMesh.material.emissiveIntensity = 0.9; }
   deactivate() { this.isActive = false; this.bodyMesh.material.emissiveIntensity = 0.5; }
 
-  setSprinting(val) { this._sprinting = val; }
+  setSprinting(val) { this._sprinting = !!val; }
   isSprinting()     { return this._sprinting; }
+
+  jump() {
+    if (!this._onGround || this._jumpLocked) return;
+    this._velocityY  = JUMP_FORCE;
+    this._onGround   = false;
+    this._jumpLocked = true;
+    setTimeout(() => { this._jumpLocked = false; }, 400);
+  }
 
   registerEnemies(list) {
     this._enemies = list;
@@ -130,7 +142,6 @@ export class Companion {
   }
 
   takeDamage(amount) {
-    // Reducir por DEF de Mika
     const def    = this.getStats().def ?? 3;
     const actual = Math.max(1, amount - Math.floor(def * 0.5));
     this.hp      = Math.max(0, this.hp - actual);
@@ -146,20 +157,34 @@ export class Companion {
   get chestPosition() {
     return new THREE.Vector3(
       this.root.position.x,
-      this.root.position.y + 0.8,
+      this.root.position.y + 1.2,
       this.root.position.z
     );
   }
 
   update(delta, joystickInput, camera) {
+    // ── Gravedad y salto ──────────────────────────────────────────────────
+    if (!this._onGround) {
+      this._velocityY += GRAVITY * delta;
+      this.root.position.y += this._velocityY * delta;
+      if (this.root.position.y <= GROUND_Y) {
+        this.root.position.y = GROUND_Y;
+        this._velocityY      = 0;
+        this._onGround       = true;
+      }
+    }
+
     if (this.isActive) {
       this._updateControlled(delta, joystickInput, camera);
     } else {
       this._updateAI(delta);
     }
 
-    const t = performance.now() * 0.001;
-    this.bodyMesh.position.y = 0.6 + Math.sin(t * 2.0 + 1.5) * 0.06;
+    // Bob solo en tierra
+    if (this._onGround) {
+      const t = performance.now() * 0.001;
+      this.bodyMesh.position.y = 0.6 + Math.sin(t * 2.0 + 1.5) * 0.06;
+    }
 
     this.skillSystem.update(delta);
     this._updateNameTag(camera);
@@ -185,10 +210,26 @@ export class Companion {
       const len = this._moveDir.length();
       if (len > 0.001) {
         this._moveDir.divideScalar(len);
-        const spd = this.getStats().speed ?? MOVE_SPEED;
+        const spd   = this.getStats().speed ?? MOVE_SPEED;
         const speed = ((this._sprinting ? spd * 1.8 : spd) * Math.min(len, 1)) * delta;
         this.root.position.addScaledVector(this._moveDir, speed);
-        this.root.position.y = GROUND_Y;
+
+        // Solo fijar Y al suelo si está en tierra
+        if (this._onGround) this.root.position.y = GROUND_Y;
+
+        // ── Stamina compartida con Kael ───────────────────────────────────
+        if (this._sprinting) {
+          const player = window._player;
+          if (player) {
+            player.stamina -= 18 * delta;
+            player._staminaTimer = 1.5;
+            if (player.stamina <= 0) {
+              player.stamina  = 0;
+              this._sprinting = false;
+            }
+            player.onStaminaUpdate?.(player.stamina, player.maxStamina);
+          }
+        }
 
         const targetAngle = Math.atan2(this._moveDir.x, this._moveDir.z);
         let diff = targetAngle - this.facingAngle;
