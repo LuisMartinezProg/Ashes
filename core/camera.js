@@ -7,7 +7,7 @@ import * as THREE from 'three';
 
 const DEFAULT_DISTANCE  = 7.0;
 const DEFAULT_ELEVATION = 0.38;
-const MIN_ELEVATION     = 0.08;
+const MIN_ELEVATION = -0.25;
 const MAX_ELEVATION     = 1.45;
 const LERP_POSITION     = 6.0;
 const LERP_LOOKAT       = 8.0;
