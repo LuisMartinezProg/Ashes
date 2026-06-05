@@ -53,7 +53,6 @@ export class CombatSystem {
     };
   }
 
-  // ── Progression del personaje activo en el party ──────────────────────────
   _getActiveProgression() {
     const active = window._partyManager?.getActiveCharacter?.();
     if (active && active === window._companion) {
@@ -62,14 +61,12 @@ export class CombatSystem {
     return this._progression;
   }
 
-  // ── Personaje activo (objeto con hp/maxHp/onDamage) ───────────────────────
   _getActiveCharacter() {
     return window._partyManager?.getActiveCharacter?.()
       ?? window._player
       ?? null;
   }
 
-  // ── Stats efectivos del personaje activo ──────────────────────────────────
   _getEffectiveStats() {
     const active = window._partyManager?.getActiveCharacter?.();
     if (active && active === window._companion) {
@@ -115,22 +112,21 @@ export class CombatSystem {
   unregisterEnemy(enemy) { this.enemies = this.enemies.filter(e => e !== enemy); }
 
   triggerAttack() {
-  // Si Mika está activa, delegar a su sistema
-  const active = window._partyManager?.getActiveCharacter?.();
-  if (active && active === window._companion) {
-    window._companion.castSkill();
-    return;
-  }
+    // Si Mika está activa, usar su arco
+    const active = window._partyManager?.getActiveCharacter?.();
+    if (active && active === window._companion) {
+      window._companion.attackBasic();
+      return;
+    }
 
-  if (this.attacking) return;
-  const now = performance.now();
-  if (now - this.lastAttackTime > COMBO_WINDOW) this.comboCount = 0;
-  const hitIndex      = this.comboCount;
-  this.comboCount     = (this.comboCount + 1) % this.comboMax;
-  this.lastAttackTime = now;
-  this._executeAttack(hitIndex);
+    if (this.attacking) return;
+    const now = performance.now();
+    if (now - this.lastAttackTime > COMBO_WINDOW) this.comboCount = 0;
+    const hitIndex      = this.comboCount;
+    this.comboCount     = (this.comboCount + 1) % this.comboMax;
+    this.lastAttackTime = now;
+    this._executeAttack(hitIndex);
   }
-  
 
   update(delta) {
     this.weapon.update(delta, this.enemies);
@@ -152,7 +148,6 @@ export class CombatSystem {
   _executeAttack(hitIndex) {
     this.attacking = true;
 
-    // ── Usar siempre la progression del personaje activo ──────────────────
     const prog      = this._getActiveProgression();
     const isRanged  = RANGED_WEAPONS.has(this._weaponType);
     const subtypeId = prog.getActiveSubtype(this._weaponType) ?? null;
@@ -173,11 +168,9 @@ export class CombatSystem {
       if (target) {
         let dmg = this.weapon.getDamage(hitIndex);
 
-        // ── Bonus de arma según personaje activo ──────────────────────────
         const weaponBonus = prog.getWeaponDamageBonus?.(this._weaponType);
         if (weaponBonus) dmg = Math.floor(dmg * weaponBonus);
 
-        // ── DEF del enemigo vs ATK efectivo del personaje activo ──────────
         const eff    = this._getEffectiveStats();
         const atkMod = eff.atk ?? prog.getStats().atk;
         const base   = prog.getStats().atk;
@@ -194,7 +187,6 @@ export class CombatSystem {
           this._missions.registerKill(this._weaponType, subtypeId);
         }
 
-        // ── Efectos de fusión ─────────────────────────────────────────────
         const school = prog.getActiveSchool(this._weaponType)
                     ?? prog.getActiveFusion(this._weaponType);
 
@@ -210,7 +202,6 @@ export class CombatSystem {
           }
         }
         if (school === 'soporte') {
-          // Curar al personaje activo, no siempre a Kael
           const heal   = Math.floor(dmg * 0.05);
           const active = this._getActiveCharacter();
           if (active && heal > 0) {
