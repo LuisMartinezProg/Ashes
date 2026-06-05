@@ -152,9 +152,13 @@ export class Bear {
       return;
     }
     this._attackTimer -= delta;
+    if (this._attackTimer <= 0.5 && this._attackTimer > 0) {
+  window._parry?.signalAttack?.(this);
+    }
     if (this._attackTimer <= 0) {
       this._attackTimer = 1.8;
-      this.player.takeDamage?.(18);
+      const parried = window._parry?.interceptDamage?.(this) ?? false;
+if (!parried) this.player.takeDamage?.(18);
       // Shake visual
       for (const mat of this._materials) mat.color.setHex(0xff4400);
       setTimeout(() => {
