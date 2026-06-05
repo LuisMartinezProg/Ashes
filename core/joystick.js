@@ -185,7 +185,6 @@ _onMouseDown(e) {
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.fill();
 
-    this._drawArrow(ctx, bx, by - r * 0.65, 0,             dpr);
     this._drawArrow(ctx, bx, by + r * 0.65, Math.PI,       dpr);
     this._drawArrow(ctx, bx + r * 0.65, by, Math.PI * 0.5, dpr);
     this._drawArrow(ctx, bx - r * 0.65, by, -Math.PI * 0.5, dpr);
