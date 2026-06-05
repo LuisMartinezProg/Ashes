@@ -127,13 +127,12 @@ export class SkillBar {
   }
 
   _updateActionBtn() {
-    if (!this._sprintBtn) return;
-    // Si está sprintando no interrumpir visualmente
-    if (this._sprinting) return;
-    if (this._enemyNear) {
-      this._sprintBtn.textContent       = '🛡️';
-      this._sprintBtn.style.borderColor = 'rgba(201,168,76,0.7)';
-      this._sprintBtn.title             = 'Parry';
+  if (!this._sprintBtn) return;
+  if (this._sprinting) return;
+  this._sprintBtn.textContent       = '🏃';
+  this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
+  this._sprintBtn.title             = 'Sprint';
+  }
     } else {
       this._sprintBtn.textContent       = '🏃';
       this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
