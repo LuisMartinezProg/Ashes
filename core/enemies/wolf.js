@@ -148,15 +148,20 @@ export class Wolf {
       return;
     }
     this._attackTimer -= delta;
-    _updateAttack(delta) {
-  const attackRange = this._config.attackRange ?? 1.5;
 
-  if (this._distToPlayer() > attackRange * 1.4) {
-    this._state = STATE.CHASE;
-    return;
+    if (this._attackTimer <= 0.5 && this._attackTimer > 0) {
+      window._parry?.signalAttack?.(this);
+    }
+
+    if (this._attackTimer <= 0) {
+      this._attackTimer = 1.5;
+      const parried = window._parry?.interceptDamage?.(this) ?? false;
+      if (!parried) this.player?.takeDamage?.(6);
+      this._flash();
+    }
+    if (this.player) this._lookAt(this.player.root.position);
   }
-  this._attackTimer -= delta;
-
+  
   // ── Señal de parry cuando faltan 0.5s ────────────────────────────────
   if (this._attackTimer <= 0.5 && this._attackTimer > 0) {
     window._parry?.signalAttack?.(this);
