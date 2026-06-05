@@ -543,10 +543,10 @@ async function boot() {
     loading.classList.add('hidden');
     setTimeout(() => loading.remove(), 900);
 
-    if (!progression.getFlag?.('escena01_done')) {
-      narrative.play(STORY_EVENTS.escena01_despertar);
-    }
-
+  //  if (!progression.getFlag?.('escena01_done')) {
+  //    narrative.play(STORY_EVENTS.escena01_despertar);
+ //   }
+//
   } catch (err) {
     txt.textContent = 'ERROR: ' + (err.message || err.toString());
     bar.style.background = '#8B2A0A';
