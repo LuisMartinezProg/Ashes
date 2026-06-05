@@ -115,14 +115,22 @@ export class CombatSystem {
   unregisterEnemy(enemy) { this.enemies = this.enemies.filter(e => e !== enemy); }
 
   triggerAttack() {
-    if (this.attacking) return;
-    const now = performance.now();
-    if (now - this.lastAttackTime > COMBO_WINDOW) this.comboCount = 0;
-    const hitIndex      = this.comboCount;
-    this.comboCount     = (this.comboCount + 1) % this.comboMax;
-    this.lastAttackTime = now;
-    this._executeAttack(hitIndex);
+  // Si Mika está activa, delegar a su sistema
+  const active = window._partyManager?.getActiveCharacter?.();
+  if (active && active === window._companion) {
+    window._companion.castSkill();
+    return;
   }
+
+  if (this.attacking) return;
+  const now = performance.now();
+  if (now - this.lastAttackTime > COMBO_WINDOW) this.comboCount = 0;
+  const hitIndex      = this.comboCount;
+  this.comboCount     = (this.comboCount + 1) % this.comboMax;
+  this.lastAttackTime = now;
+  this._executeAttack(hitIndex);
+  }
+  
 
   update(delta) {
     this.weapon.update(delta, this.enemies);
