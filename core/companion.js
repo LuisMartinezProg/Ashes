@@ -1,6 +1,7 @@
 // core/companion.js — Mika | Ashes of the Reborn | Valiant Gaming
 import * as THREE from 'three';
 import { SkillSystem } from './skillSystem.js';
+import { BowWeapon   } from './weapons/bow.js';
 
 const MOVE_SPEED   = 4.5;
 const SPRINT_SPEED = 8.0;
@@ -25,6 +26,8 @@ export class Companion {
     this._velocityY   = 0;
     this._onGround    = true;
     this._jumpLocked  = false;
+    this._attacking   = false;
+    this._bowCombo    = 0;
 
     const mikaStats = window._mikaProgression?.getStats?.() ?? { maxHp: 80 };
     this.maxHp      = mikaStats.maxHp;
@@ -43,6 +46,9 @@ export class Companion {
     this.skillSystem   = new SkillSystem(scene, this.root);
     this.activeSubtype = 'precision';
     this.activeSkillId = 'piercing_shot';
+
+    this._bow = new BowWeapon(this.root);
+    this._bow.setScene(scene);
 
     this.onDamage    = null;
     this.onSkillCast = null;
@@ -128,6 +134,14 @@ export class Companion {
     this.skillSystem.registerEnemies(list);
   }
 
+  attackBasic() {
+    if (this._attacking) return;
+    this._attacking = true;
+    this._bow.execute(this._bowCombo, this._enemies);
+    this._bowCombo = (this._bowCombo + 1) % 2;
+    setTimeout(() => { this._attacking = false; }, this._bow.getAnimDuration(this._bowCombo));
+  }
+
   castSkill() {
     const result = this.skillSystem.castSkill(this.activeSkillId);
     if (result && this.onSkillCast) {
@@ -163,7 +177,6 @@ export class Companion {
   }
 
   update(delta, joystickInput, camera) {
-    // ── Gravedad y salto ──────────────────────────────────────────────────
     if (!this._onGround) {
       this._velocityY += GRAVITY * delta;
       this.root.position.y += this._velocityY * delta;
@@ -180,13 +193,13 @@ export class Companion {
       this._updateAI(delta);
     }
 
-    // Bob solo en tierra
     if (this._onGround) {
       const t = performance.now() * 0.001;
       this.bodyMesh.position.y = 0.6 + Math.sin(t * 2.0 + 1.5) * 0.06;
     }
 
     this.skillSystem.update(delta);
+    this._bow.update(delta, this._enemies);
     this._updateNameTag(camera);
   }
 
@@ -214,10 +227,8 @@ export class Companion {
         const speed = ((this._sprinting ? spd * 1.8 : spd) * Math.min(len, 1)) * delta;
         this.root.position.addScaledVector(this._moveDir, speed);
 
-        // Solo fijar Y al suelo si está en tierra
         if (this._onGround) this.root.position.y = GROUND_Y;
 
-        // ── Stamina compartida con Kael ───────────────────────────────────
         if (this._sprinting) {
           const player = window._player;
           if (player) {
@@ -307,5 +318,6 @@ export class Companion {
   destroy() {
     this.scene.remove(this.root);
     this._nameTag.remove();
+    this._bow.destroy();
   }
 }
