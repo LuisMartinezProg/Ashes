@@ -128,23 +128,31 @@ export class BaseEnemy {
     }
     this._moveTo(this._getActivePosition(), chaseSpeed * this._slowFactor, delta);
   }
+_updateAttack(delta) {
+  const attackRange = this._config.attackRange ?? 1.5;
 
-  _updateAttack(delta) {
-    const attackRange = this._config.attackRange ?? 1.5;
-
-    if (this._distToPlayer() > attackRange * 1.4) {
-      this._state = STATE.CHASE;
-      return;
-    }
-    this._attackTimer -= delta;
-    if (this._attackTimer <= 0) {
-      this._attackTimer = this._config.attackCooldown ?? 1.5;
-      const target = this._getActiveTarget();
-      target.takeDamage?.(this._config.damage ?? 8);
-      this._onAttackVFX?.();
-    }
-    this._lookAt(this._getActivePosition());
+  if (this._distToPlayer() > attackRange * 1.4) {
+    this._state = STATE.CHASE;
+    return;
   }
+  this._attackTimer -= delta;
+
+  // ── Señal de parry cuando faltan 0.5s ────────────────────────────────
+  if (this._attackTimer <= 0.5 && this._attackTimer > 0) {
+    window._parry?.signalAttack?.(this);
+  }
+
+  if (this._attackTimer <= 0) {
+    this._attackTimer = this._config.attackCooldown ?? 1.5;
+    const target = this._getActiveTarget();
+    // Si el parry intercepta, cancelar daño
+    const parried = window._parry?.interceptDamage?.(this) ?? false;
+    if (!parried) target.takeDamage?.(this._config.damage ?? 8);
+    this._onAttackVFX?.();
+  }
+  this._lookAt(this._getActivePosition());
+}
+  
 
   _flash() {
     for (const mat of this._materials) mat.color.setHex(0xffffff);
