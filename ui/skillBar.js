@@ -143,7 +143,6 @@ export class SkillBar {
       this._attackBtn = null;
       this._sprintBtn = null;
       this._buildBtn  = null;
-      this._jumpBtn   = null;
       this._build();
       if (this._weapon || this._activeWeapon) this.refresh();
       this._updateActionBtn();
