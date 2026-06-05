@@ -223,6 +223,7 @@ async function boot() {
     setProgress(69, 'ParrySystem...');
     const parry = new ParrySystem(player, combat);
     window._parry = parry;
+    window._camera = camera;
 
     setProgress(71, 'HUD...');
     const hud = new HUD(combat, skills);
