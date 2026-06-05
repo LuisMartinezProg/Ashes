@@ -6,12 +6,12 @@
 import * as THREE from 'three';
 
 const DEFAULT_DISTANCE  = 7.0;
-const DEFAULT_ELEVATION = 0.42;
-const MIN_ELEVATION     = -0.05;
-const MAX_ELEVATION     = 1.05;
-const LERP_POSITION     = 8.0;
-const LERP_LOOKAT       = 10.0;
-const ROTATION_SENS     = 0.003;
+const DEFAULT_ELEVATION = 0.38;
+const MIN_ELEVATION     = 0.08;
+const MAX_ELEVATION     = 1.1;
+const LERP_POSITION     = 6.0;
+const LERP_LOOKAT       = 8.0;
+const ROTATION_SENS     = 0.005;
 
 export class ThirdPersonCamera {
   constructor(camera, player) {
