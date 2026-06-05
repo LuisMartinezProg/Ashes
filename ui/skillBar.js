@@ -125,20 +125,14 @@ export class SkillBar {
       this._updateActionBtn();
     }
   }
-
-  _updateActionBtn() {
-  if (!this._sprintBtn) return;
-  if (this._sprinting) return;
-  this._sprintBtn.textContent       = '🏃';
-  this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
-  this._sprintBtn.title             = 'Sprint';
-  }
-    } else {
-      this._sprintBtn.textContent       = '🏃';
-      this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
-      this._sprintBtn.title             = 'Sprint';
-    }
-  }
+_updateActionBtn() {
+    if (!this._sprintBtn) return;
+    if (this._sprinting) return;
+    this._sprintBtn.textContent       = '🏃';
+    this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
+    this._sprintBtn.title             = 'Sprint';
+}
+  
 
   _rebuild() {
     try {
@@ -249,34 +243,22 @@ export class SkillBar {
     // Botón sprint/parry
     this._sprintBtn = this._buildSmallBtn('🏃', sbSize, 'rgba(100,220,255,0.5)');
     this._placeFromBottomRight(this._sprintBtn, 755, 302, sbSize);
-
     this._sprintBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (this._enemyNear) {
-        window._parry?.attemptParry?.();
-        this._sprintBtn.style.transform = 'scale(0.88)';
-        setTimeout(() => this._sprintBtn.style.transform = 'scale(1)', 180);
-      } else {
-        this._sprinting = true;
-        const activeChar = window._partyManager?.getActiveCharacter() ?? window._player;
-        activeChar?.setSprinting?.(true);
-        this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.9)';
-        this._sprintBtn.style.transform   = 'scale(0.92)';
-      }
-    }, { passive: false });
+  e.preventDefault();
+  this._sprinting = true;
+  const activeChar = window._partyManager?.getActiveCharacter() ?? window._player;
+  activeChar?.setSprinting?.(true);
+  this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.9)';
+  this._sprintBtn.style.transform   = 'scale(0.92)';
+}, { passive: false });
 
     this._sprintBtn.addEventListener('touchend', () => {
-      this._sprinting = false;
-      if (!this._enemyNear) {
-        const activeChar = window._partyManager?.getActiveCharacter() ?? window._player;
-        activeChar?.setSprinting?.(false);
-        this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
-        this._sprintBtn.style.transform   = 'scale(1)';
-      } else {
-        // Volver a estado parry correcto al soltar
-        this._updateActionBtn();
-      }
-    });
+  this._sprinting = false;
+  const activeChar = window._partyManager?.getActiveCharacter() ?? window._player;
+  activeChar?.setSprinting?.(false);
+  this._sprintBtn.style.borderColor = 'rgba(100,220,255,0.5)';
+  this._sprintBtn.style.transform   = 'scale(1)';
+});
     this._container.appendChild(this._sprintBtn);
 
     // Botón construcción
