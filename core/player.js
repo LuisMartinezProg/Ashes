@@ -42,7 +42,6 @@ export class Player {
     scene.add(this.root);
 
     this._buildMesh();
-    this._buildJumpBtn();
   }
 
   setSprinting(val) {
@@ -86,49 +85,10 @@ export class Player {
     this.headMesh = sphere;
   }
 
-  _buildJumpBtn() {
-    const btn = document.createElement('button');
-    btn.textContent = '⬆';
-    Object.assign(btn.style, {
-      position      : 'fixed',
-      bottom        : '140px',
-      left          : '18%',
-      width         : '52px',
-      height        : '52px',
-      borderRadius  : '50%',
-      border        : '2px solid rgba(136,170,255,0.6)',
-      background    : 'rgba(10,8,20,0.88)',
-      color         : '#88aaff',
-      fontSize      : '22px',
-      cursor        : 'pointer',
-      pointerEvents : 'all',
-      display       : 'flex',
-      alignItems    : 'center',
-      justifyContent: 'center',
-      zIndex        : '121',
-      WebkitTapHighlightColor: 'transparent',
-      boxShadow     : '0 2px 8px rgba(0,0,0,0.5)',
-      transition    : 'transform 0.08s',
-    });
-
-    const doJump = (e) => {
-      e.preventDefault();
-      const active = window._partyManager?.getActiveCharacter() ?? this;
-      active.jump?.();
-      btn.style.transform = 'scale(0.88)';
-      setTimeout(() => btn.style.transform = 'scale(1)', 140);
-    };
-    btn.addEventListener('touchstart', doJump, { passive: false });
-    btn.addEventListener('click', doJump);
-    document.body.appendChild(btn);
-    this._jumpBtn = btn;
-  }
-
   update(delta, joystickInput, camera) {
     const { dx, dy } = joystickInput;
     const moving = Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01;
 
-    // ── Gravedad y salto ──────────────────────────────────────────────────
     if (!this._onGround) {
       this._velocityY += GRAVITY * delta;
       this.root.position.y += this._velocityY * delta;
@@ -139,7 +99,6 @@ export class Player {
       }
     }
 
-    // ── Stamina ───────────────────────────────────────────────────────────
     if (this._sprinting && moving) {
       this.stamina -= STAMINA_SPRINT * delta;
       this._staminaTimer = STAMINA_DELAY;
@@ -157,7 +116,6 @@ export class Player {
       }
     }
 
-    // ── Movimiento ────────────────────────────────────────────────────────
     if (moving) {
       const camFwd = new THREE.Vector3();
       camera.getWorldDirection(camFwd);
@@ -177,7 +135,6 @@ export class Player {
         const speed = (this._sprinting ? SPRINT_SPEED : MOVE_SPEED) * Math.min(len, 1);
         this.root.position.addScaledVector(this._moveDir, speed * delta);
 
-        // Solo fijar Y al suelo si está en tierra
         if (this._onGround) this.root.position.y = GROUND_Y;
 
         const targetAngle = Math.atan2(this._moveDir.x, this._moveDir.z);
@@ -189,7 +146,6 @@ export class Player {
       }
     }
 
-    // Bob flotante solo en tierra
     if (this._onGround) {
       const t = performance.now() * 0.001;
       this.bodyMesh.position.y = 0.6 + Math.sin(t * 2.2) * 0.06;
@@ -199,7 +155,6 @@ export class Player {
   get position() { return this.root.position; }
 
   get chestPosition() {
-    // Offset dinámico para que la cámara no tenga techo artificial
     return this.root.position.clone().add(new THREE.Vector3(0, 1.2, 0));
   }
 
@@ -212,6 +167,5 @@ export class Player {
 
   destroy() {
     this.scene.remove(this.root);
-    this._jumpBtn?.remove();
   }
 }
