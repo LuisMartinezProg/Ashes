@@ -274,19 +274,6 @@ export class SkillBar {
     this._buildBtn.addEventListener('click', onBuild);
     this._container.appendChild(this._buildBtn);
 
-    // Botón saltar
-    this._jumpBtn = this._buildSmallBtn('⬆', sbSize, 'rgba(136,170,255,0.5)');
-    this._placeFromBottomRight(this._jumpBtn, 755, 390, sbSize);
-    const onJump = (e) => {
-      e.preventDefault();
-      const active = window._partyManager?.getActiveCharacter() ?? window._player;
-      active?.jump?.();
-      this._jumpBtn.style.transform = 'scale(0.88)';
-      setTimeout(() => this._jumpBtn.style.transform = 'scale(1)', 140);
-    };
-    this._jumpBtn.addEventListener('touchstart', onJump, { passive: false });
-    this._jumpBtn.addEventListener('click', onJump);
-    this._container.appendChild(this._jumpBtn);
   }
 
   _buildSmallBtn(icon, size, borderColor) {
