@@ -108,9 +108,10 @@ export class ThirdPersonCamera {
   _onMouseUp() { this._dragActive = false; }
 
   _applyDelta(dx, dy) {
-    this.azimuth   -= dx * ROTATION_SENS;
-    this.elevation -= dy * ROTATION_SENS;
-    this.elevation  = Math.max(MIN_ELEVATION, Math.min(MAX_ELEVATION, this.elevation));
+  this.azimuth   -= dx * ROTATION_SENS;
+  const sens = dy > 0 ? ROTATION_SENS * 0.4 : ROTATION_SENS;
+  this.elevation -= dy * sens;
+  this.elevation  = Math.max(MIN_ELEVATION, Math.min(MAX_ELEVATION, this.elevation));
   }
 
   _calcIdealPosition() {
