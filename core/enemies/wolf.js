@@ -10,21 +10,21 @@ const STATE = {
 
 export class Wolf {
   constructor(scene, position, player) {
-    this.scene    = scene;
-    this.player   = player;
-    this.hp       = 30;
-    this.maxHp    = 30;
-    this.dead     = false;
-    this.onDeath  = null;
-    this._state   = STATE.ROAM;
-    this._spawnPos = { ...position };
-    this._fleeTarget = null;
-    this._attackTimer = 0;
-    this._roamTimer   = 0;
-    this._roamTarget  = new THREE.Vector3(position.x, 0, position.z);
+    this.scene         = scene;
+    this.player        = player;
+    this.hp            = 30;
+    this.maxHp         = 30;
+    this.dead          = false;
+    this.onDeath       = null;
+    this._state        = STATE.ROAM;
+    this._spawnPos     = { ...position };
+    this._fleeTarget   = null;
+    this._attackTimer  = 0;
+    this._roamTimer    = 0;
+    this._roamTarget   = new THREE.Vector3(position.x, 0, position.z);
     this._respawnTimer = 0;
-    this._dying       = false;
-    this._dyingTimer  = 0;
+    this._dying        = false;
+    this._dyingTimer   = 0;
 
     this._buildMesh(position);
     scene.add(this.mesh);
@@ -33,21 +33,18 @@ export class Wolf {
   _buildMesh(pos) {
     this.mesh = new THREE.Group();
 
-    // Cuerpo
     const bodyGeo = new THREE.BoxGeometry(0.7, 0.4, 1.2);
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0x5A4A3A, roughness: 0.9 });
     const body    = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 0.5;
     this.mesh.add(body);
 
-    // Cabeza
     const headGeo = new THREE.BoxGeometry(0.4, 0.35, 0.4);
     const headMat = new THREE.MeshStandardMaterial({ color: 0x6A5A4A, roughness: 0.9 });
     const head    = new THREE.Mesh(headGeo, headMat);
     head.position.set(0, 0.65, 0.55);
     this.mesh.add(head);
 
-    // Orejas
     const earGeo = new THREE.ConeGeometry(0.08, 0.18, 4);
     const earMat = new THREE.MeshStandardMaterial({ color: 0x5A4A3A });
     [-0.12, 0.12].forEach(ex => {
@@ -56,7 +53,6 @@ export class Wolf {
       this.mesh.add(ear);
     });
 
-    // Cola
     const tailGeo = new THREE.CylinderGeometry(0.06, 0.03, 0.5, 5);
     const tail    = new THREE.Mesh(tailGeo, bodyMat);
     tail.position.set(0, 0.7, -0.6);
@@ -71,9 +67,8 @@ export class Wolf {
 
   flee(fromPos) {
     this._state = STATE.FLEE;
-    // Huir en dirección opuesta al oso
-    const dx = this.mesh.position.x - fromPos.x;
-    const dz = this.mesh.position.z - fromPos.z;
+    const dx  = this.mesh.position.x - fromPos.x;
+    const dz  = this.mesh.position.z - fromPos.z;
     const len = Math.sqrt(dx*dx + dz*dz) || 1;
     this._fleeTarget = new THREE.Vector3(
       this.mesh.position.x + (dx/len) * 30,
@@ -83,7 +78,7 @@ export class Wolf {
   }
 
   startRoaming() {
-    this._state = STATE.ROAM;
+    this._state      = STATE.ROAM;
     this._fleeTarget = null;
   }
 
@@ -113,40 +108,27 @@ export class Wolf {
   _updateFlee(delta) {
     if (!this._fleeTarget) return;
     const dist = this._distTo(this._fleeTarget);
-    if (dist < 2) {
-      this._state = STATE.ROAM;
-      return;
-    }
+    if (dist < 2) { this._state = STATE.ROAM; return; }
     this._moveTo(this._fleeTarget, 5.5, delta);
   }
 
   _updateRoam(delta) {
-    // Atacar si jugador está cerca
-    if (this._distToPlayer() < 2.5) {
-      this._state = STATE.ATTACK;
-      return;
-    }
-
-    // Nuevo punto de merodeo cada 3s
+    if (this._distToPlayer() < 2.5) { this._state = STATE.ATTACK; return; }
     this._roamTimer -= delta;
     if (this._roamTimer <= 0) {
-      this._roamTimer = 2 + Math.random() * 3;
+      this._roamTimer  = 2 + Math.random() * 3;
       this._roamTarget = new THREE.Vector3(
         this._spawnPos.x + (Math.random() - 0.5) * 16,
         0,
         this._spawnPos.z + (Math.random() - 0.5) * 16
       );
     }
-
     const dist = this._distTo(this._roamTarget);
     if (dist > 0.5) this._moveTo(this._roamTarget, 1.5, delta);
   }
 
   _updateAttack(delta) {
-    if (this._distToPlayer() > 3.5) {
-      this._state = STATE.ROAM;
-      return;
-    }
+    if (this._distToPlayer() > 3.5) { this._state = STATE.ROAM; return; }
     this._attackTimer -= delta;
 
     if (this._attackTimer <= 0.5 && this._attackTimer > 0) {
@@ -161,22 +143,7 @@ export class Wolf {
     }
     if (this.player) this._lookAt(this.player.root.position);
   }
-  
-  // ── Señal de parry cuando faltan 0.5s ────────────────────────────────
-  if (this._attackTimer <= 0.5 && this._attackTimer > 0) {
-    window._parry?.signalAttack?.(this);
-  }
 
-  if (this._attackTimer <= 0) {
-    this._attackTimer = this._config.attackCooldown ?? 1.5;
-    const target = this._getActiveTarget();
-    // Si el parry intercepta, cancelar daño
-    const parried = window._parry?.interceptDamage?.(this) ?? false;
-    if (!parried) target.takeDamage?.(this._config.damage ?? 8);
-    this._onAttackVFX?.();
-  }
-  this._lookAt(this._getActivePosition());
-    }
   _distToPlayer() {
     if (!this.player || !this.mesh) return Infinity;
     return this._distTo(this.player.root.position);
@@ -219,20 +186,19 @@ export class Wolf {
       }
     }, 100);
   }
-_startDeath() {
-  this.dead    = true;
-  this._dying  = true;
-  this._dyingTimer = 600;
-  this._state  = STATE.DEAD;
 
-  // Drops
-  window._building?.addMaterial?.('madera', 2);   // carne → madera por ahora
-  window._prog?.addMagicEnergy?.(8);
-  window._prog?.addXP?.(window._combat?._weaponType ?? 'katana', 25);
+  _startDeath() {
+    this.dead        = true;
+    this._dying      = true;
+    this._dyingTimer = 600;
+    this._state      = STATE.DEAD;
 
-  if (this.onDeath) this.onDeath();
-}
+    window._building?.addMaterial?.('madera', 2);
+    window._prog?.addMagicEnergy?.(8);
+    window._prog?.addXP?.(window._combat?._weaponType ?? 'katana', 25);
 
+    if (this.onDeath) this.onDeath();
+  }
 
   _updateDeathAnim(delta) {
     if (!this.mesh) return;
@@ -242,17 +208,17 @@ _startDeath() {
     if (this._dyingTimer <= 0) {
       this._dying = false;
       this.scene.remove(this.mesh);
-      this.mesh = null;
+      this.mesh          = null;
       this._respawnTimer = 60;
     }
   }
 
   _respawn() {
-    this.hp    = this.maxHp;
-    this.dead  = false;
-    this._dying = false;
-    this._state = STATE.ROAM;
+    this.hp         = this.maxHp;
+    this.dead       = false;
+    this._dying     = false;
+    this._state     = STATE.ROAM;
     this._buildMesh(this._spawnPos);
     this.scene.add(this.mesh);
   }
-              }
+}
