@@ -11,7 +11,7 @@ const MIN_ELEVATION     = -0.05;
 const MAX_ELEVATION     = 1.05;
 const LERP_POSITION     = 8.0;
 const LERP_LOOKAT       = 10.0;
-const ROTATION_SENS     = 0.006;
+const ROTATION_SENS     = 0.003;
 
 export class ThirdPersonCamera {
   constructor(camera, player) {
