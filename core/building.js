@@ -14,11 +14,11 @@ export class BuildingSystem {
     this._scene      = scene;
     this._player     = player;
     this._prog       = null;
-    this._inventory  = {};   // { madera: 0, piedra: 0, hierro: 0, mineral: 0 }
+    this._inventory  = {};
     this._tool       = 'punos';
-    this._built      = [];   // estructuras colocadas
-    this._placing    = null; // estructura en modo preview
-    this._ghost      = null; // mesh fantasma
+    this._built      = [];
+    this._placing    = null;
+    this._ghost      = null;
     this._townName   = null;
 
     this._initInventory();
@@ -26,7 +26,7 @@ export class BuildingSystem {
   }
 
   setProgression(p) { this._prog = p; }
-setZone(zone)     { this._zone = zone; }
+  setZone(zone)     { this._zone = zone; }
 
   // ─────────────────────────────────────────────
   // INVENTARIO
@@ -115,48 +115,37 @@ setZone(zone)     { this._zone = zone; }
   updateGhostPosition() {
     if (!this._ghost || !this._placing) return;
     const pos = this._player.root.position.clone();
-    pos.z -= 4; // colocar delante del jugador
+    pos.z -= 4;
     this._ghost.position.copy(pos);
     this._ghost.position.y = this._placing.tierData.size[1] / 2;
   }
-confirmPlace() {
-  if (!this._placing || !this._ghost) return false;
-  const { structureId, tier, def, tierData } = this._placing;
 
-  if (!this.consumeMaterials(tierData.cost)) {
-    console.warn('[Building] Materiales insuficientes');
-    return false;
-  }
+  confirmPlace() {
+    if (!this._placing || !this._ghost) return false;
+    const { structureId, tier, def, tierData } = this._placing;
 
-  const data = { structureId, tier, def, tierData };
-  this._placing = null;
+    if (!this.consumeMaterials(tierData.cost)) {
+      console.warn('[Building] Materiales insuficientes');
+      return false;
+    }
 
-  if (this._built.length === 0 && !this._townName) {
-    this._requestTownName(() => this._placeStructure(
-      data.structureId, data.tier, data.def, data.tierData
-    ));
-    return true;
-  }
+    const data = { structureId, tier, def, tierData };
+    this._placing = null;
 
-  this._placeStructure(data.structureId, data.tier, data.def, data.tierData);
-  return true;
-}
-  
-
-    // Primera construcción → pedir nombre del pueblo
     if (this._built.length === 0 && !this._townName) {
-      this._requestTownName(() => this._placeStructure(structureId, tier, def, tierData));
+      this._requestTownName(() => this._placeStructure(
+        data.structureId, data.tier, data.def, data.tierData
+      ));
       return true;
     }
 
-    this._placeStructure(structureId, tier, def, tierData);
+    this._placeStructure(data.structureId, data.tier, data.def, data.tierData);
     return true;
   }
 
   _placeStructure(structureId, tier, def, tierData) {
     const pos = this._ghost.position.clone();
 
-    // Crear mesh real
     const geo = new THREE.BoxGeometry(...tierData.size);
     const mat = new THREE.MeshLambertMaterial({
       color: this._getTierColor(tier),
@@ -177,14 +166,12 @@ confirmPlace() {
     this._built.push(record);
     this._saveToStorage();
 
-    // Limpiar ghost
-this._scene.remove(this._ghost);
-this._ghost.geometry.dispose();
-this._ghost.material.dispose();
-this._ghost   = null;
-this._placing = null;
+    this._scene.remove(this._ghost);
+    this._ghost.geometry.dispose();
+    this._ghost.material.dispose();
+    this._ghost   = null;
+    this._placing = null;
 
-    // Aplicar efecto
     this._applyEffect(def.effect, mesh);
 
     console.log(`[Building] Construido: ${def.label} (${tier}) en`, pos);
@@ -205,7 +192,6 @@ this._placing = null;
   _applyEffect(effect, mesh) {
     if (!effect) return;
     if (effect.type === 'regen') {
-      // Fogata — luz puntual
       const light = new THREE.PointLight(0xff6600, 1.5, effect.radius * 2);
       light.position.copy(mesh.position);
       light.position.y += 1;
