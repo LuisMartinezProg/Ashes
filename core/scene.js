@@ -46,9 +46,6 @@ export async function initScene() {
   addGround(worldGroup, 200, 60,  0,   90, 0x6A9A5A, 0.90);
   addGround(worldGroup, 200, 120, 0, -160, 0x1a1a1a, 0.99);
 
-  const playerMesh = new THREE.Mesh(
-    new THREE.SphereGeometry(0.35, 12, 12),
-    new THREE.MeshStandardMaterial({
   
 
   buildForestDense(worldGroup);
