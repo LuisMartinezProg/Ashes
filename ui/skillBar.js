@@ -53,6 +53,15 @@ export class SkillBar {
       this._activeCharId      = 'mika';
       this._activeProgression = mikaProgression ?? this.progression;
       if (this._attackBtn) this._attackBtn.textContent = '🏹';
+
+      const MIKA_SKILLS = window._MIKA_SKILLS ?? [];
+      MIKA_SKILLS.forEach((sk, i) => {
+        this._updateButton(i, sk);
+        this._buttons[i].style.display = 'flex';
+      });
+      for (let i = MIKA_SKILLS.length; i < this._buttons.length; i++) {
+        this._buttons[i].style.display = 'none';
+      }
     } else {
       this._activeSkillSystem = this.skillSystem;
       this._activeWeapon      = this._weapon;
@@ -60,20 +69,8 @@ export class SkillBar {
       this._activeProgression = this.progression;
       const icons = { katana:'🗡️', sword:'⚔️', magic:'🔮', bow:'🏹' };
       if (this._attackBtn) this._attackBtn.textContent = icons[this._weapon] ?? '⚔️';
+      this.refresh();
     }
-    this._buttons.forEach(b => { b.dataset.skillId = ''; b.style.display = 'none'; });
-    this.refresh();
-    // Forzar habilidades fijas de Mika
-import { MIKA_SKILLS } from '../core/mikaProgression.js';
-
-// En setActiveCharacter idx === 1:
-MIKA_SKILLS.forEach((sk, i) => {
-  this._updateButton(i, sk);
-  this._buttons[i].style.display = 'flex';
-});
-for (let i = MIKA_SKILLS.length; i < this._buttons.length; i++) {
-  this._buttons[i].style.display = 'none';
-}
     this._updateActionBtn();
   }
 
