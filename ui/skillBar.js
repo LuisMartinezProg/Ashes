@@ -63,6 +63,17 @@ export class SkillBar {
     }
     this._buttons.forEach(b => { b.dataset.skillId = ''; b.style.display = 'none'; });
     this.refresh();
+    // Forzar habilidades fijas de Mika
+import { MIKA_SKILLS } from '../core/mikaProgression.js';
+
+// En setActiveCharacter idx === 1:
+MIKA_SKILLS.forEach((sk, i) => {
+  this._updateButton(i, sk);
+  this._buttons[i].style.display = 'flex';
+});
+for (let i = MIKA_SKILLS.length; i < this._buttons.length; i++) {
+  this._buttons[i].style.display = 'none';
+}
     this._updateActionBtn();
   }
 
