@@ -119,15 +119,29 @@ setZone(zone)     { this._zone = zone; }
     this._ghost.position.copy(pos);
     this._ghost.position.y = this._placing.tierData.size[1] / 2;
   }
+confirmPlace() {
+  if (!this._placing || !this._ghost) return false;
+  const { structureId, tier, def, tierData } = this._placing;
 
-  confirmPlace() {
-    if (!this._placing || !this._ghost) return false;
-    const { structureId, tier, def, tierData } = this._placing;
+  if (!this.consumeMaterials(tierData.cost)) {
+    console.warn('[Building] Materiales insuficientes');
+    return false;
+  }
 
-    if (!this.consumeMaterials(tierData.cost)) {
-      console.warn('[Building] Materiales insuficientes');
-      return false;
-    }
+  const data = { structureId, tier, def, tierData };
+  this._placing = null;
+
+  if (this._built.length === 0 && !this._townName) {
+    this._requestTownName(() => this._placeStructure(
+      data.structureId, data.tier, data.def, data.tierData
+    ));
+    return true;
+  }
+
+  this._placeStructure(data.structureId, data.tier, data.def, data.tierData);
+  return true;
+}
+  
 
     // Primera construcción → pedir nombre del pueblo
     if (this._built.length === 0 && !this._townName) {
@@ -164,9 +178,11 @@ setZone(zone)     { this._zone = zone; }
     this._saveToStorage();
 
     // Limpiar ghost
-    this._scene.remove(this._ghost);
-    this._ghost    = null;
-    this._placing  = null;
+this._scene.remove(this._ghost);
+this._ghost.geometry.dispose();
+this._ghost.material.dispose();
+this._ghost   = null;
+this._placing = null;
 
     // Aplicar efecto
     this._applyEffect(def.effect, mesh);
