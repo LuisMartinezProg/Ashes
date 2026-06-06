@@ -133,6 +133,9 @@ export class PartyManager {
       poison_arrow: 'poison', plague_shot: 'poison', toxic_cloud: 'poison', death_plague: 'poison',
       rain_of_arrows: 'rain', storm_volley: 'rain', arrow_storm: 'rain', sky_collapse: 'rain',
       back_step: 'agility', roll_shot: 'agility', phantom_step: 'agility', void_dance: 'agility',
+      astral_arrow     : 'astral',
+astral_rain      : 'astral',
+stellar_collapse : 'astral',
     };
     return map[skillId] ?? null;
   }
