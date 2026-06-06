@@ -69,7 +69,7 @@ export class PartyMenu {
       position     : 'fixed',
       bottom       : '90px',
       left         : '12px',
-      display      : 'flex',
+      display      : 'none',
       flexDirection: 'column',
       gap          : '2px',
       zIndex       : '130',
