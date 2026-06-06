@@ -49,3 +49,4 @@ export const MIKA_SKILLS = [
     element    : 'astral',
   },
 ];
+window._MIKA_SKILLS = MIKA_SKILLS;
