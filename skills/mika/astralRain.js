@@ -122,4 +122,4 @@ export class AstralRain {
     };
     requestAnimationFrame(animate);
   }
-}alRain.js
+}
