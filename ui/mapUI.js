@@ -21,12 +21,13 @@ export class MapUI {
       { label: 'Ironfell',     color: '#5A6A4A', minZ:  60, maxZ: 100 },
     ];
 
-    // Dungeons fijos del mundo
     this._dungeons = [
       { x:   0, z: -120, color: '#C9A84C', label: 'Mazmorra I'   },
       { x: -30, z: -160, color: '#44aaff', label: 'Mazmorra II'  },
       { x:  30, z: -200, color: '#9933ff', label: 'Mazmorra III' },
     ];
+
+    this._pins = JSON.parse(localStorage.getItem('ashes_map_pins') || '[]');
 
     this._buildMinimap();
     this._buildFullmap();
@@ -101,13 +102,11 @@ export class MapUI {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Fondo
     ctx.fillStyle = 'rgba(4,4,10,0.9)';
     ctx.beginPath();
     ctx.roundRect(0, 0, w, h, 8);
     ctx.fill();
 
-    // Zonas
     this._zones.forEach(zone => {
       const y1 = this._worldToMini(0, zone.minZ, w, h).y;
       const y2 = this._worldToMini(0, zone.maxZ, w, h).y;
@@ -115,7 +114,6 @@ export class MapUI {
       ctx.fillRect(0, y2, w, y1 - y2);
     });
 
-    // Árboles estáticos
     ctx.fillStyle = 'rgba(40,120,40,0.6)';
     [
       [-12,-45],[10,-48],[-8,-55],[15,-50],[-18,-52],
@@ -128,7 +126,6 @@ export class MapUI {
       ctx.fill();
     });
 
-    // Ironfell
     const iron = this._worldToMini(0, 75, w, h);
     ctx.fillStyle = 'rgba(201,168,76,0.5)';
     ctx.fillRect(iron.x - 6, iron.y - 4, 12, 8);
@@ -137,17 +134,14 @@ export class MapUI {
     ctx.textAlign = 'center';
     ctx.fillText('?', iron.x, iron.y + 3);
 
-    // Bandera
     const flag = this._getFlag();
     if (flag) {
       const fp = this._worldToMini(flag.x, flag.z, w, h);
-      ctx.fillStyle = '#C9A84C';
       ctx.font = `${Math.round(w * 0.12)}px monospace`;
       ctx.textAlign = 'center';
       ctx.fillText('🚩', fp.x, fp.y + 4);
     }
 
-    // Estructuras
     this._getStructures().forEach(s => {
       if (!s.position) return;
       const p = this._worldToMini(s.position.x, s.position.z, w, h);
@@ -155,7 +149,6 @@ export class MapUI {
       ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
     });
 
-    // Enemigos cercanos
     ctx.fillStyle = 'rgba(255,60,60,0.85)';
     this._getNearEnemies().forEach(e => {
       const p = this._worldToMini(e.mesh.position.x, e.mesh.position.z, w, h);
@@ -164,7 +157,9 @@ export class MapUI {
       ctx.fill();
     });
 
-    // Jugador
+    // Pins
+    this._drawPins(ctx, w, h, true);
+
     if (this._player) {
       const pos = this._player.root.position;
       const p   = this._worldToMini(pos.x, pos.z, w, h);
@@ -177,7 +172,6 @@ export class MapUI {
       ctx.stroke();
     }
 
-    // Norte
     ctx.fillStyle = 'rgba(201,168,76,0.5)';
     ctx.font = `${Math.round(w * 0.08)}px monospace`;
     ctx.textAlign = 'left';
@@ -213,11 +207,19 @@ export class MapUI {
            border-bottom:1px solid rgba(201,168,76,0.2);">
         <span style="font-family:'Cinzel',serif;font-size:11px;
              letter-spacing:4px;color:#c9a84c;">MAPA — SOLMARA</span>
-        <button id="map-close"
-          style="background:none;border:1px solid rgba(201,168,76,0.3);
-          color:#c9a84c;font-size:18px;cursor:pointer;
-          width:34px;height:34px;border-radius:50%;
-          display:flex;align-items:center;justify-content:center;">✕</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="map-pin-btn"
+            style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);
+            color:#c9a84c;font-size:10px;cursor:pointer;padding:4px 12px;
+            border-radius:20px;font-family:monospace;letter-spacing:1px;">
+            📍 Pin
+          </button>
+          <button id="map-close"
+            style="background:none;border:1px solid rgba(201,168,76,0.3);
+            color:#c9a84c;font-size:18px;cursor:pointer;
+            width:34px;height:34px;border-radius:50%;
+            display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
       </div>
       <canvas id="map-canvas" style="margin-top:16px;border-radius:10px;
         border:1px solid rgba(201,168,76,0.25);"></canvas>
@@ -231,6 +233,11 @@ export class MapUI {
     this._fullmap.querySelector('#map-close').addEventListener('click', () => this.close());
     this._fullmap.querySelector('#map-close').addEventListener('touchstart', (e) => {
       e.preventDefault(); this.close();
+    }, { passive: false });
+
+    this._fullmap.querySelector('#map-pin-btn').addEventListener('click', () => this._openPinModal());
+    this._fullmap.querySelector('#map-pin-btn').addEventListener('touchstart', (e) => {
+      e.preventDefault(); this._openPinModal();
     }, { passive: false });
 
     this._drawFullmap();
@@ -248,7 +255,6 @@ export class MapUI {
     const w   = size;
     const h   = size;
 
-    // Zonas
     this._zones.forEach(zone => {
       const y1 = this._worldToMap(0, zone.minZ, w, h).y;
       const y2 = this._worldToMap(0, zone.maxZ, w, h).y;
@@ -261,7 +267,6 @@ export class MapUI {
       ctx.fillText(zone.label.toUpperCase(), w / 2, cy);
     });
 
-    // Árboles
     ctx.fillStyle = 'rgba(40,140,40,0.5)';
     [
       [-12,-45],[10,-48],[-8,-55],[15,-50],[-18,-52],
@@ -274,7 +279,6 @@ export class MapUI {
       ctx.fill();
     });
 
-    // Camino
     ctx.strokeStyle = 'rgba(200,168,120,0.6)';
     ctx.lineWidth   = Math.round(w * 0.015);
     ctx.setLineDash([]);
@@ -285,7 +289,6 @@ export class MapUI {
     ctx.lineTo(pEnd.x,   pEnd.y);
     ctx.stroke();
 
-    // Dungeons
     this._dungeons.forEach(d => {
       const p = this._worldToMap(d.x, d.z, w, h);
       if (p.y < 0 || p.y > h) return;
@@ -299,7 +302,6 @@ export class MapUI {
       ctx.fillText(d.label, p.x, p.y - 9);
     });
 
-    // Ironfell
     const iron = this._worldToMap(0, 75, w, h);
     const ironfellDiscovered = window._prog?.getFlag?.('ironfell_desbloqueada');
     if (ironfellDiscovered) {
@@ -318,11 +320,9 @@ export class MapUI {
       ctx.fillText('?', iron.x, iron.y + 8);
     }
 
-    // Bandera
     const flag = this._getFlag();
     if (flag) {
       const fp = this._worldToMap(flag.x, flag.z, w, h);
-      ctx.fillStyle = '#C9A84C';
       ctx.font = `${Math.round(w * 0.05)}px monospace`;
       ctx.textAlign = 'center';
       ctx.fillText('🚩', fp.x, fp.y);
@@ -331,7 +331,6 @@ export class MapUI {
       ctx.fillText('Base', fp.x, fp.y + 14);
     }
 
-    // Estructuras
     this._getStructures().forEach(s => {
       if (!s.position) return;
       const p = this._worldToMap(s.position.x, s.position.z, w, h);
@@ -342,7 +341,6 @@ export class MapUI {
       ctx.strokeRect(p.x - 3, p.y - 3, 6, 6);
     });
 
-    // NPCs
     ctx.fillStyle = 'rgba(100,200,255,0.85)';
     this._getNPCs().forEach(npc => {
       if (!npc.mesh) return;
@@ -352,7 +350,6 @@ export class MapUI {
       ctx.fill();
     });
 
-    // Enemigos cercanos
     ctx.fillStyle = 'rgba(255,60,60,0.85)';
     this._getNearEnemies().forEach(e => {
       const p = this._worldToMap(e.mesh.position.x, e.mesh.position.z, w, h);
@@ -361,7 +358,9 @@ export class MapUI {
       ctx.fill();
     });
 
-    // Jugador
+    // Pins
+    this._drawPins(ctx, w, h, false);
+
     if (this._player) {
       const pos = this._player.root.position;
       const p   = this._worldToMap(pos.x, pos.z, w, h);
@@ -379,13 +378,11 @@ export class MapUI {
       ctx.stroke();
     }
 
-    // Norte
     ctx.fillStyle = 'rgba(201,168,76,0.7)';
     ctx.font = `bold ${Math.round(w * 0.05)}px monospace`;
     ctx.textAlign = 'left';
     ctx.fillText('↑ N', 10, 30);
 
-    // Leyenda
     const legend = this._fullmap.querySelector('#map-legend');
     if (legend) {
       legend.innerHTML = [
@@ -413,6 +410,10 @@ export class MapUI {
           <div style="width:12px;height:12px;background:rgba(201,168,76,0.8);border:1px solid rgba(201,168,76,0.4);"></div>
           <span style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a7a5a;">ESTRUCTURAS</span>
         </div>`,
+        `<div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:12px;">📍</span>
+          <span style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a7a5a;">PINS</span>
+        </div>`,
       ].join('');
     }
   }
@@ -422,6 +423,198 @@ export class MapUI {
     const x = ((wx - minX) / (maxX - minX)) * canvasW;
     const y = (1 - (wz - minZ) / (maxZ - minZ)) * canvasH;
     return { x, y };
+  }
+
+  // ── Pins ──────────────────────────────────────────────────────────────────
+
+  _savePins() {
+    localStorage.setItem('ashes_map_pins', JSON.stringify(this._pins));
+  }
+
+  _drawPins(ctx, w, h, isMini = false) {
+    this._pins.forEach(pin => {
+      const p = isMini
+        ? this._worldToMini(pin.x, pin.z, w, h)
+        : this._worldToMap(pin.x, pin.z, w, h);
+
+      if (isMini) {
+        ctx.font = `${Math.round(w * 0.1)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText(pin.icon, p.x, p.y + 4);
+      } else {
+        ctx.font = `${Math.round(w * 0.04)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText(pin.icon, p.x, p.y);
+        ctx.fillStyle = pin.color;
+        ctx.font = `${Math.round(w * 0.022)}px monospace`;
+        ctx.fillText(pin.label, p.x, p.y + 14);
+      }
+    });
+  }
+
+  _openPinModal() {
+    const existing = document.getElementById('pin-modal');
+    if (existing) existing.remove();
+
+    const pos = this._player?.root?.position;
+    if (!pos) return;
+
+    const PIN_TYPES = [
+      { icon: '🏠', label: 'Refugio',      color: '#44aa88' },
+      { icon: '⚔️', label: 'Combate',      color: '#ff4444' },
+      { icon: '🏪', label: 'Comercio',     color: '#ffaa44' },
+      { icon: '⛏️', label: 'Recursos',     color: '#aaaaff' },
+      { icon: '🏛️', label: 'Monumento',    color: '#ffcc44' },
+      { icon: '🚩', label: 'Base',         color: '#C9A84C' },
+      { icon: '⚠️', label: 'Peligro',      color: '#ff6622' },
+      { icon: '🔮', label: 'Lugar mágico', color: '#cc44ff' },
+    ];
+
+    let selectedType = PIN_TYPES[0];
+
+    const modal = document.createElement('div');
+    modal.id = 'pin-modal';
+    Object.assign(modal.style, {
+      position      : 'fixed',
+      inset         : '0',
+      background    : 'rgba(0,0,0,0.75)',
+      zIndex        : '600',
+      display       : 'flex',
+      alignItems    : 'center',
+      justifyContent: 'center',
+      backdropFilter: 'blur(4px)',
+    });
+
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+      background   : 'rgba(8,6,20,0.98)',
+      border       : '1px solid rgba(201,168,76,0.3)',
+      borderRadius : '14px',
+      padding      : '18px',
+      width        : '90vw',
+      maxWidth     : '340px',
+      fontFamily   : 'monospace',
+      display      : 'flex',
+      flexDirection: 'column',
+      gap          : '12px',
+    });
+
+    const title = document.createElement('div');
+    title.textContent = 'COLOCAR PIN';
+    title.style.cssText = 'font-size:10px;color:#c9a84c;letter-spacing:3px;text-align:center;';
+    box.appendChild(title);
+
+    const coords = document.createElement('div');
+    coords.textContent = `Posición: ${Math.round(pos.x)}, ${Math.round(pos.z)}`;
+    coords.style.cssText = 'font-size:9px;color:#555577;text-align:center;';
+    box.appendChild(coords);
+
+    const typesGrid = document.createElement('div');
+    typesGrid.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:6px;';
+
+    PIN_TYPES.forEach(type => {
+      const btn = document.createElement('button');
+      btn.style.cssText = `
+        background:rgba(10,8,24,0.9);
+        border:2px solid rgba(255,255,255,0.08);
+        border-radius:8px;padding:6px 2px;
+        display:flex;flex-direction:column;align-items:center;gap:2px;
+        cursor:pointer;WebkitTapHighlightColor:transparent;
+        transition:border-color 0.1s;
+      `;
+      btn.innerHTML = `
+        <div style="font-size:18px;">${type.icon}</div>
+        <div style="font-size:7px;color:#666688;letter-spacing:0.5px;">${type.label}</div>
+      `;
+      const select = (e) => {
+        e.preventDefault();
+        selectedType = type;
+        typesGrid.querySelectorAll('button').forEach(b => {
+          b.style.borderColor = 'rgba(255,255,255,0.08)';
+        });
+        btn.style.borderColor = type.color;
+      };
+      btn.addEventListener('touchstart', select, { passive: false });
+      btn.addEventListener('click', select);
+      typesGrid.appendChild(btn);
+    });
+
+    typesGrid.querySelector('button').style.borderColor = PIN_TYPES[0].color;
+    box.appendChild(typesGrid);
+
+    const input = document.createElement('input');
+    Object.assign(input.style, {
+      background   : 'rgba(255,255,255,0.05)',
+      border       : '1px solid rgba(201,168,76,0.3)',
+      borderRadius : '8px',
+      color        : '#ffffff',
+      fontFamily   : 'monospace',
+      fontSize     : '11px',
+      padding      : '8px 10px',
+      outline      : 'none',
+      letterSpacing: '1px',
+    });
+    input.placeholder = 'Nombre del lugar...';
+    input.maxLength   = 24;
+    box.appendChild(input);
+
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:8px;';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancelar';
+    cancelBtn.style.cssText = `
+      flex:1;background:transparent;
+      border:1px solid rgba(255,255,255,0.08);
+      color:#555577;padding:7px;border-radius:8px;
+      cursor:pointer;font-family:monospace;font-size:10px;
+    `;
+    const onCancel = (e) => { e.preventDefault(); modal.remove(); };
+    cancelBtn.addEventListener('touchstart', onCancel, { passive: false });
+    cancelBtn.addEventListener('click', onCancel);
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.textContent = 'Colocar';
+    confirmBtn.style.cssText = `
+      flex:1;background:rgba(201,168,76,0.15);
+      border:1px solid rgba(201,168,76,0.4);
+      color:#c9a84c;padding:7px;border-radius:8px;
+      cursor:pointer;font-family:monospace;font-size:10px;
+      letter-spacing:1px;
+    `;
+    const onConfirm = (e) => {
+      e.preventDefault();
+      const name = input.value.trim() || selectedType.label;
+      this._pins.push({
+        x    : pos.x,
+        z    : pos.z,
+        icon : selectedType.icon,
+        color: selectedType.color,
+        label: name,
+      });
+      this._savePins();
+      modal.remove();
+      this._drawFullmap();
+      this._drawMinimap();
+    };
+    confirmBtn.addEventListener('touchstart', onConfirm, { passive: false });
+    confirmBtn.addEventListener('click', onConfirm);
+
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(confirmBtn);
+    box.appendChild(btnRow);
+
+    modal.appendChild(box);
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    document.body.appendChild(modal);
+    setTimeout(() => input.focus(), 100);
+  }
+
+  _removePin(idx) {
+    this._pins.splice(idx, 1);
+    this._savePins();
+    this._drawFullmap();
+    this._drawMinimap();
   }
 
   // ── Update ────────────────────────────────────────────────────────────────
