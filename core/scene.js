@@ -49,13 +49,7 @@ export async function initScene() {
   const playerMesh = new THREE.Mesh(
     new THREE.SphereGeometry(0.35, 12, 12),
     new THREE.MeshStandardMaterial({
-      color: 0xffffff, transparent: true, opacity: 0.85,
-      emissive: 0xaaccff, emissiveIntensity: 0.6,
-    })
-  );
-  playerMesh.position.set(0, 0.6, -20);
-  playerMesh.name = 'player_placeholder';
-  worldGroup.add(playerMesh);
+  
 
   buildForestDense(worldGroup);
   buildForestLight(worldGroup);
