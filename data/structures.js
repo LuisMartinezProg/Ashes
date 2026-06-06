@@ -90,6 +90,20 @@ export const STRUCTURES = {
     variants: ['pequena', 'mediana', 'grande'],
     effect: { type: 'gate' },
   },
+  escalera: {
+    id       : 'escalera',
+    label    : 'Escalera',
+    icon     : '🪜',
+    desc     : 'Permite subir a estructuras elevadas como torres y muros.',
+    unlocked : true,
+    blueprint: false,
+    tiers: {
+      madera: { cost: { madera: 6 },              hp: 40,  size: [1.5, 3, 0.5] },
+      piedra: { cost: { piedra: 4 },              hp: 120, size: [1.5, 3, 0.5] },
+      hierro: { cost: { hierro: 3, piedra: 2 },   hp: 280, size: [1.5, 3, 0.5] },
+    },
+    effect: { type: 'climb' },
+  },
 
   // ── Requieren boceto ──
 
