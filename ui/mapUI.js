@@ -3,32 +3,67 @@
 
 export class MapUI {
   constructor(player) {
-    this._player   = player;
-    this._open     = false;
-    this._minimap  = null;
-    this._fullmap  = null;
-    this._playerDot = null;
+    this._player  = player;
+    this._open    = false;
+    this._minimap = null;
+    this._fullmap = null;
 
-    // Límites del mundo
     this._world = {
       minX: -60, maxX: 60,
       minZ: -80, maxZ: 100,
     };
 
-    // Zonas del mapa
     this._zones = [
-      { label: 'Greymantle',  color: '#1A3A10', minZ: -80, maxZ: -40 },
-      { label: 'Bosque claro',color: '#2A5A1A', minZ: -40, maxZ: -10 },
-      { label: 'Planicie',    color: '#3A7A28', minZ: -10, maxZ:  30 },
-      { label: 'Camino',      color: '#4A8A38', minZ:  30, maxZ:  60 },
-      { label: 'Ironfell',    color: '#5A6A4A', minZ:  60, maxZ: 100 },
+      { label: 'Greymantle',   color: '#1A3A10', minZ: -80, maxZ: -40 },
+      { label: 'Bosque claro', color: '#2A5A1A', minZ: -40, maxZ: -10 },
+      { label: 'Planicie',     color: '#3A7A28', minZ: -10, maxZ:  30 },
+      { label: 'Camino',       color: '#4A8A38', minZ:  30, maxZ:  60 },
+      { label: 'Ironfell',     color: '#5A6A4A', minZ:  60, maxZ: 100 },
+    ];
+
+    // Dungeons fijos del mundo
+    this._dungeons = [
+      { x:   0, z: -120, color: '#C9A84C', label: 'Mazmorra I'   },
+      { x: -30, z: -160, color: '#44aaff', label: 'Mazmorra II'  },
+      { x:  30, z: -200, color: '#9933ff', label: 'Mazmorra III' },
     ];
 
     this._buildMinimap();
     this._buildFullmap();
   }
 
+  // ── Helpers dinámicos ─────────────────────────────────────────────────────
+
+  _getFlag() {
+    const bz = window._buildZone;
+    if (!bz?.hasZone?.()) return null;
+    return bz.getZoneCenter?.() ?? null;
+  }
+
+  _getStructures() {
+    const b = window._building;
+    if (!b?._placed) return [];
+    return b._placed;
+  }
+
+  _getNearEnemies() {
+    const enemies = window._enemies ?? [];
+    const pp = this._player?.root?.position;
+    if (!pp) return [];
+    return enemies.filter(e => {
+      if (e.isDead?.() || !e.mesh) return false;
+      const dx = e.mesh.position.x - pp.x;
+      const dz = e.mesh.position.z - pp.z;
+      return Math.sqrt(dx*dx + dz*dz) < 30;
+    });
+  }
+
+  _getNPCs() {
+    return window._npcs ?? [];
+  }
+
   // ── Minimapa ──────────────────────────────────────────────────────────────
+
   _buildMinimap() {
     const size = Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.18);
 
@@ -44,13 +79,11 @@ export class MapUI {
       borderRadius : '8px',
       border       : '1px solid rgba(201,168,76,0.4)',
       zIndex       : '120',
-      pointerEvents: 'none',
       opacity      : '0.85',
+      pointerEvents: 'all',
+      cursor       : 'pointer',
     });
 
-    // Toque para abrir mapa completo
-    this._minimap.style.pointerEvents = 'all';
-    this._minimap.style.cursor = 'pointer';
     this._minimap.addEventListener('click', () => this.toggle());
     this._minimap.addEventListener('touchstart', (e) => {
       e.preventDefault(); this.toggle();
@@ -82,7 +115,7 @@ export class MapUI {
       ctx.fillRect(0, y2, w, y1 - y2);
     });
 
-    // Árboles (puntos verdes)
+    // Árboles estáticos
     ctx.fillStyle = 'rgba(40,120,40,0.6)';
     [
       [-12,-45],[10,-48],[-8,-55],[15,-50],[-18,-52],
@@ -104,6 +137,33 @@ export class MapUI {
     ctx.textAlign = 'center';
     ctx.fillText('?', iron.x, iron.y + 3);
 
+    // Bandera
+    const flag = this._getFlag();
+    if (flag) {
+      const fp = this._worldToMini(flag.x, flag.z, w, h);
+      ctx.fillStyle = '#C9A84C';
+      ctx.font = `${Math.round(w * 0.12)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText('🚩', fp.x, fp.y + 4);
+    }
+
+    // Estructuras
+    this._getStructures().forEach(s => {
+      if (!s.position) return;
+      const p = this._worldToMini(s.position.x, s.position.z, w, h);
+      ctx.fillStyle = 'rgba(201,168,76,0.7)';
+      ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+    });
+
+    // Enemigos cercanos
+    ctx.fillStyle = 'rgba(255,60,60,0.85)';
+    this._getNearEnemies().forEach(e => {
+      const p = this._worldToMini(e.mesh.position.x, e.mesh.position.z, w, h);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
     // Jugador
     if (this._player) {
       const pos = this._player.root.position;
@@ -113,7 +173,7 @@ export class MapUI {
       ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = 'rgba(201,168,76,0.9)';
-      ctx.lineWidth   = 1;
+      ctx.lineWidth = 1;
       ctx.stroke();
     }
 
@@ -127,23 +187,24 @@ export class MapUI {
   _worldToMini(wx, wz, canvasW, canvasH) {
     const { minX, maxX, minZ, maxZ } = this._world;
     const x = ((wx - minX) / (maxX - minX)) * canvasW;
-    const y = (1 - (wz - minZ) / (maxZ - minZ)) * canvasH; // invertido — norte arriba
+    const y = (1 - (wz - minZ) / (maxZ - minZ)) * canvasH;
     return { x, y };
   }
 
   // ── Mapa completo ─────────────────────────────────────────────────────────
+
   _buildFullmap() {
     this._fullmap = document.createElement('div');
     Object.assign(this._fullmap.style, {
-      position     : 'fixed',
-      inset        : '0',
-      background   : 'rgba(4,4,10,0.97)',
-      zIndex       : '500',
-      display      : 'none',
-      flexDirection: 'column',
-      alignItems   : 'center',
+      position      : 'fixed',
+      inset         : '0',
+      background    : 'rgba(4,4,10,0.97)',
+      zIndex        : '500',
+      display       : 'none',
+      flexDirection : 'column',
+      alignItems    : 'center',
       justifyContent: 'center',
-      pointerEvents: 'all',
+      pointerEvents : 'all',
     });
 
     this._fullmap.innerHTML = `
@@ -160,7 +221,9 @@ export class MapUI {
       </div>
       <canvas id="map-canvas" style="margin-top:16px;border-radius:10px;
         border:1px solid rgba(201,168,76,0.25);"></canvas>
-      <div id="map-legend" style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;justify-content:center;"></div>
+      <div id="map-legend"
+        style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;justify-content:center;">
+      </div>
     `;
 
     document.body.appendChild(this._fullmap);
@@ -191,11 +254,9 @@ export class MapUI {
       const y2 = this._worldToMap(0, zone.maxZ, w, h).y;
       ctx.fillStyle = zone.color;
       ctx.fillRect(0, y2, w, y1 - y2);
-
-      // Label de zona
       const cy = (y1 + y2) / 2;
       ctx.fillStyle = 'rgba(255,255,255,0.25)';
-      ctx.font = `${Math.round(w * 0.035)}px 'Cinzel',serif`;
+      ctx.font = `${Math.round(w * 0.035)}px monospace`;
       ctx.textAlign = 'center';
       ctx.fillText(zone.label.toUpperCase(), w / 2, cy);
     });
@@ -224,15 +285,28 @@ export class MapUI {
     ctx.lineTo(pEnd.x,   pEnd.y);
     ctx.stroke();
 
-    // Ironfell — zona descubierta o no
+    // Dungeons
+    this._dungeons.forEach(d => {
+      const p = this._worldToMap(d.x, d.z, w, h);
+      if (p.y < 0 || p.y > h) return;
+      ctx.fillStyle = d.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = `${Math.round(w * 0.025)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(d.label, p.x, p.y - 9);
+    });
+
+    // Ironfell
     const iron = this._worldToMap(0, 75, w, h);
     const ironfellDiscovered = window._prog?.getFlag?.('ironfell_desbloqueada');
-
     if (ironfellDiscovered) {
       ctx.fillStyle = 'rgba(201,168,76,0.7)';
       ctx.fillRect(iron.x - 20, iron.y - 14, 40, 28);
       ctx.fillStyle = '#c9a84c';
-      ctx.font = `bold ${Math.round(w * 0.04)}px 'Cinzel',serif`;
+      ctx.font = `bold ${Math.round(w * 0.04)}px monospace`;
       ctx.textAlign = 'center';
       ctx.fillText('IRONFELL', iron.x, iron.y + 5);
     } else {
@@ -244,18 +318,58 @@ export class MapUI {
       ctx.fillText('?', iron.x, iron.y + 8);
     }
 
+    // Bandera
+    const flag = this._getFlag();
+    if (flag) {
+      const fp = this._worldToMap(flag.x, flag.z, w, h);
+      ctx.fillStyle = '#C9A84C';
+      ctx.font = `${Math.round(w * 0.05)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText('🚩', fp.x, fp.y);
+      ctx.fillStyle = 'rgba(201,168,76,0.7)';
+      ctx.font = `${Math.round(w * 0.025)}px monospace`;
+      ctx.fillText('Base', fp.x, fp.y + 14);
+    }
+
+    // Estructuras
+    this._getStructures().forEach(s => {
+      if (!s.position) return;
+      const p = this._worldToMap(s.position.x, s.position.z, w, h);
+      ctx.fillStyle = 'rgba(201,168,76,0.8)';
+      ctx.strokeStyle = 'rgba(201,168,76,0.4)';
+      ctx.lineWidth = 1;
+      ctx.fillRect(p.x - 3, p.y - 3, 6, 6);
+      ctx.strokeRect(p.x - 3, p.y - 3, 6, 6);
+    });
+
+    // NPCs
+    ctx.fillStyle = 'rgba(100,200,255,0.85)';
+    this._getNPCs().forEach(npc => {
+      if (!npc.mesh) return;
+      const p = this._worldToMap(npc.mesh.position.x, npc.mesh.position.z, w, h);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Enemigos cercanos
+    ctx.fillStyle = 'rgba(255,60,60,0.85)';
+    this._getNearEnemies().forEach(e => {
+      const p = this._worldToMap(e.mesh.position.x, e.mesh.position.z, w, h);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
     // Jugador
     if (this._player) {
       const pos = this._player.root.position;
       const p   = this._worldToMap(pos.x, pos.z, w, h);
-
-      // Pulso
       ctx.strokeStyle = 'rgba(255,255,255,0.3)';
       ctx.lineWidth   = 2;
       ctx.beginPath();
       ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
       ctx.stroke();
-
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
@@ -273,14 +387,34 @@ export class MapUI {
 
     // Leyenda
     const legend = this._fullmap.querySelector('#map-legend');
-    legend.innerHTML = this._zones.map(z => `
-      <div style="display:flex;align-items:center;gap:6px;">
-        <div style="width:12px;height:12px;border-radius:2px;background:${z.color};
-             border:1px solid rgba(255,255,255,0.2);"></div>
-        <span style="font-family:'Cinzel',serif;font-size:9px;
-             letter-spacing:2px;color:#8a7a5a;">${z.label.toUpperCase()}</span>
-      </div>
-    `).join('');
+    if (legend) {
+      legend.innerHTML = [
+        ...this._zones.map(z => `
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="width:12px;height:12px;border-radius:2px;background:${z.color};
+                 border:1px solid rgba(255,255,255,0.2);"></div>
+            <span style="font-family:monospace;font-size:9px;
+                 letter-spacing:2px;color:#8a7a5a;">${z.label.toUpperCase()}</span>
+          </div>
+        `),
+        `<div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:#fff;"></div>
+          <span style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a7a5a;">JUGADOR</span>
+        </div>`,
+        `<div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:rgba(255,60,60,0.85);"></div>
+          <span style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a7a5a;">ENEMIGOS</span>
+        </div>`,
+        `<div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:rgba(100,200,255,0.85);"></div>
+          <span style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a7a5a;">NPCs</span>
+        </div>`,
+        `<div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:12px;height:12px;background:rgba(201,168,76,0.8);border:1px solid rgba(201,168,76,0.4);"></div>
+          <span style="font-family:monospace;font-size:9px;letter-spacing:2px;color:#8a7a5a;">ESTRUCTURAS</span>
+        </div>`,
+      ].join('');
+    }
   }
 
   _worldToMap(wx, wz, canvasW, canvasH) {
@@ -291,12 +425,14 @@ export class MapUI {
   }
 
   // ── Update ────────────────────────────────────────────────────────────────
+
   update() {
     if (this._minimap) this._drawMinimap();
     if (this._open)    this._drawFullmap();
   }
 
   // ── Abrir/Cerrar ──────────────────────────────────────────────────────────
+
   toggle() { this._open ? this.close() : this.open(); }
 
   open() {
