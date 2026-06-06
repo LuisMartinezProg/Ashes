@@ -39,6 +39,9 @@ import { SkyCollapse }  from '../skills/bow/skyCollapse.js';
 import { RollShot }     from '../skills/bow/rollShot.js';
 import { PhantomStep }  from '../skills/bow/phantomStep.js';
 import { VoidDance }    from '../skills/bow/voidDance.js';
+import { AstralArrow      } from '../skills/mika/astralArrow.js';
+import { AstralRain       } from '../skills/mika/astralRain.js';
+import { StellarCollapse  } from '../skills/mika/stellarCollapse.js';
 
 const MAX_ENERGY   = 100;
 const ENERGY_REGEN = 3;
@@ -84,6 +87,9 @@ const SKILL_COST = {
   roll_shot      : 40,
   phantom_step   : 55,
   void_dance     : 75,
+  astral_arrow     : 20,
+astral_rain      : 40,
+stellar_collapse : 80,
 };
 
 export class SkillSystem {
@@ -144,6 +150,9 @@ export class SkillSystem {
       roll_shot      : new RollShot(scene, playerGroup),
       phantom_step   : new PhantomStep(scene, playerGroup),
      void_dance     : new VoidDance(scene, playerGroup),
+      astral_arrow      : new AstralArrow(scene, playerGroup),
+     astral_rain       : new AstralRain(scene, playerGroup),
+     stellar_collapse  : new StellarCollapse(scene, playerGroup),
     };
   }
 
