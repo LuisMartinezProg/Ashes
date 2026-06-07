@@ -428,14 +428,13 @@ export class DungeonManager {
     this._currentRoom = room;
 
     // Teletransportar jugador al centro de la sala
+    
+
     const cx = roomData.center.x;
-const cz = roomData.center.z + 4;
-if (this.player.root) this.player.root.position.set(cx, 0, cz);
-if (window._companion?.root) window._companion.root.position.set(cx + 1, 0, cz);
-if (window._thirdCam) {
-  window._thirdCam._camera.position.set(cx, 8, cz + 12);
-  window._thirdCam._camera.lookAt(cx, 0, cz);
-}
+    const cz = roomData.center.z + 4;
+    if (this.player.root) this.player.root.position.set(cx, 0, cz);
+    if (window._companion?.root) window._companion.root.position.set(cx + 1, 0, cz);
+    if (window._thirdCam) window._thirdCam._snapToPlayer();
   }
 
   // ── Avanzar a sala siguiente ──────────────────────────────────────────────
