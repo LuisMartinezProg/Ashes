@@ -102,11 +102,11 @@ import { KeyboardControls } from './core/keyboardControls.js';
 import { KeybindMenu }      from './ui/keybindMenu.js';
 import { DungeonManager }   from './core/dungeons/DungeonManager.js';
 import { registerLODObjects, updateWorldLOD } from './core/worldLOD.js';
-import { InventoryUI } from './ui/inventory.js';
+import { InventoryUI }      from './ui/inventory.js';
 import { ITEMS, rollDrops } from './data/items.js';
-import { CharacterMenu } from './ui/characterMenu.js';
-import { PartyMenu } from './ui/partyMenu.js';
-  
+import { CharacterMenu }    from './ui/characterMenu.js';
+import { PartyMenu }        from './ui/partyMenu.js';
+
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -115,7 +115,6 @@ function setProgress(pct, label) {
   txt.textContent = label;
 }
 
-// ── Helper de guardado ────────────────────────────────────────────────────
 function _save(progression, mikaProgression) {
   localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
   localStorage.setItem('ashes_mika',        JSON.stringify(mikaProgression.serialize()));
@@ -129,17 +128,16 @@ async function boot() {
     setProgress(20, 'initScene...');
     const { scene, camera, renderer } = await initScene();
     await new Promise(r => setTimeout(r, 100));
+
     const dungeonScene = new THREE.Scene();
     dungeonScene.background = new THREE.Color(0x0a0a12);
     dungeonScene.fog = new THREE.FogExp2(0x0a0a12, 0.025);
-    // AGREGAR ESTO:
-dungeonScene.add(new THREE.AmbientLight(0x8899bb, 1.5));
-const dungeonSun = new THREE.DirectionalLight(0xaaaaff, 1.2);
-dungeonSun.position.set(10, 20, 10);
-dungeonScene.add(dungeonSun);
-dungeonScene.add(new THREE.HemisphereLight(0x334466, 0x111122, 0.8));
+    dungeonScene.add(new THREE.AmbientLight(0x8899bb, 1.5));
+    const dungeonSun = new THREE.DirectionalLight(0xaaaaff, 1.2);
+    dungeonSun.position.set(10, 20, 10);
+    dungeonScene.add(dungeonSun);
+    dungeonScene.add(new THREE.HemisphereLight(0x334466, 0x111122, 0.8));
 
-window._dungeonScene = dungeonScene;
     window._dungeonScene = dungeonScene;
     window._worldScene   = scene;
     window._activeScene  = scene;
@@ -183,8 +181,13 @@ window._dungeonScene = dungeonScene;
 
     setProgress(62, 'DungeonManager...');
     const dungeonManager = new DungeonManager(scene, player);
-    dungeonManager.onEnter  = (def) => { console.log(`[Dungeon] Entrando: ${def.name}`); };
-    dungeonManager.onExit   = () =>    { console.log('[Dungeon] Saliendo'); };
+    dungeonManager.onEnter = (def) => {
+      console.log(`[Dungeon] Entrando: ${def.name}`);
+      window._hud?._hideCollectBtn?.();
+    };
+    dungeonManager.onExit = () => {
+      console.log('[Dungeon] Saliendo');
+    };
     dungeonManager.onReward = (reward) => {
       if (reward.xp)          progression.addXP(combat._weaponType ?? 'katana', reward.xp);
       if (reward.magicEnergy) progression.addMagicEnergy?.(reward.magicEnergy);
@@ -204,7 +207,6 @@ window._dungeonScene = dungeonScene;
     setTriggers(triggers);
 
     setProgress(67, 'localStorage...');
-    // ── Cargar Kael ───────────────────────────────────────────────────────
     const savedKael = localStorage.getItem('ashes_progression');
     if (savedKael) {
       try {
@@ -214,7 +216,6 @@ window._dungeonScene = dungeonScene;
         console.warn('[Save] Error Kael:', e);
       }
     }
-    // ── Cargar Mika ───────────────────────────────────────────────────────
     const savedMika = localStorage.getItem('ashes_mika');
     if (savedMika) {
       try {
@@ -231,13 +232,13 @@ window._dungeonScene = dungeonScene;
 
     setProgress(69, 'ParrySystem...');
     const parry = new ParrySystem(player, combat);
-    window._parry = parry;
+    window._parry  = parry;
     window._camera = camera;
 
     setProgress(71, 'HUD...');
     const hud = new HUD(combat, skills);
     window._hud = hud;
-    progression.onLevelUp = (level) => hud.updateLevel(level);
+    progression.onLevelUp     = (level) => hud.updateLevel(level);
     mikaProgression.onLevelUp = (level) => hud.updateMikaLevel(level);
     hud.setPartyManager(partyManager);
     setResourceCallback((resource) => hud.showCollectBtn(resource));
@@ -455,7 +456,7 @@ window._dungeonScene = dungeonScene;
     const characterMenu = new CharacterMenu(progression, skillBar);
     window._characterMenu = characterMenu;
     const partyMenu = new PartyMenu();
-window._partyMenu = partyMenu;
+    window._partyMenu = partyMenu;
     const inventoryUI = new InventoryUI();
     window._inventory = inventoryUI;
     window._itemDrops = { ITEMS, rollDrops };
@@ -474,12 +475,12 @@ window._partyMenu = partyMenu;
 
     const isPC = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const radialMenu = new RadialMenu([
-  { icon: '👤', label: 'Personaje',  action: () => characterMenu.open(),       locked: false },
-  { icon: '⚔️', label: 'Equipo',     action: () => partyMenu.toggle(),         locked: false },
-  { icon: '🗺️', label: 'Mapa',       action: () => mapUI.toggle(),             locked: false },
-  { icon: '🎒', label: 'Inventario', action: () => inventoryUI.open(),         locked: false },
-  { icon: '⌨️', label: 'Controles',  action: () => keybindMenu.open(),         locked: false },
-]);
+      { icon: '👤', label: 'Personaje',  action: () => characterMenu.open(),   locked: false },
+      { icon: '⚔️', label: 'Equipo',     action: () => partyMenu.toggle(),     locked: false },
+      { icon: '🗺️', label: 'Mapa',       action: () => mapUI.toggle(),         locked: false },
+      { icon: '🎒', label: 'Inventario', action: () => inventoryUI.open(),     locked: false },
+      { icon: '⌨️', label: 'Controles',  action: () => keybindMenu.open(),     locked: false },
+    ]);
     const pauseMenu = new PauseMenu({
       onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
       onFusion  : () => { pauseMenu.close(); fusionMenu.open(combat._weaponType); },
@@ -534,19 +535,17 @@ window._partyMenu = partyMenu;
 
     let _lastDungeonTime = performance.now();
     function _dungeonLoop() {
-    const now   = performance.now();
-    const delta = Math.min((now - _lastDungeonTime) * 0.001, 0.05);
-    _lastDungeonTime = now;
-    dungeonManager.update(delta, camera);
-    parry.update(delta);
-    if (window._player) updateWorldLOD(window._player.root.position);
-    requestAnimationFrame(_dungeonLoop);
-  }
+      const now   = performance.now();
+      const delta = Math.min((now - _lastDungeonTime) * 0.001, 0.05);
+      _lastDungeonTime = now;
+      dungeonManager.update(delta, camera);
+      parry.update(delta);
+      if (window._player) updateWorldLOD(window._player.root.position);
+      requestAnimationFrame(_dungeonLoop);
+    }
     requestAnimationFrame(_dungeonLoop);
 
     setInterval(() => hud.updateEnemyBar(player.root.position), 300);
-
-    // ── Autosave cada 30s — Kael + Mika ──────────────────────────────────
     setInterval(() => _save(progression, mikaProgression), 30000);
 
     setProgress(100, 'LISTO');
@@ -555,10 +554,6 @@ window._partyMenu = partyMenu;
     loading.classList.add('hidden');
     setTimeout(() => loading.remove(), 900);
 
-  //  if (!progression.getFlag?.('escena01_done')) {
-  //    narrative.play(STORY_EVENTS.escena01_despertar);
- //   }
-//
   } catch (err) {
     txt.textContent = 'ERROR: ' + (err.message || err.toString());
     bar.style.background = '#8B2A0A';
