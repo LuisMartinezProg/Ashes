@@ -436,7 +436,7 @@ if (window._thirdCam) {
   window._thirdCam._camera.position.set(cx, 8, cz + 12);
   window._thirdCam._camera.lookAt(cx, 0, cz);
 }
-  
+  }
 
   // ── Avanzar a sala siguiente ──────────────────────────────────────────────
 
