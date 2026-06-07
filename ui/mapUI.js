@@ -640,4 +640,13 @@ export class MapUI {
   }
 
   isOpen() { return this._open; }
+  hideMinimap() {
+  if (this._minimap) this._minimap.style.display = 'none';
+  if (this._open) this.close();
 }
+
+showMinimap() {
+  if (this._minimap) this._minimap.style.display = 'block';
+}
+}
+
