@@ -120,6 +120,20 @@ function _save(progression, mikaProgression) {
   localStorage.setItem('ashes_mika',        JSON.stringify(mikaProgression.serialize()));
 }
 
+function _setWorldEnemiesVisible(visible) {
+  const lists = [
+    window._enemies,
+    window._wolves,
+  ];
+  for (const list of lists) {
+    if (!list) continue;
+    for (const e of list) {
+      if (e.mesh) e.mesh.visible = visible ? !e.isDead?.() : false;
+    }
+  }
+  if (window._bear?.mesh) window._bear.mesh.visible = visible ? !window._bear.isDead?.() : false;
+}
+
 async function boot() {
   try {
     setProgress(10, 'THREE.JS...');
@@ -137,7 +151,6 @@ async function boot() {
     dungeonSun.position.set(10, 20, 10);
     dungeonScene.add(dungeonSun);
     dungeonScene.add(new THREE.HemisphereLight(0x334466, 0x111122, 0.8));
-
     window._dungeonScene = dungeonScene;
     window._worldScene   = scene;
     window._activeScene  = scene;
@@ -184,9 +197,15 @@ async function boot() {
     dungeonManager.onEnter = (def) => {
       console.log(`[Dungeon] Entrando: ${def.name}`);
       window._hud?._hideCollectBtn?.();
+      window._mapUI?.hideMinimap?.();
+      _setWorldEnemiesVisible(false);
+      if (window._worldGroup) window._worldGroup.visible = false;
     };
     dungeonManager.onExit = () => {
       console.log('[Dungeon] Saliendo');
+      window._mapUI?.showMinimap?.();
+      _setWorldEnemiesVisible(true);
+      if (window._worldGroup) window._worldGroup.visible = true;
     };
     dungeonManager.onReward = (reward) => {
       if (reward.xp)          progression.addXP(combat._weaponType ?? 'katana', reward.xp);
@@ -209,21 +228,13 @@ async function boot() {
     setProgress(67, 'localStorage...');
     const savedKael = localStorage.getItem('ashes_progression');
     if (savedKael) {
-      try {
-        progression.load(JSON.parse(savedKael));
-        console.log('[Save] Kael cargado');
-      } catch(e) {
-        console.warn('[Save] Error Kael:', e);
-      }
+      try { progression.load(JSON.parse(savedKael)); console.log('[Save] Kael cargado'); }
+      catch(e) { console.warn('[Save] Error Kael:', e); }
     }
     const savedMika = localStorage.getItem('ashes_mika');
     if (savedMika) {
-      try {
-        mikaProgression.load(JSON.parse(savedMika));
-        console.log('[Save] Mika cargada');
-      } catch(e) {
-        console.warn('[Save] Error Mika:', e);
-      }
+      try { mikaProgression.load(JSON.parse(savedMika)); console.log('[Save] Mika cargada'); }
+      catch(e) { console.warn('[Save] Error Mika:', e); }
     }
 
     window._prog = progression;
@@ -241,7 +252,10 @@ async function boot() {
     progression.onLevelUp     = (level) => hud.updateLevel(level);
     mikaProgression.onLevelUp = (level) => hud.updateMikaLevel(level);
     hud.setPartyManager(partyManager);
-    setResourceCallback((resource) => hud.showCollectBtn(resource));
+    setResourceCallback((resource) => {
+      if (window._dungeonManager?._active) return;
+      hud.showCollectBtn(resource);
+    });
 
     setProgress(73, 'spawnEnemies...');
     const enemies = spawnEnemies(scene, player);
@@ -265,11 +279,10 @@ async function boot() {
     setProgress(79, 'proximidad NPCs...');
     let _nearNPC = null;
     function _checkNPCProximity() {
+      if (window._dungeonManager?._active) return;
       if (dialogueUI.isActive() || shopUI.isActive()) return;
       const playerPos = player.root.position;
-      for (const npc of npcs) {
-        npc.update(performance.now() / 1000, playerPos);
-      }
+      for (const npc of npcs) npc.update(performance.now() / 1000, playerPos);
       let found = null;
       for (const npc of npcs) {
         if (npc.isPlayerInRange(playerPos)) { found = npc; break; }
@@ -279,8 +292,7 @@ async function boot() {
         dialogueUI.showTalkBtn(() => {
           const lines = found.isMika ? found.getLines() : found.dialogue.lines;
           dialogueUI.openDialogue(
-            found.dialogue.name,
-            lines,
+            found.dialogue.name, lines,
             () => { _nearNPC = null; },
             () => {
               progression.addReputation(10);
@@ -302,8 +314,7 @@ async function boot() {
 
     enemies.forEach(e => {
       e.onDeath = () => {
-        const weapon = combat._weaponType;
-        progression.addXP(weapon, 25);
+        progression.addXP(combat._weaponType, 25);
         _save(progression, mikaProgression);
       };
     });
@@ -321,7 +332,6 @@ async function boot() {
     const bear = new Bear(scene, { x: 0, z: -55 }, player, () => {
       wolves.forEach(w => w.flee(bear.mesh.position));
     });
-
     bear.onDeath = () => {
       setTimeout(() => wolves.forEach(w => w.startRoaming()), 3000);
     };
@@ -368,8 +378,7 @@ async function boot() {
     let _mikaRescued = false;
     function _checkMikaRescue() {
       if (_mikaRescued || !mikaNPC) return;
-      const allDead = mikaBandits.every(b => b.isDead?.());
-      if (allDead) {
+      if (mikaBandits.every(b => b.isDead?.())) {
         _mikaRescued = true;
         mikaNPC.rescue();
         console.log('[Mika] Rescatada');
@@ -425,14 +434,13 @@ async function boot() {
       flagBtn.textContent = '🚩';
       flagBtn.title = 'Clavar bandera';
       Object.assign(flagBtn.style, {
-        position    : 'fixed', top: '8px', right: '100px',
-        height      : '36px', padding: '0 12px',
-        borderRadius: '8px',
-        border      : '1px solid rgba(201,168,76,0.4)',
-        background  : 'rgba(10,8,20,0.8)', color: '#C9A84C',
-        fontSize    : '16px', fontFamily: 'monospace',
-        cursor      : 'pointer', pointerEvents: 'all',
-        zIndex      : '150', WebkitTapHighlightColor: 'transparent',
+        position:'fixed', top:'8px', right:'100px',
+        height:'36px', padding:'0 12px', borderRadius:'8px',
+        border:'1px solid rgba(201,168,76,0.4)',
+        background:'rgba(10,8,20,0.8)', color:'#C9A84C',
+        fontSize:'16px', fontFamily:'monospace',
+        cursor:'pointer', pointerEvents:'all',
+        zIndex:'150', WebkitTapHighlightColor:'transparent',
       });
       const openFlag = (e) => {
         e.preventDefault();
@@ -466,21 +474,23 @@ async function boot() {
 
     const mapUI = new MapUI(player);
     window._mapUI = mapUI;
-    setInterval(() => mapUI.update(), 500);
+    setInterval(() => {
+      if (!window._dungeonManager?._active) mapUI.update();
+    }, 500);
 
     const keyboardControls = new KeyboardControls();
     window._keyboard = keyboardControls;
     const keybindMenu = new KeybindMenu(keyboardControls);
     window._keybindMenu = keybindMenu;
 
-    const isPC = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const radialMenu = new RadialMenu([
       { icon: '👤', label: 'Personaje',  action: () => characterMenu.open(),   locked: false },
       { icon: '⚔️', label: 'Equipo',     action: () => partyMenu.toggle(),     locked: false },
-      { icon: '🗺️', label: 'Mapa',       action: () => mapUI.toggle(),         locked: false },
+      { icon: '🗺️', label: 'Mapa',       action: () => { if (!window._dungeonManager?._active) mapUI.toggle(); }, locked: false },
       { icon: '🎒', label: 'Inventario', action: () => inventoryUI.open(),     locked: false },
       { icon: '⌨️', label: 'Controles',  action: () => keybindMenu.open(),     locked: false },
     ]);
+
     const pauseMenu = new PauseMenu({
       onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
       onFusion  : () => { pauseMenu.close(); fusionMenu.open(combat._weaponType); },
@@ -507,13 +517,13 @@ async function boot() {
     const pauseBtn = document.createElement('button');
     pauseBtn.textContent = '☰';
     Object.assign(pauseBtn.style, {
-      position: 'fixed', top: '8px', left: '14px',
-      width: '36px', height: '36px', borderRadius: '8px',
-      border: '1px solid rgba(201,168,76,0.4)',
-      background: 'rgba(10,8,20,0.8)', color: '#C9A84C',
-      fontSize: '18px', cursor: 'pointer', pointerEvents: 'all',
-      zIndex: '150', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', WebkitTapHighlightColor: 'transparent',
+      position:'fixed', top:'8px', left:'14px',
+      width:'36px', height:'36px', borderRadius:'8px',
+      border:'1px solid rgba(201,168,76,0.4)',
+      background:'rgba(10,8,20,0.8)', color:'#C9A84C',
+      fontSize:'18px', cursor:'pointer', pointerEvents:'all',
+      zIndex:'150', display:'flex', alignItems:'center',
+      justifyContent:'center', WebkitTapHighlightColor:'transparent',
     });
     const openPause = (e) => { e.preventDefault(); pauseMenu.open(); };
     pauseBtn.addEventListener('click', openPause);
@@ -522,6 +532,7 @@ async function boot() {
 
     setProgress(96, 'intervalos...');
     setInterval(() => {
+      if (window._dungeonManager?._active) return;
       const pos    = player.root.position;
       const inside = buildZone.isInsideZone(pos.x, pos.z);
       if (buildCamera._btn) {
@@ -558,23 +569,15 @@ async function boot() {
     txt.textContent = 'ERROR: ' + (err.message || err.toString());
     bar.style.background = '#8B2A0A';
     console.error('[BOOT ERROR]', err.message, err.stack);
-
     const errDiv = document.createElement('div');
     Object.assign(errDiv.style, {
-      position    : 'fixed',
-      top         : '40%',
-      left        : '50%',
-      transform   : 'translateX(-50%)',
-      background  : 'rgba(0,0,0,0.95)',
-      color       : '#ff4444',
-      fontFamily  : 'monospace',
-      fontSize    : '11px',
-      padding     : '16px',
-      zIndex      : '9999',
-      maxWidth    : '90vw',
-      wordBreak   : 'break-all',
-      borderRadius: '8px',
-      border      : '1px solid #ff4444',
+      position:'fixed', top:'40%', left:'50%',
+      transform:'translateX(-50%)',
+      background:'rgba(0,0,0,0.95)', color:'#ff4444',
+      fontFamily:'monospace', fontSize:'11px',
+      padding:'16px', zIndex:'9999',
+      maxWidth:'90vw', wordBreak:'break-all',
+      borderRadius:'8px', border:'1px solid #ff4444',
     });
     errDiv.textContent = (err.message || '') + '\n' + (err.stack || '');
     document.body.appendChild(errDiv);
