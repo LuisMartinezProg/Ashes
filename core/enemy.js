@@ -47,6 +47,7 @@ export class Enemy {
     this._attackTimer = 0;
     this._waitTimer   = 0;
     this._respawnTimer = 0;
+    this.type = 'Enemy';
 
     const ox = position.x;
     const oz = position.z;
