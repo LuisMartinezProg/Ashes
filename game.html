@@ -419,6 +419,18 @@ async function boot() {
     window._roadMonsters   = roadMonsters;
     window._mikaBandits    = mikaBandits;
     window._yamiArmy       = yamiArmy;
+    const bestiaryPopup = new BestiaryPopup();
+window._bestiaryPopup = bestiaryPopup;
+
+allEnemies.forEach(e => {
+  const _orig = e.onDeath;
+  e.onDeath = () => {
+    const type = e.type ?? e.constructor.name;
+    const isNew = onKill(type);
+    if (isNew) bestiaryPopup.show(type);
+    _orig?.();
+  };
+});
 
     setProgress(86, 'Building...');
     const building = new BuildingSystem(scene, player);
