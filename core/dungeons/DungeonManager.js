@@ -52,8 +52,8 @@ export class DungeonManager {
 
     this._portals        = [];
     this._active         = null;
-    this._roomPlan       = [];   // datos puros de todas las salas del piso
-    this._currentRoom    = null; // DungeonRoom activa
+    this._roomPlan       = [];
+    this._currentRoom    = null;
     this._activeEnemies  = [];
     this._activePlatform = null;
     this._activePuzzle   = null;
@@ -337,6 +337,14 @@ export class DungeonManager {
     window._dungeonScene.fog = new THREE.FogExp2(0x0a0a12, 0.025);
     if (window._worldGroup) window._worldGroup.visible = false;
 
+    // Mover jugador y companion a dungeonScene
+    window._worldScene.remove(window._player.root);
+    window._dungeonScene.add(window._player.root);
+    if (window._companion?.root) {
+      window._worldScene.remove(window._companion.root);
+      window._dungeonScene.add(window._companion.root);
+    }
+
     this._enterBtn.style.display = 'none';
     this._exitBtn.style.display  = 'flex';
     this._etherEl.style.display  = 'block';
@@ -346,7 +354,7 @@ export class DungeonManager {
     if (this.onEnter) this.onEnter(this._active.def);
   }
 
-  // ── Generar piso — solo planifica, no construye ───────────────────────────
+  // ── Generar piso ──────────────────────────────────────────────────────────
 
   _generateFloor(level) {
     this._destroyCurrentRoom();
@@ -366,7 +374,7 @@ export class DungeonManager {
     this._loadRoom(result.start, level);
   }
 
-  // ── Cargar una sola sala ──────────────────────────────────────────────────
+  // ── Cargar sala ───────────────────────────────────────────────────────────
 
   _loadRoom(roomData, level) {
     this._destroyCurrentRoom();
@@ -427,9 +435,6 @@ export class DungeonManager {
 
     this._currentRoom = room;
 
-    // Teletransportar jugador al centro de la sala
-    
-
     const cx = roomData.center.x;
     const cz = roomData.center.z + 4;
     if (this.player.root) this.player.root.position.set(cx, 0, cz);
@@ -437,7 +442,7 @@ export class DungeonManager {
     if (window._thirdCam) window._thirdCam._snapToPlayer();
   }
 
-  // ── Avanzar a sala siguiente ──────────────────────────────────────────────
+  // ── Avanzar sala ──────────────────────────────────────────────────────────
 
   _enterNextRoom() {
     if (!this._pendingNextRoom) return;
@@ -446,7 +451,7 @@ export class DungeonManager {
     this._pendingNextRoom = null;
   }
 
-  // ── Destruir sala actual ──────────────────────────────────────────────────
+  // ── Destruir sala ─────────────────────────────────────────────────────────
 
   _destroyCurrentRoom() {
     if (this._currentRoom) {
@@ -483,6 +488,14 @@ export class DungeonManager {
     if (window._worldGroup) window._worldGroup.visible = true;
     window._worldScene.fog = new THREE.FogExp2(0x3A5A40, 0.014);
 
+    // Devolver jugador y companion a worldScene
+    window._dungeonScene.remove(window._player.root);
+    window._worldScene.add(window._player.root);
+    if (window._companion?.root) {
+      window._dungeonScene.remove(window._companion.root);
+      window._worldScene.add(window._companion.root);
+    }
+
     const activeChar = window._partyManager?.getActiveCharacter() ?? this.player;
     if (activeChar.root) {
       activeChar.root.position.set(
@@ -496,7 +509,7 @@ export class DungeonManager {
     this._levelEl.style.display  = 'none';
     this._stairBtn.style.display = 'none';
     this._doorBtn.style.display  = 'none';
-    this._active = null;
+    this._active   = null;
     this._roomPlan = [];
 
     if (this.onExit) this.onExit();
