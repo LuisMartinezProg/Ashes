@@ -31,6 +31,7 @@ const TYPE_COLORS = {
 export class BestiaryScreen {
   constructor() {
     this._open     = false;
+    this._selected = null;
     this._el       = this._build();
     document.body.appendChild(this._el);
   }
@@ -41,7 +42,7 @@ export class BestiaryScreen {
     Object.assign(el.style, {
       position     : 'fixed',
       inset        : '0',
-      background   : 'rgba(4,4,10,0.97)',
+      background   : 'linear-gradient(160deg, #04040e 0%, #0a0614 50%, #06040e 100%)',
       zIndex       : '600',
       display      : 'none',
       flexDirection: 'column',
@@ -49,30 +50,31 @@ export class BestiaryScreen {
       overflow     : 'hidden',
     });
 
-    // ── Header ─────────────────────────────────────────────────
+    // ── Header ─────────────────────────────────────────────
     const header = document.createElement('div');
     Object.assign(header.style, {
       display        : 'flex',
       alignItems     : 'center',
       justifyContent : 'space-between',
-      padding        : '14px 18px 10px',
-      borderBottom   : '1px solid rgba(201,168,76,0.2)',
+      padding        : '10px 16px 8px',
+      borderBottom   : '1px solid rgba(201,168,76,0.12)',
       flexShrink     : '0',
+      background     : 'rgba(4,2,12,0.8)',
     });
 
     const htitle = document.createElement('div');
     Object.assign(htitle.style, {
-      fontSize     : '13px',
-      letterSpacing: '0.35em',
-      color        : '#C9A84C',
+      fontSize     : '11px',
+      letterSpacing: '0.4em',
+      color        : 'rgba(201,168,76,0.7)',
       textTransform: 'uppercase',
     });
-    htitle.textContent = '📖 Bestiario';
+    htitle.textContent = '✦ Bestiario';
 
     this._countEl = document.createElement('div');
     Object.assign(this._countEl.style, {
-      fontSize     : '10px',
-      color        : 'rgba(201,168,76,0.45)',
+      fontSize     : '9px',
+      color        : 'rgba(201,168,76,0.3)',
       letterSpacing: '0.15em',
     });
 
@@ -80,12 +82,12 @@ export class BestiaryScreen {
     closeBtn.textContent = '✕';
     Object.assign(closeBtn.style, {
       background  : 'none',
-      border      : '1px solid rgba(201,168,76,0.3)',
-      color       : '#C9A84C',
-      borderRadius: '6px',
-      width       : '30px',
-      height      : '30px',
-      fontSize    : '13px',
+      border      : '1px solid rgba(201,168,76,0.2)',
+      color       : 'rgba(201,168,76,0.6)',
+      borderRadius: '4px',
+      width       : '26px',
+      height      : '26px',
+      fontSize    : '11px',
       cursor      : 'pointer',
       WebkitTapHighlightColor: 'transparent',
     });
@@ -94,18 +96,240 @@ export class BestiaryScreen {
 
     header.append(htitle, this._countEl, closeBtn);
 
-    // ── Grid scroll ────────────────────────────────────────────
+    // ── Body ────────────────────────────────────────────────
+    const body = document.createElement('div');
+    Object.assign(body.style, {
+      display : 'flex',
+      flex    : '1',
+      overflow: 'hidden',
+    });
+
+    // ── Izquierda: grilla ───────────────────────────────────
+    const leftPanel = document.createElement('div');
+    Object.assign(leftPanel.style, {
+      width       : '50%',
+      borderRight : '1px solid rgba(201,168,76,0.08)',
+      overflowY   : 'auto',
+      padding     : '10px 8px',
+      background  : 'rgba(2,2,10,0.4)',
+    });
+
     this._grid = document.createElement('div');
     Object.assign(this._grid.style, {
       display            : 'grid',
       gridTemplateColumns: 'repeat(5, 1fr)',
-      gap                : '10px',
-      padding            : '14px',
-      overflowY          : 'auto',
-      flex               : '1',
+      gap                : '5px',
     });
 
-    el.append(header, this._grid);
+    leftPanel.appendChild(this._grid);
+
+    // ── Derecha ─────────────────────────────────────────────
+    const rightPanel = document.createElement('div');
+    Object.assign(rightPanel.style, {
+      width        : '50%',
+      display      : 'flex',
+      flexDirection: 'column',
+      overflow     : 'hidden',
+    });
+
+    // Boceto (80%)
+    this._sketchPanel = document.createElement('div');
+    Object.assign(this._sketchPanel.style, {
+      flex           : '8',
+      display        : 'flex',
+      alignItems     : 'center',
+      justifyContent : 'center',
+      position       : 'relative',
+      overflow       : 'hidden',
+      background     : 'radial-gradient(ellipse at center, rgba(80,40,120,0.08) 0%, rgba(4,2,12,0) 70%)',
+    });
+
+    // Placeholder boceto
+    this._sketchEmpty = document.createElement('div');
+    Object.assign(this._sketchEmpty.style, {
+      display      : 'flex',
+      flexDirection: 'column',
+      alignItems   : 'center',
+      gap          : '8px',
+      opacity      : '0.2',
+    });
+    this._sketchEmpty.innerHTML = `
+      <div style="font-size:48px;">📖</div>
+      <div style="font-size:9px;letter-spacing:0.3em;color:#C9A84C;">SELECCIONA</div>
+    `;
+    this._sketchPanel.appendChild(this._sketchEmpty);
+
+    // Contenido boceto (oculto hasta selección)
+    this._sketchContent = document.createElement('div');
+    Object.assign(this._sketchContent.style, {
+      display      : 'none',
+      flexDirection: 'column',
+      alignItems   : 'center',
+      justifyContent: 'center',
+      width        : '100%',
+      height       : '100%',
+      position     : 'relative',
+    });
+
+    // Fondo decorativo tipo abismo
+    this._sketchBg = document.createElement('div');
+    Object.assign(this._sketchBg.style, {
+      position    : 'absolute',
+      inset       : '0',
+      opacity     : '0.06',
+      backgroundImage: `
+        radial-gradient(circle at 50% 50%, rgba(201,168,76,0.4) 0%, transparent 60%),
+        repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(201,168,76,0.03) 30px, rgba(201,168,76,0.03) 31px),
+        repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(201,168,76,0.03) 30px, rgba(201,168,76,0.03) 31px)
+      `,
+    });
+
+    // Anillo decorativo
+    this._sketchRing = document.createElement('div');
+    Object.assign(this._sketchRing.style, {
+      position    : 'absolute',
+      width       : '160px',
+      height      : '160px',
+      borderRadius: '50%',
+      border      : '1px solid rgba(201,168,76,0.12)',
+      boxShadow   : '0 0 40px rgba(100,60,200,0.08), inset 0 0 40px rgba(100,60,200,0.04)',
+    });
+
+    // Emoji boceto grande
+    this._sketchIcon = document.createElement('div');
+    Object.assign(this._sketchIcon.style, {
+      fontSize  : '80px',
+      filter    : 'drop-shadow(0 0 20px rgba(201,168,76,0.15))',
+      position  : 'relative',
+      zIndex    : '1',
+      lineHeight: '1',
+      transition: 'all 0.3s ease',
+    });
+
+    // Tipo badge sobre el boceto
+    this._sketchTypeBadge = document.createElement('div');
+    Object.assign(this._sketchTypeBadge.style, {
+      position    : 'absolute',
+      top         : '12px',
+      right       : '12px',
+      fontSize    : '8px',
+      padding     : '3px 8px',
+      borderRadius: '10px',
+      letterSpacing: '0.15em',
+      border      : '1px solid rgba(255,255,255,0.08)',
+      color       : 'rgba(255,255,255,0.35)',
+      background  : 'rgba(0,0,0,0.4)',
+    });
+
+    // Kills badge
+    this._sketchKillsBadge = document.createElement('div');
+    Object.assign(this._sketchKillsBadge.style, {
+      position    : 'absolute',
+      top         : '12px',
+      left        : '12px',
+      fontSize    : '8px',
+      padding     : '3px 8px',
+      borderRadius: '10px',
+      letterSpacing: '0.1em',
+      border      : '1px solid rgba(201,168,76,0.15)',
+      color       : 'rgba(201,168,76,0.4)',
+      background  : 'rgba(0,0,0,0.4)',
+    });
+
+    this._sketchContent.append(
+      this._sketchBg, this._sketchRing,
+      this._sketchIcon, this._sketchTypeBadge, this._sketchKillsBadge
+    );
+    this._sketchPanel.append(this._sketchEmpty, this._sketchContent);
+
+    // ── Info panel (20%) ────────────────────────────────────
+    this._infoPanel = document.createElement('div');
+    Object.assign(this._infoPanel.style, {
+      flex        : '2',
+      borderTop   : '1px solid rgba(201,168,76,0.1)',
+      padding     : '8px 12px',
+      display     : 'flex',
+      flexDirection: 'column',
+      gap         : '5px',
+      background  : 'rgba(4,2,12,0.6)',
+      overflow    : 'hidden',
+    });
+
+    // Placeholder info
+    this._infoEmpty = document.createElement('div');
+    Object.assign(this._infoEmpty.style, {
+      color       : 'rgba(201,168,76,0.15)',
+      fontSize    : '9px',
+      letterSpacing: '0.2em',
+      margin      : 'auto',
+    });
+    this._infoEmpty.textContent = '— elige un enemigo —';
+    this._infoPanel.appendChild(this._infoEmpty);
+
+    // Contenido info
+    this._infoContent = document.createElement('div');
+    Object.assign(this._infoContent.style, {
+      display      : 'none',
+      flexDirection: 'column',
+      gap          : '5px',
+      height       : '100%',
+    });
+
+    // Fila nombre + zona
+    const infoTop = document.createElement('div');
+    Object.assign(infoTop.style, {
+      display    : 'flex',
+      alignItems : 'baseline',
+      gap        : '8px',
+    });
+    this._infoName = document.createElement('div');
+    Object.assign(this._infoName.style, {
+      fontFamily   : 'Georgia, serif',
+      fontSize     : '13px',
+      color        : '#E8C97A',
+      letterSpacing: '0.05em',
+    });
+    this._infoZone = document.createElement('div');
+    Object.assign(this._infoZone.style, {
+      fontSize: '8px',
+      color   : 'rgba(201,168,76,0.35)',
+    });
+    infoTop.append(this._infoName, this._infoZone);
+
+    // Stats row
+    this._statsRow = document.createElement('div');
+    Object.assign(this._statsRow.style, {
+      display: 'flex',
+      gap    : '6px',
+    });
+
+    // Desc
+    this._infoDesc = document.createElement('div');
+    Object.assign(this._infoDesc.style, {
+      fontSize  : '8.5px',
+      color     : 'rgba(201,168,76,0.3)',
+      lineHeight: '1.5',
+      overflow  : 'hidden',
+      display   : '-webkit-box',
+      WebkitLineClamp: '2',
+      WebkitBoxOrient: 'vertical',
+    });
+
+    // Weak row
+    this._weakRow = document.createElement('div');
+    Object.assign(this._weakRow.style, {
+      display : 'flex',
+      gap     : '4px',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+    });
+
+    this._infoContent.append(infoTop, this._statsRow, this._weakRow, this._infoDesc);
+    this._infoPanel.append(this._infoEmpty, this._infoContent);
+
+    rightPanel.append(this._sketchPanel, this._infoPanel);
+    body.append(leftPanel, rightPanel);
+    el.append(header, body);
     return el;
   }
 
@@ -113,318 +337,126 @@ export class BestiaryScreen {
     this._grid.innerHTML = '';
     const list       = getBestiaryList();
     const discovered = list.filter(e => e.discovered).length;
-    this._countEl.textContent = `${discovered} / ${list.length} descubiertos`;
+    this._countEl.textContent = `${discovered} / ${list.length}`;
 
     for (const enemy of list) {
       const card = document.createElement('div');
+      const isSelected = this._selected === enemy.id;
       Object.assign(card.style, {
-        display      : 'flex',
-        flexDirection: 'column',
-        alignItems   : 'center',
-        gap          : '5px',
-        padding      : '10px 6px',
-        borderRadius : '10px',
-        background   : enemy.discovered
-          ? `linear-gradient(135deg, ${ZONE_COLORS[enemy.zone] || '#1a1a2a'}cc, rgba(10,8,20,0.95))`
-          : 'rgba(10,8,20,0.5)',
-        border       : `1px solid ${enemy.discovered ? 'rgba(201,168,76,0.25)' : 'rgba(255,255,255,0.05)'}`,
-        cursor       : enemy.discovered ? 'pointer' : 'default',
-        transition   : 'transform 0.15s',
-        WebkitTapHighlightColor: 'transparent',
-      });
-
-      // ── Foto de perfil ──────────────────────────────────────
-      const avatar = document.createElement('div');
-      Object.assign(avatar.style, {
-        width         : '48px',
-        height        : '48px',
-        borderRadius  : '50%',
-        background    : enemy.discovered
-          ? `radial-gradient(circle at 35% 35%, ${ZONE_COLORS[enemy.zone] || '#333'}cc, #0a0a14)`
-          : 'rgba(255,255,255,0.04)',
-        border        : `2px solid ${enemy.discovered ? 'rgba(201,168,76,0.45)' : 'rgba(255,255,255,0.07)'}`,
+        aspectRatio   : '1',
+        borderRadius  : '6px',
         display       : 'flex',
         alignItems    : 'center',
         justifyContent: 'center',
-        fontSize      : '24px',
-        flexShrink    : '0',
-        boxShadow     : enemy.discovered ? '0 2px 10px rgba(0,0,0,0.6)' : 'none',
+        fontSize      : '18px',
+        cursor        : enemy.discovered ? 'pointer' : 'default',
+        background    : isSelected
+          ? `linear-gradient(135deg, ${ZONE_COLORS[enemy.zone] || '#1a1a2a'}cc, rgba(100,60,200,0.2))`
+          : enemy.discovered
+            ? `linear-gradient(135deg, ${ZONE_COLORS[enemy.zone] || '#1a1a2a'}66, rgba(10,8,20,0.8))`
+            : 'rgba(8,6,16,0.8)',
+        border        : `1px solid ${isSelected
+          ? 'rgba(201,168,76,0.5)'
+          : enemy.discovered
+            ? 'rgba(201,168,76,0.12)'
+            : 'rgba(255,255,255,0.04)'}`,
+        boxShadow     : isSelected ? '0 0 12px rgba(201,168,76,0.2), inset 0 0 8px rgba(100,60,200,0.1)' : 'none',
+        transition    : 'all 0.15s',
+        filter        : enemy.discovered ? 'none' : 'brightness(0.3)',
+        WebkitTapHighlightColor: 'transparent',
       });
-      avatar.textContent = enemy.discovered ? enemy.icon : '?';
-
-      // ── Boceto al lado ──────────────────────────────────────
-      const sketchRow = document.createElement('div');
-      Object.assign(sketchRow.style, {
-        display    : 'flex',
-        alignItems : 'center',
-        gap        : '4px',
-      });
-
-      const sketch = document.createElement('div');
-      Object.assign(sketch.style, {
-        fontSize  : '18px',
-        opacity   : '0.2',
-        filter    : 'sepia(1) contrast(0.5)',
-        lineHeight: '1',
-      });
-      sketch.textContent = enemy.discovered ? enemy.icon : '···';
-
-      sketchRow.appendChild(sketch);
-
-      // ── Nombre ──────────────────────────────────────────────
-      const nameEl = document.createElement('div');
-      Object.assign(nameEl.style, {
-        fontSize     : '9px',
-        color        : enemy.discovered ? '#E8C97A' : 'rgba(255,255,255,0.12)',
-        textAlign    : 'center',
-        letterSpacing: '0.03em',
-        lineHeight   : '1.3',
-      });
-      nameEl.textContent = enemy.discovered ? enemy.name : '???';
-
-      // ── Tipo badge ──────────────────────────────────────────
-      const typeBadge = document.createElement('div');
-      Object.assign(typeBadge.style, {
-        fontSize    : '7px',
-        padding     : '1px 6px',
-        borderRadius: '8px',
-        background  : enemy.discovered
-          ? (TYPE_COLORS[enemy.type] || '#222') + '88'
-          : 'transparent',
-        border      : `1px solid ${enemy.discovered ? 'rgba(255,255,255,0.1)' : 'transparent'}`,
-        color       : enemy.discovered ? 'rgba(255,255,255,0.5)' : 'transparent',
-      });
-      typeBadge.textContent = enemy.type;
-
-      // ── Kill count ──────────────────────────────────────────
-      const killEl = document.createElement('div');
-      Object.assign(killEl.style, {
-        fontSize: '8px',
-        color   : 'rgba(201,168,76,0.4)',
-      });
-      killEl.textContent = enemy.discovered ? `×${enemy.kills}` : '';
-
-      card.append(avatar, sketchRow, nameEl, typeBadge, killEl);
+      card.textContent = enemy.discovered ? enemy.icon : '?';
 
       if (enemy.discovered) {
-        card.addEventListener('mouseenter', () => card.style.transform = 'scale(1.05)');
-        card.addEventListener('mouseleave', () => card.style.transform = 'scale(1)');
-        card.addEventListener('click',      () => this._showDetail(enemy));
-        card.addEventListener('touchstart', (e) => { e.preventDefault(); this._showDetail(enemy); }, { passive: false });
+        card.addEventListener('mouseenter', () => {
+          if (!isSelected) card.style.border = '1px solid rgba(201,168,76,0.3)';
+        });
+        card.addEventListener('mouseleave', () => {
+          if (!isSelected) card.style.border = '1px solid rgba(201,168,76,0.12)';
+        });
+        card.addEventListener('click',      () => this._select(enemy));
+        card.addEventListener('touchstart', (e) => { e.preventDefault(); this._select(enemy); }, { passive: false });
       }
 
       this._grid.appendChild(card);
     }
   }
 
-  _showDetail(enemy) {
-    let panel = document.getElementById('bs-detail-overlay');
-    if (panel) panel.remove();
+  _select(enemy) {
+    this._selected = enemy.id;
+    this._render();
 
-    panel = document.createElement('div');
-    panel.id = 'bs-detail-overlay';
-    Object.assign(panel.style, {
-      position       : 'fixed',
-      inset          : '0',
-      background     : 'rgba(4,4,10,0.88)',
-      zIndex         : '700',
-      display        : 'flex',
-      alignItems     : 'center',
-      justifyContent : 'center',
-      padding        : '20px',
-    });
+    // ── Boceto ──────────────────────────────────────────────
+    this._sketchEmpty.style.display  = 'none';
+    this._sketchContent.style.display = 'flex';
+    this._sketchIcon.textContent      = enemy.icon;
+    this._sketchTypeBadge.textContent = enemy.type;
+    this._sketchTypeBadge.style.background =
+      (TYPE_COLORS[enemy.type] || '#222') + '44';
+    this._sketchKillsBadge.textContent = `×${enemy.kills}`;
+    this._sketchBg.style.background = `
+      radial-gradient(circle at 50% 50%, ${ZONE_COLORS[enemy.zone] || '#1a1a2a'}33 0%, transparent 65%),
+      repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(201,168,76,0.02) 30px, rgba(201,168,76,0.02) 31px),
+      repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(201,168,76,0.02) 30px, rgba(201,168,76,0.02) 31px)
+    `;
+    this._sketchRing.style.borderColor =
+      (ZONE_COLORS[enemy.zone] || '#C9A84C') + '22';
 
-    const box = document.createElement('div');
-    Object.assign(box.style, {
-      background   : 'linear-gradient(135deg, rgba(20,14,35,0.99), rgba(10,8,20,0.99))',
-      border       : '1px solid rgba(201,168,76,0.3)',
-      borderRadius : '14px',
-      padding      : '18px',
-      maxWidth     : '340px',
-      width        : '100%',
-      display      : 'flex',
-      flexDirection: 'column',
-      gap          : '10px',
-      maxHeight    : '85vh',
-      overflowY    : 'auto',
-    });
+    // ── Info ─────────────────────────────────────────────────
+    this._infoEmpty.style.display   = 'none';
+    this._infoContent.style.display = 'flex';
+    this._infoName.textContent = enemy.name;
+    this._infoZone.textContent = enemy.zone;
+    this._infoDesc.textContent = enemy.desc;
 
-    // ── Fila superior: avatar + boceto + info ───────────────
-    const topRow = document.createElement('div');
-    Object.assign(topRow.style, {
-      display    : 'flex',
-      gap        : '12px',
-      alignItems : 'center',
-    });
-
-    const bigAvatar = document.createElement('div');
-    Object.assign(bigAvatar.style, {
-      width         : '68px',
-      height        : '68px',
-      borderRadius  : '50%',
-      background    : `radial-gradient(circle at 35% 35%, ${ZONE_COLORS[enemy.zone] || '#333'}cc, #0a0a14)`,
-      border        : '2px solid rgba(201,168,76,0.5)',
-      display       : 'flex',
-      alignItems    : 'center',
-      justifyContent: 'center',
-      fontSize      : '34px',
-      flexShrink    : '0',
-      boxShadow     : '0 4px 16px rgba(0,0,0,0.7)',
-    });
-    bigAvatar.textContent = enemy.icon;
-
-    const bigSketch = document.createElement('div');
-    Object.assign(bigSketch.style, {
-      fontSize  : '44px',
-      opacity   : '0.18',
-      filter    : 'sepia(1) contrast(0.4)',
-      flexShrink: '0',
-      lineHeight: '1',
-    });
-    bigSketch.textContent = enemy.icon;
-
-    const infoCol = document.createElement('div');
-    Object.assign(infoCol.style, {
-      display      : 'flex',
-      flexDirection: 'column',
-      gap          : '3px',
-      flex         : '1',
-    });
-
-    const dName = document.createElement('div');
-    Object.assign(dName.style, {
-      fontFamily   : 'Georgia, serif',
-      fontSize     : '15px',
-      color        : '#E8C97A',
-      letterSpacing: '0.05em',
-    });
-    dName.textContent = enemy.name;
-
-    [[enemy.zone, 'rgba(201,168,76,0.5)'], [enemy.type, 'rgba(160,130,200,0.7)'], [`×${enemy.kills} eliminados`, 'rgba(201,168,76,0.35)']].forEach(([text, color]) => {
-      const d = document.createElement('div');
-      Object.assign(d.style, { fontSize: '9px', color, fontFamily: 'monospace' });
-      d.textContent = text;
-      infoCol.appendChild(d);
-    });
-
-    infoCol.insertBefore(dName, infoCol.firstChild);
-    topRow.append(bigAvatar, bigSketch, infoCol);
-
-    // ── Stats ───────────────────────────────────────────────
-    const stats = document.createElement('div');
-    Object.assign(stats.style, {
-      display            : 'grid',
-      gridTemplateColumns: '1fr 1fr 1fr',
-      gap                : '6px',
-      borderTop          : '1px solid rgba(201,168,76,0.1)',
-      paddingTop         : '10px',
-    });
-
-    [{ label: 'HP', value: enemy.hp }, { label: 'ATK', value: enemy.atk }, { label: 'DEF', value: enemy.def }].forEach(({ label, value }) => {
-      const st = document.createElement('div');
-      Object.assign(st.style, {
-        background  : 'rgba(201,168,76,0.06)',
-        borderRadius: '6px',
-        padding     : '6px',
+    // Stats
+    this._statsRow.innerHTML = '';
+    [{ l: 'HP', v: enemy.hp }, { l: 'ATK', v: enemy.atk }, { l: 'DEF', v: enemy.def }].forEach(({ l, v }) => {
+      const s = document.createElement('div');
+      Object.assign(s.style, {
+        background  : 'rgba(201,168,76,0.05)',
+        border      : '1px solid rgba(201,168,76,0.1)',
+        borderRadius: '4px',
+        padding     : '3px 6px',
         textAlign   : 'center',
+        minWidth    : '36px',
       });
-      st.innerHTML = `<div style="font-size:13px;color:#C9A84C;">${value}</div><div style="font-size:7px;color:rgba(201,168,76,0.4);letter-spacing:1px;margin-top:2px;">${label}</div>`;
-      stats.appendChild(st);
+      s.innerHTML = `<div style="font-size:11px;color:#C9A84C;">${v}</div><div style="font-size:7px;color:rgba(201,168,76,0.35);letter-spacing:1px;">${l}</div>`;
+      this._statsRow.appendChild(s);
     });
 
-    // ── Debilidades ─────────────────────────────────────────
-    const weakWrap = document.createElement('div');
-    Object.assign(weakWrap.style, { display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' });
-    const weakTitle = document.createElement('div');
-    Object.assign(weakTitle.style, { fontSize: '8px', color: 'rgba(201,168,76,0.4)', letterSpacing: '0.15em' });
-    weakTitle.textContent = 'DÉBIL A:';
-    weakWrap.appendChild(weakTitle);
+    // Weak
+    this._weakRow.innerHTML = '';
+    const wl = document.createElement('div');
+    Object.assign(wl.style, { fontSize: '7px', color: 'rgba(201,168,76,0.3)', letterSpacing: '0.15em' });
+    wl.textContent = 'DÉBIL:';
+    this._weakRow.appendChild(wl);
     enemy.weakness.forEach(w => {
       const tag = document.createElement('div');
       Object.assign(tag.style, {
-        fontSize: '8px', padding: '2px 7px', borderRadius: '8px',
-        background: 'rgba(200,80,80,0.15)', border: '1px solid rgba(200,80,80,0.3)',
-        color: 'rgba(220,120,120,0.8)', textTransform: 'capitalize',
+        fontSize: '7px', padding: '1px 5px', borderRadius: '6px',
+        background: 'rgba(200,80,80,0.12)', border: '1px solid rgba(200,80,80,0.25)',
+        color: 'rgba(220,120,120,0.7)', textTransform: 'capitalize',
       });
       tag.textContent = w;
-      weakWrap.appendChild(tag);
+      this._weakRow.appendChild(tag);
     });
-
-    // ── Drops ───────────────────────────────────────────────
-    const dropsWrap = document.createElement('div');
-    const dropsTitle = document.createElement('div');
-    Object.assign(dropsTitle.style, { fontSize: '8px', color: 'rgba(201,168,76,0.4)', letterSpacing: '0.15em', marginBottom: '5px' });
-    dropsTitle.textContent = 'DROPS';
-    dropsWrap.appendChild(dropsTitle);
-
-    if (enemy.drops?.length) {
-      enemy.drops.forEach(drop => {
-        const item = ITEMS[drop.item];
-        if (!item) return;
-        const row = document.createElement('div');
-        Object.assign(row.style, {
-          display: 'flex', justifyContent: 'space-between',
-          fontSize: '9.5px', color: 'rgba(201,168,76,0.55)',
-          padding: '3px 0', borderBottom: '1px solid rgba(201,168,76,0.06)',
-        });
-        row.innerHTML = `<span>${item.icon} ${item.name}</span><span style="color:rgba(201,168,76,0.3)">${Math.round(drop.chance * 100)}%</span>`;
-        dropsWrap.appendChild(row);
-      });
-    } else {
-      const none = document.createElement('div');
-      Object.assign(none.style, { fontSize: '9px', color: 'rgba(201,168,76,0.25)' });
-      none.textContent = 'Sin drops registrados';
-      dropsWrap.appendChild(none);
-    }
-
-    // ── Descripción ─────────────────────────────────────────
-    const desc = document.createElement('div');
-    Object.assign(desc.style, {
-      fontSize  : '9.5px',
-      color     : 'rgba(201,168,76,0.38)',
-      lineHeight: '1.6',
-      borderTop : '1px solid rgba(201,168,76,0.1)',
-      paddingTop: '8px',
-    });
-    desc.textContent = enemy.desc;
-
-    // ── Cerrar ──────────────────────────────────────────────
-    const closeRow = document.createElement('div');
-    Object.assign(closeRow.style, { textAlign: 'right' });
-    const closeD = document.createElement('button');
-    closeD.textContent = '✕ Cerrar';
-    Object.assign(closeD.style, {
-      background  : 'transparent',
-      border      : '1px solid rgba(201,168,76,0.3)',
-      borderRadius: '6px',
-      color       : '#C9A84C',
-      fontFamily  : 'monospace',
-      fontSize    : '10px',
-      padding     : '6px 14px',
-      cursor      : 'pointer',
-      pointerEvents: 'all',
-    });
-    closeD.addEventListener('click',      () => panel.remove());
-    closeD.addEventListener('touchstart', (e) => { e.preventDefault(); panel.remove(); }, { passive: false });
-    closeRow.appendChild(closeD);
-
-    box.append(topRow, stats, weakWrap, dropsWrap, desc, closeRow);
-    panel.appendChild(box);
-    panel.addEventListener('click', (e) => { if (e.target === panel) panel.remove(); });
-    document.body.appendChild(panel);
   }
 
   open() {
-    this._open = true;
+    this._open     = true;
+    this._selected = null;
     this._el.style.display = 'flex';
+    this._sketchEmpty.style.display   = 'flex';
+    this._sketchContent.style.display = 'none';
+    this._infoEmpty.style.display     = 'block';
+    this._infoContent.style.display   = 'none';
     this._render();
   }
 
   close() {
     this._open = false;
     this._el.style.display = 'none';
-    const detail = document.getElementById('bs-detail-overlay');
-    if (detail) detail.remove();
   }
 
   isOpen() { return this._open; }
