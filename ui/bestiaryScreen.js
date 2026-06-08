@@ -4,13 +4,13 @@ import { getBestiaryList } from '../core/bestiary.js';
 import { ITEMS } from '../data/items.js';
 
 const ZONE_COLORS = {
-  'Bosque':             '#2d5a1b',
-  'Bosque Profundo':    '#1a4020',
-  'Llanuras':           '#5a4a1b',
-  'Camino':             '#3a3020',
-  'Territorio Yami':    '#2a1040',
-  'Mazmorras':          '#1a1a2a',
-  'Mazmorra — Jefe':    '#3a0a0a',
+  'Bosque':                '#2d5a1b',
+  'Bosque Profundo':       '#1a4020',
+  'Llanuras':              '#5a4a1b',
+  'Camino':                '#3a3020',
+  'Territorio Yami':       '#2a1040',
+  'Mazmorras':             '#1a1a2a',
+  'Mazmorra — Jefe':       '#3a0a0a',
   'Mazmorra — Jefe Final': '#4a0000',
 };
 
@@ -30,10 +30,8 @@ const TYPE_COLORS = {
 
 export class BestiaryScreen {
   constructor() {
-    this._open = false;
-    this._selected = null;
-    this._page = 0;
-    this._el = this._build();
+    this._open     = false;
+    this._el       = this._build();
     document.body.appendChild(this._el);
   }
 
@@ -41,515 +39,392 @@ export class BestiaryScreen {
     const el = document.createElement('div');
     el.id = 'bestiary-screen';
     Object.assign(el.style, {
-      position: 'fixed',
-      inset: '0',
-      background: 'rgba(4,4,10,0.97)',
-      zIndex: '600',
-      display: 'none',
+      position     : 'fixed',
+      inset        : '0',
+      background   : 'rgba(4,4,10,0.97)',
+      zIndex       : '600',
+      display      : 'none',
       flexDirection: 'column',
-      fontFamily: 'monospace',
-      overflow: 'hidden',
+      fontFamily   : 'monospace',
+      overflow     : 'hidden',
     });
 
-    // ── Header ──────────────────────────────────────────────────
+    // ── Header ─────────────────────────────────────────────────
     const header = document.createElement('div');
     Object.assign(header.style, {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '14px 18px 10px',
-      borderBottom: '1px solid rgba(201,168,76,0.2)',
-      flexShrink: '0',
+      display        : 'flex',
+      alignItems     : 'center',
+      justifyContent : 'space-between',
+      padding        : '14px 18px 10px',
+      borderBottom   : '1px solid rgba(201,168,76,0.2)',
+      flexShrink     : '0',
     });
 
     const htitle = document.createElement('div');
     Object.assign(htitle.style, {
-      fontSize: '13px',
+      fontSize     : '13px',
       letterSpacing: '0.35em',
-      color: '#C9A84C',
+      color        : '#C9A84C',
       textTransform: 'uppercase',
     });
     htitle.textContent = '📖 Bestiario';
 
-    const hcount = document.createElement('div');
-    hcount.id = 'bs-count';
-    Object.assign(hcount.style, {
-      fontSize: '10px',
-      color: 'rgba(201,168,76,0.45)',
+    this._countEl = document.createElement('div');
+    Object.assign(this._countEl.style, {
+      fontSize     : '10px',
+      color        : 'rgba(201,168,76,0.45)',
       letterSpacing: '0.15em',
     });
 
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '✕';
     Object.assign(closeBtn.style, {
-      background: 'none',
-      border: '1px solid rgba(201,168,76,0.3)',
-      color: '#C9A84C',
+      background  : 'none',
+      border      : '1px solid rgba(201,168,76,0.3)',
+      color       : '#C9A84C',
       borderRadius: '6px',
-      width: '30px',
-      height: '30px',
-      fontSize: '13px',
-      cursor: 'pointer',
+      width       : '30px',
+      height      : '30px',
+      fontSize    : '13px',
+      cursor      : 'pointer',
       WebkitTapHighlightColor: 'transparent',
     });
-    closeBtn.onclick = () => this.close();
+    closeBtn.addEventListener('click',      () => this.close());
+    closeBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.close(); }, { passive: false });
 
-    header.append(htitle, hcount, closeBtn);
+    header.append(htitle, this._countEl, closeBtn);
 
-    // ── Body ────────────────────────────────────────────────────
-    const body = document.createElement('div');
-    body.id = 'bs-body';
-    Object.assign(body.style, {
-      display: 'flex',
-      flex: '1',
-      overflow: 'hidden',
+    // ── Grid scroll ────────────────────────────────────────────
+    this._grid = document.createElement('div');
+    Object.assign(this._grid.style, {
+      display            : 'grid',
+      gridTemplateColumns: 'repeat(5, 1fr)',
+      gap                : '10px',
+      padding            : '14px',
+      overflowY          : 'auto',
+      flex               : '1',
     });
 
-    // Lista izquierda
-    const listPanel = document.createElement('div');
-    listPanel.id = 'bs-list';
-    Object.assign(listPanel.style, {
-      width: '42%',
-      borderRight: '1px solid rgba(201,168,76,0.15)',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-    });
-
-    const listScroll = document.createElement('div');
-    listScroll.id = 'bs-list-scroll';
-    Object.assign(listScroll.style, {
-      flex: '1',
-      overflowY: 'auto',
-      overflowX: 'hidden',
-    });
-
-    // Paginación
-    const pagination = document.createElement('div');
-    pagination.id = 'bs-pagination';
-    Object.assign(pagination.style, {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '8px 12px',
-      borderTop: '1px solid rgba(201,168,76,0.15)',
-      flexShrink: '0',
-    });
-
-    const prevBtn = document.createElement('button');
-    prevBtn.textContent = '◀';
-    prevBtn.id = 'bs-prev';
-    this._stylePageBtn(prevBtn);
-    prevBtn.onclick = () => this._changePage(-1);
-
-    const pageLabel = document.createElement('div');
-    pageLabel.id = 'bs-page-label';
-    Object.assign(pageLabel.style, {
-      fontSize: '10px',
-      color: 'rgba(201,168,76,0.5)',
-      letterSpacing: '0.1em',
-    });
-
-    const nextBtn = document.createElement('button');
-    nextBtn.textContent = '▶';
-    nextBtn.id = 'bs-next';
-    this._stylePageBtn(nextBtn);
-    nextBtn.onclick = () => this._changePage(1);
-
-    pagination.append(prevBtn, pageLabel, nextBtn);
-    listPanel.append(listScroll, pagination);
-
-    // Panel derecho
-    const detailPanel = document.createElement('div');
-    detailPanel.id = 'bs-detail';
-    Object.assign(detailPanel.style, {
-      flex: '1',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px 16px',
-      gap: '12px',
-    });
-
-    const placeholder = document.createElement('div');
-    placeholder.id = 'bs-placeholder';
-    Object.assign(placeholder.style, {
-      color: 'rgba(201,168,76,0.2)',
-      fontSize: '11px',
-      letterSpacing: '0.2em',
-      textAlign: 'center',
-    });
-    placeholder.textContent = 'Selecciona un enemigo';
-    detailPanel.appendChild(placeholder);
-
-    body.append(listPanel, detailPanel);
-    el.append(header, body);
+    el.append(header, this._grid);
     return el;
   }
 
-  _stylePageBtn(btn) {
-    Object.assign(btn.style, {
-      background: 'none',
-      border: '1px solid rgba(201,168,76,0.25)',
-      color: '#C9A84C',
-      borderRadius: '6px',
-      width: '28px',
-      height: '28px',
-      fontSize: '11px',
-      cursor: 'pointer',
-      WebkitTapHighlightColor: 'transparent',
-    });
-  }
-
-  _renderList() {
-    const list = getBestiaryList();
-    const total = list.length;
+  _render() {
+    this._grid.innerHTML = '';
+    const list       = getBestiaryList();
     const discovered = list.filter(e => e.discovered).length;
+    this._countEl.textContent = `${discovered} / ${list.length} descubiertos`;
 
-    // Contador
-    this._el.querySelector('#bs-count').textContent =
-      `${discovered} / ${total} descubiertos`;
-
-    const PER_PAGE = 10;
-    const totalPages = Math.ceil(total / PER_PAGE);
-    if (this._page >= totalPages) this._page = 0;
-
-    const start = this._page * PER_PAGE;
-    const slice = list.slice(start, start + PER_PAGE);
-
-    // Página label
-    this._el.querySelector('#bs-page-label').textContent =
-      `${this._page + 1} / ${totalPages}`;
-
-    // Botones
-    this._el.querySelector('#bs-prev').style.opacity =
-      this._page === 0 ? '0.3' : '1';
-    this._el.querySelector('#bs-next').style.opacity =
-      this._page >= totalPages - 1 ? '0.3' : '1';
-
-    const scroll = this._el.querySelector('#bs-list-scroll');
-    scroll.innerHTML = '';
-
-    slice.forEach((enemy, i) => {
-      const row = document.createElement('div');
-      const isSelected = this._selected === enemy.id;
-      Object.assign(row.style, {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        padding: '10px 14px',
-        cursor: 'pointer',
-        borderBottom: '1px solid rgba(201,168,76,0.08)',
-        background: isSelected
-          ? 'rgba(201,168,76,0.1)'
-          : i % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent',
-        transition: 'background 0.2s',
+    for (const enemy of list) {
+      const card = document.createElement('div');
+      Object.assign(card.style, {
+        display      : 'flex',
+        flexDirection: 'column',
+        alignItems   : 'center',
+        gap          : '5px',
+        padding      : '10px 6px',
+        borderRadius : '10px',
+        background   : enemy.discovered
+          ? `linear-gradient(135deg, ${ZONE_COLORS[enemy.zone] || '#1a1a2a'}cc, rgba(10,8,20,0.95))`
+          : 'rgba(10,8,20,0.5)',
+        border       : `1px solid ${enemy.discovered ? 'rgba(201,168,76,0.25)' : 'rgba(255,255,255,0.05)'}`,
+        cursor       : enemy.discovered ? 'pointer' : 'default',
+        transition   : 'transform 0.15s',
         WebkitTapHighlightColor: 'transparent',
       });
 
-      // Icono / silueta
-      const iconBox = document.createElement('div');
-      Object.assign(iconBox.style, {
-        width: '32px',
-        height: '32px',
-        borderRadius: '6px',
-        display: 'flex',
-        alignItems: 'center',
+      // ── Foto de perfil ──────────────────────────────────────
+      const avatar = document.createElement('div');
+      Object.assign(avatar.style, {
+        width         : '48px',
+        height        : '48px',
+        borderRadius  : '50%',
+        background    : enemy.discovered
+          ? `radial-gradient(circle at 35% 35%, ${ZONE_COLORS[enemy.zone] || '#333'}cc, #0a0a14)`
+          : 'rgba(255,255,255,0.04)',
+        border        : `2px solid ${enemy.discovered ? 'rgba(201,168,76,0.45)' : 'rgba(255,255,255,0.07)'}`,
+        display       : 'flex',
+        alignItems    : 'center',
         justifyContent: 'center',
-        fontSize: '18px',
-        flexShrink: '0',
-        background: enemy.discovered
-          ? (ZONE_COLORS[enemy.zone] || '#1a1a2a')
-          : '#0a0a0a',
-        border: `1px solid ${enemy.discovered
-          ? 'rgba(201,168,76,0.2)'
-          : 'rgba(100,100,100,0.2)'}`,
-        filter: enemy.discovered ? 'none' : 'grayscale(1) brightness(0.2)',
+        fontSize      : '24px',
+        flexShrink    : '0',
+        boxShadow     : enemy.discovered ? '0 2px 10px rgba(0,0,0,0.6)' : 'none',
       });
-      iconBox.textContent = enemy.discovered ? enemy.icon : '?';
+      avatar.textContent = enemy.discovered ? enemy.icon : '?';
 
-      // Nombre
+      // ── Boceto al lado ──────────────────────────────────────
+      const sketchRow = document.createElement('div');
+      Object.assign(sketchRow.style, {
+        display    : 'flex',
+        alignItems : 'center',
+        gap        : '4px',
+      });
+
+      const sketch = document.createElement('div');
+      Object.assign(sketch.style, {
+        fontSize  : '18px',
+        opacity   : '0.2',
+        filter    : 'sepia(1) contrast(0.5)',
+        lineHeight: '1',
+      });
+      sketch.textContent = enemy.discovered ? enemy.icon : '···';
+
+      sketchRow.appendChild(sketch);
+
+      // ── Nombre ──────────────────────────────────────────────
       const nameEl = document.createElement('div');
       Object.assign(nameEl.style, {
-        fontSize: '11px',
-        color: enemy.discovered ? '#C9A84C' : 'rgba(100,100,100,0.5)',
-        letterSpacing: '0.05em',
-        flex: '1',
+        fontSize     : '9px',
+        color        : enemy.discovered ? '#E8C97A' : 'rgba(255,255,255,0.12)',
+        textAlign    : 'center',
+        letterSpacing: '0.03em',
+        lineHeight   : '1.3',
       });
       nameEl.textContent = enemy.discovered ? enemy.name : '???';
 
-      // Kill count
+      // ── Tipo badge ──────────────────────────────────────────
+      const typeBadge = document.createElement('div');
+      Object.assign(typeBadge.style, {
+        fontSize    : '7px',
+        padding     : '1px 6px',
+        borderRadius: '8px',
+        background  : enemy.discovered
+          ? (TYPE_COLORS[enemy.type] || '#222') + '88'
+          : 'transparent',
+        border      : `1px solid ${enemy.discovered ? 'rgba(255,255,255,0.1)' : 'transparent'}`,
+        color       : enemy.discovered ? 'rgba(255,255,255,0.5)' : 'transparent',
+      });
+      typeBadge.textContent = enemy.type;
+
+      // ── Kill count ──────────────────────────────────────────
       const killEl = document.createElement('div');
       Object.assign(killEl.style, {
-        fontSize: '9px',
-        color: 'rgba(201,168,76,0.35)',
+        fontSize: '8px',
+        color   : 'rgba(201,168,76,0.4)',
       });
       killEl.textContent = enemy.discovered ? `×${enemy.kills}` : '';
 
-      row.append(iconBox, nameEl, killEl);
+      card.append(avatar, sketchRow, nameEl, typeBadge, killEl);
 
-      row.onclick = () => {
-        if (!enemy.discovered) return;
-        this._selected = enemy.id;
-        this._renderList();
-        this._renderDetail(enemy);
-      };
+      if (enemy.discovered) {
+        card.addEventListener('mouseenter', () => card.style.transform = 'scale(1.05)');
+        card.addEventListener('mouseleave', () => card.style.transform = 'scale(1)');
+        card.addEventListener('click',      () => this._showDetail(enemy));
+        card.addEventListener('touchstart', (e) => { e.preventDefault(); this._showDetail(enemy); }, { passive: false });
+      }
 
-      scroll.appendChild(row);
-    });
+      this._grid.appendChild(card);
+    }
   }
 
-  _renderDetail(enemy) {
-    const panel = this._el.querySelector('#bs-detail');
-    panel.innerHTML = '';
+  _showDetail(enemy) {
+    let panel = document.getElementById('bs-detail-overlay');
+    if (panel) panel.remove();
 
-    // Figura — cuadro de color con inicial
-    const figure = document.createElement('div');
-    Object.assign(figure.style, {
-      width: '110px',
-      height: '110px',
-      borderRadius: '14px',
-      background: `linear-gradient(135deg, ${ZONE_COLORS[enemy.zone] || '#1a1a2a'}, ${TYPE_COLORS[enemy.type] || '#1a1a2a'})`,
-      border: '2px solid rgba(201,168,76,0.3)',
-      display: 'flex',
+    panel = document.createElement('div');
+    panel.id = 'bs-detail-overlay';
+    Object.assign(panel.style, {
+      position       : 'fixed',
+      inset          : '0',
+      background     : 'rgba(4,4,10,0.88)',
+      zIndex         : '700',
+      display        : 'flex',
+      alignItems     : 'center',
+      justifyContent : 'center',
+      padding        : '20px',
+    });
+
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+      background   : 'linear-gradient(135deg, rgba(20,14,35,0.99), rgba(10,8,20,0.99))',
+      border       : '1px solid rgba(201,168,76,0.3)',
+      borderRadius : '14px',
+      padding      : '18px',
+      maxWidth     : '340px',
+      width        : '100%',
+      display      : 'flex',
       flexDirection: 'column',
-      alignItems: 'center',
+      gap          : '10px',
+      maxHeight    : '85vh',
+      overflowY    : 'auto',
+    });
+
+    // ── Fila superior: avatar + boceto + info ───────────────
+    const topRow = document.createElement('div');
+    Object.assign(topRow.style, {
+      display    : 'flex',
+      gap        : '12px',
+      alignItems : 'center',
+    });
+
+    const bigAvatar = document.createElement('div');
+    Object.assign(bigAvatar.style, {
+      width         : '68px',
+      height        : '68px',
+      borderRadius  : '50%',
+      background    : `radial-gradient(circle at 35% 35%, ${ZONE_COLORS[enemy.zone] || '#333'}cc, #0a0a14)`,
+      border        : '2px solid rgba(201,168,76,0.5)',
+      display       : 'flex',
+      alignItems    : 'center',
       justifyContent: 'center',
-      gap: '4px',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
+      fontSize      : '34px',
+      flexShrink    : '0',
+      boxShadow     : '0 4px 16px rgba(0,0,0,0.7)',
+    });
+    bigAvatar.textContent = enemy.icon;
+
+    const bigSketch = document.createElement('div');
+    Object.assign(bigSketch.style, {
+      fontSize  : '44px',
+      opacity   : '0.18',
+      filter    : 'sepia(1) contrast(0.4)',
       flexShrink: '0',
+      lineHeight: '1',
+    });
+    bigSketch.textContent = enemy.icon;
+
+    const infoCol = document.createElement('div');
+    Object.assign(infoCol.style, {
+      display      : 'flex',
+      flexDirection: 'column',
+      gap          : '3px',
+      flex         : '1',
     });
 
-    const figIcon = document.createElement('div');
-    figIcon.style.fontSize = '36px';
-    figIcon.textContent = enemy.icon;
-
-    const figInitial = document.createElement('div');
-    Object.assign(figInitial.style, {
-      fontSize: '9px',
-      letterSpacing: '0.2em',
-      color: 'rgba(255,255,255,0.4)',
-      textTransform: 'uppercase',
+    const dName = document.createElement('div');
+    Object.assign(dName.style, {
+      fontFamily   : 'Georgia, serif',
+      fontSize     : '15px',
+      color        : '#E8C97A',
+      letterSpacing: '0.05em',
     });
-    figInitial.textContent = enemy.name[0];
+    dName.textContent = enemy.name;
 
-    figure.append(figIcon, figInitial);
-
-    // Nombre y tipo
-    const nameEl = document.createElement('div');
-    Object.assign(nameEl.style, {
-      fontSize: '15px',
-      color: '#E8C97A',
-      letterSpacing: '0.08em',
-      textAlign: 'center',
-      fontFamily: 'Georgia, serif',
-    });
-    nameEl.textContent = enemy.name;
-
-    const badges = document.createElement('div');
-    Object.assign(badges.style, {
-      display: 'flex',
-      gap: '6px',
-      flexWrap: 'wrap',
-      justifyContent: 'center',
+    [[enemy.zone, 'rgba(201,168,76,0.5)'], [enemy.type, 'rgba(160,130,200,0.7)'], [`×${enemy.kills} eliminados`, 'rgba(201,168,76,0.35)']].forEach(([text, color]) => {
+      const d = document.createElement('div');
+      Object.assign(d.style, { fontSize: '9px', color, fontFamily: 'monospace' });
+      d.textContent = text;
+      infoCol.appendChild(d);
     });
 
-    [enemy.zone, enemy.type].forEach(label => {
-      const b = document.createElement('div');
-      Object.assign(b.style, {
-        fontSize: '9px',
-        padding: '2px 8px',
-        borderRadius: '10px',
-        background: 'rgba(201,168,76,0.1)',
-        border: '1px solid rgba(201,168,76,0.2)',
-        color: 'rgba(201,168,76,0.6)',
-        letterSpacing: '0.1em',
-      });
-      b.textContent = label;
-      badges.appendChild(b);
-    });
+    infoCol.insertBefore(dName, infoCol.firstChild);
+    topRow.append(bigAvatar, bigSketch, infoCol);
 
-    // Stats
+    // ── Stats ───────────────────────────────────────────────
     const stats = document.createElement('div');
     Object.assign(stats.style, {
-      display: 'grid',
+      display            : 'grid',
       gridTemplateColumns: '1fr 1fr 1fr',
-      gap: '6px',
-      width: '100%',
+      gap                : '6px',
+      borderTop          : '1px solid rgba(201,168,76,0.1)',
+      paddingTop         : '10px',
     });
 
-    [
-      { label: 'HP',  value: enemy.hp  },
-      { label: 'ATK', value: enemy.atk },
-      { label: 'DEF', value: enemy.def },
-    ].forEach(({ label, value }) => {
-      const box = document.createElement('div');
-      Object.assign(box.style, {
-        background: 'rgba(201,168,76,0.05)',
-        border: '1px solid rgba(201,168,76,0.15)',
+    [{ label: 'HP', value: enemy.hp }, { label: 'ATK', value: enemy.atk }, { label: 'DEF', value: enemy.def }].forEach(({ label, value }) => {
+      const st = document.createElement('div');
+      Object.assign(st.style, {
+        background  : 'rgba(201,168,76,0.06)',
         borderRadius: '6px',
-        padding: '6px',
-        textAlign: 'center',
+        padding     : '6px',
+        textAlign   : 'center',
       });
-      const val = document.createElement('div');
-      Object.assign(val.style, {
-        fontSize: '13px',
-        color: '#C9A84C',
-      });
-      val.textContent = value;
-      const lbl = document.createElement('div');
-      Object.assign(lbl.style, {
-        fontSize: '8px',
-        color: 'rgba(201,168,76,0.4)',
-        letterSpacing: '0.15em',
-        marginTop: '2px',
-      });
-      lbl.textContent = label;
-      box.append(val, lbl);
-      stats.appendChild(box);
+      st.innerHTML = `<div style="font-size:13px;color:#C9A84C;">${value}</div><div style="font-size:7px;color:rgba(201,168,76,0.4);letter-spacing:1px;margin-top:2px;">${label}</div>`;
+      stats.appendChild(st);
     });
 
-    // Kills
-    const killsRow = document.createElement('div');
-    Object.assign(killsRow.style, {
-      fontSize: '10px',
-      color: 'rgba(201,168,76,0.5)',
-      letterSpacing: '0.1em',
-    });
-    killsRow.textContent = `Eliminados: ${enemy.kills}`;
-
-    // Debilidades
-    const weakRow = document.createElement('div');
-    Object.assign(weakRow.style, {
-      display: 'flex',
-      gap: '5px',
-      flexWrap: 'wrap',
-      justifyContent: 'center',
-    });
-
-    const weakLabel = document.createElement('div');
-    Object.assign(weakLabel.style, {
-      fontSize: '9px',
-      color: 'rgba(201,168,76,0.4)',
-      letterSpacing: '0.15em',
-      width: '100%',
-      textAlign: 'center',
-    });
-    weakLabel.textContent = 'DEBILIDADES';
-    weakRow.appendChild(weakLabel);
-
+    // ── Debilidades ─────────────────────────────────────────
+    const weakWrap = document.createElement('div');
+    Object.assign(weakWrap.style, { display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' });
+    const weakTitle = document.createElement('div');
+    Object.assign(weakTitle.style, { fontSize: '8px', color: 'rgba(201,168,76,0.4)', letterSpacing: '0.15em' });
+    weakTitle.textContent = 'DÉBIL A:';
+    weakWrap.appendChild(weakTitle);
     enemy.weakness.forEach(w => {
       const tag = document.createElement('div');
       Object.assign(tag.style, {
-        fontSize: '9px',
-        padding: '2px 8px',
-        borderRadius: '10px',
-        background: 'rgba(200,80,80,0.15)',
-        border: '1px solid rgba(200,80,80,0.3)',
-        color: 'rgba(220,120,120,0.8)',
-        letterSpacing: '0.1em',
-        textTransform: 'capitalize',
+        fontSize: '8px', padding: '2px 7px', borderRadius: '8px',
+        background: 'rgba(200,80,80,0.15)', border: '1px solid rgba(200,80,80,0.3)',
+        color: 'rgba(220,120,120,0.8)', textTransform: 'capitalize',
       });
       tag.textContent = w;
-      weakRow.appendChild(tag);
+      weakWrap.appendChild(tag);
     });
 
-    // Drops
-    const dropsRow = document.createElement('div');
-    Object.assign(dropsRow.style, {
-      width: '100%',
-    });
+    // ── Drops ───────────────────────────────────────────────
+    const dropsWrap = document.createElement('div');
+    const dropsTitle = document.createElement('div');
+    Object.assign(dropsTitle.style, { fontSize: '8px', color: 'rgba(201,168,76,0.4)', letterSpacing: '0.15em', marginBottom: '5px' });
+    dropsTitle.textContent = 'DROPS';
+    dropsWrap.appendChild(dropsTitle);
 
-    const dropsLabel = document.createElement('div');
-    Object.assign(dropsLabel.style, {
-      fontSize: '9px',
-      color: 'rgba(201,168,76,0.4)',
-      letterSpacing: '0.15em',
-      textAlign: 'center',
-      marginBottom: '5px',
-    });
-    dropsLabel.textContent = 'DROPS';
-    dropsRow.appendChild(dropsLabel);
-
-    const dropsList = document.createElement('div');
-    Object.assign(dropsList.style, {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '3px',
-    });
-
-    enemy.drops.forEach(drop => {
-      const item = ITEMS[drop.item];
-      if (!item) return;
-      const row = document.createElement('div');
-      Object.assign(row.style, {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        fontSize: '9.5px',
-        color: 'rgba(201,168,76,0.55)',
-        padding: '2px 0',
-        borderBottom: '1px solid rgba(201,168,76,0.06)',
+    if (enemy.drops?.length) {
+      enemy.drops.forEach(drop => {
+        const item = ITEMS[drop.item];
+        if (!item) return;
+        const row = document.createElement('div');
+        Object.assign(row.style, {
+          display: 'flex', justifyContent: 'space-between',
+          fontSize: '9.5px', color: 'rgba(201,168,76,0.55)',
+          padding: '3px 0', borderBottom: '1px solid rgba(201,168,76,0.06)',
+        });
+        row.innerHTML = `<span>${item.icon} ${item.name}</span><span style="color:rgba(201,168,76,0.3)">${Math.round(drop.chance * 100)}%</span>`;
+        dropsWrap.appendChild(row);
       });
+    } else {
+      const none = document.createElement('div');
+      Object.assign(none.style, { fontSize: '9px', color: 'rgba(201,168,76,0.25)' });
+      none.textContent = 'Sin drops registrados';
+      dropsWrap.appendChild(none);
+    }
 
-      const left = document.createElement('span');
-      left.textContent = `${item.icon} ${item.name}`;
-
-      const right = document.createElement('span');
-      right.style.color = 'rgba(201,168,76,0.3)';
-      right.textContent = `${Math.round(drop.chance * 100)}%`;
-
-      row.append(left, right);
-      dropsList.appendChild(row);
-    });
-
-    dropsRow.appendChild(dropsList);
-
-    // Desc
+    // ── Descripción ─────────────────────────────────────────
     const desc = document.createElement('div');
     Object.assign(desc.style, {
-      fontSize: '9.5px',
-      color: 'rgba(201,168,76,0.35)',
+      fontSize  : '9.5px',
+      color     : 'rgba(201,168,76,0.38)',
       lineHeight: '1.6',
-      textAlign: 'center',
-      borderTop: '1px solid rgba(201,168,76,0.1)',
+      borderTop : '1px solid rgba(201,168,76,0.1)',
       paddingTop: '8px',
     });
     desc.textContent = enemy.desc;
 
-    panel.append(figure, nameEl, badges, stats, killsRow, weakRow, dropsRow, desc);
-  }
+    // ── Cerrar ──────────────────────────────────────────────
+    const closeRow = document.createElement('div');
+    Object.assign(closeRow.style, { textAlign: 'right' });
+    const closeD = document.createElement('button');
+    closeD.textContent = '✕ Cerrar';
+    Object.assign(closeD.style, {
+      background  : 'transparent',
+      border      : '1px solid rgba(201,168,76,0.3)',
+      borderRadius: '6px',
+      color       : '#C9A84C',
+      fontFamily  : 'monospace',
+      fontSize    : '10px',
+      padding     : '6px 14px',
+      cursor      : 'pointer',
+      pointerEvents: 'all',
+    });
+    closeD.addEventListener('click',      () => panel.remove());
+    closeD.addEventListener('touchstart', (e) => { e.preventDefault(); panel.remove(); }, { passive: false });
+    closeRow.appendChild(closeD);
 
-  _changePage(dir) {
-    const list = getBestiaryList();
-    const totalPages = Math.ceil(list.length / 10);
-    this._page = Math.max(0, Math.min(totalPages - 1, this._page + dir));
-    this._renderList();
+    box.append(topRow, stats, weakWrap, dropsWrap, desc, closeRow);
+    panel.appendChild(box);
+    panel.addEventListener('click', (e) => { if (e.target === panel) panel.remove(); });
+    document.body.appendChild(panel);
   }
 
   open() {
     this._open = true;
-    this._page = 0;
-    this._selected = null;
     this._el.style.display = 'flex';
-    this._renderList();
-    const panel = this._el.querySelector('#bs-detail');
-    panel.innerHTML = '';
-    const ph = document.createElement('div');
-    Object.assign(ph.style, {
-      color: 'rgba(201,168,76,0.2)',
-      fontSize: '11px',
-      letterSpacing: '0.2em',
-      textAlign: 'center',
-    });
-    ph.textContent = 'Selecciona un enemigo';
-    panel.appendChild(ph);
+    this._render();
   }
 
   close() {
     this._open = false;
     this._el.style.display = 'none';
+    const detail = document.getElementById('bs-detail-overlay');
+    if (detail) detail.remove();
   }
 
   isOpen() { return this._open; }
