@@ -16,6 +16,17 @@ export const BESTIARY_DATA = {
     weakness: ['fuego', 'luz'],
     desc: 'Lobo salvaje del bosque de Aeltherion. Ataca en manada.',
   },
+  Enemy: {
+  name: 'Soldado Rojo',
+  zone: 'Mundo',
+  type: 'Humano',
+  icon: '👺',
+  hp: 80,
+  atk: 8,
+  def: 4,
+  weakness: ['fuego'],
+  desc: 'Soldado básico que patrulla los alrededores de Aeltherion.',
+},
   Bear: {
     name: 'Oso',
     zone: 'Bosque',
