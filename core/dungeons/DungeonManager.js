@@ -12,38 +12,14 @@ import { PlatformLevel }    from './levels/PlatformLevel.js';
 import { PuzzleLevel }      from './levels/PuzzleLevel.js';
 
 const DUNGEON_DEFS = [
-  {
-    id       : 'ruins',
-    name     : 'Ruinas de Piedra',
-    position : { x: 0,   z: -120 },
-    color    : 0x8B7355,
-    glowColor: 0xC9A84C,
-    boss     : 'malachar',
-    reward   : { etherFragments: 30, material: 'hierro',  amount: 20 },
-  },
-  {
-    id       : 'crystal',
-    name     : 'Caverna de Cristal',
-    position : { x: -30, z: -160 },
-    color    : 0x445566,
-    glowColor: 0x44aaff,
-    boss     : 'veyris',
-    reward   : { etherFragments: 50, material: 'mineral', amount: 15 },
-  },
-  {
-    id       : 'fortress',
-    name     : 'Fortaleza Oscura',
-    position : { x: 30,  z: -200 },
-    color    : 0x1a0a2a,
-    glowColor: 0x9933ff,
-    boss     : 'khazeron',
-    reward   : { etherFragments: 80, material: 'mineral', amount: 30 },
-  },
+  { id:'ruins',    name:'Ruinas de Piedra',   position:{ x:0,   z:-120 }, color:0x8B7355, glowColor:0xC9A84C, boss:'malachar', reward:{ etherFragments:30, material:'hierro',  amount:20 } },
+  { id:'crystal',  name:'Caverna de Cristal', position:{ x:-30, z:-160 }, color:0x445566, glowColor:0x44aaff, boss:'veyris',   reward:{ etherFragments:50, material:'mineral', amount:15 } },
+  { id:'fortress', name:'Fortaleza Oscura',   position:{ x:30,  z:-200 }, color:0x1a0a2a, glowColor:0x9933ff, boss:'khazeron', reward:{ etherFragments:80, material:'mineral', amount:30 } },
 ];
 
-const ENTER_RANGE  = 5;
-const DOOR_RANGE   = 3.5;
-const CHECK_RATE   = 0.3;
+const ENTER_RANGE = 5;
+const DOOR_RANGE  = 3.5;
+const CHECK_RATE  = 0.3;
 
 export class DungeonManager {
   constructor(scene, player) {
@@ -54,6 +30,7 @@ export class DungeonManager {
     this._active         = null;
     this._roomPlan       = [];
     this._currentRoom    = null;
+    this._currentRoomIdx = 0;
     this._activeEnemies  = [];
     this._activePlatform = null;
     this._activePuzzle   = null;
@@ -203,9 +180,9 @@ export class DungeonManager {
       cursor: 'pointer', pointerEvents: 'all',
       zIndex: '150', whiteSpace: 'nowrap',
     });
-    this._stairBtn.textContent = '▼ Bajar al siguiente piso';
-    this._stairBtn.addEventListener('click', () => this._descend());
-    this._stairBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this._descend(); }, { passive: false });
+    this._stairBtn.textContent = '▼ Siguiente sala';
+    this._stairBtn.addEventListener('click', () => this._advanceRoom());
+    this._stairBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this._advanceRoom(); }, { passive: false });
     document.body.appendChild(this._stairBtn);
 
     this._doorBtn = document.createElement('button');
@@ -247,7 +224,7 @@ export class DungeonManager {
       if (!this._active) {
         this._checkProximity();
       } else {
-        this._checkStairProximity();
+        this._checkAdvanceProximity();
         this._checkDoorProximity();
       }
     }
@@ -275,54 +252,49 @@ export class DungeonManager {
              ?? this.player.root.position;
     let nearest = null, minDist = Infinity;
     for (const d of this._portals) {
-      const dx = pos.x - d.def.position.x;
-      const dz = pos.z - d.def.position.z;
+      const dx   = pos.x - d.def.position.x;
+      const dz   = pos.z - d.def.position.z;
       const dist = Math.sqrt(dx*dx + dz*dz);
       if (dist < ENTER_RANGE && dist < minDist) { minDist = dist; nearest = d; }
     }
     if (nearest && nearest !== this._nearDungeon) {
       this._nearDungeon = nearest;
       this._enterBtn.style.display = 'flex';
-      this._enterBtn.textContent = `⚔ Entrar — ${nearest.def.name}`;
+      this._enterBtn.textContent   = `⚔ Entrar — ${nearest.def.name}`;
     } else if (!nearest && this._nearDungeon) {
       this._nearDungeon = null;
       this._enterBtn.style.display = 'none';
     }
   }
 
-  _checkStairProximity() {
-    if (!this._stairPos || !this._stairReady) return;
+  _checkAdvanceProximity() {
+    if (!this._stairReady) { this._stairBtn.style.display = 'none'; return; }
     const pos = window._partyManager?.getActiveCharacter()?.root?.position
              ?? this.player.root.position;
-    const dx = pos.x - this._stairPos.x;
-    const dz = pos.z - this._stairPos.z;
-    this._stairBtn.style.display =
-      Math.sqrt(dx*dx + dz*dz) < 2.5 ? 'flex' : 'none';
+    if (!this._stairPos) return;
+    const dx   = pos.x - this._stairPos.x;
+    const dz   = pos.z - this._stairPos.z;
+    this._stairBtn.style.display = Math.sqrt(dx*dx + dz*dz) < 3.5 ? 'flex' : 'none';
   }
 
   _checkDoorProximity() {
-    if (!this._currentRoom || !this._currentRoom.cleared) {
-      this._doorBtn.style.display = 'none';
-      return;
-    }
-    const pos = window._partyManager?.getActiveCharacter()?.root?.position
-             ?? this.player.root.position;
+    if (!this._currentRoom?.cleared) { this._doorBtn.style.display = 'none'; return; }
+    const pos         = window._partyManager?.getActiveCharacter()?.root?.position
+                     ?? this.player.root.position;
     const connections = this._currentRoom.data.connections;
     let nearest = null, minDist = Infinity;
     for (const conn of connections) {
-      const dx = pos.x - conn.center.x;
-      const dz = pos.z - conn.center.z;
+      const dx   = pos.x - conn.center.x;
+      const dz   = pos.z - conn.center.z;
       const dist = Math.sqrt(dx*dx + dz*dz);
-      if (dist < DOOR_RANGE * 3 && dist < minDist) {
-        minDist = dist; nearest = conn;
-      }
+      if (dist < DOOR_RANGE * 3 && dist < minDist) { minDist = dist; nearest = conn; }
     }
     if (nearest) {
-      this._doorBtn.style.display = 'flex';
-      this._pendingNextRoom = nearest;
+      this._doorBtn.style.display  = 'flex';
+      this._pendingNextRoom        = nearest;
     } else {
-      this._doorBtn.style.display = 'none';
-      this._pendingNextRoom = null;
+      this._doorBtn.style.display  = 'none';
+      this._pendingNextRoom        = null;
     }
   }
 
@@ -330,14 +302,14 @@ export class DungeonManager {
 
   _enterDungeon() {
     if (!this._nearDungeon || this._active) return;
-    this._active       = this._nearDungeon;
-    this._currentLevel = 1;
+    this._active         = this._nearDungeon;
+    this._currentLevel   = 1;
+    this._currentRoomIdx = 0;
 
     window._activeScene = window._dungeonScene;
     window._dungeonScene.fog = new THREE.FogExp2(0x0a0a12, 0.025);
     if (window._worldGroup) window._worldGroup.visible = false;
 
-    // Mover jugador y companion a dungeonScene
     window._worldScene.remove(window._player.root);
     window._dungeonScene.add(window._player.root);
     if (window._companion?.root) {
@@ -358,6 +330,7 @@ export class DungeonManager {
 
   _generateFloor(level) {
     this._destroyCurrentRoom();
+    this._currentRoomIdx = 0;
 
     const gen    = new DungeonGenerator(this.scene, this._active.def, level);
     const result = gen.generate(
@@ -365,13 +338,13 @@ export class DungeonManager {
       this._active.def.position.z - 20
     );
 
-    this._roomPlan     = result.rooms;
-    this._stairPos     = null;
-    this._stairReady   = false;
+    this._roomPlan   = result.rooms;
+    this._stairPos   = null;
+    this._stairReady = false;
     this._stairBtn.style.display = 'none';
     this._doorBtn.style.display  = 'none';
 
-    this._loadRoom(result.start, level);
+    this._loadRoom(this._roomPlan[0], level);
   }
 
   // ── Cargar sala ───────────────────────────────────────────────────────────
@@ -383,23 +356,8 @@ export class DungeonManager {
     const room = new DungeonRoom(dungeonScene, roomData, this._active.def, level ?? this._currentLevel);
 
     room.setupCombat((position, lvl, mode) => {
-      return this._spawnDungeonEnemy(position, lvl ?? this._currentLevel, mode);
+      return this._spawnDungeonEnemy(position, roomData.difficulty ?? lvl ?? this._currentLevel, mode);
     });
-
-    if (roomData.type === 'platform') {
-      room.setupPlatforms();
-      this._activePlatform = new PlatformLevel(dungeonScene, {
-        x: roomData.center.x, z: roomData.center.z,
-      });
-      this._activePlatform.activate();
-      this._activePlatform.onComplete = () => {
-        this.giveLevelReward(this._currentLevel);
-        this._stairPos   = { x: roomData.center.x, z: roomData.center.z + 8 };
-        this._stairReady = true;
-        this._showFloating('¡Nivel superado! Baja las escaleras', '#44ff88');
-      };
-      this._activePlatform.onFail = () => this._showFloating('Intenta de nuevo', '#ff8888');
-    }
 
     if (roomData.type === 'puzzle') {
       room.setupPuzzle();
@@ -408,10 +366,10 @@ export class DungeonManager {
       });
       this._activePuzzle.activate();
       this._activePuzzle.onComplete = () => {
-        this.giveLevelReward(this._currentLevel);
-        this._stairPos   = { x: roomData.center.x, z: roomData.center.z + 8 };
+        this._giveRoomReward(roomData);
+        this._stairPos   = { x: roomData.center.x, z: roomData.center.z };
         this._stairReady = true;
-        this._showFloating('¡Acertijo resuelto! Baja las escaleras', '#aa88ff');
+        this._showFloating('¡Acertijo resuelto!', '#aa88ff');
       };
       this._activePuzzle.onFail = () => this._showFloating('¡Demasiados errores!', '#ff4444');
       this._activePuzzle.onSpawnEnemy = (position, tier) => {
@@ -419,19 +377,42 @@ export class DungeonManager {
       };
     }
 
+    if (roomData.type === 'platform') {
+      room.setupPlatforms();
+      this._activePlatform = new PlatformLevel(dungeonScene, {
+        x: roomData.center.x, z: roomData.center.z,
+      });
+      this._activePlatform.activate();
+      this._activePlatform.onComplete = () => {
+        this._giveRoomReward(roomData);
+        this._stairPos   = { x: roomData.center.x, z: roomData.center.z };
+        this._stairReady = true;
+        this._showFloating('¡Nivel superado!', '#44ff88');
+      };
+      this._activePlatform.onFail = () => this._showFloating('Intenta de nuevo', '#ff8888');
+    }
+
     room.onClear((clearedRoom) => {
       if (clearedRoom.type === 'combat') {
-        this.giveLevelReward(this._currentLevel);
-        if (this._currentLevel < 8) {
-          this._stairPos   = { x: clearedRoom.center.x, z: clearedRoom.center.z + 6 };
-          this._stairReady = true;
-          this._showFloating(`Piso ${this._currentLevel} limpio — sigue adelante`, '#C9A84C');
-        }
+        this._giveRoomReward(roomData);
+        this._stairPos   = { x: clearedRoom.center.x, z: clearedRoom.center.z };
+        this._stairReady = true;
+        this._showFloating('¡Sala limpia!', '#C9A84C');
       }
       if (clearedRoom.type === 'boss') {
         this.giveBossReward(this._active.def.id);
       }
+      if (clearedRoom.type === 'start') {
+        this._stairPos   = { x: clearedRoom.center.x, z: clearedRoom.center.z };
+        this._stairReady = true;
+      }
     });
+
+    // Sala START — avanzar automáticamente disponible
+    if (roomData.type === 'start') {
+      this._stairPos   = { x: roomData.center.x, z: roomData.center.z };
+      this._stairReady = true;
+    }
 
     this._currentRoom = room;
 
@@ -439,10 +420,20 @@ export class DungeonManager {
     const cz = roomData.center.z + 4;
     if (this.player.root) this.player.root.position.set(cx, 0, cz);
     if (window._companion?.root) window._companion.root.position.set(cx + 1, 0, cz);
-    if (window._thirdCam) window._thirdCam._snapToPlayer();
+    setTimeout(() => { if (window._thirdCam) window._thirdCam._snapToPlayer(); }, 50);
   }
 
-  // ── Avanzar sala ──────────────────────────────────────────────────────────
+  // ── Avanzar a siguiente sala (flujo lineal) ───────────────────────────────
+
+  _advanceRoom() {
+    const nextIdx = this._currentRoomIdx + 1;
+    if (nextIdx >= this._roomPlan.length) return;
+    this._currentRoomIdx = nextIdx;
+    this._stairReady     = false;
+    this._stairBtn.style.display = 'none';
+    this._loadRoom(this._roomPlan[nextIdx], this._currentLevel);
+    this._updateLevelHUD();
+  }
 
   _enterNextRoom() {
     if (!this._pendingNextRoom) return;
@@ -451,7 +442,7 @@ export class DungeonManager {
     this._pendingNextRoom = null;
   }
 
-  // ── Destruir sala ─────────────────────────────────────────────────────────
+  // ── Destruir sala actual ──────────────────────────────────────────────────
 
   _destroyCurrentRoom() {
     if (this._currentRoom) {
@@ -462,20 +453,9 @@ export class DungeonManager {
     if (this._activePuzzle)   { this._activePuzzle.destroy();   this._activePuzzle   = null; }
 
     for (const e of this._activeEnemies) {
-      if (e.mesh) (window._dungeonScene ?? this.scene).remove(e.mesh);
+      if (e?.mesh) (window._dungeonScene ?? this.scene).remove(e.mesh);
     }
     this._activeEnemies = [];
-  }
-
-  // ── Descender piso ────────────────────────────────────────────────────────
-
-  _descend() {
-    if (!this._stairReady) return;
-    this._stairBtn.style.display = 'none';
-    this._currentLevel = Math.min(this._currentLevel + 1, 8);
-    this._updateLevelHUD();
-    this._generateFloor(this._currentLevel);
-    this._showFloating(`Piso ${this._currentLevel}`, '#C9A84C');
   }
 
   // ── Salir ─────────────────────────────────────────────────────────────────
@@ -488,7 +468,6 @@ export class DungeonManager {
     if (window._worldGroup) window._worldGroup.visible = true;
     window._worldScene.fog = new THREE.FogExp2(0x3A5A40, 0.014);
 
-    // Devolver jugador y companion a worldScene
     window._dungeonScene.remove(window._player.root);
     window._worldScene.add(window._player.root);
     if (window._companion?.root) {
@@ -497,7 +476,7 @@ export class DungeonManager {
     }
 
     const activeChar = window._partyManager?.getActiveCharacter() ?? this.player;
-    if (activeChar.root) {
+    if (activeChar?.root) {
       activeChar.root.position.set(
         this._active.def.position.x, 0,
         this._active.def.position.z + 8
@@ -509,34 +488,40 @@ export class DungeonManager {
     this._levelEl.style.display  = 'none';
     this._stairBtn.style.display = 'none';
     this._doorBtn.style.display  = 'none';
-    this._active   = null;
-    this._roomPlan = [];
+    this._active         = null;
+    this._roomPlan       = [];
+    this._currentRoomIdx = 0;
 
     if (this.onExit) this.onExit();
   }
 
   // ── Spawn enemigos ────────────────────────────────────────────────────────
 
-  _spawnDungeonEnemy(position, level, mode) {
+  _spawnDungeonEnemy(position, difficulty, mode) {
     const dungeonScene = window._dungeonScene ?? this.scene;
     let enemy;
 
+    const tier = Math.floor(difficulty / 3); // 0-1 fácil, 2-3 medio, 4+ difícil
+
     if (mode === 'puzzle') {
-      const tier = Math.min(level, 3);
       if (tier <= 1)       enemy = new DungeonGuard(dungeonScene, position, this.player);
       else if (tier === 2) enemy = new RuneWarden(dungeonScene, position, this.player);
       else                 enemy = new AncientSentinel(dungeonScene, position, this.player);
     } else {
       const roll = Math.random();
-      if (level <= 3) {
+      if (tier <= 1) {
         enemy = new DungeonGuard(dungeonScene, position, this.player);
-      } else if (level <= 5) {
+      } else if (tier === 2) {
         enemy = roll < 0.5
           ? new DungeonGuard(dungeonScene, position, this.player)
           : new RuneWarden(dungeonScene, position, this.player);
+      } else if (tier === 3) {
+        enemy = roll < 0.4
+          ? new RuneWarden(dungeonScene, position, this.player)
+          : new AncientSentinel(dungeonScene, position, this.player);
       } else {
-        if (roll < 0.3)       enemy = new DungeonGuard(dungeonScene, position, this.player);
-        else if (roll < 0.65) enemy = new RuneWarden(dungeonScene, position, this.player);
+        if (roll < 0.2)       enemy = new DungeonGuard(dungeonScene, position, this.player);
+        else if (roll < 0.55) enemy = new RuneWarden(dungeonScene, position, this.player);
         else                  enemy = new AncientSentinel(dungeonScene, position, this.player);
       }
     }
@@ -545,13 +530,23 @@ export class DungeonManager {
       this._activeEnemies.push(enemy);
       window._combat?.registerEnemy?.(enemy);
       enemy.onDeath = () => {
-        window._prog?.addXP?.(window._combat?._weaponType ?? 'katana', 30 + level * 5);
+        window._prog?.addXP?.(window._combat?._weaponType ?? 'katana', 20 + difficulty * 8);
       };
     }
     return enemy ?? null;
   }
 
   // ── Recompensas ───────────────────────────────────────────────────────────
+
+  _giveRoomReward(roomData) {
+    const diff     = roomData.difficulty ?? 1;
+    const xp       = 15 + diff * 12;
+    const energy   = 3  + diff * 2;
+    const material = diff >= 8 ? 'mineral' : diff >= 5 ? 'hierro' : 'piedra';
+    const amount   = 2  + diff * 2;
+    this.giveReward({ xp, magicEnergy: energy, material, amount });
+    this._showFloating(`+${amount} ${material}  +${xp} XP`, '#C9A84C');
+  }
 
   giveReward(reward) {
     if (reward.etherFragments) {
@@ -564,15 +559,6 @@ export class DungeonManager {
     if (reward.xp)          window._prog?.addXP?.(window._combat?._weaponType ?? 'katana', reward.xp);
     if (reward.magicEnergy) window._prog?.addMagicEnergy?.(reward.magicEnergy);
     if (this.onReward) this.onReward(reward);
-  }
-
-  giveLevelReward(level) {
-    const xp       = 20 + level * 10;
-    const energy   = 5  + level * 3;
-    const material = level >= 6 ? 'mineral' : level >= 4 ? 'hierro' : 'piedra';
-    const amount   = 3  + level * 2;
-    this.giveReward({ xp, magicEnergy: energy, material, amount });
-    this._showFloating(`+${amount} ${material}  +${xp} XP`, '#C9A84C');
   }
 
   giveBossReward(dungeonId) {
@@ -599,8 +585,9 @@ export class DungeonManager {
   // ── HUD / VFX ─────────────────────────────────────────────────────────────
 
   _updateLevelHUD() {
+    const total = this._roomPlan.length || 10;
     this._levelEl.style.display = 'block';
-    this._levelEl.textContent   = `PISO ${this._currentLevel} / 8`;
+    this._levelEl.textContent   = `SALA ${this._currentRoomIdx + 1} / ${total}`;
   }
 
   _flashEther() {
