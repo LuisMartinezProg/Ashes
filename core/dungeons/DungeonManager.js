@@ -362,8 +362,8 @@ export class DungeonManager {
     if (roomData.type === 'puzzle') {
       room.setupPuzzle();
       this._activePuzzle = new PuzzleLevel(dungeonScene, {
-        x: roomData.center.x, z: roomData.center.z,
-      });
+  x: roomData.center.x, z: roomData.center.z,
+}, roomData.difficulty ?? 1);
       this._activePuzzle.activate();
       this._activePuzzle.onComplete = () => {
         this._giveRoomReward(roomData);
