@@ -149,11 +149,11 @@ async function boot() {
     const dungeonScene = new THREE.Scene();
     dungeonScene.background = new THREE.Color(0x0a0a12);
     dungeonScene.fog = new THREE.FogExp2(0x0a0a12, 0.025);
-    dungeonScene.add(new THREE.AmbientLight(0x8899bb, 3.0));
-const dungeonSun = new THREE.DirectionalLight(0xffffff, 2.5);
-dungeonSun.position.set(10, 20, 10);
-dungeonScene.add(dungeonSun);
-dungeonScene.add(new THREE.HemisphereLight(0x6688cc, 0x332244, 1.5));
+    dungeonScene.add(new THREE.AmbientLight(0xffffff, 5.0));
+    const dungeonSun = new THREE.DirectionalLight(0xffffff, 2.5);
+    dungeonSun.position.set(10, 20, 10);
+    dungeonScene.add(dungeonSun);
+   dungeonScene.add(new THREE.HemisphereLight(0x6688cc, 0x332244, 1.5));
     window._dungeonScene = dungeonScene;
     window._worldScene   = scene;
     window._activeScene  = scene;
