@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Test Drops</title>
+  <style>
+    body { background:#111; color:#0f0; font-family:monospace; padding:16px; }
+    button { background:#222; color:#C9A84C; border:1px solid #C9A84C; padding:8px 16px; margin:4px; border-radius:8px; font-size:14px; }
+    #out { margin-top:16px; font-size:12px; line-height:1.8; }
+  </style>
+</head>
+<body>
+<h3 style="color:#C9A84C">Test Drops — Ashes</h3>
+<div id="btns"></div>
+<div id="out"></div>
+
+<script type="module">
+import { rollDrops, ITEMS, ENEMY_DROPS } from './data/items.js';
+
+const out = document.getElementById('out');
+const btns = document.getElementById('btns');
+
+const enemies = Object.keys(ENEMY_DROPS);
+
+for (const name of enemies) {
+  const btn = document.createElement('button');
+  btn.textContent = name;
+  btn.onclick = () => {
+    const rolled = rollDrops(name);
+    const lines = rolled.map(d => {
+      const item = ITEMS[d.id];
+      return `${item?.icon ?? '?'} ${d.id} x${d.qty} — ${item ? '✅' : '❌ NO EXISTE'}`;
+    });
+    out.innerHTML = `<b style="color:#C9A84C">${name}</b><br>` +
+      (lines.length ? lines.join('<br>') : '<span style="color:#f44">Sin drops este roll</span>');
+  };
+  btns.appendChild(btn);
+}
+</script>
+</body>
+</html>
