@@ -744,6 +744,15 @@ export class HUD {
     setTimeout(() => this._collectBtn.style.transform = 'scale(1)', 140);
     res.hp -= power;
     window._building?.addMaterial?.(res.type, power);
+    const icons = { madera:'🪵', piedra:'🪨', hierro:'⚙️', mineral:'💎' };
+    window._inventory?.addItem?.({
+    id     : res.type,
+    name   : res.type.charAt(0).toUpperCase() + res.type.slice(1),
+    icon   : icons[res.type] ?? '📦',
+    section: 'materiales',
+    rarity : 'comun',
+    qty    : power,
+    });
     this._showFloating(`+${power} ${res.type}`, res.type === 'madera' ? '#8B6340' : '#888078');
     if (res.hp <= 0) {
       res.depleted = true; res.mesh.visible = false;
