@@ -66,6 +66,17 @@ export class BuildingSystem {
     }
     const amount = tool.multiplicador;
     this.addMaterial(resourceType, amount);
+    // Sincronizar al InventoryUI
+if (window._inventory) {
+  window._inventory.addItem({
+    id     : resourceType,
+    name   : resourceType.charAt(0).toUpperCase() + resourceType.slice(1),
+    icon   : { madera:'🪵', piedra:'🪨', hierro:'⚙️', mineral:'💎' }[resourceType] ?? '📦',
+    section: 'materiales',
+    rarity : 'comun',
+    qty    : amount,
+  });
+}
     console.log(`[Building] +${amount} ${resourceType} (total: ${this._inventory[resourceType]})`);
     return amount;
   }
