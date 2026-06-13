@@ -10,7 +10,7 @@ export const STATE = {
 
 export class BaseEnemy {
   constructor(scene, position, player, config) {
-    this.scene = window._dungeonScene ?? scene;
+    this.scene = scene;
     this.player   = player;
     this.hp       = config.hp;
     this.maxHp    = config.hp;
