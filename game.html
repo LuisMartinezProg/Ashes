@@ -103,7 +103,7 @@ import { KeybindMenu }      from './ui/keybindMenu.js';
 import { DungeonManager }   from './core/dungeons/DungeonManager.js';
 import { registerLODObjects, updateWorldLOD } from './core/worldLOD.js';
 import { InventoryUI }      from './ui/inventory.js';
-import { ITEMS, rollDrops } from './data/items.js';
+import { ITEMS, rollDrops, rollCurrency } from './data/items.js';
 import { CharacterMenu }    from './ui/characterMenu.js';
 import { PartyMenu }        from './ui/partyMenu.js';
 import { onKill }        from './core/bestiary.js';
@@ -487,7 +487,7 @@ allEnemies.forEach(e => {
     const bestiaryScreen = new BestiaryScreen();
 window._bestiaryScreen = bestiaryScreen;
     window._inventory = inventoryUI;
-    window._itemDrops = { ITEMS, rollDrops };
+    window._itemDrops = { ITEMS, rollDrops, rollCurrency };
     inventoryUI.syncMaterials(building);
     const subtypeMenu = new SubtypeMenu(progression, skillBar);
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
