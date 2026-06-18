@@ -109,7 +109,8 @@ import { PartyMenu }        from './ui/partyMenu.js';
 import { onKill }        from './core/bestiary.js';
 import { BestiaryPopup } from './ui/bestiaryPopup.js';
 import { BestiaryScreen } from './ui/bestiaryScreen.js';
-  
+import { CurrencySystem } from './core/currency.js';
+
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -183,6 +184,8 @@ async function boot() {
 
     setProgress(57, 'Progression...');
     const progression     = new Progression();
+    const currency = new CurrencySystem();
+window._currency = currency;
     const mikaProgression = createMikaProgression();
     window._mikaProgression = mikaProgression;
 
