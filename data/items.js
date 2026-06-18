@@ -319,15 +319,47 @@ export const ENEMY_DROPS = {
     { item: 'pocionVida', qty: [1,1], chance: 0.15 },
   ],
 };
+// ── DROPS DE MONEDA (separado de ENEMY_DROPS) ──────────────────────
+export const CURRENCY_DROPS = {
+  // ── Mundo abierto — solo monedas, oro casi nulo ──────────────────
+  Wolf:            { monedas: [2, 5],   oro: [0, 0],  oroChance: 0 },
+  Bear:            { monedas: [8, 15],  oro: [0, 1],  oroChance: 0.05 },
+  Mossling:        { monedas: [1, 3],   oro: [0, 0],  oroChance: 0 },
+  Firefly:         { monedas: [1, 2],   oro: [0, 0],  oroChance: 0 },
+  CrystalSpider:   { monedas: [2, 4],   oro: [0, 0],  oroChance: 0 },
+  Troll:           { monedas: [6, 10],  oro: [0, 1],  oroChance: 0.04 },
+  EarthGolem:      { monedas: [8, 14],  oro: [0, 1],  oroChance: 0.06 },
+  WanderingSpirit: { monedas: [2, 4],   oro: [0, 0],  oroChance: 0 },
+  ShadowForest:    { monedas: [3, 6],   oro: [0, 0],  oroChance: 0 },
+  StoneSnake:      { monedas: [4, 7],   oro: [0, 0],  oroChance: 0 },
+  WarriorGhost:    { monedas: [5, 9],   oro: [0, 1],  oroChance: 0.03 },
+  EliteMercenary:  { monedas: [10, 16], oro: [0, 1],  oroChance: 0.08 },
+  Bandit:          { monedas: [3, 6],   oro: [0, 0],  oroChance: 0 },
+  ShadowSoldier:   { monedas: [4, 7],   oro: [0, 0],  oroChance: 0 },
+  DarkArcher:      { monedas: [5, 8],   oro: [0, 1],  oroChance: 0.04 },
+  Berserker:       { monedas: [9, 14],  oro: [0, 1],  oroChance: 0.07 },
+  YamiMage:        { monedas: [8, 13],  oro: [0, 1],  oroChance: 0.06 },
+  ShadowCaptain:   { monedas: [20, 30], oro: [2, 4],  oroChance: 1.0 },
 
-export function rollDrops(enemyType) {
-  const table = ENEMY_DROPS[enemyType] ?? ENEMY_DROPS.default;
-  const result = [];
-  for (const entry of table) {
-    if (Math.random() < entry.chance) {
-      const qty = entry.qty[0] + Math.floor(Math.random() * (entry.qty[1] - entry.qty[0] + 1));
-      result.push({ id: entry.item, qty });
-    }
+  // ── Mazmorras — fuente principal de oro ──────────────────────────
+  DungeonGuard:    { monedas: [4, 8],   oro: [1, 2],  oroChance: 0.5  },
+  RuneWarden:      { monedas: [6, 10],  oro: [2, 3],  oroChance: 0.6  },
+  AncientSentinel: { monedas: [8, 14],  oro: [3, 5],  oroChance: 0.7  },
+
+  // ── Jefes de mazmorra — oro garantizado, cantidad alta ────────────
+  Malachar:  { monedas: [40, 60], oro: [15, 25], oroChance: 1.0 },
+  Veyris:    { monedas: [40, 60], oro: [15, 25], oroChance: 1.0 },
+  Khazeron:  { monedas: [60, 90], oro: [25, 40], oroChance: 1.0 },
+
+  default: { monedas: [1, 3], oro: [0, 0], oroChance: 0 },
+};
+
+export function rollCurrency(enemyType) {
+  const table = CURRENCY_DROPS[enemyType] ?? CURRENCY_DROPS.default;
+  const monedas = table.monedas[0] + Math.floor(Math.random() * (table.monedas[1] - table.monedas[0] + 1));
+  let oro = 0;
+  if (Math.random() < table.oroChance) {
+    oro = table.oro[0] + Math.floor(Math.random() * (table.oro[1] - table.oro[0] + 1));
   }
-  return result;
-}
+  return { monedas, oro };
+                    }
