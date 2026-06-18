@@ -143,7 +143,8 @@ async function boot() {
 
     setProgress(5, 'Verificando...');
     await new Promise(r => setTimeout(r, 200));
-    
+
+    txt.style.color = '#C9A84C';
     setProgress(10, 'THREE.JS...');
     await new Promise(r => setTimeout(r, 100));
 
@@ -589,24 +590,16 @@ window._bestiaryScreen = bestiaryScreen;
     const loading = document.getElementById('loading');
     loading.classList.add('hidden');
     setTimeout(() => loading.remove(), 900);
-
-  } catch (err) {
-    txt.textContent = 'ERROR: ' + (err.message || err.toString());
-    bar.style.background = '#8B2A0A';
-    console.error('[BOOT ERROR]', err.message, err.stack);
-    const errDiv = document.createElement('div');
-    Object.assign(errDiv.style, {
-      position:'fixed', top:'40%', left:'50%',
-      transform:'translateX(-50%)',
-      background:'rgba(0,0,0,0.95)', color:'#ff4444',
-      fontFamily:'monospace', fontSize:'11px',
-      padding:'16px', zIndex:'9999',
-      maxWidth:'90vw', wordBreak:'break-all',
-      borderRadius:'8px', border:'1px solid #ff4444',
-    });
-    errDiv.textContent = (err.message || '') + '\n' + (err.stack || '');
-    document.body.appendChild(errDiv);
+} catch (err) {
+    const msg = (err?.message || String(err)) + '\n\n' + (err?.stack || '');
+    txt.textContent = msg.slice(0, 300);
+    txt.style.color = '#ff4444';
+    txt.style.fontSize = '9px';
+    txt.style.whiteSpace = 'pre-wrap';
+    txt.style.maxWidth = '90vw';
+    bar.style.background = '#8B2 A0A';
   }
+  
 }
 
 window.addEventListener('load', boot);
