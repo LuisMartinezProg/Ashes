@@ -164,6 +164,7 @@ const MANIFEST = [
       { path: './core/worldLOD.js',                 exp: 'registerLODObjects' },
       { path: './core/dungeons/DungeonManager.js',  exp: 'DungeonManager' },
       { path: './data/items.js',                    exp: 'ITEMS' },
+      { path: './core/currency.js',                 exp: 'CurrencySystem' },
     ]
   },
   {
@@ -197,6 +198,14 @@ const MANIFEST = [
       { path: './core/weather.js',   exp: 'Weather',   pending: true },
       { path: './core/relations.js', exp: 'Relations', pending: true },
       { path: './core/cinematic.js', exp: 'Cinematic', pending: true },
+    ]
+  },
+  {
+    id: 'coreEconomy', icon: '💰', label: 'Core — Economía / Tienda (Futuro)',
+    files: [
+      { path: './ui/shopNew.js',     exp: 'ShopUI',        pending: true },
+      { path: './core/banner.js',    exp: 'BannerSystem',  pending: true },
+      { path: './ui/bannerUI.js',    exp: 'BannerUI',      pending: true },
     ]
   },
   {
