@@ -140,6 +140,10 @@ function _setWorldEnemiesVisible(visible) {
 
 async function boot() {
   try {
+
+    setProgress(5, 'Verificando...');
+    await new Promise(r => setTimeout(r, 200));
+    
     setProgress(10, 'THREE.JS...');
     await new Promise(r => setTimeout(r, 100));
 
