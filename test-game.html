@@ -77,6 +77,17 @@ const imports = [
   './ui/bestiaryScreen.js',
   './core/currency.js',
 ];
+  out.textContent += '\n\nProbando initScene...\n';
+try {
+  const { initScene } = await import('./core/scene.js');
+  const result = await initScene();
+  out.textContent += '✓ initScene OK\n';
+  out.textContent += '✓ scene: ' + !!result.scene + '\n';
+  out.textContent += '✓ camera: ' + !!result.camera + '\n';
+  out.textContent += '✓ renderer: ' + !!result.renderer + '\n';
+} catch(e) {
+  out.textContent += '✗ initScene FALLÓ: ' + e.message + '\n';
+}
 
 for (const path of imports) {
   try {
