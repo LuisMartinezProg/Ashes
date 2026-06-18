@@ -2,7 +2,7 @@
 <html>
 <head><meta charset="UTF-8"></head>
 <body>
-<div id="out" style="color:#0f0;font-family:monospace;font-size:12px;padding:16px;background:#000;min-height:100vh;word-break:break-all;"></div>
+<div id="out" style="color:#0f0;font-family:monospace;font-size:11px;padding:16px;background:#000;min-height:100vh;word-break:break-all;white-space:pre-wrap;"></div>
 <script type="importmap">
 {
   "imports": {
@@ -13,28 +13,80 @@
 </script>
 <script type="module">
 const out = document.getElementById('out');
-out.textContent = 'Iniciando imports...';
+out.textContent = 'Probando imports...\n';
 
 const imports = [
-  ['three', 'THREE'],
-  ['./core/scene.js', 'initScene'],
-  ['./core/loop.js', 'startLoop'],
-  ['./core/combat.js', 'CombatSystem'],
-  ['./core/currency.js', 'CurrencySystem'],
-  ['./core/bestiary.js', 'onKill'],
-  ['./ui/bestiaryPopup.js', 'BestiaryPopup'],
-  ['./ui/bestiaryScreen.js', 'BestiaryScreen'],
+  './core/scene.js',
+  './core/loop.js',
+  './core/resize.js',
+  './core/combat.js',
+  './core/enemy.js',
+  './ui/hud.js',
+  './core/skillSystem.js',
+  './core/npc.js',
+  './ui/dialogue.js',
+  './ui/shop.js',
+  './core/inventory.js',
+  './core/progression.js',
+  './ui/skillBar.js',
+  './ui/subtypeMenu.js',
+  './ui/pauseMenu.js',
+  './ui/fusionMenu.js',
+  './core/narrative.js',
+  './data/storyEvents.js',
+  './core/triggers.js',
+  './core/building.js',
+  './ui/buildMenu.js',
+  './ui/skillTree.js',
+  './ui/radialMenu.js',
+  './core/parry.js',
+  './core/enemies/wolf.js',
+  './core/enemies/bear.js',
+  './ui/mapUI.js',
+  './core/enemies/Mossling.js',
+  './core/enemies/Firefly.js',
+  './core/enemies/CrystalSpider.js',
+  './core/enemies/Troll.js',
+  './core/enemies/EarthGolem.js',
+  './core/enemies/WanderingSpirit.js',
+  './core/enemies/ShadowForest.js',
+  './core/enemies/StoneSnake.js',
+  './core/enemies/WarriorGhost.js',
+  './core/enemies/EliteMercenary.js',
+  './core/enemies/Bandit.js',
+  './core/enemies/ShadowSoldier.js',
+  './core/enemies/DarkArcher.js',
+  './core/enemies/Berserker.js',
+  './core/enemies/YamiMage.js',
+  './core/enemies/ShadowCaptain.js',
+  './core/buildCamera.js',
+  './core/buildZone.js',
+  './core/companion.js',
+  './core/partyManager.js',
+  './core/mikaProgression.js',
+  './core/keyboardControls.js',
+  './ui/keybindMenu.js',
+  './core/dungeons/DungeonManager.js',
+  './core/worldLOD.js',
+  './ui/inventory.js',
+  './data/items.js',
+  './ui/characterMenu.js',
+  './ui/partyMenu.js',
+  './core/bestiary.js',
+  './ui/bestiaryPopup.js',
+  './ui/bestiaryScreen.js',
+  './core/currency.js',
 ];
 
-for (const [path, exp] of imports) {
+for (const path of imports) {
   try {
-    const mod = await import(path);
-    out.textContent += `\n✓ ${path}`;
+    await import(path);
+    out.textContent += `✓ ${path}\n`;
   } catch(e) {
-    out.textContent += `\n✗ ${path}: ${e.message}`;
+    out.textContent += `✗ ${path}: ${e.message}\n`;
   }
 }
-out.textContent += '\n\nListo.';
+out.textContent += '\n✅ Todos los imports completados.';
 </script>
 </body>
 </html>
