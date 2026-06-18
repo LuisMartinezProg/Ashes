@@ -111,6 +111,12 @@ import { BestiaryPopup } from './ui/bestiaryPopup.js';
 import { BestiaryScreen } from './ui/bestiaryScreen.js';
 import { CurrencySystem } from './core/currency.js';
 
+  window.addEventListener('error', (e) => {
+  document.body.innerHTML = `<div style="color:#ff4444;font-family:monospace;font-size:11px;padding:16px;background:#000;position:fixed;inset:0;overflow:auto;z-index:9999;word-break:break-all;">
+    <b>ERROR DE IMPORT</b><br><br>${e.message}<br><br>${e.filename}<br>Línea: ${e.lineno}
+  </div>`;
+});
+  
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
