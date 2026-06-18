@@ -319,6 +319,17 @@ export const ENEMY_DROPS = {
     { item: 'pocionVida', qty: [1,1], chance: 0.15 },
   ],
 };
+export function rollDrops(enemyType) {
+  const table = ENEMY_DROPS[enemyType] ?? ENEMY_DROPS.default;
+  const result = [];
+  for (const entry of table) {
+    if (Math.random() < entry.chance) {
+      const qty = entry.qty[0] + Math.floor(Math.random() * (entry.qty[1] - entry.qty[0] + 1));
+      result.push({ id: entry.item, qty });
+    }
+  }
+  return result;
+}
 // ── DROPS DE MONEDA (separado de ENEMY_DROPS) ──────────────────────
 export const CURRENCY_DROPS = {
   // ── Mundo abierto — solo monedas, oro casi nulo ──────────────────
