@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body>
+<div id="out" style="color:#0f0;font-family:monospace;font-size:12px;padding:16px;background:#000;min-height:100vh;word-break:break-all;"></div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+const out = document.getElementById('out');
+out.textContent = 'Iniciando imports...';
+
+const imports = [
+  ['three', 'THREE'],
+  ['./core/scene.js', 'initScene'],
+  ['./core/loop.js', 'startLoop'],
+  ['./core/combat.js', 'CombatSystem'],
+  ['./core/currency.js', 'CurrencySystem'],
+  ['./core/bestiary.js', 'onKill'],
+  ['./ui/bestiaryPopup.js', 'BestiaryPopup'],
+  ['./ui/bestiaryScreen.js', 'BestiaryScreen'],
+];
+
+for (const [path, exp] of imports) {
+  try {
+    const mod = await import(path);
+    out.textContent += `\n✓ ${path}`;
+  } catch(e) {
+    out.textContent += `\n✗ ${path}: ${e.message}`;
+  }
+}
+out.textContent += '\n\nListo.';
+</script>
+</body>
+</html>
