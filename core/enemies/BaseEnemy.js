@@ -197,6 +197,18 @@ _updateAttack(delta) {
       }
     }
   }
+
+  // Drops de moneda
+  if (window._currency && window._itemDrops?.rollCurrency) {
+    const { rollCurrency } = window._itemDrops;
+    const enemyType = this.constructor.name;
+    const { monedas, oro } = rollCurrency(enemyType);
+    if (monedas > 0) window._currency.addMonedas(monedas);
+    if (oro > 0) {
+      window._currency.addOro(oro);
+      window._inventory?.showDropNotification?.('Oro', oro, '🥇');
+    }
+  }
   }
   
   
