@@ -1,8 +1,11 @@
 // ui/shop.js
 // Ashes of the Reborn | Valiant Gaming
 
-import { SHOPS }    from '../data/dialogues.js';
+import { SHOPS }     from '../data/dialogues.js';
+import { ITEMS }     from '../data/items.js';
 import { inventory } from '../core/inventory.js';
+
+const WEAPON_IDS = ['espadaHierro', 'espadaRunica', 'katanaOscura', 'arcoElfico', 'bastónCristal'];
 
 export class ShopUI {
   constructor() {
@@ -16,9 +19,9 @@ export class ShopUI {
   open(shopId, onClose = null) {
     const shop = SHOPS[shopId];
     if (!shop) return;
-    this._onClose  = onClose;
-    this._active   = true;
-    this._shopId   = shopId;
+    this._onClose = onClose;
+    this._active  = true;
+    this._shopId  = shopId;
     this._render(shop);
     this._panel.style.display = 'flex';
   }
@@ -64,6 +67,7 @@ export class ShopUI {
       justifyContent : 'space-between',
       alignItems     : 'center',
       marginBottom   : '16px',
+      gap            : '8px',
     });
 
     const title = document.createElement('div');
@@ -76,14 +80,34 @@ export class ShopUI {
     });
     title.textContent = shop.title;
 
-    const goldEl = document.createElement('div');
-    Object.assign(goldEl.style, {
-      color      : '#FFD700',
-      fontFamily : 'monospace',
-      fontSize   : '13px',
+    // Header de monedas: monedas + oro
+    const currencyWrap = document.createElement('div');
+    Object.assign(currencyWrap.style, {
+      display: 'flex',
+      gap: '10px',
+      fontFamily: 'monospace',
+      fontSize: '12px',
     });
-    goldEl.textContent = `🪙 ${inventory.getGold()}`;
-    inventory.onGoldChange = (g) => { goldEl.textContent = `🪙 ${g}`; };
+
+    const monedasEl = document.createElement('div');
+    monedasEl.style.color = '#EEE8D5';
+    const oroEl = document.createElement('div');
+    oroEl.style.color = '#FFD700';
+
+    const currency = window._currency;
+    const refreshCurrency = () => {
+      monedasEl.textContent = `🪙 ${currency?.getMonedas() ?? 0}`;
+      oroEl.textContent     = `✨ ${currency?.getOro() ?? 0}`;
+    };
+    refreshCurrency();
+
+    if (currency) {
+      currency.onMonedasChange = refreshCurrency;
+      currency.onOroChange     = refreshCurrency;
+    }
+
+    currencyWrap.appendChild(monedasEl);
+    currencyWrap.appendChild(oroEl);
 
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '✕';
@@ -102,7 +126,7 @@ export class ShopUI {
     closeBtn.addEventListener('mousedown', () => this.close());
 
     header.appendChild(title);
-    header.appendChild(goldEl);
+    header.appendChild(currencyWrap);
     header.appendChild(closeBtn);
     this._panel.appendChild(header);
 
@@ -116,14 +140,20 @@ export class ShopUI {
       gap      : '10px',
     });
 
-    for (const item of shop.items) {
-      list.appendChild(this._buildItemCard(item));
+    for (const shopItem of shop.items) {
+      list.appendChild(this._buildItemCard(shopItem));
     }
 
     this._panel.appendChild(list);
   }
 
-  _buildItemCard(item) {
+  _buildItemCard(shopItem) {
+    const item = ITEMS[shopItem.id];
+    if (!item) {
+      console.warn('[ShopUI] Item no encontrado en ITEMS:', shopItem.id);
+      return document.createElement('div');
+    }
+
     const card = document.createElement('div');
     Object.assign(card.style, {
       background   : 'rgba(255,255,255,0.04)',
@@ -162,12 +192,14 @@ export class ShopUI {
     info.appendChild(name);
     info.appendChild(desc);
 
-    const buyBtn = document.createElement('button');
-    const owned  = item.id === 'sword' || item.id === 'bow' || item.id === 'magic'
-      ? inventory.hasWeapon(item.id)
+    const isWeaponOrGear = item.section === 'equipos';
+    const owned = isWeaponOrGear
+      ? inventory.getItems().some(i => i.id === item.id)
       : false;
 
-    buyBtn.textContent = owned ? 'COMPRADO' : `🪙 ${item.price}`;
+    const currencyIcon = shopItem.currency === 'oro' ? '✨' : '🪙';
+    const buyBtn = document.createElement('button');
+    buyBtn.textContent = owned ? 'COMPRADO' : `${currencyIcon} ${shopItem.price}`;
     Object.assign(buyBtn.style, {
       background   : owned ? 'rgba(80,80,80,0.4)' : 'rgba(201,168,76,0.15)',
       border       : `1px solid ${owned ? 'rgba(255,255,255,0.1)' : 'rgba(201,168,76,0.5)'}`,
@@ -185,15 +217,27 @@ export class ShopUI {
     if (!owned) {
       const buy = (e) => {
         e.preventDefault();
-        const ok = inventory.spendGold(item.price);
-        if (!ok) {
-          buyBtn.textContent = 'SIN ORO';
-          setTimeout(() => { buyBtn.textContent = `🪙 ${item.price}`; }, 1000);
+        const currency = window._currency;
+        if (!currency) {
+          console.warn('[ShopUI] window._currency no está disponible');
           return;
         }
-        // Arma o item
-        if (['sword','bow','magic'].includes(item.id)) {
-          inventory.addWeapon(item.id);
+
+        const spendFn = shopItem.currency === 'oro'
+          ? currency.spendOro.bind(currency)
+          : currency.spendMonedas.bind(currency);
+
+        const ok = spendFn(shopItem.price);
+        if (!ok) {
+          const label = shopItem.currency === 'oro' ? 'SIN ORO' : 'SIN MONEDAS';
+          buyBtn.textContent = label;
+          setTimeout(() => { buyBtn.textContent = `${currencyIcon} ${shopItem.price}`; }, 1000);
+          return;
+        }
+
+        inventory.addItem(item.id);
+
+        if (isWeaponOrGear) {
           buyBtn.textContent = 'COMPRADO';
           buyBtn.style.background = 'rgba(80,80,80,0.4)';
           buyBtn.style.color = '#666';
@@ -201,9 +245,8 @@ export class ShopUI {
           buyBtn.removeEventListener('touchstart', buy);
           buyBtn.removeEventListener('mousedown', buy);
         } else {
-          inventory.addItem(item.id);
           buyBtn.textContent = '✓';
-          setTimeout(() => { buyBtn.textContent = `🪙 ${item.price}`; }, 800);
+          setTimeout(() => { buyBtn.textContent = `${currencyIcon} ${shopItem.price}`; }, 800);
         }
       };
       buyBtn.addEventListener('touchstart', buy, { passive: false });
@@ -215,4 +258,4 @@ export class ShopUI {
     card.appendChild(buyBtn);
     return card;
   }
-      }
+}
