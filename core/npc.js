@@ -8,20 +8,16 @@ const INTERACT_RANGE = 2.5;
 const MIKA_CRY_RANGE = 15;
 
 const NPC_DEFS = [
-  // ── Zona inicial ──
-  { id: 'aldeano',        x:  2,   z:  2,   color: 0x8899AA },
-  { id: 'herrero',        x: -10,  z: -13,  color: 0x886644 },
-  { id: 'guardia',        x:  17,  z:  0,   color: 0x445566 },
-  { id: 'vendedor_armas', x:  6,   z:  6,   color: 0xCC9944 },
-  { id: 'vendedor_items', x:  8,   z:  6,   color: 0x44AA88 },
-
-  // ── Camino a Ironfell ──
-  { id: 'mika',           x:  0,   z:  38,  color: 0xFFAABB, isMika: true },
-
-  // ── Ironfell ──
-  { id: 'yuna',           x:  0,   z:  64,  color: 0x4466AA }, // puerta norte
-  { id: 'voron',          x:  0,   z:  82,  color: 0x8866AA }, // despacho al fondo
-  { id: 'elfa_vendedora', x: -16,  z:  74,  color: 0x66AA88 }, // tienda elfa
+  // ── TODOS cerca del spawn (0,0,-20) — temporal para pruebas ──
+  { id: 'aldeano',        x:  3,   z: -16,  color: 0x8899AA },
+  { id: 'herrero',        x: -3,   z: -16,  color: 0x886644 },
+  { id: 'guardia',        x:  6,   z: -18,  color: 0x445566 },
+  { id: 'vendedor_armas', x: -6,   z: -18,  color: 0xCC9944 },
+  { id: 'vendedor_items', x:  3,   z: -22,  color: 0x44AA88 },
+  { id: 'mika',           x: -3,   z: -22,  color: 0xFFAABB, isMika: true },
+  { id: 'yuna',           x:  6,   z: -24,  color: 0x4466AA },
+  { id: 'voron',          x: -6,   z: -24,  color: 0x8866AA },
+  { id: 'elfa_vendedora', x:  0,   z: -26,  color: 0x66AA88 },
 ];
 
 export class NPC {
