@@ -94,23 +94,37 @@ export const DIALOGUES = {
 
 };
 
+// ── TIENDAS ────────────────────────────────────────────────────────
+// Cada item ahora referencia un ID real de data/items.js.
+// currency: 'monedas' (normal) | 'oro' (premium)
+// price: monto en la moneda indicada
+
 export const SHOPS = {
 
   armas: {
     title: 'Armería',
     items: [
-      { id: 'sword',  name: 'Espada',      icon: '⚔️',  price: 80,  desc: 'Daño equilibrado. Buena para combate directo.' },
-      { id: 'bow',    name: 'Arco',        icon: '🏹',  price: 100, desc: 'Ataque a distancia. Requiere puntería.' },
-      { id: 'magic',  name: 'Orbe Mágico', icon: '🔮',  price: 120, desc: 'Canaliza energía arcana. Alto daño mágico.' },
+      { id: 'espadaHierro',   currency: 'monedas', price: 65   },
+      { id: 'espadaRunica',   currency: 'oro',      price: 180  },
+      { id: 'arcoElfico',     currency: 'oro',      price: 180  },
+      { id: 'armaduraHierro', currency: 'monedas', price: 65   },
+      { id: 'armaduraRunica', currency: 'oro',      price: 190  },
+      { id: 'anilloFuerza',   currency: 'oro',      price: 170  },
+      { id: 'katanaOscura',   currency: 'oro',      price: 1200 },
+      { id: 'bastónCristal',  currency: 'oro',      price: 1200 },
+      { id: 'mantoDeSombra',  currency: 'oro',      price: 1100 },
+      { id: 'amuletoCristal', currency: 'oro',      price: 1100 },
     ],
   },
 
   items: {
     title: 'Alquimia',
     items: [
-      { id: 'potion_hp',     name: 'Poción HP',      icon: '🧪', price: 20, desc: 'Restaura 30 puntos de vida.' },
-      { id: 'potion_energy', name: 'Poción Energía',  icon: '⚗️', price: 25, desc: 'Restaura 40 puntos de energía.' },
-      { id: 'potion_hp_max', name: 'Elixir Mayor',    icon: '🫧', price: 60, desc: 'Restaura toda la vida.' },
+      { id: 'pocionVida',       currency: 'monedas', price: 18 },
+      { id: 'pocionMana',       currency: 'monedas', price: 15 },
+      { id: 'pocionVidaGrande', currency: 'monedas', price: 55 },
+      { id: 'elixirFuerza',     currency: 'monedas', price: 70 },
+      { id: 'elixirGuardia',    currency: 'monedas', price: 70 },
     ],
   },
 
