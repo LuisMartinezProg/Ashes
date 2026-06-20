@@ -14,14 +14,26 @@ export class DialogueUI {
   }
 
   // ── API pública ──────────────────────────────────────────────────────────
-
-  showTalkBtn(onTalk) {
+showTalkBtn(onTalk) {
     this._talkBtn.style.display = 'block';
-    this._talkBtn.onclick = () => {
+
+    const handler = (e) => {
+      e.preventDefault();
       this.hideTalkBtn();
       if (onTalk) onTalk();
     };
-  }
+
+    // Limpiar listener anterior para no acumular handlers en cada llamada
+    if (this._talkHandler) {
+      this._talkBtn.removeEventListener('touchstart', this._talkHandler);
+      this._talkBtn.removeEventListener('mousedown', this._talkHandler);
+    }
+    this._talkHandler = handler;
+
+    this._talkBtn.addEventListener('touchstart', handler, { passive: false });
+    this._talkBtn.addEventListener('mousedown', handler);
+}
+  
 
   hideTalkBtn() {
     this._talkBtn.style.display = 'none';
