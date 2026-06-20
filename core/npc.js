@@ -140,7 +140,13 @@ export class NPC {
     return this.dialogue?.lines ?? [];
   }
 
-  if (!this._cryShown) {
+  update(t, playerPos) {
+    this._dot.position.y = 1.9 + Math.sin(t * 2.5) * 0.08;
+
+    // Grito de ayuda de Mika desactivado temporalmente para pruebas de tienda
+    /*
+    if (this.isMika && playerPos && this.isInCryRange(playerPos)) {
+      if (!this._cryShown) {
         this._cryShown = true;
         this._showCry();
         this._cryInterval = setInterval(() => {
@@ -156,6 +162,7 @@ export class NPC {
       this._cryShown = false;
       clearInterval(this._cryInterval);
     }
+    */
   }
 }
 
