@@ -140,11 +140,7 @@ export class NPC {
     return this.dialogue?.lines ?? [];
   }
 
-  update(t, playerPos) {
-    this._dot.position.y = 1.9 + Math.sin(t * 2.5) * 0.08;
-
-    if (this.isMika && playerPos && this.isInCryRange(playerPos)) {
-      if (!this._cryShown) {
+  if (!this._cryShown) {
         this._cryShown = true;
         this._showCry();
         this._cryInterval = setInterval(() => {
