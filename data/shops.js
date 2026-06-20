@@ -1,176 +1,192 @@
 // data/shops.js — Ashes of the Reborn | Valiant Gaming
-// Esqueleto de estructura — PENDIENTE validar antes de llenar precios reales
+// Requiere: import { ITEMS } from './items.js';
 
 import { ITEMS } from './items.js';
 
-// ─────────────────────────────────────────────────────────────────
-// CONFIG GENERAL DE TIENDAS
-// ─────────────────────────────────────────────────────────────────
+// ── CONFIG GENERAL DE TIENDAS ─────────────────────────────────────
 export const SHOP_CONFIG = {
-  cycleHours: 1,        // 1 hora real = 1 ciclo día/noche (coincide con town day/night)
-  rotationOnCycle: true, // alquimista y armería rotan qué venden cada ciclo
+  alquimista: { currency: 'monedas', sellback: false },
+  armeria:    { currency: 'oro',     sellback: false },
+  general:    { currency: 'mixto',   sellback: true   }, // mixto: ver precio por item
 };
 
-// ─────────────────────────────────────────────────────────────────
-// STOCK POR TIPO (cuántas unidades por slot, se repone cada ciclo)
-// ─────────────────────────────────────────────────────────────────
+// % que la General paga al jugador por rareza al vender (sell-back)
+export const SELLBACK_RATES = {
+  comun:       0.60,
+  poco_comun:  0.50,
+  raro:        0.40,
+  epico:       0.30,
+  legendario:  0.125, // promedio del rango 10-15%
+};
+
+// ── STOCK POR TIPO (cantidad disponible por ciclo día/noche) ─────
 export const STOCK_BY_TYPE = {
   consumibles: { min: 10, max: 20 },
-  materialesComunes: { min: 8, max: 15 },
-  materialesRaros: { min: 3, max: 6 },
-  equipos: {
-    comun: { min: 3, max: 3 },
-    raro: { min: 1, max: 2 },
-    epico: { min: 1, max: 1 },
-    legendario: { min: 0, max: 0 }, // no se vende, solo drop/gacha
-  },
+  materiales:  { min: 5,  max: 10 },
+  equipos:     { min: 1,  max: 3  },
 };
 
-// ─────────────────────────────────────────────────────────────────
-// SELL-BACK (solo General compra) — % del "valor base" del item
-// valorBase se define más abajo en VALUE_TABLE
-// ─────────────────────────────────────────────────────────────────
-export const SELLBACK_RATE = {
-  comun: 0.60,
-  raro: 0.40,
-  epico: 0.30,
-  legendario: 0.125, // punto medio de 10-15%
-};
+function rollStock(section) {
+  const range = STOCK_BY_TYPE[section] ?? { min: 1, max: 5 };
+  return range.min + Math.floor(Math.random() * (range.max - range.min + 1));
+}
 
-// ─────────────────────────────────────────────────────────────────
-// VALOR BASE POR RAREZA (referencia para precio compra/venta)
-// Esto reemplaza mi tabla anterior de "tiers" que no existían en items.js
-// ─────────────────────────────────────────────────────────────────
-export const VALUE_TABLE = {
-  // materiales: precio unitario
-  materiales: {
-    comun: { moneda: 'monedas', precio: 8 },
-    raro: { moneda: 'oro', precio: 25 },
-    epico: { moneda: 'oro', precio: 60 },
-    legendario: { moneda: 'oro', precio: 150 },
-  },
-  // consumibles: precio unitario
-  consumibles: {
-    comun: { moneda: 'monedas', precio: 20 },
-    raro: { moneda: 'monedas', precio: 70 },
-  },
-  // equipos: precio unitario
-  equipos: {
-    comun: { moneda: 'oro', precio: 60 },
-    raro: { moneda: 'oro', precio: 250 },
-    epico: { moneda: 'oro', precio: 900 },
-    legendario: { moneda: 'oro', precio: null }, // no se vende
-  },
-};
+// ── DESBLOQUEO POR RAREZA (proxy de progreso, sin campo de zona) ──
+// comun/poco_comun/raro: disponibles desde el inicio
+// epico: requiere haber derrotado al menos 1 boss de mazmorra
+// legendario: no se vende nunca (solo drop/gacha)
+function isUnlocked(rarity, bossesDefeated) {
+  if (rarity === 'legendario') return false;
+  if (rarity === 'epico') return bossesDefeated >= 1;
+  return true; // comun, poco_comun, raro
+}
 
-// ─────────────────────────────────────────────────────────────────
-// CATÁLOGO FIJO POR TIENDA (qué SECCIONES/rarezas puede vender cada una)
-// Las listas concretas de itemIds se generan dinámicamente en runtime
-// filtrando ITEMS por section + rarity + progreso del jugador
-// ─────────────────────────────────────────────────────────────────
-export const SHOPS = {
-  alquimista: {
-    id: 'alquimista',
-    name: 'Alquimista',
-    sections: ['consumibles'],
-    moneda: 'monedas',
-    slotsRotativos: 8,
-    rotates: true,
-    sellback: false,
-  },
-
-  armeria: {
-    id: 'armeria',
-    name: 'Armería',
-    sections: ['equipos'],
-    moneda: 'oro',
-    slotsRotativos: 6,
-    rotates: true,
-    sellback: false,
-    excludeRarity: ['legendario'], // legendario nunca en venta
-  },
-
-  general: {
-    id: 'general',
-    name: 'Tienda General',
-    sections: ['materiales'],
-    moneda: 'mixta', // comunes=monedas, raros+=oro (ver VALUE_TABLE)
-    slotsFijos: true, // catálogo fijo, no rota
-    rotates: false,
-    sellback: true,        // ÚNICA tienda que compra del jugador
-    sellbackSections: 'all', // compra cualquier section (materiales/consumibles/equipos)
-    recetas: true, // vende planos de crafting (ver RECIPES)
-  },
-};
-
-// ─────────────────────────────────────────────────────────────────
-// DESBLOQUEO PROGRESIVO — qué rareza/zona habilita qué catálogo
-// ─────────────────────────────────────────────────────────────────
-export const UNLOCK_PROGRESSION = [
-  { zone: 1, dungeon: null, unlocks: ['comun'] },
-  { zone: 2, dungeon: 'dungeon1', unlocks: ['raro'] },
-  { zone: 3, dungeon: 'dungeon2', unlocks: ['epico'] },
-  { zone: 'ascension1', dungeon: null, unlocks: ['legendario_materiales'] }, // solo materiales, nunca equipo legendario
+// ── CATÁLOGO ALQUIMISTA (consumibles, paga con monedas) ───────────
+export const ALQUIMISTA_CATALOG = [
+  'pocionVida',
+  'pocionVidaGrande',
+  'pocionMana',
+  'elixirFuerza',
+  'elixirGuardia',
 ];
 
-// ─────────────────────────────────────────────────────────────────
-// RECETAS / PLANOS — vendidas solo en General, desbloqueo permanente
-// PLACEHOLDER: 5 ejemplos, faltan IDs reales de craft output
-// ─────────────────────────────────────────────────────────────────
-export const RECIPES = {
-  recetaEspadaHierro: {
-    id: 'recetaEspadaHierro',
-    name: 'Plano: Espada de Hierro',
-    resultItem: 'espadaHierro',
-    rarity: 'comun',
-    moneda: 'monedas',
-    precio: 100,
-    materiales: { hierro: 5, madera: 2 },
-  },
-  recetaArmaduraHierro: {
-    id: 'recetaArmaduraHierro',
-    name: 'Plano: Armadura de Hierro',
-    resultItem: 'armaduraHierro',
-    rarity: 'comun',
-    moneda: 'monedas',
-    precio: 120,
-    materiales: { hierro: 6, piedra: 4 },
-  },
-  recetaEspadaRunica: {
-    id: 'recetaEspadaRunica',
-    name: 'Plano: Espada Rúnica',
-    resultItem: 'espadaRunica',
-    rarity: 'raro',
-    moneda: 'oro',
-    precio: 200,
-    materiales: { mineral: 4, cristalEspada: 2 },
-  },
-  recetaArmaduraRunica: {
-    id: 'recetaArmaduraRunica',
-    name: 'Plano: Armadura Rúnica',
-    resultItem: 'armaduraRunica',
-    rarity: 'raro',
-    moneda: 'oro',
-    precio: 220,
-    materiales: { mineral: 5, hierro: 5 },
-  },
-  recetaKatanaOscura: {
-    id: 'recetaKatanaOscura',
-    name: 'Plano: Katana Oscura',
-    resultItem: 'katanaOscura',
-    rarity: 'epico',
-    moneda: 'oro',
-    precio: 800,
-    materiales: { etherFragmento: 5, cristalKatana: 3, nucleoArcano: 1 },
-  },
+export const ALQUIMISTA_PRICES = {
+  pocionVida:       18,
+  pocionVidaGrande: 55,
+  pocionMana:       15,
+  elixirFuerza:     70,
+  elixirGuardia:    70,
 };
 
-// ─────────────────────────────────────────────────────────────────
-// FUNCIONES PENDIENTES DE IMPLEMENTAR (firmas, sin lógica aún)
-// ─────────────────────────────────────────────────────────────────
-// generateShopStock(shopId, playerProgress) -> array de items con stock actual
-// purchaseItem(shopId, itemId, qty, playerCurrency) -> resultado compra
-// sellItemToGeneral(itemId, qty, playerInventory) -> monedas/oro ganados
-// buyRecipe(recipeId, playerCurrency) -> desbloquea receta permanente
-// craftFromRecipe(recipeId, playerMaterials) -> crea item, consume materiales
-// rotateShopStock(shopId) -> se llama cada cycleHours, recalcula slots rotativos
+// ── CATÁLOGO ARMERÍA (armas + armaduras + accesorios, paga con oro) ─
+export const ARMERIA_CATALOG = [
+  'espadaHierro',
+  'espadaRunica',
+  'katanaOscura',
+  'arcoElfico',
+  'bastónCristal',
+  'armaduraHierro',
+  'armaduraRunica',
+  'mantoDeSombra',
+  'anilloFuerza',
+  'amuletoCristal',
+];
+
+export const ARMERIA_PRICES = {
+  espadaHierro:    65,
+  armaduraHierro:  65,
+  espadaRunica:    180,
+  arcoElfico:      180,
+  armaduraRunica:  190,
+  anilloFuerza:    170,
+  katanaOscura:    1200,
+  bastónCristal:   1200,
+  mantoDeSombra:   1100,
+  amuletoCristal:  1100,
+};
+
+// ── CATÁLOGO GENERAL (materiales fijos, compra con monedas/oro) ───
+export const GENERAL_CATALOG = [
+  'madera',
+  'piedra',
+  'hierro',
+  'mineral',
+  'etherFragmento',
+];
+
+export const GENERAL_PRICES = {
+  madera:         6,
+  piedra:         6,
+  hierro:         12,
+  mineral:        45,
+  etherFragmento: 65,
+};
+
+// Moneda usada para COMPRAR cada material en la General
+export const GENERAL_CURRENCY = {
+  madera:         'monedas',
+  piedra:         'monedas',
+  hierro:         'monedas',
+  mineral:        'oro',
+  etherFragmento: 'oro',
+};
+
+// ── GENERAR INVENTARIO ACTUAL DE UNA TIENDA ───────────────────────
+// bossesDefeated: número de jefes de mazmorra derrotados (para desbloqueo épico)
+export function generateShopInventory(shopType, bossesDefeated = 0) {
+  let catalog, prices;
+
+  if (shopType === 'alquimista') {
+    catalog = ALQUIMISTA_CATALOG;
+    prices = ALQUIMISTA_PRICES;
+  } else if (shopType === 'armeria') {
+    catalog = ARMERIA_CATALOG;
+    prices = ARMERIA_PRICES;
+  } else if (shopType === 'general') {
+    catalog = GENERAL_CATALOG;
+    prices = GENERAL_PRICES;
+  } else {
+    return [];
+  }
+
+  const inventory = [];
+  for (const itemId of catalog) {
+    const item = ITEMS[itemId];
+    if (!item) continue;
+    if (!isUnlocked(item.rarity, bossesDefeated)) continue;
+
+    inventory.push({
+      id: item.id,
+      name: item.name,
+      icon: item.icon,
+      rarity: item.rarity,
+      section: item.section,
+      price: prices[itemId] ?? 0,
+      currency: shopType === 'general' ? GENERAL_CURRENCY[itemId] : SHOP_CONFIG[shopType].currency,
+      stock: rollStock(item.section),
+    });
+  }
+  return inventory;
+}
+
+// ── COMPRAR ITEM ───────────────────────────────────────────────────
+// playerCurrency: { monedas, oro } | inventoryState: array generado por generateShopInventory
+export function buyItem(shopType, itemId, playerCurrency, inventoryState) {
+  const slot = inventoryState.find(s => s.id === itemId);
+  if (!slot) return { success: false, reason: 'no_disponible' };
+  if (slot.stock <= 0) return { success: false, reason: 'sin_stock' };
+  if (playerCurrency[slot.currency] < slot.price) return { success: false, reason: 'sin_fondos' };
+
+  slot.stock -= 1;
+  return {
+    success: true,
+    itemId,
+    cost: slot.price,
+    currency: slot.currency,
+  };
+}
+
+// ── VENDER ITEM (sell-back, solo General) ─────────────────────────
+export function sellItemToGeneral(itemId, baseValue) {
+  const item = ITEMS[itemId];
+  if (!item) return { success: false, reason: 'item_invalido' };
+
+  const rate = SELLBACK_RATES[item.rarity] ?? 0.5;
+  const payout = Math.round(baseValue * rate);
+
+  return {
+    success: true,
+    itemId,
+    payout,
+    currency: 'monedas', // General siempre paga en monedas al comprar del jugador
+    rate,
+  };
+}
+
+// ── RESET DIARIO DE STOCK (llamar en el ciclo día/noche) ──────────
+export function refreshShopStock(inventoryState) {
+  for (const slot of inventoryState) {
+    slot.stock = rollStock(slot.section);
+  }
+  return inventoryState;
+}
