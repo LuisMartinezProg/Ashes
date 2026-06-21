@@ -110,7 +110,8 @@ import { onKill }        from './core/bestiary.js';
 import { BestiaryPopup } from './ui/bestiaryPopup.js';
 import { BestiaryScreen } from './ui/bestiaryScreen.js';
 import { CurrencySystem } from './core/currency.js';
-
+import { Thug } from './core/enemies/Thug.js';
+  
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -267,14 +268,20 @@ window._currency = currency;
       if (window._dungeonManager?._active) return;
       hud.showCollectBtn(resource);
     });
-
     setProgress(73, 'spawnEnemies...');
-    const enemies = spawnEnemies(scene, player);
+    const enemies = [
+      new Thug(scene, { x:  3, z: -10 }, player),
+      new Thug(scene, { x: -3, z: -10 }, player),
+      new Thug(scene, { x:  6, z: -14 }, player),
+      new Thug(scene, { x: -6, z: -14 }, player),
+      new Thug(scene, { x:  0, z: -12 }, player),
+    ];
     enemies.forEach(e => combat.registerEnemy(e));
     skills.registerEnemies(enemies);
     setSkillSystem(skills);
     setEnemies(enemies);
     hud.setEnemies(enemies);
+    
 
     setProgress(75, 'DialogueUI...');
     const dialogueUI = new DialogueUI();
