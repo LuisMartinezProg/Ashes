@@ -270,12 +270,12 @@ window._currency = currency;
     });
     setProgress(73, 'spawnEnemies...');
     const enemies = [
-      new Thug(scene, { x:  3, z: -10 }, player),
-      new Thug(scene, { x: -3, z: -10 }, player),
-      new Thug(scene, { x:  6, z: -14 }, player),
-      new Thug(scene, { x: -6, z: -14 }, player),
-      new Thug(scene, { x:  0, z: -12 }, player),
-    ];
+  new Thug(scene, { x:  14, z: -28 }, player),
+  new Thug(scene, { x:  18, z: -32 }, player),
+  new Thug(scene, { x:  22, z: -26 }, player),
+  new Thug(scene, { x: -14, z: -30 }, player),
+  new Thug(scene, { x: -18, z: -26 }, player),
+];
     enemies.forEach(e => combat.registerEnemy(e));
     skills.registerEnemies(enemies);
     setSkillSystem(skills);
