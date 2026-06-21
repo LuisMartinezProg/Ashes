@@ -62,6 +62,10 @@ const header = document.createElement('div');
       oroEl.textContent     = `✨ ${currency?.getOro() ?? 0}`;
     };
     refreshCurrency();
+    window._currency?.onChange(refreshCurrency);
+
+    currencyWrap.append(monedasEl, oroEl);
+    this._refreshCurrency = refreshCurrency;
 
     if (window._currency) {
       const prevMonedas = window._currency.onMonedasChange;
