@@ -96,15 +96,12 @@ export class ShopUI {
 
     const currency = window._currency;
     const refreshCurrency = () => {
+      const currency = window._currency;
       monedasEl.textContent = `🪙 ${currency?.getMonedas() ?? 0}`;
       oroEl.textContent     = `✨ ${currency?.getOro() ?? 0}`;
     };
     refreshCurrency();
-
-    if (currency) {
-      currency.onMonedasChange = refreshCurrency;
-      currency.onOroChange     = refreshCurrency;
-    }
+    window._currency?.onChange(refreshCurrency);
 
     currencyWrap.appendChild(monedasEl);
     currencyWrap.appendChild(oroEl);
