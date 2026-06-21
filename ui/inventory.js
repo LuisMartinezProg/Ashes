@@ -19,7 +19,22 @@ export class InventoryUI {
     };
     this._buildUI();
   }
-const header = document.createElement('div');
+
+  _buildUI() {
+    this._overlay = document.createElement('div');
+    Object.assign(this._overlay.style, {
+      position      : 'fixed', inset: '0',
+      background    : 'rgba(4,4,10,0.92)',
+      zIndex        : '400',
+      display       : 'none',
+      flexDirection : 'column',
+      alignItems    : 'center',
+      justifyContent: 'flex-start',
+      paddingTop    : '20px',
+      overflowY     : 'auto',
+    });
+
+    const header = document.createElement('div');
     Object.assign(header.style, {
       width         : '100%',
       maxWidth      : '420px',
@@ -63,16 +78,6 @@ const header = document.createElement('div');
     };
     refreshCurrency();
     window._currency?.onChange(refreshCurrency);
-
-    currencyWrap.append(monedasEl, oroEl);
-    this._refreshCurrency = refreshCurrency;
-
-    if (window._currency) {
-      const prevMonedas = window._currency.onMonedasChange;
-      const prevOro     = window._currency.onOroChange;
-      window._currency.onMonedasChange = (v) => { prevMonedas?.(v); refreshCurrency(); };
-      window._currency.onOroChange     = (v) => { prevOro?.(v); refreshCurrency(); };
-    }
 
     currencyWrap.append(monedasEl, oroEl);
     this._refreshCurrency = refreshCurrency;
@@ -195,7 +200,6 @@ const header = document.createElement('div');
     this._emptyMsg.style.display = 'none';
     this._grid.style.display     = 'grid';
 
-    // Consumibles usan layout de lista para mostrar botón Usar
     if (this._section === 'consumibles') {
       this._grid.style.gridTemplateColumns = '1fr';
       for (const item of items) {
@@ -209,7 +213,6 @@ const header = document.createElement('div');
     }
   }
 
-  // ── Slot estándar (materiales / equipos) ──────────────────────────────────
   _buildSlot(item) {
     const slot = document.createElement('div');
     Object.assign(slot.style, {
@@ -270,7 +273,6 @@ const header = document.createElement('div');
     return slot;
   }
 
-  // ── Fila de consumible con botón Usar ─────────────────────────────────────
   _buildConsumibleRow(item) {
     const row = document.createElement('div');
     Object.assign(row.style, {
@@ -315,7 +317,6 @@ const header = document.createElement('div');
 
     info.append(nameLine, descLine, qtyLine);
 
-    // ── Botón Usar ────────────────────────────────────────────────────────
     const useBtn = document.createElement('button');
     Object.assign(useBtn.style, {
       padding      : '8px 14px',
@@ -350,7 +351,6 @@ const header = document.createElement('div');
     return row;
   }
 
-  // ── Lógica de uso de consumibles ──────────────────────────────────────────
   _useConsumible(item, qtyEl, btn, rowEl) {
     if (!item.effect) return;
     if ((item.qty ?? 1) <= 0) return;
@@ -380,11 +380,9 @@ const header = document.createElement('div');
 
     if (!used) return;
 
-    // Descontar del inventario
     item.qty = (item.qty ?? 1) - 1;
 
     if (item.qty <= 0) {
-      // Eliminar del array y del DOM
       this._items.consumibles = this._items.consumibles.filter(i => i.id !== item.id);
       rowEl.style.transition = 'opacity 0.3s';
       rowEl.style.opacity    = '0';
@@ -400,14 +398,12 @@ const header = document.createElement('div');
     }
   }
 
-  // ── Objetivo de curación: personaje activo en el party ────────────────────
   _getHealTarget() {
     const active = window._partyManager?.getActiveCharacter?.();
     if (active) return active;
     return window._player ?? null;
   }
 
-  // ── Aplicar buff temporal ─────────────────────────────────────────────────
   _applyBuff(effect, icon, itemName) {
     const prog = window._prog;
     if (!prog) return false;
@@ -437,12 +433,10 @@ const header = document.createElement('div');
       }, effect.duration * 1000);
     }
 
-    // Indicador visual de buff activo en HUD
     this._showBuffIndicator(icon, itemName, effect.duration);
     return true;
   }
 
-  // ── Notificación de uso (esquina inferior) ────────────────────────────────
   _showUseNotification(icon, name, detail) {
     const el = document.createElement('div');
     Object.assign(el.style, {
@@ -473,7 +467,6 @@ const header = document.createElement('div');
     setTimeout(() => el.remove(), 750);
   }
 
-  // ── Indicador de buff activo en pantalla ──────────────────────────────────
   _showBuffIndicator(icon, name, duration) {
     const id  = `_buff_${icon}`;
     const old = document.getElementById(id);
@@ -645,7 +638,7 @@ const header = document.createElement('div');
     this._refreshCurrency?.();
   }
 
-close() {
+  close() {
     this._open = false;
     this._overlay.style.display = 'none';
     this._tooltip.style.display = 'none';
