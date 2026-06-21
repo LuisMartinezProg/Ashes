@@ -19,22 +19,7 @@ export class InventoryUI {
     };
     this._buildUI();
   }
-
-  _buildUI() {
-    this._overlay = document.createElement('div');
-    Object.assign(this._overlay.style, {
-      position      : 'fixed', inset: '0',
-      background    : 'rgba(4,4,10,0.92)',
-      zIndex        : '400',
-      display       : 'none',
-      flexDirection : 'column',
-      alignItems    : 'center',
-      justifyContent: 'flex-start',
-      paddingTop    : '20px',
-      overflowY     : 'auto',
-    });
-
-    const header = document.createElement('div');
+const header = document.createElement('div');
     Object.assign(header.style, {
       width         : '100%',
       maxWidth      : '420px',
@@ -43,6 +28,7 @@ export class InventoryUI {
       justifyContent: 'space-between',
       padding       : '0 16px 12px',
       borderBottom  : '1px solid rgba(201,168,76,0.2)',
+      gap           : '8px',
     });
 
     const title = document.createElement('div');
@@ -53,6 +39,39 @@ export class InventoryUI {
       color        : '#C9A84C',
     });
     title.textContent = 'INVENTARIO';
+
+    // ── Contador de monedas/oro ───────────────────────────────────────────
+    const currencyWrap = document.createElement('div');
+    Object.assign(currencyWrap.style, {
+      display    : 'flex',
+      gap        : '10px',
+      fontFamily : 'monospace',
+      fontSize   : '11px',
+      flex       : '1',
+      justifyContent: 'center',
+    });
+
+    const monedasEl = document.createElement('div');
+    monedasEl.style.color = '#EEE8D5';
+    const oroEl = document.createElement('div');
+    oroEl.style.color = '#FFD700';
+
+    const refreshCurrency = () => {
+      const currency = window._currency;
+      monedasEl.textContent = `🪙 ${currency?.getMonedas() ?? 0}`;
+      oroEl.textContent     = `✨ ${currency?.getOro() ?? 0}`;
+    };
+    refreshCurrency();
+
+    if (window._currency) {
+      const prevMonedas = window._currency.onMonedasChange;
+      const prevOro     = window._currency.onOroChange;
+      window._currency.onMonedasChange = (v) => { prevMonedas?.(v); refreshCurrency(); };
+      window._currency.onOroChange     = (v) => { prevOro?.(v); refreshCurrency(); };
+    }
+
+    currencyWrap.append(monedasEl, oroEl);
+    this._refreshCurrency = refreshCurrency;
 
     const closeBtn = document.createElement('button');
     Object.assign(closeBtn.style, {
@@ -67,7 +86,7 @@ export class InventoryUI {
     closeBtn.addEventListener('click', () => this.close());
     closeBtn.addEventListener('touchstart', (e) => { e.preventDefault(); this.close(); }, { passive: false });
 
-    header.append(title, closeBtn);
+    header.append(title, currencyWrap, closeBtn);
 
     this._tabBar = document.createElement('div');
     Object.assign(this._tabBar.style, {
@@ -619,9 +638,10 @@ export class InventoryUI {
     this._open = true;
     this._overlay.style.display = 'flex';
     this._switchSection(this._section);
+    this._refreshCurrency?.();
   }
 
-  close() {
+close() {
     this._open = false;
     this._overlay.style.display = 'none';
     this._tooltip.style.display = 'none';
