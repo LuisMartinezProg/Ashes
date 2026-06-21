@@ -8,10 +8,26 @@ export class CurrencySystem {
     this.monedas = 0;
     this.oro     = 0;
 
-    this.onMonedasChange = null;
-    this.onOroChange     = null;
+    this.onMonedasChange = null; // compatibilidad: callback único legacy
+    this.onOroChange     = null; // compatibilidad: callback único legacy
+
+    this._listeners = new Set(); // nuevos suscriptores múltiples
 
     this._load();
+  }
+
+  // ── Suscripción múltiple (nuevo) ────────────────────────────────────────
+  // callback(monedas, oro) se llama en CUALQUIER cambio de cualquiera de los dos
+  onChange(callback) {
+    this._listeners.add(callback);
+  }
+
+  offChange(callback) {
+    this._listeners.delete(callback);
+  }
+
+  _notify() {
+    for (const cb of this._listeners) cb(this.monedas, this.oro);
   }
 
   // ── Monedas (normal) ────────────────────────────────────────────────────
@@ -22,6 +38,7 @@ export class CurrencySystem {
     this.monedas += amount;
     this._save();
     this.onMonedasChange?.(this.monedas);
+    this._notify();
   }
 
   spendMonedas(amount) {
@@ -29,6 +46,7 @@ export class CurrencySystem {
     this.monedas -= amount;
     this._save();
     this.onMonedasChange?.(this.monedas);
+    this._notify();
     return true;
   }
 
@@ -42,6 +60,7 @@ export class CurrencySystem {
     this.oro += amount;
     this._save();
     this.onOroChange?.(this.oro);
+    this._notify();
   }
 
   spendOro(amount) {
@@ -49,6 +68,7 @@ export class CurrencySystem {
     this.oro -= amount;
     this._save();
     this.onOroChange?.(this.oro);
+    this._notify();
     return true;
   }
 
