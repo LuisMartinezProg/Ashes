@@ -111,6 +111,7 @@ import { BestiaryPopup } from './ui/bestiaryPopup.js';
 import { BestiaryScreen } from './ui/bestiaryScreen.js';
 import { CurrencySystem } from './core/currency.js';
 import { Thug } from './core/enemies/Thug.js';
+import { DayNightCycle } from './core/dayNight.js';
   
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -150,7 +151,7 @@ async function boot() {
     await new Promise(r => setTimeout(r, 100));
 
     setProgress(20, 'initScene...');
-    const { scene, camera, renderer } = await initScene();
+    const { scene, camera, renderer, lights } = await initScene();
     await new Promise(r => setTimeout(r, 100));
 
     const dungeonScene = new THREE.Scene();
@@ -192,6 +193,9 @@ async function boot() {
     const progression     = new Progression();
     const currency = new CurrencySystem();
 window._currency = currency;
+    const dayNight = new DayNightCycle(scene, lights);
+    dayNight.start(0.1); // arranca ligeramente entrado el día, ajustable
+    window._dayNight = dayNight;
     const mikaProgression = createMikaProgression();
     window._mikaProgression = mikaProgression;
 
