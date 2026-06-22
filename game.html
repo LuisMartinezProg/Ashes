@@ -112,6 +112,7 @@ import { BestiaryScreen } from './ui/bestiaryScreen.js';
 import { CurrencySystem } from './core/currency.js';
 import { Thug } from './core/enemies/Thug.js';
 import { DayNightCycle } from './core/dayNight.js';
+import { TimeMenu } from './ui/timeMenu.js';
   
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -198,7 +199,8 @@ window._currency = currency;
     window._dayNight = dayNight;
     const mikaProgression = createMikaProgression();
     window._mikaProgression = mikaProgression;
-
+    const timeMenu = new TimeMenu(dayNight);
+    window._timeMenu = timeMenu;
     setProgress(59, 'Companion...');
     const companion = new Companion(scene, player.root.position);
     window._companion = companion;
@@ -525,9 +527,9 @@ window._bestiaryScreen = bestiaryScreen;
   { icon: '🗺️', label: 'Mapa',       action: () => { if (!window._dungeonManager?._active) mapUI.toggle(); }, locked: false },
   { icon: '🎒', label: 'Inventario', action: () => inventoryUI.open(),     locked: false },
   { icon: '📖', label: 'Bestiario',  action: () => bestiaryScreen.open(),  locked: false },
+  { icon: '🕐', label: 'Tiempo',     action: () => timeMenu.open(),        locked: false },
   { icon: '⌨️', label: 'Controles',  action: () => keybindMenu.open(),     locked: false },
 ]);
-
     const pauseMenu = new PauseMenu({
       onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
       onFusion  : () => { pauseMenu.close(); fusionMenu.open(combat._weaponType); },
