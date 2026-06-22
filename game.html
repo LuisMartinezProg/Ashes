@@ -528,7 +528,7 @@ window._bestiaryScreen = bestiaryScreen;
   { icon: '🎒', label: 'Inventario', action: () => inventoryUI.open(),     locked: false },
   { icon: '📖', label: 'Bestiario',  action: () => bestiaryScreen.open(),  locked: false },
   { icon: '🕐', label: 'Tiempo',     action: () => timeMenu.open(),        locked: false },
-  { icon: '⌨️', label: 'Controles',  action: () => keybindMenu.open(),     locked: false },
+ //{ icon: '⌨️', label: 'Controles',  action: () => keybindMenu.open(),     locked: false },
 ]);
     const pauseMenu = new PauseMenu({
       onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
