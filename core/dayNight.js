@@ -107,15 +107,19 @@ export class DayNightCycle {
     for (let i = 0; i < PHASES.length - 1; i++) {
       const from = PHASES[i];
       const to   = PHASES[i + 1];
-      if (progress >= from.t && progress <= to.t) {
-        const span  = to.t - from.t;
+      // Usamos < en vez de <= para el límite superior, evitando que un
+      // progress exactamente igual a un límite caiga en el segmento equivocado.
+      if (progress >= from.t && progress < to.t) {
+        const span   = to.t - from.t;
         const localT = span > 0 ? (progress - from.t) / span : 0;
-        // El nombre de fase "actual" es el de la fase que ya empezó (from),
-        // salvo en el primer 50% del segmento día/noche que ya cambia de nombre.
-        const phaseName = localT < 0.5 ? from.name : to.name;
+        const phaseName = from.name;
         return { from, to, localT, phaseName };
       }
     }
+    // progress === último t (ej. 0.95 al cierre del ciclo): usar la última fase
+    const last = PHASES[PHASES.length - 1];
+    return { from: last, to: last, localT: 0, phaseName: last.name };
+  }
     // Fallback (no debería pasar con t:0.95→1.0 cerrando el ciclo)
     return { from: PHASES[0], to: PHASES[0], localT: 0, phaseName: PHASES[0].name };
   }
