@@ -46,7 +46,16 @@ export class DayNightCycle {
     if (this._intervalId) clearInterval(this._intervalId);
     this._intervalId = null;
   }
-
+  // Salta instantáneamente al inicio de una fase (amanecer/dia/atardecer/noche)
+  jumpToPhase(phaseName) {
+    const phase = PHASES.find(p => p.name === phaseName);
+    if (!phase) {
+      console.warn('[DayNight] Fase desconocida:', phaseName);
+      return;
+    }
+    this._elapsed = phase.t * CYCLE_DURATION_S;
+    this._tick(); // aplica el cambio visual de inmediato
+  }
   // Progreso del ciclo (0 a 1)
   getProgress() {
     return (this._elapsed % CYCLE_DURATION_S) / CYCLE_DURATION_S;
