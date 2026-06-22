@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Test DayNight</title>
+  <style>
+    body { background:#111; color:#0f0; font-family:monospace; padding:16px; margin:0; }
+    #canvas-wrap { width:100%; height:200px; margin-bottom:12px; }
+    button { background:#222; color:#C9A84C; border:1px solid #C9A84C; padding:10px 16px; margin:4px; border-radius:8px; font-size:13px; }
+    #out { margin-top:12px; font-size:12px; line-height:1.6; white-space:pre-wrap; color:#C9A84C; }
+  </style>
+</head>
+<body>
+<h3 style="color:#C9A84C">Test DayNight — Ashes</h3>
+<div id="canvas-wrap"></div>
+<div id="btns"></div>
+<div id="out"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { DayNightCycle } from './core/dayNight.js';
+
+const out = document.getElementById('out');
+function log(msg) {
+  out.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n` + out.textContent;
+}
+
+// ── Escena mínima ──────────────────────────────────────────────
+const wrap = document.getElementById('canvas-wrap');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(wrap.clientWidth, 200);
+wrap.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x5A7A8A);
+scene.fog = new THREE.FogExp2(0x3A5A40, 0.014);
+
+const camera = new THREE.PerspectiveCamera(55, wrap.clientWidth / 200, 0.1, 100);
+camera.position.set(0, 2, 6);
+
+const cube = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2, 2),
+  new THREE.MeshStandardMaterial({ color: 0xffffff })
+);
+scene.add(cube);
+
+const ambientLight = new THREE.AmbientLight(0xB0C8D0, 1.8);
+scene.add(ambientLight);
+
+const sun = new THREE.DirectionalLight(0xFFE8A0, 2.0);
+sun.position.set(-5, 5, 5);
+scene.add(sun);
+
+const hemiLight = new THREE.HemisphereLight(0x88AA66, 0x2A3A1A, 1.0);
+scene.add(hemiLight);
+
+function animate() {
+  cube.rotation.y += 0.01;
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ── DayNightCycle ──────────────────────────────────────────────
+log('Creando DayNightCycle...');
+const dayNight = new DayNightCycle(scene, { ambient: ambientLight, sun, hemisphere: hemiLight });
+log('DayNightCycle creado: ' + (dayNight ? 'OK' : 'FALLÓ'));
+
+dayNight.onPhaseChange = (name) => log('Cambio de fase detectado → ' + name);
+
+try {
+  dayNight.start(0.1);
+  log('dayNight.start(0.1) ejecutado sin error');
+} catch (e) {
+  log('❌ ERROR en start(): ' + e.message);
+}
+
+// ── Botones de prueba ──────────────────────────────────────────
+const btns = document.getElementById('btns');
+['amanecer', 'dia', 'atardecer', 'noche'].forEach(phase => {
+  const btn = document.createElement('button');
+  btn.textContent = phase;
+  btn.onclick = () => {
+    try {
+      dayNight.jumpToPhase(phase);
+      log(`jumpToPhase('${phase}') ejecutado — sky ahora: #${scene.background.getHexString()}`);
+    } catch (e) {
+      log(`❌ ERROR en jumpToPhase('${phase}'): ${e.message}`);
+    }
+  };
+  btns.appendChild(btn);
+});
+
+const progBtn = document.createElement('button');
+progBtn.textContent = 'Ver progreso actual';
+progBtn.onclick = () => log('Progreso: ' + dayNight.getProgress().toFixed(3));
+btns.appendChild(progBtn);
+</script>
+</body>
+</html>
