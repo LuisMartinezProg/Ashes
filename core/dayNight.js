@@ -24,12 +24,22 @@ export class DayNightCycle {
     this._elapsed     = 0;
     this._intervalId  = null;
 
+    // Objetos temporales "from" (sobre los que se llama .lerp())
     this._tmpSky     = new THREE.Color();
     this._tmpFog     = new THREE.Color();
     this._tmpAmbient = new THREE.Color();
     this._tmpSun     = new THREE.Color();
     this._tmpHemiSky = new THREE.Color();
     this._tmpHemiGr  = new THREE.Color();
+
+    // Objetos temporales "to" — separados, porque .lerp(target, t) necesita
+    // que target sea un objeto distinto al que estamos mutando.
+    this._tmpSkyTo     = new THREE.Color();
+    this._tmpFogTo     = new THREE.Color();
+    this._tmpAmbientTo = new THREE.Color();
+    this._tmpSunTo     = new THREE.Color();
+    this._tmpHemiSkyTo = new THREE.Color();
+    this._tmpHemiGrTo  = new THREE.Color();
 
     this.onPhaseChange   = null;
     this._lastPhaseName  = null;
@@ -70,12 +80,30 @@ export class DayNightCycle {
   _applyProgress(progress) {
     const { from, to, localT, phaseName } = this._findPhaseSegment(progress);
 
-    this._tmpSky.setHex(from.sky).lerp(this._tmpSky.set(to.sky), localT);
-    this._tmpFog.setHex(from.fog).lerp(this._tmpFog.set(to.fog), localT);
-    this._tmpAmbient.setHex(from.ambient).lerp(this._tmpAmbient.set(to.ambient), localT);
-    this._tmpSun.setHex(from.sunColor).lerp(this._tmpSun.set(to.sunColor), localT);
-    this._tmpHemiSky.setHex(from.hemiSky).lerp(this._tmpHemiSky.set(to.hemiSky), localT);
-    this._tmpHemiGr.setHex(from.hemiGround).lerp(this._tmpHemiGr.set(to.hemiGround), localT);
+    this._tmpSky.setHex(from.sky);
+    this._tmpSkyTo.setHex(to.sky);
+    this._tmpSky.lerp(this._tmpSkyTo, localT);
+
+    this._tmpFog.setHex(from.fog);
+    this._tmpFogTo.setHex(to.fog);
+    this._tmpFog.lerp(this._tmpFogTo, localT);
+
+    this._tmpAmbient.setHex(from.ambient);
+    this._tmpAmbientTo.setHex(to.ambient);
+    this._tmpAmbient.lerp(this._tmpAmbientTo, localT);
+
+    this._tmpSun.setHex(from.sunColor);
+    this._tmpSunTo.setHex(to.sunColor);
+    this._tmpSun.lerp(this._tmpSunTo, localT);
+
+    this._tmpHemiSky.setHex(from.hemiSky);
+    this._tmpHemiSkyTo.setHex(to.hemiSky);
+    this._tmpHemiSky.lerp(this._tmpHemiSkyTo, localT);
+
+    this._tmpHemiGr.setHex(from.hemiGround);
+    this._tmpHemiGrTo.setHex(to.hemiGround);
+    this._tmpHemiGr.lerp(this._tmpHemiGrTo, localT);
+
     const sunIntensity = from.sunIntensity + (to.sunIntensity - from.sunIntensity) * localT;
 
     if (this.scene.background?.isColor) {
