@@ -2,10 +2,10 @@
 // Ciclo día/noche visual: cielo, fog y luces interpolan entre 4 fases.
 // v1: solo visual/ambiental. Gameplay (dificultad nocturna, stock tiendas) viene después.
 import * as THREE from 'three';
+
 const CYCLE_DURATION_S = 1800; // 30 min reales = 1 día completo
 const UPDATE_INTERVAL_MS = 1000; // recalcular 1 vez por segundo (no por frame)
 
-// Cada fase: [horaInicio (0-1 del ciclo), color de cielo, color de fog, color luz ambiental, color luz sol, intensidad sol, color hemisferio cielo, color hemisferio suelo]
 const PHASES = [
   { t: 0.00, name: 'amanecer', sky: 0xFFB870, fog: 0xE8956A, ambient: 0xFFD8A0, sunColor: 0xFFA860, sunIntensity: 1.6, hemiSky: 0xFFB870, hemiGround: 0x6A4A30 },
   { t: 0.10, name: 'dia',      sky: 0x5A7A8A, fog: 0x3A5A40, ambient: 0xB0C8D0, sunColor: 0xFFE8A0, sunIntensity: 2.0, hemiSky: 0x88AA66, hemiGround: 0x2A3A1A },
@@ -16,29 +16,28 @@ const PHASES = [
 
 export class DayNightCycle {
   constructor(scene, lights) {
-    this.scene  = scene;
-    this.sun    = lights.sun;
+    this.scene   = scene;
+    this.sun     = lights.sun;
     this.ambient = lights.ambient;
-    this.hemi   = lights.hemisphere;
+    this.hemi    = lights.hemisphere;
 
-    this._elapsed = 0; // segundos transcurridos en el ciclo actual
-    this._intervalId = null;
+    this._elapsed     = 0;
+    this._intervalId  = null;
 
-    // Reutilizamos objetos Color para no crear basura cada tick
-    this._tmpSky    = new THREE.Color();
-    this._tmpFog    = new THREE.Color();
-    this._tmpAmbient= new THREE.Color();
-    this._tmpSun    = new THREE.Color();
-    this._tmpHemiSky= new THREE.Color();
-    this._tmpHemiGr = new THREE.Color();
+    this._tmpSky     = new THREE.Color();
+    this._tmpFog     = new THREE.Color();
+    this._tmpAmbient = new THREE.Color();
+    this._tmpSun     = new THREE.Color();
+    this._tmpHemiSky = new THREE.Color();
+    this._tmpHemiGr  = new THREE.Color();
 
-    this.onPhaseChange = null; // callback opcional: (phaseName) => {}
-    this._lastPhaseName = null;
+    this.onPhaseChange   = null;
+    this._lastPhaseName  = null;
   }
 
   start(startProgress = 0) {
     this._elapsed = startProgress * CYCLE_DURATION_S;
-    this._tick(); // aplica estado inicial inmediatamente, sin esperar 1s
+    this._applyProgress(this.getProgress()); // aplica estado inicial SIN avanzar tiempo
     this._intervalId = setInterval(() => this._tick(), UPDATE_INTERVAL_MS);
   }
 
@@ -46,6 +45,7 @@ export class DayNightCycle {
     if (this._intervalId) clearInterval(this._intervalId);
     this._intervalId = null;
   }
+
   // Salta instantáneamente al inicio de una fase (amanecer/dia/atardecer/noche)
   jumpToPhase(phaseName) {
     const phase = PHASES.find(p => p.name === phaseName);
@@ -54,17 +54,17 @@ export class DayNightCycle {
       return;
     }
     this._elapsed = phase.t * CYCLE_DURATION_S;
-    this._tick(); // aplica el cambio visual de inmediato
+    this._applyProgress(this.getProgress()); // aplica de inmediato, SIN sumar tiempo extra
   }
-  // Progreso del ciclo (0 a 1)
+
   getProgress() {
     return (this._elapsed % CYCLE_DURATION_S) / CYCLE_DURATION_S;
   }
 
+  // Avanza el tiempo 1 tick Y aplica (usado solo por el setInterval automático)
   _tick() {
     this._elapsed += UPDATE_INTERVAL_MS / 1000;
-    const progress = this.getProgress();
-    this._applyProgress(progress);
+    this._applyProgress(this.getProgress());
   }
 
   _applyProgress(progress) {
@@ -107,20 +107,13 @@ export class DayNightCycle {
     for (let i = 0; i < PHASES.length - 1; i++) {
       const from = PHASES[i];
       const to   = PHASES[i + 1];
-      // Usamos < en vez de <= para el límite superior, evitando que un
-      // progress exactamente igual a un límite caiga en el segmento equivocado.
       if (progress >= from.t && progress < to.t) {
         const span   = to.t - from.t;
         const localT = span > 0 ? (progress - from.t) / span : 0;
-        const phaseName = from.name;
-        return { from, to, localT, phaseName };
+        return { from, to, localT, phaseName: from.name };
       }
     }
-    // progress === último t (ej. 0.95 al cierre del ciclo): usar la última fase
     const last = PHASES[PHASES.length - 1];
     return { from: last, to: last, localT: 0, phaseName: last.name };
-  }
-    // Fallback (no debería pasar con t:0.95→1.0 cerrando el ciclo)
-    return { from: PHASES[0], to: PHASES[0], localT: 0, phaseName: PHASES[0].name };
   }
 }
