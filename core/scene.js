@@ -27,13 +27,17 @@ export async function initScene() {
   camera.position.set(0, 12, 16);
   camera.lookAt(0, 0, 0);
 
-  scene.add(new THREE.AmbientLight(0xB0C8D0, 1.8));
+  const ambientLight = new THREE.AmbientLight(0xB0C8D0, 1.8);
+  scene.add(ambientLight);
+
   const sun = new THREE.DirectionalLight(0xFFE8A0, 2.0);
   sun.position.set(-20, 40, -10);
   sun.castShadow = false;
   scene.add(sun);
-  scene.add(new THREE.HemisphereLight(0x88AA66, 0x2A3A1A, 1.0));
 
+  const hemiLight = new THREE.HemisphereLight(0x88AA66, 0x2A3A1A, 1.0);
+  scene.add(hemiLight);
+  
   const worldGroup = new THREE.Group();
   worldGroup.name = 'world';
   scene.add(worldGroup);
@@ -70,8 +74,8 @@ export async function initScene() {
     color: 0x1a0a2a, glow: 0x9933ff, torchColor: 0x9933ff,
   });
 
-  console.log('[SCENE] Mundo inicializado');
-  return { scene, camera, renderer };
+console.log('[SCENE] Mundo inicializado');
+  return { scene, camera, renderer, lights: { ambient: ambientLight, sun, hemisphere: hemiLight } };
 }
 
 function addGround(parent, w, d, x, z, color, roughness) {
