@@ -21,6 +21,8 @@
     }
     .row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
     .row span:last-child { color: #C9A84C; font-weight: bold; }
+    .row.sub span:last-child { color: #8ab4ff; font-size: 11px; }
+    .guarantee-on { color: #ff66cc !important; }
     .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
     button {
       flex: 1 1 auto; min-width: 110px;
@@ -35,7 +37,7 @@
     button:active { background: rgba(201,168,76,0.25); }
     button.danger { border-color: rgba(255,80,80,0.5); color: #ff6666; background: rgba(255,80,80,0.08); }
     #log {
-      max-height: 50vh; overflow-y: auto;
+      max-height: 45vh; overflow-y: auto;
       font-size: 12px; line-height: 1.6;
     }
     .pull-line { padding: 6px 8px; border-radius: 6px; margin-bottom: 4px; }
@@ -43,22 +45,33 @@
     .rarity-raro  { background: rgba(80,140,255,0.12); color: #8ab4ff; }
     .rarity-epico { background: rgba(255,200,60,0.15); color: #ffd24d; font-weight: bold; }
     .featured-tag { color: #ff66cc; }
+    .offrate-tag { color: #888; }
   </style>
 </head>
 <body>
 
-  <h1>🎴 TEST — Sistema de Gacha</h1>
+  <h1>🎴 TEST — Gacha (doble pity estilo Genshin)</h1>
 
   <div class="panel">
     <div class="row"><span>Gemas</span><span id="gems">--</span></div>
-    <div class="row"><span>Pity actual</span><span id="pity">--</span></div>
-    <div class="row"><span>Pity restante</span><span id="pity-left">--</span></div>
     <div class="row"><span>Costo por pull</span><span id="cost">--</span></div>
+  </div>
+
+  <div class="panel">
+    <div class="row"><span>Pity Épico</span><span id="pity-epico">--</span></div>
+    <div class="row sub"><span>Restante</span><span id="pity-epico-left">--</span></div>
+    <div class="row"><span>Garantía Épico (perdiste 50/50)</span><span id="guarantee-epico">--</span></div>
+  </div>
+
+  <div class="panel">
+    <div class="row"><span>Pity Raro</span><span id="pity-raro">--</span></div>
+    <div class="row sub"><span>Restante</span><span id="pity-raro-left">--</span></div>
+    <div class="row"><span>Garantía Raro (perdiste 50/50)</span><span id="guarantee-raro">--</span></div>
   </div>
 
   <div class="btns">
     <button id="add-gems">+160 gemas</button>
-    <button id="add-gems-big">+1600 gemas</button>
+    <button id="add-gems-big">+16000 gemas</button>
   </div>
 
   <div class="btns">
@@ -67,7 +80,10 @@
   </div>
 
   <div class="btns">
-    <button id="force-pity" class="danger">Forzar pity (89)</button>
+    <button id="force-pity-epico" class="danger">Forzar pity Épico (89)</button>
+    <button id="force-pity-raro" class="danger">Forzar pity Raro (9)</button>
+  </div>
+  <div class="btns">
     <button id="reset" class="danger">Reset total</button>
   </div>
 
@@ -76,28 +92,42 @@
   </div>
 
   <script type="module">
-    import { GachaSystem, PULL_COST, PITY_THRESHOLD } from './core/gacha.js';
+    import { GachaSystem, PULL_COST, PITY_EPICO_THRESHOLD, PITY_RARO_THRESHOLD } from './core/gacha.js';
 
     const gacha = new GachaSystem();
     window._gacha = gacha; // para inspeccionar desde consola si hace falta
 
     const $gems = document.getElementById('gems');
-    const $pity = document.getElementById('pity');
-    const $pityLeft = document.getElementById('pity-left');
     const $cost = document.getElementById('cost');
+    const $pityEpico = document.getElementById('pity-epico');
+    const $pityEpicoLeft = document.getElementById('pity-epico-left');
+    const $guaranteeEpico = document.getElementById('guarantee-epico');
+    const $pityRaro = document.getElementById('pity-raro');
+    const $pityRaroLeft = document.getElementById('pity-raro-left');
+    const $guaranteeRaro = document.getElementById('guarantee-raro');
     const $log = document.getElementById('log');
 
     function refresh() {
       $gems.textContent = gacha.getGems();
-      $pity.textContent = `${gacha.getPity()} / ${PITY_THRESHOLD}`;
-      $pityLeft.textContent = gacha.getPityRemaining();
       $cost.textContent = `${PULL_COST} gemas`;
+
+      $pityEpico.textContent = `${gacha.getPityEpico()} / ${PITY_EPICO_THRESHOLD}`;
+      $pityEpicoLeft.textContent = gacha.getPityEpicoRemaining();
+      $guaranteeEpico.textContent = gacha.isGuaranteedEpico() ? 'SÍ' : 'no';
+      $guaranteeEpico.className = gacha.isGuaranteedEpico() ? 'guarantee-on' : '';
+
+      $pityRaro.textContent = `${gacha.getPityRaro()} / ${PITY_RARO_THRESHOLD}`;
+      $pityRaroLeft.textContent = gacha.getPityRaroRemaining();
+      $guaranteeRaro.textContent = gacha.isGuaranteedRaro() ? 'SÍ' : 'no';
+      $guaranteeRaro.className = gacha.isGuaranteedRaro() ? 'guarantee-on' : '';
     }
 
     function logPull(item) {
       const div = document.createElement('div');
       div.className = `pull-line rarity-${item.rarity}`;
-      const tag = item.featured ? ' <span class="featured-tag">[FEATURED]</span>' : (item.featured === false ? ' [off-rate]' : '');
+      let tag = '';
+      if (item.featured === true) tag = ' <span class="featured-tag">[FEATURED]</span>';
+      else if (item.featured === false) tag = ' <span class="offrate-tag">[off-rate]</span>';
       div.innerHTML = `<b>${item.rarity.toUpperCase()}</b> — ${item.name}${tag}`;
       $log.prepend(div);
     }
@@ -108,7 +138,7 @@
     });
 
     document.getElementById('add-gems-big').addEventListener('click', () => {
-      gacha.addGems(1600);
+      gacha.addGems(16000);
       refresh();
     });
 
@@ -126,11 +156,18 @@
       refresh();
     });
 
-    document.getElementById('force-pity').addEventListener('click', () => {
-      gacha._pity = 89;
+    document.getElementById('force-pity-epico').addEventListener('click', () => {
+      gacha._pityEpico = 89;
       gacha._savePity();
       refresh();
-      alert('Pity forzado a 89. El próximo pull garantiza Épico.');
+      alert('Pity Épico forzado a 89. El próximo pull garantiza Épico.');
+    });
+
+    document.getElementById('force-pity-raro').addEventListener('click', () => {
+      gacha._pityRaro = 9;
+      gacha._savePity();
+      refresh();
+      alert('Pity Raro forzado a 9. El próximo pull garantiza al menos Raro.');
     });
 
     document.getElementById('reset').addEventListener('click', () => {
