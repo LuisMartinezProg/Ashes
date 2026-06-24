@@ -113,7 +113,8 @@ import { CurrencySystem } from './core/currency.js';
 import { Thug } from './core/enemies/Thug.js';
 import { DayNightCycle } from './core/dayNight.js';
 import { TimeMenu } from './ui/timeMenu.js';
-  
+import { WeatherSystem } from './core/weather.js';
+        
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -193,13 +194,16 @@ async function boot() {
     setProgress(57, 'Progression...');
     const progression     = new Progression();
     const currency = new CurrencySystem();
-window._currency = currency;
+    window._currency = currency;
     const dayNight = new DayNightCycle(scene, lights);
     dayNight.start(0.1); // arranca ligeramente entrado el día, ajustable
     window._dayNight = dayNight;
     const mikaProgression = createMikaProgression();
     window._mikaProgression = mikaProgression;
     const timeMenu = new TimeMenu(dayNight);
+    const weather = new WeatherSystem(scene);
+    weather.start();
+    window._weather = weather;
     window._timeMenu = timeMenu;
     setProgress(59, 'Companion...');
     const companion = new Companion(scene, player.root.position);
@@ -590,6 +594,7 @@ window._bestiaryScreen = bestiaryScreen;
       _lastDungeonTime = now;
       dungeonManager.update(delta, camera);
       parry.update(delta);
+      window._weather?.updateRain(delta);
       if (window._player) updateWorldLOD(window._player.root.position);
       requestAnimationFrame(_dungeonLoop);
     }
