@@ -199,12 +199,13 @@ async function boot() {
     dayNight.start(0.1); // arranca ligeramente entrado el día, ajustable
     window._dayNight = dayNight;
     const mikaProgression = createMikaProgression();
-    window._mikaProgression = mikaProgression;
-    const timeMenu = new TimeMenu(dayNight);
-    const weather = new WeatherSystem(scene);
-    weather.start();
-    window._weather = weather;
-    window._timeMenu = timeMenu;
+     window._mikaProgression = mikaProgression;
+     const weather = new WeatherSystem(scene);
+     weather.start();
+     window._weather = weather;
+     const timeMenu = new TimeMenu(dayNight, weather);
+     window._timeMenu = timeMenu;
+    
     setProgress(59, 'Companion...');
     const companion = new Companion(scene, player.root.position);
     window._companion = companion;
@@ -507,7 +508,7 @@ allEnemies.forEach(e => {
     window._partyMenu = partyMenu;
     const inventoryUI = new InventoryUI();
     const bestiaryScreen = new BestiaryScreen();
-window._bestiaryScreen = bestiaryScreen;
+    window._bestiaryScreen = bestiaryScreen;
     window._inventory = inventoryUI;
     window._itemDrops = { ITEMS, rollDrops, rollCurrency };
     inventoryUI.syncMaterials(building);
@@ -615,7 +616,7 @@ window._bestiaryScreen = bestiaryScreen;
     txt.style.fontSize = '9px';
     txt.style.whiteSpace = 'pre-wrap';
     txt.style.maxWidth = '90vw';
-    bar.style.background = '#8B2 A0A';
+    bar.style.background = '#8B2A0A';
   }
   
 }
