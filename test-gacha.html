@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Test Gacha</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: #0a0814; color: #eee;
+      font-family: monospace; padding: 16px;
+      min-height: 100vh;
+    }
+    h1 { color: #C9A84C; font-size: 16px; letter-spacing: 0.1em; margin-bottom: 16px; }
+    .panel {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
+    .row span:last-child { color: #C9A84C; font-weight: bold; }
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    button {
+      flex: 1 1 auto; min-width: 110px;
+      padding: 12px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(201,168,76,0.4);
+      background: rgba(201,168,76,0.1);
+      color: #C9A84C;
+      font-family: monospace; font-size: 12px;
+      cursor: pointer;
+    }
+    button:active { background: rgba(201,168,76,0.25); }
+    button.danger { border-color: rgba(255,80,80,0.5); color: #ff6666; background: rgba(255,80,80,0.08); }
+    #log {
+      max-height: 50vh; overflow-y: auto;
+      font-size: 12px; line-height: 1.6;
+    }
+    .pull-line { padding: 6px 8px; border-radius: 6px; margin-bottom: 4px; }
+    .rarity-comun { background: rgba(255,255,255,0.05); color: #ccc; }
+    .rarity-raro  { background: rgba(80,140,255,0.12); color: #8ab4ff; }
+    .rarity-epico { background: rgba(255,200,60,0.15); color: #ffd24d; font-weight: bold; }
+    .featured-tag { color: #ff66cc; }
+  </style>
+</head>
+<body>
+
+  <h1>🎴 TEST — Sistema de Gacha</h1>
+
+  <div class="panel">
+    <div class="row"><span>Gemas</span><span id="gems">--</span></div>
+    <div class="row"><span>Pity actual</span><span id="pity">--</span></div>
+    <div class="row"><span>Pity restante</span><span id="pity-left">--</span></div>
+    <div class="row"><span>Costo por pull</span><span id="cost">--</span></div>
+  </div>
+
+  <div class="btns">
+    <button id="add-gems">+160 gemas</button>
+    <button id="add-gems-big">+1600 gemas</button>
+  </div>
+
+  <div class="btns">
+    <button id="pull1">Pull x1</button>
+    <button id="pull10">Pull x10</button>
+  </div>
+
+  <div class="btns">
+    <button id="force-pity" class="danger">Forzar pity (89)</button>
+    <button id="reset" class="danger">Reset total</button>
+  </div>
+
+  <div class="panel">
+    <div id="log"></div>
+  </div>
+
+  <script type="module">
+    import { GachaSystem, PULL_COST, PITY_THRESHOLD } from './core/gacha.js';
+
+    const gacha = new GachaSystem();
+    window._gacha = gacha; // para inspeccionar desde consola si hace falta
+
+    const $gems = document.getElementById('gems');
+    const $pity = document.getElementById('pity');
+    const $pityLeft = document.getElementById('pity-left');
+    const $cost = document.getElementById('cost');
+    const $log = document.getElementById('log');
+
+    function refresh() {
+      $gems.textContent = gacha.getGems();
+      $pity.textContent = `${gacha.getPity()} / ${PITY_THRESHOLD}`;
+      $pityLeft.textContent = gacha.getPityRemaining();
+      $cost.textContent = `${PULL_COST} gemas`;
+    }
+
+    function logPull(item) {
+      const div = document.createElement('div');
+      div.className = `pull-line rarity-${item.rarity}`;
+      const tag = item.featured ? ' <span class="featured-tag">[FEATURED]</span>' : (item.featured === false ? ' [off-rate]' : '');
+      div.innerHTML = `<b>${item.rarity.toUpperCase()}</b> — ${item.name}${tag}`;
+      $log.prepend(div);
+    }
+
+    document.getElementById('add-gems').addEventListener('click', () => {
+      gacha.addGems(160);
+      refresh();
+    });
+
+    document.getElementById('add-gems-big').addEventListener('click', () => {
+      gacha.addGems(1600);
+      refresh();
+    });
+
+    document.getElementById('pull1').addEventListener('click', () => {
+      const results = gacha.pull(1);
+      if (!results) { alert('Gemas insuficientes'); return; }
+      results.forEach(logPull);
+      refresh();
+    });
+
+    document.getElementById('pull10').addEventListener('click', () => {
+      const results = gacha.pull(10);
+      if (!results) { alert('Gemas insuficientes'); return; }
+      results.forEach(logPull);
+      refresh();
+    });
+
+    document.getElementById('force-pity').addEventListener('click', () => {
+      gacha._pity = 89;
+      gacha._savePity();
+      refresh();
+      alert('Pity forzado a 89. El próximo pull garantiza Épico.');
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      if (!confirm('¿Borrar gemas y pity guardados?')) return;
+      localStorage.removeItem('ashes_gemas');
+      localStorage.removeItem('ashes_gacha_pity');
+      location.reload();
+    });
+
+    refresh();
+  </script>
+
+</body>
+</html>
