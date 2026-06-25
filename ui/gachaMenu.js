@@ -1,7 +1,10 @@
 // ui/gachaMenu.js
 // Banner de Gacha — "Velo Umbral / Eco Astral".
-// El cristal acumula grietas según el pity Épico actual (persiste entre pulls,
-// no se reinicia con cada uno). Solo se rompe cuando un pull trae un Épico.
+// Layout: [Banners] [Cristal] [Gemas + Showcase + Stats + Pulls]
+// El cristal vive siempre visible (no es un overlay aparte) y acumula
+// grietas según el pity Épico actual. Historial en pantalla separada.
+
+import { PULL_COST, PITY_EPICO_THRESHOLD, PITY_RARO_THRESHOLD } from './../core/gacha.js';
 
 const RARITY_LABELS = {
   comun: 'Polvo',
@@ -26,8 +29,6 @@ const FEATURED_DISPLAY = {
   epico: 'Reliquia: Alba Eterna',
 };
 
-const PITY_EPICO_MAX = 90; // mismo valor que core/gacha.js (duplicado aquí solo para el dibujo visual)
-
 let _stylesInjected = false;
 
 function _injectStyles() {
@@ -45,217 +46,222 @@ function _injectStyles() {
       -webkit-tap-highlight-color: transparent;
     }
     #gacha-overlay.open { display: flex; }
-    .gacha-header {
+
+    .gacha-topbar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 16px 10px;
+      padding: 10px 12px;
       border-bottom: 1px solid rgba(157,127,232,0.2);
+      flex-shrink: 0;
     }
     .gacha-title {
-      font-family: Georgia, serif; letter-spacing: 0.15em;
-      font-size: 14px; color: #9D7FE8; text-transform: uppercase;
+      font-family: Georgia, serif; letter-spacing: 0.12em;
+      font-size: 13px; color: #9D7FE8; text-transform: uppercase;
     }
-    .gacha-skip, .gacha-close {
+    .gacha-topbar-actions { display: flex; gap: 6px; }
+    .gacha-topbar-actions button {
       background: rgba(157,127,232,0.1);
       border: 1px solid rgba(157,127,232,0.35);
-      color: #E8E4F0; border-radius: 8px;
-      font-family: monospace; font-size: 11px;
-      padding: 8px 10px; cursor: pointer;
+      color: #E8E4F0; border-radius: 7px;
+      font-family: monospace; font-size: 10px;
+      padding: 7px 8px; cursor: pointer;
     }
-    .gacha-skip.active { background: rgba(157,127,232,0.35); color: #fff; }
-    .gacha-body { flex: 1; overflow-y: auto; padding: 16px; }
-    .gacha-banner {
-      background: linear-gradient(180deg, #171025, #0F0A18);
-      border: 1px solid rgba(232,201,122,0.3);
-      border-radius: 12px;
-      padding: 18px 14px;
-      text-align: center;
-      margin-bottom: 16px;
-    }
-    .gacha-banner-label {
-      font-size: 10px; letter-spacing: 0.2em; color: #5C4A8A;
-      text-transform: uppercase; margin-bottom: 6px;
-    }
-    .gacha-banner-name {
-      font-family: Georgia, serif; font-size: 16px; color: #E8C97A;
-    }
-    .gacha-panel {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(157,127,232,0.18);
-      border-radius: 10px;
-      padding: 12px; margin-bottom: 12px;
-    }
-    .gacha-panel-title {
-      font-size: 11px; letter-spacing: 0.1em; color: #9D7FE8;
-      text-transform: uppercase; margin-bottom: 10px;
-    }
-    .gacha-dots { display: flex; gap: 6px; margin-bottom: 8px; }
-    .gacha-dot {
-      width: 14px; height: 14px; border-radius: 50%;
-      background: rgba(157,127,232,0.15);
-      border: 1px solid rgba(157,127,232,0.3);
-      transition: background 0.3s, box-shadow 0.3s;
-    }
-    .gacha-dot.lit {
-      background: #9D7FE8;
-      box-shadow: 0 0 8px rgba(157,127,232,0.8);
-    }
-    .gacha-bar-wrap {
-      height: 6px; border-radius: 3px;
-      background: rgba(232,201,122,0.12);
-      overflow: hidden; margin-bottom: 6px;
-    }
-    .gacha-bar-fill {
-      height: 100%; background: linear-gradient(90deg, #7A6030, #E8C97A);
-      transition: width 0.4s ease;
-    }
-    .gacha-row { display: flex; justify-content: space-between; font-size: 11px; color: #B8B0C8; }
-    .gacha-guarantee { color: #E8C97A; font-weight: bold; }
-    .gacha-footer {
-      padding: 12px 16px 18px;
-      border-top: 1px solid rgba(157,127,232,0.2);
-    }
-    .gacha-gems-row {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 10px; font-size: 13px;
-    }
-    .gacha-gems-value { color: #E8C97A; font-weight: bold; }
-    .gacha-pull-btns { display: flex; gap: 10px; }
-    .gacha-pull-btn {
-      flex: 1; padding: 14px 8px; border-radius: 10px;
-      border: 1px solid rgba(157,127,232,0.5);
-      background: rgba(157,127,232,0.12);
-      color: #E8E4F0; font-family: monospace; font-size: 13px;
-      cursor: pointer;
-    }
-    .gacha-pull-btn:active { background: rgba(157,127,232,0.3); }
-    .gacha-pull-btn.disabled { opacity: 0.4; pointer-events: none; }
-    .gacha-msg {
-      font-size: 11px; color: #E89A9A; text-align: center;
-      margin-top: 6px; min-height: 14px;
+    .gacha-topbar-actions button.active { background: rgba(157,127,232,0.35); color: #fff; }
+
+    .gacha-main {
+      flex: 1; display: flex; overflow: hidden;
+      padding: 10px 8px;
+      gap: 8px;
     }
 
-    /* ---- Revelación: el cristal ---- */
-    #gacha-reveal {
-      position: fixed; inset: 0; z-index: 320;
-      background: #050308;
-      display: none;
-      flex-direction: column; align-items: center; justify-content: flex-start;
-      padding: 32px 16px 24px;
-      overflow-y: auto;
+    /* ---- Columna banners ---- */
+    .gacha-col-banners {
+      flex: 0 0 62px;
+      display: flex; flex-direction: column; gap: 6px;
     }
-    #gacha-reveal.open { display: flex; }
-    .gacha-stars {
-      position: absolute; inset: 0; pointer-events: none;
-      background-image:
-        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.5), transparent),
-        radial-gradient(1px 1px at 80% 15%, rgba(255,255,255,0.4), transparent),
-        radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.5), transparent),
-        radial-gradient(1px 1px at 30% 85%, rgba(255,255,255,0.3), transparent),
-        radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.4), transparent),
-        radial-gradient(1px 1px at 20% 50%, rgba(255,255,255,0.3), transparent);
+    .gacha-banner-tab {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(157,127,232,0.25);
+      border-radius: 8px;
+      color: #B8B0C8; font-family: monospace; font-size: 9px;
+      padding: 8px 4px; line-height: 1.3;
+      cursor: pointer; text-align: center;
+    }
+    .gacha-banner-tab.active {
+      border-color: #E8C97A; color: #E8C97A;
+      background: rgba(232,201,122,0.08);
+    }
+    .gacha-banner-tab.disabled {
+      opacity: 0.45; pointer-events: none;
+    }
+    .gacha-banner-tab small { display: block; font-size: 8px; color: #6E6280; margin-top: 2px; }
+
+    /* ---- Columna cristal ---- */
+    .gacha-col-gem {
+      flex: 0 0 34%;
+      display: flex; align-items: center; justify-content: center;
+      overflow: visible;
     }
     #gacha-gem-wrap {
-      position: relative; width: 220px; height: 280px;
-      margin-top: 24px; flex-shrink: 0;
+      position: relative; width: 130px; height: 175px;
+      overflow: visible;
     }
     #gacha-gem-svg { width: 100%; height: 100%; overflow: visible; }
     .gem-glow {
-      filter: drop-shadow(0 0 18px rgba(157,127,232,0.65)) drop-shadow(0 0 38px rgba(157,127,232,0.35));
+      filter: drop-shadow(0 0 12px rgba(157,127,232,0.6)) drop-shadow(0 0 26px rgba(157,127,232,0.3));
     }
     #gem-rest-group {
       animation: gemPulse 2.6s ease-in-out infinite;
       transform-origin: 100px 135px;
     }
     @keyframes gemPulse {
-      0%, 100% { filter: drop-shadow(0 0 14px rgba(157,127,232,0.55)) drop-shadow(0 0 30px rgba(157,127,232,0.25)); }
-      50%      { filter: drop-shadow(0 0 22px rgba(157,127,232,0.8)) drop-shadow(0 0 46px rgba(157,127,232,0.4)); }
+      0%, 100% { filter: drop-shadow(0 0 10px rgba(157,127,232,0.5)) drop-shadow(0 0 20px rgba(157,127,232,0.22)); }
+      50%      { filter: drop-shadow(0 0 16px rgba(157,127,232,0.75)) drop-shadow(0 0 32px rgba(157,127,232,0.38)); }
     }
     .gem-crack {
-      fill: none;
-      stroke: #E8E4F0;
-      stroke-width: 1.4;
-      stroke-linecap: round;
-      stroke-dasharray: 40;
-      stroke-dashoffset: 40;
-      opacity: 0;
+      fill: none; stroke: #E8E4F0; stroke-width: 1.4; stroke-linecap: round;
+      stroke-dasharray: 40; stroke-dashoffset: 40; opacity: 0;
       filter: drop-shadow(0 0 4px rgba(255,255,255,0.9));
       transition: stroke-dashoffset 0.5s ease, opacity 0.15s ease;
     }
-    .gem-crack.drawn {
-      stroke-dashoffset: 0;
-      opacity: 0.95;
-    }
-    .gem-crack.instant {
-      transition: none !important;
-    }
+    .gem-crack.drawn { stroke-dashoffset: 0; opacity: 0.95; }
+    .gem-crack.instant { transition: none !important; }
     .gem-fragment {
       transition: transform 0.6s cubic-bezier(0.2,0.8,0.3,1), opacity 0.6s ease 0.1s;
-      transform: translate(0,0) rotate(0deg);
-      opacity: 1;
+      transform: translate(0,0) rotate(0deg); opacity: 1;
     }
-    /* Desplazamientos moderados — no es una explosión total */
-    #gem-fragments.exploded .frag-tl { transform: translate(-13px,-7px) rotate(-9deg); }
-    #gem-fragments.exploded .frag-tr { transform: translate(13px,-7px) rotate(9deg); }
-    #gem-fragments.exploded .frag-l  { transform: translate(-17px,5px) rotate(-13deg); }
-    #gem-fragments.exploded .frag-r  { transform: translate(17px,5px) rotate(13deg); }
-    #gem-fragments.exploded .frag-bl { transform: translate(-11px,14px) rotate(-7deg); }
-    #gem-fragments.exploded .frag-br { transform: translate(11px,14px) rotate(7deg); }
-    .gem-core {
-      transition: opacity 0.5s ease, transform 0.6s ease;
-      transform-origin: 100px 150px;
-    }
-    #gem-fragments.exploded .gem-core { opacity: 0; transform: scale(1.25); }
+    #gem-fragments.exploded .frag-tl { transform: translate(-9px,-5px) rotate(-8deg); }
+    #gem-fragments.exploded .frag-tr { transform: translate(9px,-5px) rotate(8deg); }
+    #gem-fragments.exploded .frag-l  { transform: translate(-12px,4px) rotate(-12deg); }
+    #gem-fragments.exploded .frag-r  { transform: translate(12px,4px) rotate(12deg); }
+    #gem-fragments.exploded .frag-bl { transform: translate(-8px,10px) rotate(-6deg); }
+    #gem-fragments.exploded .frag-br { transform: translate(8px,10px) rotate(6deg); }
+    .gem-core { transition: opacity 0.5s ease, transform 0.6s ease; transform-origin: 100px 150px; }
+    #gem-fragments.exploded .gem-core { opacity: 0; transform: scale(1.2); }
     .gem-escape-crack {
-      stroke: rgba(157,127,232,0.55);
-      stroke-width: 1; fill: none;
-      stroke-dasharray: 60; stroke-dashoffset: 60;
-      opacity: 0;
+      stroke: rgba(157,127,232,0.5); stroke-width: 1; fill: none;
+      stroke-dasharray: 30; stroke-dashoffset: 30; opacity: 0;
     }
     #gem-fragments.exploded .gem-escape-crack {
-      stroke-dashoffset: 0; opacity: 0.3;
-      transition: stroke-dashoffset 0.9s ease, opacity 0.9s ease;
+      stroke-dashoffset: 0; opacity: 0.28;
+      transition: stroke-dashoffset 0.8s ease, opacity 0.8s ease;
     }
 
-    #gacha-result-single {
-      text-align: center; margin-top: -130px;
-      opacity: 0; transition: opacity 0.5s ease;
-      pointer-events: none;
+    /* ---- Columna info (derecha) ---- */
+    .gacha-col-info {
+      flex: 1; display: flex; flex-direction: column;
+      overflow-y: auto; min-width: 0;
     }
-    #gacha-result-single.show { opacity: 1; }
-    .gacha-result-single-rarity {
-      font-family: Georgia, serif; font-size: 20px; letter-spacing: 0.05em;
+    .gacha-gems-row {
+      display: flex; justify-content: flex-end; align-items: center;
+      gap: 5px; font-size: 12px; margin-bottom: 8px;
     }
-    .gacha-result-single-sub {
-      font-size: 11px; color: #B8B0C8; margin-top: 2px;
+    .gacha-gems-value { color: #E8C97A; font-weight: bold; }
+
+    .gacha-showcase {
+      display: flex; justify-content: center;
+      margin-bottom: 10px;
     }
-    .gacha-result-single-name {
-      font-size: 12px; color: #E8E4F0; margin-top: 8px;
+    .gacha-showcase-frame {
+      transform: rotate(-4deg);
+      background: linear-gradient(160deg, #1B1330, #100A1C);
+      border: 1px solid rgba(232,201,122,0.35);
+      border-radius: 10px;
+      padding: 12px 14px;
+      text-align: center;
+      min-width: 140px;
+      transition: opacity 0.3s ease;
     }
-    .gacha-result-single-featured {
-      font-size: 10px; color: #E8C97A; margin-top: 4px; letter-spacing: 0.1em;
+    .gacha-showcase-label {
+      font-size: 9px; letter-spacing: 0.16em; color: #5C4A8A;
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+    .gacha-showcase-name {
+      font-family: Georgia, serif; font-size: 13px; color: #E8C97A;
+    }
+    .gacha-showcase-rarity {
+      font-family: Georgia, serif; font-size: 15px; margin-top: 2px;
+    }
+    .gacha-showcase-featured {
+      font-size: 9px; color: #E8C97A; margin-top: 4px; letter-spacing: 0.1em;
+    }
+    .gacha-showcase-continue {
+      display: block; margin: 8px auto 0; padding: 5px 10px;
+      border-radius: 6px; border: 1px solid rgba(232,201,122,0.4);
+      background: rgba(232,201,122,0.1); color: #E8C97A;
+      font-family: monospace; font-size: 9px; cursor: pointer;
+      transform: rotate(4deg);
     }
 
-    #gacha-result-list {
-      width: 100%; max-width: 320px; margin-top: 10px;
+    .gacha-panel {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(157,127,232,0.18);
+      border-radius: 9px;
+      padding: 9px 10px; margin-bottom: 8px;
     }
-    .gacha-result-line {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 9px 12px; border-radius: 8px; margin-bottom: 6px;
-      background: rgba(255,255,255,0.04);
-      font-size: 12px; opacity: 0; transform: translateY(6px);
-      transition: opacity 0.3s ease, transform 0.3s ease;
+    .gacha-panel-title {
+      font-size: 9px; letter-spacing: 0.08em; color: #9D7FE8;
+      text-transform: uppercase; margin-bottom: 7px;
     }
-    .gacha-result-line.shown { opacity: 1; transform: translateY(0); }
-    .gacha-result-rarity { font-family: Georgia, serif; font-weight: bold; }
-    .gacha-result-featured { color: #E8C97A; font-size: 10px; margin-left: 6px; }
-
-    #gacha-reveal-close {
-      margin: 18px auto 8px; padding: 10px 22px; border-radius: 10px;
-      border: 1px solid rgba(157,127,232,0.5);
+    .gacha-dots { display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: wrap; }
+    .gacha-dot {
+      width: 11px; height: 11px; border-radius: 50%;
       background: rgba(157,127,232,0.15);
-      color: #E8E4F0; font-family: monospace; font-size: 12px;
-      cursor: pointer; flex-shrink: 0;
+      border: 1px solid rgba(157,127,232,0.3);
+      transition: background 0.3s, box-shadow 0.3s;
     }
+    .gacha-dot.lit { background: #9D7FE8; box-shadow: 0 0 6px rgba(157,127,232,0.8); }
+    .gacha-bar-wrap {
+      height: 5px; border-radius: 3px;
+      background: rgba(232,201,122,0.12);
+      overflow: hidden; margin-bottom: 5px;
+    }
+    .gacha-bar-fill {
+      height: 100%; background: linear-gradient(90deg, #7A6030, #E8C97A);
+      transition: width 0.4s ease;
+    }
+    .gacha-row { display: flex; justify-content: space-between; font-size: 10px; color: #B8B0C8; }
+    .gacha-guarantee { color: #E8C97A; font-weight: bold; }
+
+    .gacha-pull-btns { display: flex; gap: 8px; margin-top: 2px; }
+    .gacha-pull-btn {
+      flex: 1; padding: 11px 6px; border-radius: 9px;
+      border: 1px solid rgba(157,127,232,0.5);
+      background: rgba(157,127,232,0.12);
+      color: #E8E4F0; font-family: monospace; font-size: 11px;
+      cursor: pointer;
+    }
+    .gacha-pull-btn:active { background: rgba(157,127,232,0.3); }
+    .gacha-pull-btn.disabled { opacity: 0.4; pointer-events: none; }
+    .gacha-msg {
+      font-size: 10px; color: #E89A9A; text-align: center;
+      margin-top: 5px; min-height: 13px;
+    }
+
+    /* ---- Historial (pantalla aparte) ---- */
+    #gacha-history {
+      position: fixed; inset: 0; z-index: 330;
+      background: #0B0815; display: none;
+      flex-direction: column; color: #E8E4F0; font-family: monospace;
+    }
+    #gacha-history.open { display: flex; }
+    .gacha-history-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 14px; border-bottom: 1px solid rgba(157,127,232,0.2);
+    }
+    .gacha-history-header button {
+      background: rgba(157,127,232,0.1); border: 1px solid rgba(157,127,232,0.35);
+      color: #E8E4F0; border-radius: 7px; font-family: monospace;
+      font-size: 11px; padding: 7px 10px; cursor: pointer;
+    }
+    .gacha-history-list { flex: 1; overflow-y: auto; padding: 12px 14px; }
+    .gacha-history-line {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 10px; border-radius: 7px; margin-bottom: 5px;
+      background: rgba(255,255,255,0.03); font-size: 11px;
+    }
+    .gacha-history-rarity { font-family: Georgia, serif; font-weight: bold; }
+    .gacha-history-featured { color: #E8C97A; font-size: 9px; margin-left: 5px; }
+    .gacha-history-empty { color: #6E6280; text-align: center; margin-top: 30px; font-size: 11px; }
   `;
   document.head.appendChild(style);
 }
@@ -303,10 +309,10 @@ function _gemSVG() {
         </g>
         <polygon class="gem-fragment gem-core" points="100,110 125,150 100,190 75,150" fill="url(#coreGlow)"/>
 
-        <path class="gem-escape-crack" d="M100,18 C 90,-10 70,-30 50,-55"/>
-        <path class="gem-escape-crack" d="M185,135 C 215,125 240,105 260,80"/>
-        <path class="gem-escape-crack" d="M100,248 C 95,275 80,300 60,320"/>
-        <path class="gem-escape-crack" d="M15,135 C -15,140 -45,130 -70,110"/>
+        <path class="gem-escape-crack" d="M100,18 C 95,0 85,-12 75,-25"/>
+        <path class="gem-escape-crack" d="M185,135 C 200,130 215,118 225,105"/>
+        <path class="gem-escape-crack" d="M100,248 C 97,262 90,275 80,285"/>
+        <path class="gem-escape-crack" d="M15,135 C 0,138 -15,132 -28,122"/>
       </g>
 
       <g id="gem-cracks">
@@ -327,6 +333,7 @@ export class GachaMenu {
   constructor(gacha) {
     this.gacha = gacha;
     this._skipAnim = false;
+    this._history = []; // { rarity, name, featured } más reciente primero
     _injectStyles();
     this._build();
     this._refresh();
@@ -342,76 +349,98 @@ export class GachaMenu {
     const overlay = document.createElement('div');
     overlay.id = 'gacha-overlay';
     overlay.innerHTML = `
-      <div class="gacha-header">
+      <div class="gacha-topbar">
         <div class="gacha-title">Eco Astral</div>
-        <div style="display:flex; gap:8px;">
-          <button class="gacha-skip" id="gacha-skip-btn">Saltar animación</button>
-          <button class="gacha-close" id="gacha-close-btn">Cerrar</button>
+        <div class="gacha-topbar-actions">
+          <button id="gacha-history-btn">Historial</button>
+          <button id="gacha-skip-btn">Saltar animación</button>
+          <button id="gacha-close-btn">Cerrar</button>
         </div>
       </div>
-      <div class="gacha-body">
-        <div class="gacha-banner">
-          <div class="gacha-banner-label">Velo destacado</div>
-          <div class="gacha-banner-name" id="gacha-featured-epico"></div>
+      <div class="gacha-main">
+        <div class="gacha-col-banners">
+          <button class="gacha-banner-tab active" id="gacha-tab-promo">Promocional</button>
+          <button class="gacha-banner-tab disabled" id="gacha-tab-standard">Permanente<small>próximamente</small></button>
         </div>
 
-        <div class="gacha-panel">
-          <div class="gacha-panel-title">Eco — garantía cada 10</div>
-          <div class="gacha-dots" id="gacha-dots-raro"></div>
-          <div class="gacha-row">
-            <span>Garantía Eco</span>
-            <span id="gacha-guarantee-raro">no</span>
-          </div>
+        <div class="gacha-col-gem">
+          <div id="gacha-gem-wrap">${_gemSVG()}</div>
         </div>
 
-        <div class="gacha-panel">
-          <div class="gacha-panel-title">Velo — garantía cada 90</div>
-          <div class="gacha-bar-wrap"><div class="gacha-bar-fill" id="gacha-bar-epico"></div></div>
-          <div class="gacha-row">
-            <span id="gacha-pity-epico-text">0 / 90</span>
-            <span id="gacha-guarantee-epico">no</span>
+        <div class="gacha-col-info">
+          <div class="gacha-gems-row">
+            <span>Gemas</span>
+            <span class="gacha-gems-value" id="gacha-gems-value">0</span>
           </div>
+
+          <div class="gacha-showcase">
+            <div class="gacha-showcase-frame" id="gacha-showcase-frame">
+              <div class="gacha-showcase-label" id="gacha-showcase-label">Velo destacado</div>
+              <div class="gacha-showcase-name" id="gacha-showcase-name"></div>
+            </div>
+          </div>
+
+          <div class="gacha-panel">
+            <div class="gacha-panel-title">Eco — garantía cada 10</div>
+            <div class="gacha-dots" id="gacha-dots-raro"></div>
+            <div class="gacha-row">
+              <span>Garantía Eco</span>
+              <span id="gacha-guarantee-raro">no</span>
+            </div>
+          </div>
+
+          <div class="gacha-panel">
+            <div class="gacha-panel-title">Velo — garantía cada 90</div>
+            <div class="gacha-bar-wrap"><div class="gacha-bar-fill" id="gacha-bar-epico"></div></div>
+            <div class="gacha-row">
+              <span id="gacha-pity-epico-text">Faltan 90</span>
+              <span id="gacha-guarantee-epico">no</span>
+            </div>
+          </div>
+
+          <div class="gacha-pull-btns">
+            <button class="gacha-pull-btn" id="gacha-pull1">Eco x1 (${PULL_COST})</button>
+            <button class="gacha-pull-btn" id="gacha-pull10">Eco x10 (${PULL_COST * 10})</button>
+          </div>
+          <div class="gacha-msg" id="gacha-msg"></div>
         </div>
-      </div>
-      <div class="gacha-footer">
-        <div class="gacha-gems-row">
-          <span>Gemas</span>
-          <span class="gacha-gems-value" id="gacha-gems-value">0</span>
-        </div>
-        <div class="gacha-pull-btns">
-          <button class="gacha-pull-btn" id="gacha-pull1">Eco x1 (160)</button>
-          <button class="gacha-pull-btn" id="gacha-pull10">Eco x10 (1600)</button>
-        </div>
-        <div class="gacha-msg" id="gacha-msg"></div>
       </div>
     `;
     document.body.appendChild(overlay);
     this._overlay = overlay;
 
-    const reveal = document.createElement('div');
-    reveal.id = 'gacha-reveal';
-    reveal.innerHTML = `
-      <div class="gacha-stars"></div>
-      <div id="gacha-gem-wrap">${_gemSVG()}</div>
-      <div id="gacha-result-single">
-        <div class="gacha-result-single-rarity" id="gacha-result-single-rarity"></div>
-        <div class="gacha-result-single-sub" id="gacha-result-single-sub"></div>
-        <div class="gacha-result-single-name" id="gacha-result-single-name"></div>
-        <div class="gacha-result-single-featured" id="gacha-result-single-featured"></div>
+    const history = document.createElement('div');
+    history.id = 'gacha-history';
+    history.innerHTML = `
+      <div class="gacha-history-header">
+        <div class="gacha-title">Historial</div>
+        <button id="gacha-history-close-btn">Cerrar</button>
       </div>
-      <div id="gacha-result-list"></div>
-      <button id="gacha-reveal-close">Cerrar</button>
+      <div class="gacha-history-list" id="gacha-history-list"></div>
     `;
-    document.body.appendChild(reveal);
-    this._reveal = reveal;
+    document.body.appendChild(history);
+    this._history_el = history;
+
+    // Cache de nodos de grietas (evita re-querySelectorAll en cada pull)
+    this._gemCracks = Array.from(overlay.querySelectorAll('.gem-crack'));
+    this._gemFragments = overlay.querySelector('#gem-fragments');
 
     this._bindTap(overlay.querySelector('#gacha-close-btn'), () => this.close());
     this._bindTap(overlay.querySelector('#gacha-skip-btn'), () => this._toggleSkip());
     this._bindTap(overlay.querySelector('#gacha-pull1'), () => this._doPull(1));
     this._bindTap(overlay.querySelector('#gacha-pull10'), () => this._doPull(10));
-    this._bindTap(reveal.querySelector('#gacha-reveal-close'), () => this._closeReveal());
+    this._bindTap(overlay.querySelector('#gacha-history-btn'), () => this._openHistory());
+    this._bindTap(overlay.querySelector('#gacha-tab-standard'), () => {
+      this._showMsg('Banner permanente: próximamente.');
+    });
+    this._bindTap(history.querySelector('#gacha-history-close-btn'), () => this._closeHistory());
 
-    overlay.querySelector('#gacha-featured-epico').textContent = FEATURED_DISPLAY.epico;
+    overlay.querySelector('#gacha-showcase-name').textContent = FEATURED_DISPLAY.epico;
+  }
+
+  _showMsg(text) {
+    const msg = this._overlay.querySelector('#gacha-msg');
+    msg.textContent = text;
   }
 
   _toggleSkip() {
@@ -422,6 +451,7 @@ export class GachaMenu {
   open() {
     this._overlay.classList.add('open');
     this._refresh();
+    this._syncGemToPity();
   }
 
   close() {
@@ -433,6 +463,33 @@ export class GachaMenu {
     else this.open();
   }
 
+  _openHistory() {
+    const list = this._history_el.querySelector('#gacha-history-list');
+    list.innerHTML = '';
+    if (this._history.length === 0) {
+      list.innerHTML = '<div class="gacha-history-empty">Todavía no has hecho ninguna tirada.</div>';
+    } else {
+      this._history.forEach(item => {
+        const line = document.createElement('div');
+        line.className = 'gacha-history-line';
+        const label = RARITY_LABELS[item.rarity] || item.rarity;
+        const color = RARITY_COLORS[item.rarity] || '#fff';
+        let tag = '';
+        if (item.featured === true) tag = '<span class="gacha-history-featured">DESTACADO</span>';
+        line.innerHTML = `
+          <span><span class="gacha-history-rarity" style="color:${color}">${label}</span> — ${item.name}</span>
+          ${tag}
+        `;
+        list.appendChild(line);
+      });
+    }
+    this._history_el.classList.add('open');
+  }
+
+  _closeHistory() {
+    this._history_el.classList.remove('open');
+  }
+
   _refresh() {
     const g = this.gacha;
     this._overlay.querySelector('#gacha-gems-value').textContent = g.getGems();
@@ -440,7 +497,7 @@ export class GachaMenu {
     const dotsWrap = this._overlay.querySelector('#gacha-dots-raro');
     dotsWrap.innerHTML = '';
     const pityRaro = g.getPityRaro();
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < PITY_RARO_THRESHOLD; i++) {
       const dot = document.createElement('div');
       dot.className = 'gacha-dot' + (i < pityRaro ? ' lit' : '');
       dotsWrap.appendChild(dot);
@@ -449,135 +506,128 @@ export class GachaMenu {
     this._overlay.querySelector('#gacha-guarantee-raro').className = g.isGuaranteedRaro() ? 'gacha-guarantee' : '';
 
     const pityEpico = g.getPityEpico();
-    this._overlay.querySelector('#gacha-bar-epico').style.width = `${Math.min(100, (pityEpico / PITY_EPICO_MAX) * 100)}%`;
-    this._overlay.querySelector('#gacha-pity-epico-text').textContent = `${pityEpico} / ${PITY_EPICO_MAX}`;
+    this._overlay.querySelector('#gacha-bar-epico').style.width = `${Math.min(100, (pityEpico / PITY_EPICO_THRESHOLD) * 100)}%`;
+    this._overlay.querySelector('#gacha-pity-epico-text').textContent = `Faltan ${g.getPityEpicoRemaining()}`;
     this._overlay.querySelector('#gacha-guarantee-epico').textContent = g.isGuaranteedEpico() ? 'SÍ' : 'no';
     this._overlay.querySelector('#gacha-guarantee-epico').className = g.isGuaranteedEpico() ? 'gacha-guarantee' : '';
 
-    const canPull1 = g.canPull(1);
-    const canPull10 = g.canPull(10);
-    this._overlay.querySelector('#gacha-pull1').classList.toggle('disabled', !canPull1);
-    this._overlay.querySelector('#gacha-pull10').classList.toggle('disabled', !canPull10);
+    this._overlay.querySelector('#gacha-pull1').classList.toggle('disabled', !g.canPull(1));
+    this._overlay.querySelector('#gacha-pull10').classList.toggle('disabled', !g.canPull(10));
   }
 
-  _doPull(times) {
-    const msg = this._overlay.querySelector('#gacha-msg');
-    if (!this.gacha.canPull(times)) {
-      msg.textContent = 'No tienes suficientes gemas.';
-      return;
-    }
-    msg.textContent = '';
-
-    const pityBefore = this.gacha.getPityEpico(); // estado del cristal ANTES de este pull
-    const results = this.gacha.pull(times);
-    this._refresh();
-    if (!results) return;
-
-    const hasEpico = results.some(r => r.rarity === 'epico');
-    this._showReveal(results, times, pityBefore, hasEpico);
+  // Pone las grietas en el estado exacto correspondiente al pity actual, sin animar.
+  _syncGemToPity() {
+    const pity = this.gacha.getPityEpico();
+    const count = Math.round((Math.min(pity, PITY_EPICO_THRESHOLD) / PITY_EPICO_THRESHOLD) * this._gemCracks.length);
+    this._setCracksInstant(count);
   }
 
-  // Pone las grietas en un estado exacto, sin animación (para fijar el punto de partida).
   _setCracksInstant(count) {
-    const cracks = Array.from(this._reveal.querySelectorAll('.gem-crack'));
-    cracks.forEach((c, i) => {
+    this._gemCracks.forEach((c, i) => {
       c.classList.add('instant');
       c.classList.toggle('drawn', i < count);
     });
     requestAnimationFrame(() => {
-      cracks.forEach(c => c.classList.remove('instant'));
+      this._gemCracks.forEach(c => c.classList.remove('instant'));
     });
-    return cracks;
   }
 
-  // Anima la aparición de grietas nuevas, una por una, desde "from" hasta "to".
-  _animateCracksTo(cracks, from, to, baseDelay, stepDelay) {
+  _animateCracksTo(from, to, baseDelay, stepDelay) {
     for (let i = from; i < to; i++) {
-      setTimeout(() => cracks[i]?.classList.add('drawn'), baseDelay + (i - from) * stepDelay);
+      setTimeout(() => this._gemCracks[i]?.classList.add('drawn'), baseDelay + (i - from) * stepDelay);
     }
     return baseDelay + Math.max(0, (to - from)) * stepDelay;
   }
 
-  _showReveal(results, times, pityBefore, hasEpico) {
-    this._reveal.classList.add('open');
-    this._reveal.querySelector('#gacha-result-single').classList.remove('show');
-    this._reveal.querySelector('#gacha-result-list').innerHTML = '';
-    this._reveal.querySelector('#gem-fragments').classList.remove('exploded');
+  _doPull(times) {
+    if (!this.gacha.canPull(times)) {
+      this._showMsg('No tienes suficientes gemas.');
+      return;
+    }
+    this._showMsg('');
 
-    const totalCracks = this._reveal.querySelectorAll('.gem-crack').length; // 8
-    const beforeCount = Math.round((Math.min(pityBefore, PITY_EPICO_MAX) / PITY_EPICO_MAX) * totalCracks);
+    const pityBefore = this.gacha.getPityEpico();
+    const results = this.gacha.pull(times);
+    this._refresh();
+    if (!results) return;
+
+    results.forEach(r => this._history.unshift({ rarity: r.rarity, name: r.name, featured: r.featured }));
+    if (this._history.length > 200) this._history.length = 200;
+
+    const hasEpico = results.some(r => r.rarity === 'epico');
+    this._playReveal(results, times, pityBefore, hasEpico);
+  }
+
+  _playReveal(results, times, pityBefore, hasEpico) {
+    this._gemFragments.classList.remove('exploded');
+    const totalCracks = this._gemCracks.length;
+    const beforeCount = Math.round((Math.min(pityBefore, PITY_EPICO_THRESHOLD) / PITY_EPICO_THRESHOLD) * totalCracks);
 
     if (this._skipAnim) {
       const targetCount = hasEpico ? totalCracks
-        : Math.round((Math.min(this.gacha.getPityEpico(), PITY_EPICO_MAX) / PITY_EPICO_MAX) * totalCracks);
+        : Math.round((Math.min(this.gacha.getPityEpico(), PITY_EPICO_THRESHOLD) / PITY_EPICO_THRESHOLD) * totalCracks);
       this._setCracksInstant(targetCount);
-      if (hasEpico) this._reveal.querySelector('#gem-fragments').classList.add('exploded');
-      this._populateResults(results, times, true);
+      if (hasEpico) this._gemFragments.classList.add('exploded');
+      this._showResultInShowcase(results, times);
       return;
     }
 
-    const cracks = this._setCracksInstant(beforeCount);
+    this._setCracksInstant(beforeCount);
 
     if (!hasEpico) {
       const afterCount = Math.max(
         beforeCount,
-        Math.round((Math.min(this.gacha.getPityEpico(), PITY_EPICO_MAX) / PITY_EPICO_MAX) * totalCracks)
+        Math.round((Math.min(this.gacha.getPityEpico(), PITY_EPICO_THRESHOLD) / PITY_EPICO_THRESHOLD) * totalCracks)
       );
-      const elapsed = this._animateCracksTo(cracks, beforeCount, afterCount, 300, 120);
-      setTimeout(() => this._populateResults(results, times, false), elapsed + 350);
+      const elapsed = this._animateCracksTo(beforeCount, afterCount, 200, 110);
+      setTimeout(() => this._showResultInShowcase(results, times), elapsed + 300);
     } else {
-      const elapsed = this._animateCracksTo(cracks, beforeCount, totalCracks, 300, 80);
-      const breakDelay = elapsed + 450;
-      setTimeout(() => {
-        this._reveal.querySelector('#gem-fragments').classList.add('exploded');
-      }, breakDelay);
-      setTimeout(() => this._populateResults(results, times, false), breakDelay + 350);
+      const elapsed = this._animateCracksTo(beforeCount, totalCracks, 200, 75);
+      const breakDelay = elapsed + 400;
+      setTimeout(() => this._gemFragments.classList.add('exploded'), breakDelay);
+      setTimeout(() => this._showResultInShowcase(results, times), breakDelay + 300);
     }
   }
 
-  _populateResults(results, times, instant) {
+  // Reemplaza el contenido del showcase con el/los resultado(s), con botón para volver al featured.
+  _showResultInShowcase(results, times) {
+    const frame = this._overlay.querySelector('#gacha-showcase-frame');
+    frame.innerHTML = '';
+
     if (times === 1) {
       const item = results[0];
-      const label = RARITY_LABELS[item.rarity] || item.rarity;
-      const full = RARITY_FULL[item.rarity] || item.rarity;
       const color = RARITY_COLORS[item.rarity] || '#fff';
-
-      const rEl = this._reveal.querySelector('#gacha-result-single-rarity');
-      rEl.textContent = label;
-      rEl.style.color = color;
-      this._reveal.querySelector('#gacha-result-single-sub').textContent = `- ${full}`;
-      this._reveal.querySelector('#gacha-result-single-name').textContent = item.name;
-      this._reveal.querySelector('#gacha-result-single-featured').textContent =
-        item.featured === true ? 'DESTACADO' : '';
-
-      const wrap = this._reveal.querySelector('#gacha-result-single');
-      if (instant) wrap.classList.add('show');
-      else requestAnimationFrame(() => wrap.classList.add('show'));
+      frame.innerHTML = `
+        <div class="gacha-showcase-label">${RARITY_FULL[item.rarity] || item.rarity}</div>
+        <div class="gacha-showcase-rarity" style="color:${color}">${RARITY_LABELS[item.rarity] || item.rarity}</div>
+        <div class="gacha-showcase-name">${item.name}</div>
+        ${item.featured === true ? '<div class="gacha-showcase-featured">DESTACADO</div>' : ''}
+        <button class="gacha-showcase-continue" id="gacha-showcase-continue">Continuar</button>
+      `;
     } else {
-      const list = this._reveal.querySelector('#gacha-result-list');
-      list.innerHTML = '';
-      results.forEach((item, i) => {
-        const line = document.createElement('div');
-        line.className = 'gacha-result-line';
-        const label = RARITY_LABELS[item.rarity] || item.rarity;
+      const rows = results.map(item => {
         const color = RARITY_COLORS[item.rarity] || '#fff';
-        let featuredTag = '';
-        if (item.featured === true) featuredTag = '<span class="gacha-result-featured">DESTACADO</span>';
-        line.innerHTML = `
-          <span><span class="gacha-result-rarity" style="color:${color}">${label}</span> — ${item.name}</span>
-          ${featuredTag}
-        `;
-        list.appendChild(line);
-        if (instant) {
-          line.classList.add('shown');
-        } else {
-          setTimeout(() => line.classList.add('shown'), i * 90);
-        }
-      });
+        const tag = item.featured === true ? ' ★' : '';
+        return `<div style="font-size:10px; margin-bottom:3px;">
+          <span style="color:${color}; font-family:Georgia,serif;">${RARITY_LABELS[item.rarity] || item.rarity}</span>
+          — ${item.name}${tag}
+        </div>`;
+      }).join('');
+      frame.innerHTML = `
+        <div class="gacha-showcase-label">Resultados x${times}</div>
+        <div style="max-height:140px; overflow-y:auto; text-align:left; margin-top:6px;">${rows}</div>
+        <button class="gacha-showcase-continue" id="gacha-showcase-continue">Continuar</button>
+      `;
     }
+
+    this._bindTap(frame.querySelector('#gacha-showcase-continue'), () => this._resetShowcase());
   }
 
-  _closeReveal() {
-    this._reveal.classList.remove('open');
+  _resetShowcase() {
+    const frame = this._overlay.querySelector('#gacha-showcase-frame');
+    frame.innerHTML = `
+      <div class="gacha-showcase-label" id="gacha-showcase-label">Velo destacado</div>
+      <div class="gacha-showcase-name" id="gacha-showcase-name">${FEATURED_DISPLAY.epico}</div>
+    `;
   }
 }
