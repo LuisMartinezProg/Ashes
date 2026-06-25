@@ -93,7 +93,7 @@
 
   <script type="module">
     import { GachaSystem, PULL_COST, PITY_EPICO_THRESHOLD, PITY_RARO_THRESHOLD } from './core/gacha.js';
-
+    import { GachaMenu } from './ui/gachaMenu.js';
     const gacha = new GachaSystem();
     window._gacha = gacha; // para inspeccionar desde consola si hace falta
 
@@ -121,7 +121,9 @@
       $guaranteeRaro.textContent = gacha.isGuaranteedRaro() ? 'SÍ' : 'no';
       $guaranteeRaro.className = gacha.isGuaranteedRaro() ? 'guarantee-on' : '';
     }
-
+      const menu = new GachaMenu(gacha);
+    window._gachaMenu = menu;
+    menu.open();
     function logPull(item) {
       const div = document.createElement('div');
       div.className = `pull-line rarity-${item.rarity}`;
