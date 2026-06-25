@@ -114,7 +114,8 @@ import { Thug } from './core/enemies/Thug.js';
 import { DayNightCycle } from './core/dayNight.js';
 import { TimeMenu } from './ui/timeMenu.js';
 import { WeatherSystem } from './core/weather.js';
-        
+import { GachaSystem } from './core/gacha.js';
+  
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
 
@@ -194,6 +195,8 @@ async function boot() {
     setProgress(57, 'Progression...');
     const progression     = new Progression();
     const currency = new CurrencySystem();
+    const gacha = new GachaSystem();
+    window._gacha = gacha;
     window._currency = currency;
     const dayNight = new DayNightCycle(scene, lights);
     dayNight.start(0.1); // arranca ligeramente entrado el día, ajustable
@@ -233,6 +236,7 @@ async function boot() {
     dungeonManager.onReward = (reward) => {
       if (reward.xp)          progression.addXP(combat._weaponType ?? 'katana', reward.xp);
       if (reward.magicEnergy) progression.addMagicEnergy?.(reward.magicEnergy);
+      gacha.addGems(80);
       _save(progression, mikaProgression);
     };
     window._dungeonManager = dungeonManager;
@@ -454,11 +458,13 @@ allEnemies.forEach(e => {
   e.onDeath = () => {
     const type = e.type ?? e.constructor.name;
     const isNew = onKill(type);
-    if (isNew) bestiaryPopup.show(type);
+    if (isNew) {
+      bestiaryPopup.show(type);
+      gacha.addGems(20);
+    }
     _orig?.();
   };
 });
-
     setProgress(86, 'Building...');
     const building = new BuildingSystem(scene, player);
     building.setProgression(progression);
