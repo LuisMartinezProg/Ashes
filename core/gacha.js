@@ -12,10 +12,10 @@ const RARITY = {
 };
 
 const RATES = {
-  [RARITY.EPICO]: 0.05,
-  [RARITY.RARO]: 0.25,
-  [RARITY.COMUN]: 0.70,
-};
+  [RARITY.EPICO]: 0.006,
+  [RARITY.RARO]: 0.051,
+  [RARITY.COMUN]: 0.943,
+}; 
 
 const PITY_EPICO_THRESHOLD = 90;
 const PITY_RARO_THRESHOLD = 10; // estilo Genshin: garantiza 4★ cada 10 pulls
