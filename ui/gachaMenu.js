@@ -1,7 +1,7 @@
 // ui/gachaMenu.js
 // Banner de Gacha — "Velo Umbral / Eco Astral".
-// La piedra: reposo -> grietas -> ruptura en fragmentos -> resultado(s).
-// SVG + CSS puro, sin imágenes externas (placeholder hasta tener un asset real).
+// El cristal acumula grietas según el pity Épico actual (persiste entre pulls,
+// no se reinicia con cada uno). Solo se rompe cuando un pull trae un Épico.
 
 const RARITY_LABELS = {
   comun: 'Polvo',
@@ -25,6 +25,8 @@ const FEATURED_DISPLAY = {
   raro: 'Fragmento Raro de Kael',
   epico: 'Reliquia: Alba Eterna',
 };
+
+const PITY_EPICO_MAX = 90; // mismo valor que core/gacha.js (duplicado aquí solo para el dibujo visual)
 
 let _stylesInjected = false;
 
@@ -132,7 +134,7 @@ function _injectStyles() {
       margin-top: 6px; min-height: 14px;
     }
 
-    /* ---- Revelación: la piedra ---- */
+    /* ---- Revelación: el cristal ---- */
     #gacha-reveal {
       position: fixed; inset: 0; z-index: 320;
       background: #050308;
@@ -177,36 +179,40 @@ function _injectStyles() {
       stroke-dashoffset: 40;
       opacity: 0;
       filter: drop-shadow(0 0 4px rgba(255,255,255,0.9));
+      transition: stroke-dashoffset 0.5s ease, opacity 0.15s ease;
     }
     .gem-crack.drawn {
       stroke-dashoffset: 0;
       opacity: 0.95;
-      transition: stroke-dashoffset 0.5s ease, opacity 0.15s ease;
+    }
+    .gem-crack.instant {
+      transition: none !important;
     }
     .gem-fragment {
-      transition: transform 0.7s cubic-bezier(0.2,0.8,0.3,1), opacity 0.7s ease 0.1s;
+      transition: transform 0.6s cubic-bezier(0.2,0.8,0.3,1), opacity 0.6s ease 0.1s;
       transform: translate(0,0) rotate(0deg);
       opacity: 1;
     }
-    #gem-fragments.exploded .frag-tl { transform: translate(-26px,-14px) rotate(-18deg); }
-    #gem-fragments.exploded .frag-tr { transform: translate(26px,-14px) rotate(18deg); }
-    #gem-fragments.exploded .frag-l  { transform: translate(-36px,10px) rotate(-26deg); }
-    #gem-fragments.exploded .frag-r  { transform: translate(36px,10px) rotate(26deg); }
-    #gem-fragments.exploded .frag-bl { transform: translate(-22px,30px) rotate(-14deg); }
-    #gem-fragments.exploded .frag-br { transform: translate(22px,30px) rotate(14deg); }
+    /* Desplazamientos moderados — no es una explosión total */
+    #gem-fragments.exploded .frag-tl { transform: translate(-13px,-7px) rotate(-9deg); }
+    #gem-fragments.exploded .frag-tr { transform: translate(13px,-7px) rotate(9deg); }
+    #gem-fragments.exploded .frag-l  { transform: translate(-17px,5px) rotate(-13deg); }
+    #gem-fragments.exploded .frag-r  { transform: translate(17px,5px) rotate(13deg); }
+    #gem-fragments.exploded .frag-bl { transform: translate(-11px,14px) rotate(-7deg); }
+    #gem-fragments.exploded .frag-br { transform: translate(11px,14px) rotate(7deg); }
     .gem-core {
       transition: opacity 0.5s ease, transform 0.6s ease;
       transform-origin: 100px 150px;
     }
-    #gem-fragments.exploded .gem-core { opacity: 0; transform: scale(1.6); }
+    #gem-fragments.exploded .gem-core { opacity: 0; transform: scale(1.25); }
     .gem-escape-crack {
-      stroke: rgba(157,127,232,0.7);
+      stroke: rgba(157,127,232,0.55);
       stroke-width: 1; fill: none;
       stroke-dasharray: 60; stroke-dashoffset: 60;
       opacity: 0;
     }
     #gem-fragments.exploded .gem-escape-crack {
-      stroke-dashoffset: 0; opacity: 0.5;
+      stroke-dashoffset: 0; opacity: 0.3;
       transition: stroke-dashoffset 0.9s ease, opacity 0.9s ease;
     }
 
@@ -254,7 +260,6 @@ function _injectStyles() {
   document.head.appendChild(style);
 }
 
-// SVG de la piedra: facetas + núcleo + grietas internas + grietas que escapan al fondo.
 function _gemSVG() {
   return `
   <svg id="gacha-gem-svg" viewBox="0 0 200 270">
@@ -444,8 +449,8 @@ export class GachaMenu {
     this._overlay.querySelector('#gacha-guarantee-raro').className = g.isGuaranteedRaro() ? 'gacha-guarantee' : '';
 
     const pityEpico = g.getPityEpico();
-    this._overlay.querySelector('#gacha-bar-epico').style.width = `${Math.min(100, (pityEpico / 90) * 100)}%`;
-    this._overlay.querySelector('#gacha-pity-epico-text').textContent = `${pityEpico} / 90`;
+    this._overlay.querySelector('#gacha-bar-epico').style.width = `${Math.min(100, (pityEpico / PITY_EPICO_MAX) * 100)}%`;
+    this._overlay.querySelector('#gacha-pity-epico-text').textContent = `${pityEpico} / ${PITY_EPICO_MAX}`;
     this._overlay.querySelector('#gacha-guarantee-epico').textContent = g.isGuaranteedEpico() ? 'SÍ' : 'no';
     this._overlay.querySelector('#gacha-guarantee-epico').className = g.isGuaranteedEpico() ? 'gacha-guarantee' : '';
 
@@ -462,52 +467,72 @@ export class GachaMenu {
       return;
     }
     msg.textContent = '';
+
+    const pityBefore = this.gacha.getPityEpico(); // estado del cristal ANTES de este pull
     const results = this.gacha.pull(times);
     this._refresh();
-    if (results) this._showReveal(results, times);
+    if (!results) return;
+
+    const hasEpico = results.some(r => r.rarity === 'epico');
+    this._showReveal(results, times, pityBefore, hasEpico);
   }
 
-  // Reinicia la piedra a su estado de reposo (sin grietas, sin romper).
-  _resetGem() {
-    const cracks = this._reveal.querySelectorAll('.gem-crack');
-    cracks.forEach(c => c.classList.remove('drawn'));
-    this._reveal.querySelector('#gem-fragments').classList.remove('exploded');
+  // Pone las grietas en un estado exacto, sin animación (para fijar el punto de partida).
+  _setCracksInstant(count) {
+    const cracks = Array.from(this._reveal.querySelectorAll('.gem-crack'));
+    cracks.forEach((c, i) => {
+      c.classList.add('instant');
+      c.classList.toggle('drawn', i < count);
+    });
+    requestAnimationFrame(() => {
+      cracks.forEach(c => c.classList.remove('instant'));
+    });
+    return cracks;
+  }
+
+  // Anima la aparición de grietas nuevas, una por una, desde "from" hasta "to".
+  _animateCracksTo(cracks, from, to, baseDelay, stepDelay) {
+    for (let i = from; i < to; i++) {
+      setTimeout(() => cracks[i]?.classList.add('drawn'), baseDelay + (i - from) * stepDelay);
+    }
+    return baseDelay + Math.max(0, (to - from)) * stepDelay;
+  }
+
+  _showReveal(results, times, pityBefore, hasEpico) {
+    this._reveal.classList.add('open');
     this._reveal.querySelector('#gacha-result-single').classList.remove('show');
     this._reveal.querySelector('#gacha-result-list').innerHTML = '';
-  }
+    this._reveal.querySelector('#gem-fragments').classList.remove('exploded');
 
-  _showReveal(results, times) {
-    this._resetGem();
-    this._reveal.classList.add('open');
-
-    const bestRarity = results.reduce((best, r) => {
-      const order = { comun: 0, raro: 1, epico: 2 };
-      return order[r.rarity] > order[best] ? r.rarity : best;
-    }, 'comun');
+    const totalCracks = this._reveal.querySelectorAll('.gem-crack').length; // 8
+    const beforeCount = Math.round((Math.min(pityBefore, PITY_EPICO_MAX) / PITY_EPICO_MAX) * totalCracks);
 
     if (this._skipAnim) {
-      this._reveal.querySelector('#gem-fragments').classList.add('exploded');
+      const targetCount = hasEpico ? totalCracks
+        : Math.round((Math.min(this.gacha.getPityEpico(), PITY_EPICO_MAX) / PITY_EPICO_MAX) * totalCracks);
+      this._setCracksInstant(targetCount);
+      if (hasEpico) this._reveal.querySelector('#gem-fragments').classList.add('exploded');
       this._populateResults(results, times, true);
       return;
     }
 
-    // 1) Grietas se dibujan (más cantidad según la mejor rareza obtenida)
-    const cracks = Array.from(this._reveal.querySelectorAll('.gem-crack'));
-    const crackCount = bestRarity === 'epico' ? cracks.length
-                      : bestRarity === 'raro' ? Math.ceil(cracks.length * 0.6)
-                      : Math.ceil(cracks.length * 0.3);
-    cracks.slice(0, crackCount).forEach((c, i) => {
-      setTimeout(() => c.classList.add('drawn'), 250 + i * 90);
-    });
+    const cracks = this._setCracksInstant(beforeCount);
 
-    // 2) Ruptura
-    const ruptureDelay = 250 + crackCount * 90 + 400;
-    setTimeout(() => {
-      this._reveal.querySelector('#gem-fragments').classList.add('exploded');
-    }, ruptureDelay);
-
-    // 3) Resultados aparecen
-    setTimeout(() => this._populateResults(results, times, false), ruptureDelay + 350);
+    if (!hasEpico) {
+      const afterCount = Math.max(
+        beforeCount,
+        Math.round((Math.min(this.gacha.getPityEpico(), PITY_EPICO_MAX) / PITY_EPICO_MAX) * totalCracks)
+      );
+      const elapsed = this._animateCracksTo(cracks, beforeCount, afterCount, 300, 120);
+      setTimeout(() => this._populateResults(results, times, false), elapsed + 350);
+    } else {
+      const elapsed = this._animateCracksTo(cracks, beforeCount, totalCracks, 300, 80);
+      const breakDelay = elapsed + 450;
+      setTimeout(() => {
+        this._reveal.querySelector('#gem-fragments').classList.add('exploded');
+      }, breakDelay);
+      setTimeout(() => this._populateResults(results, times, false), breakDelay + 350);
+    }
   }
 
   _populateResults(results, times, instant) {
