@@ -1,7 +1,7 @@
 // ui/gachaMenu.js
-// Banner de Gacha — estética "Velo Umbral / Eco Astral".
-// Revelación tipo grieta de luz, sin cartas que se voltean.
-// Las rarezas internas (comun/raro/epico) no cambian; aquí solo se renombran para mostrar.
+// Banner de Gacha — "Velo Umbral / Eco Astral".
+// La piedra: reposo -> grietas -> ruptura en fragmentos -> resultado(s).
+// SVG + CSS puro, sin imágenes externas (placeholder hasta tener un asset real).
 
 const RARITY_LABELS = {
   comun: 'Polvo',
@@ -9,14 +9,18 @@ const RARITY_LABELS = {
   epico: 'Velo',
 };
 
+const RARITY_FULL = {
+  comun: 'Común',
+  raro: 'Raro',
+  epico: 'Épico',
+};
+
 const RARITY_COLORS = {
-  comun: '#9C95AE',
+  comun: '#B8AFD0',
   raro: '#9D7FE8',
   epico: '#E8C97A',
 };
 
-// Placeholder de nombres del featured actual. Si cambias el POOL en core/gacha.js,
-// actualiza esto también (por ahora son dos fuentes separadas, a propósito, hasta que se decida el diseño final).
 const FEATURED_DISPLAY = {
   raro: 'Fragmento Raro de Kael',
   epico: 'Reliquia: Alba Eterna',
@@ -128,33 +132,109 @@ function _injectStyles() {
       margin-top: 6px; min-height: 14px;
     }
 
-    /* ---- Revelación: grieta de luz ---- */
+    /* ---- Revelación: la piedra ---- */
     #gacha-reveal {
       position: fixed; inset: 0; z-index: 320;
-      background: rgba(5,3,8,0.96);
+      background: #050308;
       display: none;
-      flex-direction: column; align-items: center; justify-content: center;
-      padding: 24px 16px;
+      flex-direction: column; align-items: center; justify-content: flex-start;
+      padding: 32px 16px 24px;
+      overflow-y: auto;
     }
     #gacha-reveal.open { display: flex; }
-    .gacha-crack {
-      height: 3px; width: 4px;
-      background: #E8E4F0;
-      box-shadow: 0 0 16px 4px rgba(157,127,232,0.9), 0 0 40px 10px rgba(157,127,232,0.4);
-      transition: width 0.35s ease;
-      margin-bottom: 18px;
+    .gacha-stars {
+      position: absolute; inset: 0; pointer-events: none;
+      background-image:
+        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 80% 15%, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 30% 85%, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 20% 50%, rgba(255,255,255,0.3), transparent);
     }
-    .gacha-crack.expand { width: 86vw; max-width: 360px; }
-    #gacha-reveal-content {
-      width: 86vw; max-width: 360px;
-      max-height: 0; overflow-y: auto;
+    #gacha-gem-wrap {
+      position: relative; width: 220px; height: 280px;
+      margin-top: 24px; flex-shrink: 0;
+    }
+    #gacha-gem-svg { width: 100%; height: 100%; overflow: visible; }
+    .gem-glow {
+      filter: drop-shadow(0 0 18px rgba(157,127,232,0.65)) drop-shadow(0 0 38px rgba(157,127,232,0.35));
+    }
+    #gem-rest-group {
+      animation: gemPulse 2.6s ease-in-out infinite;
+      transform-origin: 100px 135px;
+    }
+    @keyframes gemPulse {
+      0%, 100% { filter: drop-shadow(0 0 14px rgba(157,127,232,0.55)) drop-shadow(0 0 30px rgba(157,127,232,0.25)); }
+      50%      { filter: drop-shadow(0 0 22px rgba(157,127,232,0.8)) drop-shadow(0 0 46px rgba(157,127,232,0.4)); }
+    }
+    .gem-crack {
+      fill: none;
+      stroke: #E8E4F0;
+      stroke-width: 1.4;
+      stroke-linecap: round;
+      stroke-dasharray: 40;
+      stroke-dashoffset: 40;
       opacity: 0;
-      transition: max-height 0.4s ease, opacity 0.4s ease;
+      filter: drop-shadow(0 0 4px rgba(255,255,255,0.9));
     }
-    #gacha-reveal-content.show { max-height: 60vh; opacity: 1; }
+    .gem-crack.drawn {
+      stroke-dashoffset: 0;
+      opacity: 0.95;
+      transition: stroke-dashoffset 0.5s ease, opacity 0.15s ease;
+    }
+    .gem-fragment {
+      transition: transform 0.7s cubic-bezier(0.2,0.8,0.3,1), opacity 0.7s ease 0.1s;
+      transform: translate(0,0) rotate(0deg);
+      opacity: 1;
+    }
+    #gem-fragments.exploded .frag-tl { transform: translate(-26px,-14px) rotate(-18deg); }
+    #gem-fragments.exploded .frag-tr { transform: translate(26px,-14px) rotate(18deg); }
+    #gem-fragments.exploded .frag-l  { transform: translate(-36px,10px) rotate(-26deg); }
+    #gem-fragments.exploded .frag-r  { transform: translate(36px,10px) rotate(26deg); }
+    #gem-fragments.exploded .frag-bl { transform: translate(-22px,30px) rotate(-14deg); }
+    #gem-fragments.exploded .frag-br { transform: translate(22px,30px) rotate(14deg); }
+    .gem-core {
+      transition: opacity 0.5s ease, transform 0.6s ease;
+      transform-origin: 100px 150px;
+    }
+    #gem-fragments.exploded .gem-core { opacity: 0; transform: scale(1.6); }
+    .gem-escape-crack {
+      stroke: rgba(157,127,232,0.7);
+      stroke-width: 1; fill: none;
+      stroke-dasharray: 60; stroke-dashoffset: 60;
+      opacity: 0;
+    }
+    #gem-fragments.exploded .gem-escape-crack {
+      stroke-dashoffset: 0; opacity: 0.5;
+      transition: stroke-dashoffset 0.9s ease, opacity 0.9s ease;
+    }
+
+    #gacha-result-single {
+      text-align: center; margin-top: -130px;
+      opacity: 0; transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+    #gacha-result-single.show { opacity: 1; }
+    .gacha-result-single-rarity {
+      font-family: Georgia, serif; font-size: 20px; letter-spacing: 0.05em;
+    }
+    .gacha-result-single-sub {
+      font-size: 11px; color: #B8B0C8; margin-top: 2px;
+    }
+    .gacha-result-single-name {
+      font-size: 12px; color: #E8E4F0; margin-top: 8px;
+    }
+    .gacha-result-single-featured {
+      font-size: 10px; color: #E8C97A; margin-top: 4px; letter-spacing: 0.1em;
+    }
+
+    #gacha-result-list {
+      width: 100%; max-width: 320px; margin-top: 10px;
+    }
     .gacha-result-line {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 12px; border-radius: 8px; margin-bottom: 6px;
+      padding: 9px 12px; border-radius: 8px; margin-bottom: 6px;
       background: rgba(255,255,255,0.04);
       font-size: 12px; opacity: 0; transform: translateY(6px);
       transition: opacity 0.3s ease, transform 0.3s ease;
@@ -162,15 +242,80 @@ function _injectStyles() {
     .gacha-result-line.shown { opacity: 1; transform: translateY(0); }
     .gacha-result-rarity { font-family: Georgia, serif; font-weight: bold; }
     .gacha-result-featured { color: #E8C97A; font-size: 10px; margin-left: 6px; }
+
     #gacha-reveal-close {
-      margin-top: 16px; padding: 10px 22px; border-radius: 10px;
+      margin: 18px auto 8px; padding: 10px 22px; border-radius: 10px;
       border: 1px solid rgba(157,127,232,0.5);
       background: rgba(157,127,232,0.15);
       color: #E8E4F0; font-family: monospace; font-size: 12px;
-      cursor: pointer;
+      cursor: pointer; flex-shrink: 0;
     }
   `;
   document.head.appendChild(style);
+}
+
+// SVG de la piedra: facetas + núcleo + grietas internas + grietas que escapan al fondo.
+function _gemSVG() {
+  return `
+  <svg id="gacha-gem-svg" viewBox="0 0 200 270">
+    <defs>
+      <linearGradient id="facetA" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#7A63B8"/>
+        <stop offset="100%" stop-color="#4A3C75"/>
+      </linearGradient>
+      <linearGradient id="facetB" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#5C4A8A"/>
+        <stop offset="100%" stop-color="#332760"/>
+      </linearGradient>
+      <radialGradient id="coreGlow" cx="50%" cy="40%" r="60%">
+        <stop offset="0%" stop-color="#EAE6FF"/>
+        <stop offset="45%" stop-color="#9D7FE8"/>
+        <stop offset="100%" stop-color="#5C4A8A"/>
+      </radialGradient>
+    </defs>
+
+    <g id="gem-rest-group" class="gem-glow">
+      <g id="gem-fragments">
+        <g class="gem-fragment frag-tl">
+          <polygon points="100,18 45,85 100,110" fill="url(#facetA)" stroke="#1A1428" stroke-width="1.5"/>
+          <polygon points="45,85 15,135 75,150 100,110" fill="url(#facetB)" stroke="#1A1428" stroke-width="1.5"/>
+        </g>
+        <g class="gem-fragment frag-tr">
+          <polygon points="100,18 155,85 100,110" fill="url(#facetB)" stroke="#1A1428" stroke-width="1.5"/>
+          <polygon points="155,85 185,135 125,150 100,110" fill="url(#facetA)" stroke="#1A1428" stroke-width="1.5"/>
+        </g>
+        <g class="gem-fragment frag-l">
+          <polygon points="15,135 50,195 75,150" fill="url(#facetA)" stroke="#1A1428" stroke-width="1.5"/>
+        </g>
+        <g class="gem-fragment frag-r">
+          <polygon points="185,135 150,195 125,150" fill="url(#facetB)" stroke="#1A1428" stroke-width="1.5"/>
+        </g>
+        <g class="gem-fragment frag-bl">
+          <polygon points="50,195 100,248 100,190 75,150" fill="url(#facetB)" stroke="#1A1428" stroke-width="1.5"/>
+        </g>
+        <g class="gem-fragment frag-br">
+          <polygon points="150,195 100,248 100,190 125,150" fill="url(#facetA)" stroke="#1A1428" stroke-width="1.5"/>
+        </g>
+        <polygon class="gem-fragment gem-core" points="100,110 125,150 100,190 75,150" fill="url(#coreGlow)"/>
+
+        <path class="gem-escape-crack" d="M100,18 C 90,-10 70,-30 50,-55"/>
+        <path class="gem-escape-crack" d="M185,135 C 215,125 240,105 260,80"/>
+        <path class="gem-escape-crack" d="M100,248 C 95,275 80,300 60,320"/>
+        <path class="gem-escape-crack" d="M15,135 C -15,140 -45,130 -70,110"/>
+      </g>
+
+      <g id="gem-cracks">
+        <path class="gem-crack" d="M100,18 L100,110"/>
+        <path class="gem-crack" d="M45,85 L100,110"/>
+        <path class="gem-crack" d="M155,85 L100,110"/>
+        <path class="gem-crack" d="M15,135 L75,150"/>
+        <path class="gem-crack" d="M185,135 L125,150"/>
+        <path class="gem-crack" d="M75,150 L100,190"/>
+        <path class="gem-crack" d="M125,150 L100,190"/>
+        <path class="gem-crack" d="M100,190 L100,248"/>
+      </g>
+    </g>
+  </svg>`;
 }
 
 export class GachaMenu {
@@ -241,8 +386,15 @@ export class GachaMenu {
     const reveal = document.createElement('div');
     reveal.id = 'gacha-reveal';
     reveal.innerHTML = `
-      <div class="gacha-crack" id="gacha-crack"></div>
-      <div id="gacha-reveal-content"></div>
+      <div class="gacha-stars"></div>
+      <div id="gacha-gem-wrap">${_gemSVG()}</div>
+      <div id="gacha-result-single">
+        <div class="gacha-result-single-rarity" id="gacha-result-single-rarity"></div>
+        <div class="gacha-result-single-sub" id="gacha-result-single-sub"></div>
+        <div class="gacha-result-single-name" id="gacha-result-single-name"></div>
+        <div class="gacha-result-single-featured" id="gacha-result-single-featured"></div>
+      </div>
+      <div id="gacha-result-list"></div>
       <button id="gacha-reveal-close">Cerrar</button>
     `;
     document.body.appendChild(reveal);
@@ -312,49 +464,92 @@ export class GachaMenu {
     msg.textContent = '';
     const results = this.gacha.pull(times);
     this._refresh();
-    if (results) this._showReveal(results);
+    if (results) this._showReveal(results, times);
   }
 
-  _showReveal(results) {
-    const content = this._reveal.querySelector('#gacha-reveal-content');
-    const crack = this._reveal.querySelector('#gacha-crack');
-    content.innerHTML = '';
-    content.classList.remove('show');
-    crack.classList.remove('expand');
+  // Reinicia la piedra a su estado de reposo (sin grietas, sin romper).
+  _resetGem() {
+    const cracks = this._reveal.querySelectorAll('.gem-crack');
+    cracks.forEach(c => c.classList.remove('drawn'));
+    this._reveal.querySelector('#gem-fragments').classList.remove('exploded');
+    this._reveal.querySelector('#gacha-result-single').classList.remove('show');
+    this._reveal.querySelector('#gacha-result-list').innerHTML = '';
+  }
 
-    results.forEach(item => {
-      const line = document.createElement('div');
-      line.className = 'gacha-result-line';
-      const label = RARITY_LABELS[item.rarity] || item.rarity;
-      const color = RARITY_COLORS[item.rarity] || '#fff';
-      let featuredTag = '';
-      if (item.featured === true) featuredTag = '<span class="gacha-result-featured">DESTACADO</span>';
-      line.innerHTML = `
-        <span><span class="gacha-result-rarity" style="color:${color}">${label}</span> — ${item.name}</span>
-        ${featuredTag}
-      `;
-      content.appendChild(line);
-    });
-
+  _showReveal(results, times) {
+    this._resetGem();
     this._reveal.classList.add('open');
 
+    const bestRarity = results.reduce((best, r) => {
+      const order = { comun: 0, raro: 1, epico: 2 };
+      return order[r.rarity] > order[best] ? r.rarity : best;
+    }, 'comun');
+
     if (this._skipAnim) {
-      crack.classList.add('expand');
-      content.classList.add('show');
-      content.querySelectorAll('.gacha-result-line').forEach(l => l.classList.add('shown'));
+      this._reveal.querySelector('#gem-fragments').classList.add('exploded');
+      this._populateResults(results, times, true);
       return;
     }
 
-    requestAnimationFrame(() => {
-      crack.classList.add('expand');
-      setTimeout(() => {
-        content.classList.add('show');
-        const lines = content.querySelectorAll('.gacha-result-line');
-        lines.forEach((l, i) => {
-          setTimeout(() => l.classList.add('shown'), i * 90);
-        });
-      }, 380);
+    // 1) Grietas se dibujan (más cantidad según la mejor rareza obtenida)
+    const cracks = Array.from(this._reveal.querySelectorAll('.gem-crack'));
+    const crackCount = bestRarity === 'epico' ? cracks.length
+                      : bestRarity === 'raro' ? Math.ceil(cracks.length * 0.6)
+                      : Math.ceil(cracks.length * 0.3);
+    cracks.slice(0, crackCount).forEach((c, i) => {
+      setTimeout(() => c.classList.add('drawn'), 250 + i * 90);
     });
+
+    // 2) Ruptura
+    const ruptureDelay = 250 + crackCount * 90 + 400;
+    setTimeout(() => {
+      this._reveal.querySelector('#gem-fragments').classList.add('exploded');
+    }, ruptureDelay);
+
+    // 3) Resultados aparecen
+    setTimeout(() => this._populateResults(results, times, false), ruptureDelay + 350);
+  }
+
+  _populateResults(results, times, instant) {
+    if (times === 1) {
+      const item = results[0];
+      const label = RARITY_LABELS[item.rarity] || item.rarity;
+      const full = RARITY_FULL[item.rarity] || item.rarity;
+      const color = RARITY_COLORS[item.rarity] || '#fff';
+
+      const rEl = this._reveal.querySelector('#gacha-result-single-rarity');
+      rEl.textContent = label;
+      rEl.style.color = color;
+      this._reveal.querySelector('#gacha-result-single-sub').textContent = `- ${full}`;
+      this._reveal.querySelector('#gacha-result-single-name').textContent = item.name;
+      this._reveal.querySelector('#gacha-result-single-featured').textContent =
+        item.featured === true ? 'DESTACADO' : '';
+
+      const wrap = this._reveal.querySelector('#gacha-result-single');
+      if (instant) wrap.classList.add('show');
+      else requestAnimationFrame(() => wrap.classList.add('show'));
+    } else {
+      const list = this._reveal.querySelector('#gacha-result-list');
+      list.innerHTML = '';
+      results.forEach((item, i) => {
+        const line = document.createElement('div');
+        line.className = 'gacha-result-line';
+        const label = RARITY_LABELS[item.rarity] || item.rarity;
+        const color = RARITY_COLORS[item.rarity] || '#fff';
+        let featuredTag = '';
+        if (item.featured === true) featuredTag = '<span class="gacha-result-featured">DESTACADO</span>';
+        line.innerHTML = `
+          <span><span class="gacha-result-rarity" style="color:${color}">${label}</span> — ${item.name}</span>
+          ${featuredTag}
+        `;
+        list.appendChild(line);
+        if (instant) {
+          line.classList.add('shown');
+        } else {
+          setTimeout(() => line.classList.add('shown'), i * 90);
+        }
+      });
+    }
   }
 
   _closeReveal() {
