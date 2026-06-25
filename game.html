@@ -115,6 +115,7 @@ import { DayNightCycle } from './core/dayNight.js';
 import { TimeMenu } from './ui/timeMenu.js';
 import { WeatherSystem } from './core/weather.js';
 import { GachaSystem } from './core/gacha.js';
+import { GachaMenu } from './ui/gachaMenu.js';
   
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -196,6 +197,8 @@ async function boot() {
     const progression     = new Progression();
     const currency = new CurrencySystem();
     const gacha = new GachaSystem();
+    const gachaMenu = new GachaMenu(gacha);
+    window._gachaMenu = gachaMenu;
     window._gacha = gacha;
     window._currency = currency;
     const dayNight = new DayNightCycle(scene, lights);
@@ -540,6 +543,7 @@ allEnemies.forEach(e => {
   { icon: '📖', label: 'Bestiario',  action: () => bestiaryScreen.open(),  locked: false },
   { icon: '🕐', label: 'Tiempo',     action: () => timeMenu.open(),        locked: false },
  //{ icon: '⌨️', label: 'Controles',  action: () => keybindMenu.open(),     locked: false },
+  { icon: '🔮', label: 'Eco Astral', action: () => gachaMenu.toggle(),     locked: false },
 ]);
     const pauseMenu = new PauseMenu({
       onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
