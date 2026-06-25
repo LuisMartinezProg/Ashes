@@ -86,6 +86,9 @@
   <div class="btns">
     <button id="reset" class="danger">Reset total</button>
   </div>
+  <div class="btns">
+    <button id="open-menu">Abrir banner (GachaMenu)</button>
+  </div>
 
   <div class="panel">
     <div id="log"></div>
@@ -94,8 +97,9 @@
   <script type="module">
     import { GachaSystem, PULL_COST, PITY_EPICO_THRESHOLD, PITY_RARO_THRESHOLD } from './core/gacha.js';
     import { GachaMenu } from './ui/gachaMenu.js';
+
     const gacha = new GachaSystem();
-    window._gacha = gacha; // para inspeccionar desde consola si hace falta
+    window._gacha = gacha;
 
     const $gems = document.getElementById('gems');
     const $cost = document.getElementById('cost');
@@ -121,9 +125,7 @@
       $guaranteeRaro.textContent = gacha.isGuaranteedRaro() ? 'SÍ' : 'no';
       $guaranteeRaro.className = gacha.isGuaranteedRaro() ? 'guarantee-on' : '';
     }
-      const menu = new GachaMenu(gacha);
-    window._gachaMenu = menu;
-    menu.open();
+
     function logPull(item) {
       const div = document.createElement('div');
       div.className = `pull-line rarity-${item.rarity}`;
@@ -183,14 +185,14 @@
 
     const menu = new GachaMenu(gacha);
     window._gachaMenu = menu;
-    menu.open();
+
+    document.getElementById('open-menu').addEventListener('click', () => menu.open());
 
     window.addEventListener('error', (e) => {
       document.body.insertAdjacentHTML('afterbegin',
         `<div style="background:red;color:#fff;padding:8px;font-size:11px;word-break:break-all;">
           ERROR: ${e.message}<br>${e.filename}:${e.lineno}
         </div>`);
-    });
     });
   </script>
 
