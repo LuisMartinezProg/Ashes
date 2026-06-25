@@ -180,11 +180,17 @@
     });
 
     refresh();
+
+    const menu = new GachaMenu(gacha);
+    window._gachaMenu = menu;
+    menu.open();
+
     window.addEventListener('error', (e) => {
       document.body.insertAdjacentHTML('afterbegin',
         `<div style="background:red;color:#fff;padding:8px;font-size:11px;word-break:break-all;">
           ERROR: ${e.message}<br>${e.filename}:${e.lineno}
         </div>`);
+    });
     });
   </script>
 
