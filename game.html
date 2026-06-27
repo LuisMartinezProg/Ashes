@@ -116,6 +116,7 @@ import { TimeMenu } from './ui/timeMenu.js';
 import { WeatherSystem } from './core/weather.js';
 import { GachaSystem } from './core/gacha.js';
 import { GachaMenu } from './ui/gachaMenu.js';
+import { refreshAllEffectiveStats } from './core/relics.js';
   
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -266,7 +267,7 @@ async function boot() {
       try { mikaProgression.load(JSON.parse(savedMika)); console.log('[Save] Mika cargada'); }
       catch(e) { console.warn('[Save] Error Mika:', e); }
     }
-
+    refreshAllEffectiveStats();
     window._prog = progression;
     combat.setProgression(progression);
     buildZone.setProgression(progression);
