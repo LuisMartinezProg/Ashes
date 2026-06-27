@@ -1,10 +1,13 @@
 // ui/inventory.js — Ashes of the Reborn | Valiant Gaming
 
-const SECTIONS = ['materiales', 'equipos', 'consumibles'];
+import { getEquippedBy } from '../core/relics.js';
+
+const SECTIONS = ['materiales', 'equipos', 'reliquias', 'consumibles'];
 
 const SECTION_LABELS = {
   materiales : '🪵 Materiales',
   equipos    : '⚔️ Equipos',
+  reliquias  : '💠 Reliquias',
   consumibles: '🧪 Consumibles',
 };
 
@@ -15,6 +18,7 @@ export class InventoryUI {
     this._items   = {
       materiales : [],
       equipos    : [],
+      reliquias  : [],
       consumibles: [],
     };
     this._buildUI();
@@ -166,7 +170,7 @@ export class InventoryUI {
       color        : '#C9A84C',
       zIndex       : '500',
       display      : 'none',
-      maxWidth     : '200px',
+      maxWidth     : '220px',
       pointerEvents: 'none',
     });
 
@@ -204,6 +208,11 @@ export class InventoryUI {
       this._grid.style.gridTemplateColumns = '1fr';
       for (const item of items) {
         this._grid.appendChild(this._buildConsumibleRow(item));
+      }
+    } else if (this._section === 'reliquias') {
+      this._grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+      for (const item of items) {
+        this._grid.appendChild(this._buildRelicSlot(item));
       }
     } else {
       this._grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
@@ -271,6 +280,133 @@ export class InventoryUI {
     slot.addEventListener('click', (e) => this._showTooltip(item, e));
     slot.addEventListener('touchstart', (e) => { e.preventDefault(); this._showTooltip(item, e); }, { passive: false });
     return slot;
+  }
+
+  // ── Slot de reliquia ──────────────────────────────────────────────────────
+
+  _buildRelicSlot(item) {
+    const slot = document.createElement('div');
+    Object.assign(slot.style, {
+      background   : 'rgba(201,168,76,0.06)',
+      border       : `1px solid ${this._rarityColor(item.rarity)}`,
+      borderRadius : '10px',
+      padding      : '8px 4px',
+      display      : 'flex',
+      flexDirection: 'column',
+      alignItems   : 'center',
+      gap          : '4px',
+      cursor       : 'pointer',
+      position     : 'relative',
+      minHeight    : '72px',
+    });
+
+    const icon = document.createElement('div');
+    icon.style.fontSize = '24px';
+    icon.textContent = item.icon ?? '💠';
+
+    const name = document.createElement('div');
+    Object.assign(name.style, {
+      fontFamily: 'monospace',
+      fontSize  : '9px',
+      color     : '#C9A84C',
+      textAlign : 'center',
+      lineHeight: '1.2',
+    });
+    name.textContent = item.name;
+
+    const equippedBy = getEquippedBy(item.id);
+    if (equippedBy) {
+      const badge = document.createElement('div');
+      Object.assign(badge.style, {
+        position: 'absolute', top: '3px', left: '4px',
+        fontSize: '11px',
+      });
+      badge.textContent = equippedBy === 'mika' ? '🏹' : '🗡️';
+      slot.appendChild(badge);
+    }
+
+    slot.append(icon, name);
+    slot.addEventListener('click', (e) => this._showRelicTooltip(item, e));
+    slot.addEventListener('touchstart', (e) => { e.preventDefault(); this._showRelicTooltip(item, e); }, { passive: false });
+    return slot;
+  }
+
+  _showRelicTooltip(item, e) {
+    const equippedBy = getEquippedBy(item.id);
+
+    const lines = [item.name, `Arma: ${item.weapon} | Elemento: ${item.element}`];
+    if (item.stats) {
+      for (const [k, v] of Object.entries(item.stats)) lines.push(`${k}: +${v}`);
+    }
+    if (item.rarity) lines.push(`[${item.rarity}]`);
+
+    this._tooltip.innerHTML = lines.map((l, i) =>
+      `<div style="opacity:${i===0?1:0.7};margin-bottom:2px">${l}</div>`
+    ).join('');
+
+    const actions = document.createElement('div');
+    Object.assign(actions.style, { display: 'flex', gap: '6px', marginTop: '8px' });
+
+    const makeBtn = (label, onClick) => {
+      const b = document.createElement('button');
+      Object.assign(b.style, {
+        flex         : '1',
+        padding      : '6px 8px',
+        borderRadius : '8px',
+        border       : '1px solid rgba(201,168,76,0.5)',
+        background   : 'rgba(201,168,76,0.12)',
+        color        : '#C9A84C',
+        fontFamily   : 'monospace',
+        fontSize     : '9px',
+        cursor       : 'pointer',
+        pointerEvents: 'all',
+      });
+      b.textContent = label;
+      b.addEventListener('click', onClick);
+      b.addEventListener('touchstart', (ev) => { ev.preventDefault(); onClick(); }, { passive: false });
+      return b;
+    };
+
+    if (equippedBy === 'kael') {
+      actions.appendChild(makeBtn('Quitar de Kael', () => {
+        window._prog?.unequipRelic?.();
+        this._closeTooltip();
+        this._renderGrid();
+      }));
+    } else {
+      actions.appendChild(makeBtn('Equipar a Kael', () => {
+        window._prog?.equipRelic?.(item);
+        this._closeTooltip();
+        this._renderGrid();
+      }));
+    }
+
+    if (equippedBy === 'mika') {
+      actions.appendChild(makeBtn('Quitar de Mika', () => {
+        window._mikaProgression?.unequipRelic?.();
+        this._closeTooltip();
+        this._renderGrid();
+      }));
+    } else {
+      actions.appendChild(makeBtn('Equipar a Mika', () => {
+        window._mikaProgression?.equipRelic?.(item);
+        this._closeTooltip();
+        this._renderGrid();
+      }));
+    }
+
+    this._tooltip.appendChild(actions);
+
+    const rect = e.target.closest('div').getBoundingClientRect();
+    this._tooltip.style.display       = 'block';
+    this._tooltip.style.pointerEvents = 'all';
+    this._tooltip.style.left          = Math.min(rect.left, window.innerWidth - 230) + 'px';
+    this._tooltip.style.top           = (rect.top - 10) + 'px';
+  }
+
+  _closeTooltip() {
+    this._tooltip.style.display       = 'none';
+    this._tooltip.style.pointerEvents = 'none';
   }
 
   _buildConsumibleRow(item) {
@@ -518,6 +654,8 @@ export class InventoryUI {
   _rarityColor(rarity) {
     switch (rarity) {
       case 'comun'     : return 'rgba(180,180,180,0.3)';
+      case 'rara'      : return 'rgba(80,120,255,0.5)';
+      case 'epica'     : return 'rgba(160,60,255,0.5)';
       case 'raro'      : return 'rgba(80,120,255,0.5)';
       case 'epico'     : return 'rgba(160,60,255,0.5)';
       case 'legendario': return 'rgba(255,160,0,0.6)';
@@ -578,6 +716,7 @@ export class InventoryUI {
     if (!this._items[sec]) return;
     const existing = this._items[sec].find(i => i.id === item.id);
     if (existing) {
+      if (sec === 'reliquias') return; // únicas, no se acumulan
       existing.qty = (existing.qty ?? 1) + (item.qty ?? 1);
     } else {
       this._items[sec].push({ qty: 1, ...item });
@@ -641,7 +780,7 @@ export class InventoryUI {
   close() {
     this._open = false;
     this._overlay.style.display = 'none';
-    this._tooltip.style.display = 'none';
+    this._closeTooltip();
   }
 
   isOpen() { return this._open; }
