@@ -2,6 +2,7 @@
 
 import { WEAPON_TREES, getTreeKey } from './skillData.js';
 import { WEAPON_CRYSTAL_MAP       } from './skillData.js';
+import { refreshEffectiveStats    } from './relics.js';
 
 const LEVEL_XP = [
   0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200, 4000,
@@ -73,6 +74,7 @@ class ProgressionBase {
     this._flags          = {};
     this._reputation     = 0;
     this._trialsPassed   = {};
+    this._equippedRelic  = null;
 
     this.onLevelUp        = null;
     this.onWeaponLevelUp  = null;
@@ -148,6 +150,7 @@ class ProgressionBase {
     companion.syncStatsFromProgression();
   }
     }
+    refreshEffectiveStats(this._charId);
   }
 
   _showLevelUpNotification() {
@@ -442,6 +445,22 @@ class ProgressionBase {
   unlockSubtype()       {}
   unlockByStory()       {}
 
+  // ── Reliquias ────────────────────────────────────────────────────────────
+
+  getEquippedRelic() { return this._equippedRelic; }
+
+  equipRelic(relic) {
+    if (!relic) return false;
+    this._equippedRelic = relic;
+    refreshEffectiveStats(this._charId);
+    return true;
+  }
+
+  unequipRelic() {
+    this._equippedRelic = null;
+    refreshEffectiveStats(this._charId);
+  }
+
   // ── Serialización ─────────────────────────────────────────────────────────
 
   serialize() {
@@ -461,6 +480,7 @@ class ProgressionBase {
       flags        : this._flags,
       reputation   : this._reputation,
       trialsPassed : this._trialsPassed,
+      equippedRelic: this._equippedRelic,
     };
   }
 
@@ -480,7 +500,9 @@ class ProgressionBase {
     if (data.flags)                        this._flags         = data.flags;
     if (data.reputation     !== undefined) this._reputation    = data.reputation;
     if (data.trialsPassed)                 this._trialsPassed  = data.trialsPassed;
+    if (data.equippedRelic  !== undefined) this._equippedRelic = data.equippedRelic;
     this._initMissingTrees();
+    refreshEffectiveStats(this._charId);
   }
 
   _initMissingTrees() {
