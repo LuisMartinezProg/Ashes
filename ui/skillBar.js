@@ -1,5 +1,7 @@
 // ui/skillBar.js — Ashes of the Reborn | Valiant Gaming
 
+import { activateRelic, isRelicActive, getRelicCooldownPct, getEquippedRelic } from '../core/relics.js';
+
 const BASE_W = 800;
 const BASE_H = 450;
 
@@ -23,6 +25,7 @@ export class SkillBar {
     this._sprintBtn         = null;
     this._buildBtn          = null;
     this._jumpBtn           = null;
+    this._relicBtn          = null;
     this._container         = null;
     this._cooldowns         = {};
     this._enemyNear         = false;
@@ -32,7 +35,8 @@ export class SkillBar {
     this._build();
     this._resizeHandler = () => this._rebuild();
     window.addEventListener('resize', this._resizeHandler);
-    this._proximityInterval = setInterval(() => this._checkEnemyProximity(), 500);
+    this._proximityInterval   = setInterval(() => this._checkEnemyProximity(), 500);
+    this._relicUpdateInterval = setInterval(() => this._updateRelicBtn(), 100);
   }
 
   setWeapon(type) {
@@ -115,6 +119,7 @@ export class SkillBar {
 
   destroy() {
     clearInterval(this._proximityInterval);
+    clearInterval(this._relicUpdateInterval);
     window.removeEventListener('resize', this._resizeHandler);
     this._container?.remove();
   }
@@ -142,6 +147,33 @@ export class SkillBar {
     this._sprintBtn.title             = 'Sprint';
   }
 
+  // ── Reliquia: aparece/desaparece según estado ───────────────────────────
+  _updateRelicBtn() {
+    if (!this._relicBtn) return;
+
+    const charId = this._activeCharId ?? 'kael';
+    const relic  = getEquippedRelic(charId);
+
+    // Sin reliquia equipada: el botón no se muestra
+    if (!relic) {
+      this._relicBtn.style.display = 'none';
+      return;
+    }
+
+    // Activa: el botón desaparece por completo durante los 7s de efecto
+    if (isRelicActive(charId)) {
+      this._relicBtn.style.display = 'none';
+      return;
+    }
+
+    // En cooldown o lista: visible, con overlay de progreso
+    this._relicBtn.style.display = 'flex';
+    const pct = getRelicCooldownPct(charId); // 0 a 1, 1 = lista
+    const overlay = this._relicBtn.querySelector('.relic-cooldown');
+    if (overlay) overlay.style.height = `${(1 - pct) * 100}%`;
+    this._relicBtn.style.opacity = pct < 1 ? '0.55' : '1';
+  }
+
   _rebuild() {
     try {
       const wasVisible = this._visible;
@@ -151,6 +183,7 @@ export class SkillBar {
       this._sprintBtn = null;
       this._buildBtn  = null;
       this._jumpBtn   = null;
+      this._relicBtn  = null;
       this._build();
       if (this._weapon || this._activeWeapon) this.refresh();
       this._updateActionBtn();
@@ -295,6 +328,36 @@ export class SkillBar {
     this._jumpBtn.addEventListener('touchstart', onJump, { passive: false });
     this._jumpBtn.addEventListener('click', onJump);
     this._container.appendChild(this._jumpBtn);
+
+    // Botón reliquia
+    this._relicBtn = this._buildSmallBtn('💠', skSize, 'rgba(180,80,255,0.5)');
+    this._placeFromBottomRight(this._relicBtn, 600, 200, skSize);
+    this._relicBtn.style.overflow = 'hidden';
+
+    const relicCooldown = document.createElement('div');
+    relicCooldown.className = 'relic-cooldown';
+    relicCooldown.style.cssText = `
+      position:absolute;bottom:0;left:0;
+      width:100%;height:0%;
+      background:rgba(0,0,0,0.65);
+      transition:height 0.1s linear;
+      pointer-events:none;
+    `;
+    this._relicBtn.appendChild(relicCooldown);
+
+    const onRelic = (e) => {
+      e.preventDefault();
+      const charId = this._activeCharId ?? 'kael';
+      const ok = activateRelic(charId);
+      if (ok) {
+        this._relicBtn.style.transform = 'scale(0.88)';
+        setTimeout(() => this._relicBtn.style.transform = 'scale(1)', 140);
+      }
+    };
+    this._relicBtn.addEventListener('touchstart', onRelic, { passive: false });
+    this._relicBtn.addEventListener('click', onRelic);
+    this._container.appendChild(this._relicBtn);
+    this._updateRelicBtn();
   }
 
   _buildSmallBtn(icon, size, borderColor) {
