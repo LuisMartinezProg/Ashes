@@ -4,7 +4,7 @@ import { Player }          from './player.js';
 import { VirtualJoystick } from './joystick.js';
 import { ThirdPersonCamera } from './camera.js';
 import { FOREST_RESOURCES } from './scene.js';
-
+import { update as updateRelics } from './relics.js';
 const FRAME_CAP       = 1 / 20;
 const COLLECT_RANGE   = 3.5;
 const COLLECT_CHECK   = 0.3;
@@ -132,8 +132,9 @@ if (!window._dungeonManager?._active) {
 }
   
 
+  
   if (_combatSystem) _combatSystem.update(delta);
-
+  updateRelics(delta);
   for (const n of _npcs) n.update(timestamp * 0.001);
 
   _collectAccum += delta;
