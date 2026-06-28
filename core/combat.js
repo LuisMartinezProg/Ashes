@@ -6,11 +6,13 @@ import { SwordWeapon  } from './weapons/sword.js';
 import { MagicWeapon  } from './weapons/magic.js';
 import { BowWeapon    } from './weapons/bow.js';
 import { BranchMissionSystem } from './branchMissions.js';
+import { isRelicActive } from './relics.js';
 
-const ATTACK_RANGE   = 2.5;
-const COMBO_WINDOW   = 600;
-const SHAKE_DURATION = 180;
-const SHAKE_STRENGTH = 0.18;
+const ATTACK_RANGE        = 2.5;
+const COMBO_WINDOW        = 600;
+const SHAKE_DURATION      = 180;
+const SHAKE_STRENGTH      = 0.18;
+const RELIC_ENERGY_BONUS  = 5; // placeholder — pendiente de balance
 
 const RANGED_WEAPONS = new Set(['magic', 'bow']);
 
@@ -76,6 +78,24 @@ export class CombatSystem {
     }
     return window._effectiveStats
       ?? this._progression.getStats();
+  }
+
+  // ── Reliquia: bonus de energía si el combo conecta mientras está activa ──
+  _grantRelicEnergyIfActive() {
+    const active = window._partyManager?.getActiveCharacter?.();
+    const charId = (active && active === window._companion) ? 'mika' : 'kael';
+
+    if (!isRelicActive(charId)) return;
+
+    if (charId === 'mika') {
+      window._hud?.addMikaEnergy?.(RELIC_ENERGY_BONUS);
+    } else {
+      const sys = window._skillSystem;
+      if (sys) {
+        sys.energy = Math.min(sys.maxEnergy, sys.energy + RELIC_ENERGY_BONUS);
+        if (sys.onEnergyUpdate) sys.onEnergyUpdate(sys.energy, sys.maxEnergy);
+      }
+    }
   }
 
   setWeapon(type) {
@@ -155,6 +175,7 @@ export class CombatSystem {
     if (isRanged) {
       this.weapon.execute(hitIndex, this.enemies);
       this._triggerShake(0.5);
+      this._grantRelicEnergyIfActive();
 
       if (subtypeId && this._missions) {
         const estimatedDmg = this.weapon.getDamage?.(hitIndex) ?? 0;
@@ -178,6 +199,7 @@ export class CombatSystem {
 
         target.takeDamage(dmg);
         this._triggerShake(1.0);
+        this._grantRelicEnergyIfActive();
 
         if (subtypeId && this._missions) {
           this._missions.registerDamage(this._weaponType, subtypeId, dmg);
