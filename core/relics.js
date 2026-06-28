@@ -10,13 +10,10 @@
 // Mientras no exista el efecto de una reliquia, activarla no hace nada visible
 // todavía, pero el sistema de duración/cooldown funciona igual.
 
-import { getRelicData } from '../data/relics.js';
-
 const EFFECT_DURATION = 7; // segundos
 const EFFECT_COOLDOWN = 7; // segundos
 
 // ── Estado de activación por personaje ─────────────────────────────────────
-// No usamos clases para mantenerlo simple: un objeto plano por personaje.
 function _makeState() {
   return {
     active            : false,
@@ -44,9 +41,6 @@ function _getEffectFn(weapon, element) {
 }
 
 // ── Reliquia equipada por personaje ─────────────────────────────────────────
-// Usa el mismo patrón que el sistema viejo: la progresión de cada personaje
-// guarda cuál reliquia tiene equipada (getEquippedRelic()).
-
 function _getProgression(charId) {
   return charId === 'mika' ? window._mikaProgression : window._prog;
 }
