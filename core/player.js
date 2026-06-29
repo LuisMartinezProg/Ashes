@@ -2,7 +2,7 @@
  * player.js — Alma del protagonista
  * Ashes of the Reborn | Valiant Gaming
  */
-
+import { notifyCharacterDown } from './gameOverSystem.js';
 import * as THREE from 'three';
 
 const MOVE_SPEED     = 5.0;
@@ -163,6 +163,7 @@ export class Player {
     const reduced = Math.max(1, Math.floor(amount * (1 - def / (def + 50))));
     this.hp       = Math.max(0, this.hp - reduced);
     if (this.onDamage) this.onDamage(this.hp, this.maxHp);
+    if (this.hp <= 0) notifyCharacterDown('kael');   // ← nuevo
   }
 
   destroy() {
