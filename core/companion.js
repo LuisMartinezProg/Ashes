@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { SkillSystem } from './skillSystem.js';
 import { BowWeapon   } from './weapons/bow.js';
+import { notifyCharacterDown } from './gameOverSystem.js';
 
 const MOVE_SPEED   = 4.5;
 const SPRINT_SPEED = 8.0;
@@ -160,6 +161,7 @@ export class Companion {
     const actual = Math.max(1, amount - Math.floor(def * 0.5));
     this.hp      = Math.max(0, this.hp - actual);
     if (this.onDamage) this.onDamage(this.hp, this.maxHp);
+    if (this.hp <= 0) notifyCharacterDown('mika');   // ← nuevo
   }
 
   heal(amount) {
