@@ -135,6 +135,7 @@ export class SkillBar {
     }
     if (near !== this._enemyNear) {
       this._enemyNear = near;
+      if (near) window._tutorial?.notifyNearEnemy?.();   
       this._updateActionBtn();
     }
   }
@@ -159,7 +160,7 @@ export class SkillBar {
       this._relicBtn.style.display = 'none';
       return;
     }
-
+    window._tutorial?.notifyHasRelic?.();   //
     // Activa: el botón desaparece por completo durante los 7s de efecto
     if (isRelicActive(charId)) {
       this._relicBtn.style.display = 'none';
