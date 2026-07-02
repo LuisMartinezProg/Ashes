@@ -132,10 +132,7 @@ export class CombatSystem {
   unregisterEnemy(enemy) { this.enemies = this.enemies.filter(e => e !== enemy); }
 
   triggerAttack() {
-    window._tutorial?.notifyAttacked?.();   // ← aquí
-   const active = window._partyManager?.getActiveCharacter?.();
- 
-    // Si Mika está activa, usar su arco
+    window._tutorial?.notifyAttacked?.();   // ← aquí 
     const active = window._partyManager?.getActiveCharacter?.();
     if (active && active === window._companion) {
       window._companion.attackBasic();
