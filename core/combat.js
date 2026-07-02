@@ -227,12 +227,12 @@ export class CombatSystem {
           }
         }
         if (school === 'soporte') {
-          const heal   = Math.floor(dmg * 0.05);
-          const active = this._getActiveCharacter();
-          if (active && heal > 0) {
-            active.hp = Math.min(active.maxHp, active.hp + heal);
-            active.onDamage?.(active.hp, active.maxHp);
-          }
+  const heal       = Math.floor(dmg * 0.05);
+  const activeChar = this._getActiveCharacter();
+  if (activeChar && heal > 0) {
+    activeChar.hp = Math.min(activeChar.maxHp, activeChar.hp + heal);
+    activeChar.onDamage?.(activeChar.hp, activeChar.maxHp);
+  }
         }
       }
     }
