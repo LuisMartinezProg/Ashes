@@ -117,6 +117,7 @@ import { WeatherSystem } from './core/weather.js';
 import { GachaSystem } from './core/gacha.js';
 import { GachaMenu } from './ui/gachaMenu.js';
 import { refreshAllEffectiveStats } from './core/relics.js';
+import { TutorialSystem } from './ui/tutorial.js';
   
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -512,6 +513,8 @@ allEnemies.forEach(e => {
     window._skillTree = skillTree;
     const skillBar    = new SkillBar(skills, progression);
     window._skillBar  = skillBar;
+    const tutorial = new TutorialSystem(dialogueUI);
+    window._tutorial = tutorial;
     const characterMenu = new CharacterMenu(progression, skillBar);
     window._characterMenu = characterMenu;
     const partyMenu = new PartyMenu();
@@ -528,9 +531,12 @@ allEnemies.forEach(e => {
     const mapUI = new MapUI(player);
     window._mapUI = mapUI;
     setInterval(() => {
-      if (!window._dungeonManager?._active) mapUI.update();
-    }, 500);
-
+  if (window._dungeonManager?._active) return;
+  const pos    = player.root.position;
+  const inside = buildZone.isInsideZone(pos.x, pos.z);
+  if (inside) window._tutorial?.notifyNearBuild?.();  // ← aquí
+  ...
+}, 500);
     const keyboardControls = new KeyboardControls();
     window._keyboard = keyboardControls;
     const keybindMenu = new KeybindMenu(keyboardControls);
