@@ -168,6 +168,9 @@ export class SkillSystem {
   if (this.energy < cost) return false;
   const success = skill.cast(this.enemies);
   if (success) {
+      window._tutorial?.notifyUsedSkill?.();  // ← aquí
+  this.energy -= cost;
+ 
     this.energy -= cost;
     if (this.onEnergyUpdate) this.onEnergyUpdate(this.energy, this.maxEnergy);
     // ── Notificar al puzzle activo ────────────────────────────────────────
