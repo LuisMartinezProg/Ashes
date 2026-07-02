@@ -69,7 +69,9 @@ function _tick(timestamp) {
       dx: Math.abs(kbInput.dx) > 0.01 ? kbInput.dx : joyInput.dx,
       dy: Math.abs(kbInput.dy) > 0.01 ? kbInput.dy : joyInput.dy,
     };
-
+    if (Math.abs(input.dx) > 0.01 || Math.abs(input.dy) > 0.01) {
+  window._tutorial?.notifyMoved?.();
+    }
     if (window._partyManager) {
       window._partyManager.update(delta, input, _camera);
     } else {
