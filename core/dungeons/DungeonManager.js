@@ -260,7 +260,8 @@ export class DungeonManager {
     if (nearest && nearest !== this._nearDungeon) {
       this._nearDungeon = nearest;
       this._enterBtn.style.display = 'flex';
-      this._enterBtn.textContent   = `⚔ Entrar — ${nearest.def.name}`;
+      this._enterBtn.textContent   = ` Entrar — ${nearest.def.name}`;
+      window._tutorial?.notifyNearDungeon?.(); 
     } else if (!nearest && this._nearDungeon) {
       this._nearDungeon = null;
       this._enterBtn.style.display = 'none';
