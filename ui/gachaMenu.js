@@ -1,8 +1,9 @@
 // ui/gachaMenu.js
 // Banner de Gacha — "Velo Umbral / Eco Astral".
-// Layout: [Banners] [Cristal] [Gemas + Showcase + Stats + Pulls]
+// Layout: [Banners] [Cristal] [Gemas/Deseos + Showcase(personaje+arma) + Stats + Pulls]
 // El cristal vive siempre visible (no es un overlay aparte) y acumula
-// grietas según el pity Épico actual. Historial en pantalla separada.
+// grietas según el pity Épico actual. Resultado en showcase (1x grande / 10x grid).
+// Historial y Probabilidades en pantallas separadas.
 
 import { PULL_COST, PITY_EPICO_THRESHOLD, PITY_RARO_THRESHOLD } from './../core/gacha.js';
 
@@ -27,6 +28,12 @@ const RARITY_COLORS = {
 const FEATURED_DISPLAY = {
   raro: 'Fragmento Raro de Kael',
   epico: 'Reliquia: Alba Eterna',
+};
+
+// Placeholders de ejemplo para el panel de probabilidades (hasta tener assets reales)
+const RATE_EXAMPLES = {
+  epico: { name: 'Kael', sub: 'Velo — Personaje' },
+  raro: { name: 'Mika', sub: 'Eco — Personaje' },
 };
 
 let _stylesInjected = false;
@@ -151,29 +158,57 @@ function _injectStyles() {
       flex: 1; display: flex; flex-direction: column;
       overflow-y: auto; min-width: 0;
     }
-    .gacha-gems-row {
-      display: flex; justify-content: flex-end; align-items: center;
-      gap: 5px; font-size: 12px; margin-bottom: 8px;
-    }
-    .gacha-gems-value { color: #E8C97A; font-weight: bold; }
 
+    /* Doble contador: Deseos (gemas, costo real) + Monedas del banner (placeholder) */
+    .gacha-currency-row {
+      display: flex; justify-content: flex-end; align-items: center;
+      gap: 10px; font-size: 11px; margin-bottom: 8px;
+    }
+    .gacha-currency-chip {
+      display: flex; align-items: center; gap: 4px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(157,127,232,0.2);
+      border-radius: 14px; padding: 3px 9px;
+    }
+    .gacha-currency-icon { font-size: 11px; }
+    .gacha-currency-label { color: #6E6280; font-size: 9px; }
+    .gacha-deseos-value { color: #E8C97A; font-weight: bold; }
+    .gacha-banner-coin-value { color: #9D7FE8; font-weight: bold; }
+
+    /* Showcase: personaje + arma lado a lado */
     .gacha-showcase {
       display: flex; justify-content: center;
       margin-bottom: 10px;
     }
     .gacha-showcase-frame {
-      transform: rotate(-4deg);
       background: linear-gradient(160deg, #1B1330, #100A1C);
       border: 1px solid rgba(232,201,122,0.35);
       border-radius: 10px;
-      padding: 12px 14px;
+      padding: 10px 12px;
       text-align: center;
-      min-width: 140px;
+      min-width: 160px;
       transition: opacity 0.3s ease;
     }
     .gacha-showcase-label {
       font-size: 9px; letter-spacing: 0.16em; color: #5C4A8A;
-      text-transform: uppercase; margin-bottom: 4px;
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+    .gacha-showcase-duo {
+      display: flex; align-items: flex-end; justify-content: center;
+      gap: 8px; margin-bottom: 4px;
+    }
+    .gacha-placeholder-box {
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; font-size: 16px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .gacha-ph-character {
+      width: 56px; height: 68px;
+      background: linear-gradient(160deg, rgba(232,201,122,0.18), rgba(232,201,122,0.05));
+    }
+    .gacha-ph-weapon {
+      width: 34px; height: 46px;
+      background: linear-gradient(160deg, rgba(157,127,232,0.2), rgba(157,127,232,0.05));
     }
     .gacha-showcase-name {
       font-family: Georgia, serif; font-size: 13px; color: #E8C97A;
@@ -189,7 +224,26 @@ function _injectStyles() {
       border-radius: 6px; border: 1px solid rgba(232,201,122,0.4);
       background: rgba(232,201,122,0.1); color: #E8C97A;
       font-family: monospace; font-size: 9px; cursor: pointer;
-      transform: rotate(4deg);
+    }
+
+    /* Grid de resultados 10x */
+    .gacha-result-grid {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 6px; margin-top: 4px;
+    }
+    .gacha-result-cell {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 3px; padding: 5px 2px; border-radius: 6px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .gacha-result-cell.is-featured { border-color: rgba(232,201,122,0.5); }
+    .gacha-result-ph {
+      width: 32px; height: 38px; border-radius: 4px;
+    }
+    .gacha-result-cell-label {
+      font-size: 7px; text-align: center; line-height: 1.15;
+      color: #E8E4F0; word-break: break-word;
     }
 
     .gacha-panel {
@@ -220,6 +274,7 @@ function _injectStyles() {
       transition: width 0.4s ease;
     }
     .gacha-row { display: flex; justify-content: space-between; font-size: 10px; color: #B8B0C8; }
+    .gacha-row.small-top { margin-bottom: 4px; }
     .gacha-guarantee { color: #E8C97A; font-weight: bold; }
 
     .gacha-pull-btns { display: flex; gap: 8px; margin-top: 2px; }
@@ -262,6 +317,43 @@ function _injectStyles() {
     .gacha-history-rarity { font-family: Georgia, serif; font-weight: bold; }
     .gacha-history-featured { color: #E8C97A; font-size: 9px; margin-left: 5px; }
     .gacha-history-empty { color: #6E6280; text-align: center; margin-top: 30px; font-size: 11px; }
+
+    /* ---- Probabilidades (pantalla aparte) ---- */
+    #gacha-rates {
+      position: fixed; inset: 0; z-index: 330;
+      background: #0B0815; display: none;
+      flex-direction: column; color: #E8E4F0; font-family: monospace;
+    }
+    #gacha-rates.open { display: flex; }
+    .gacha-rates-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 14px; border-bottom: 1px solid rgba(157,127,232,0.2);
+    }
+    .gacha-rates-header button {
+      background: rgba(157,127,232,0.1); border: 1px solid rgba(157,127,232,0.35);
+      color: #E8E4F0; border-radius: 7px; font-family: monospace;
+      font-size: 11px; padding: 7px 10px; cursor: pointer;
+    }
+    .gacha-rates-body { flex: 1; overflow-y: auto; padding: 14px; }
+    .gacha-rates-blurb {
+      font-size: 10px; color: #B8B0C8; line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    .gacha-rates-row {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(157,127,232,0.15);
+      border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+    }
+    .gacha-rates-ph {
+      width: 38px; height: 46px; border-radius: 5px; flex-shrink: 0;
+    }
+    .gacha-rates-info { flex: 1; }
+    .gacha-rates-rarity-label {
+      font-family: Georgia, serif; font-size: 12px; font-weight: bold;
+    }
+    .gacha-rates-example { font-size: 9px; color: #6E6280; margin-top: 1px; }
+    .gacha-rates-pct { font-size: 13px; font-weight: bold; }
   `;
   document.head.appendChild(style);
 }
@@ -329,11 +421,19 @@ function _gemSVG() {
   </svg>`;
 }
 
+// Caja placeholder coloreada según rareza (usa gradiente simple con el color de rareza)
+function _placeholderStyle(rarity, sizeClass) {
+  const color = RARITY_COLORS[rarity] || '#7A63B8';
+  return `background: linear-gradient(160deg, ${color}55, ${color}15); border-color: ${color}88;`;
+}
+
 export class GachaMenu {
   constructor(gacha) {
     this.gacha = gacha;
     this._skipAnim = false;
     this._history = []; // { rarity, name, featured } más reciente primero
+    this._totalPulls = 0;
+    this._bannerCoins = 0; // placeholder — no hay lógica real en core/gacha.js todavía
     _injectStyles();
     this._build();
     this._refresh();
@@ -352,6 +452,7 @@ export class GachaMenu {
       <div class="gacha-topbar">
         <div class="gacha-title">Eco Astral</div>
         <div class="gacha-topbar-actions">
+          <button id="gacha-rates-btn">Probabilidades</button>
           <button id="gacha-history-btn">Historial</button>
           <button id="gacha-skip-btn">Saltar animación</button>
           <button id="gacha-close-btn">Cerrar</button>
@@ -360,6 +461,7 @@ export class GachaMenu {
       <div class="gacha-main">
         <div class="gacha-col-banners">
           <button class="gacha-banner-tab active" id="gacha-tab-promo">Promocional</button>
+          <button class="gacha-banner-tab disabled" id="gacha-tab-initial">Inicial<small>próximamente</small></button>
           <button class="gacha-banner-tab disabled" id="gacha-tab-standard">Permanente<small>próximamente</small></button>
         </div>
 
@@ -368,19 +470,35 @@ export class GachaMenu {
         </div>
 
         <div class="gacha-col-info">
-          <div class="gacha-gems-row">
-            <span>Gemas</span>
-            <span class="gacha-gems-value" id="gacha-gems-value">0</span>
+          <div class="gacha-currency-row">
+            <div class="gacha-currency-chip">
+              <span class="gacha-currency-icon">🪙</span>
+              <span class="gacha-currency-label">Banner</span>
+              <span class="gacha-banner-coin-value" id="gacha-banner-coin-value">0</span>
+            </div>
+            <div class="gacha-currency-chip">
+              <span class="gacha-currency-icon">✦</span>
+              <span class="gacha-currency-label">Deseos</span>
+              <span class="gacha-deseos-value" id="gacha-deseos-value">0</span>
+            </div>
           </div>
 
           <div class="gacha-showcase">
             <div class="gacha-showcase-frame" id="gacha-showcase-frame">
               <div class="gacha-showcase-label" id="gacha-showcase-label">Velo destacado</div>
+              <div class="gacha-showcase-duo">
+                <div class="gacha-placeholder-box gacha-ph-character" id="gacha-showcase-char-ph" style="${_placeholderStyle('epico')}">★</div>
+                <div class="gacha-placeholder-box gacha-ph-weapon" id="gacha-showcase-weapon-ph" style="${_placeholderStyle('epico')}">⚔</div>
+              </div>
               <div class="gacha-showcase-name" id="gacha-showcase-name"></div>
             </div>
           </div>
 
           <div class="gacha-panel">
+            <div class="gacha-row small-top">
+              <span>Tiradas totales (banner)</span>
+              <span id="gacha-total-pulls">0</span>
+            </div>
             <div class="gacha-panel-title">Eco — garantía cada 10</div>
             <div class="gacha-dots" id="gacha-dots-raro"></div>
             <div class="gacha-row">
@@ -421,6 +539,26 @@ export class GachaMenu {
     document.body.appendChild(history);
     this._history_el = history;
 
+    const rates = document.createElement('div');
+    rates.id = 'gacha-rates';
+    rates.innerHTML = `
+      <div class="gacha-rates-header">
+        <div class="gacha-title">Probabilidades</div>
+        <button id="gacha-rates-close-btn">Cerrar</button>
+      </div>
+      <div class="gacha-rates-body">
+        <div class="gacha-rates-blurb">
+          Cada tirada tiene una probabilidad fija por rareza. El pity Eco garantiza
+          al menos un Raro cada 10 tiradas. El pity Velo garantiza un Épico cada 90
+          tiradas como máximo, con 50/50 a favor del personaje destacado (con
+          garantía si se pierde el 50/50 dos veces seguidas).
+        </div>
+        <div id="gacha-rates-list"></div>
+      </div>
+    `;
+    document.body.appendChild(rates);
+    this._rates_el = rates;
+
     // Cache de nodos de grietas (evita re-querySelectorAll en cada pull)
     this._gemCracks = Array.from(overlay.querySelectorAll('.gem-crack'));
     this._gemFragments = overlay.querySelector('#gem-fragments');
@@ -430,12 +568,45 @@ export class GachaMenu {
     this._bindTap(overlay.querySelector('#gacha-pull1'), () => this._doPull(1));
     this._bindTap(overlay.querySelector('#gacha-pull10'), () => this._doPull(10));
     this._bindTap(overlay.querySelector('#gacha-history-btn'), () => this._openHistory());
+    this._bindTap(overlay.querySelector('#gacha-rates-btn'), () => this._openRates());
     this._bindTap(overlay.querySelector('#gacha-tab-standard'), () => {
       this._showMsg('Banner permanente: próximamente.');
     });
+    this._bindTap(overlay.querySelector('#gacha-tab-initial'), () => {
+      this._showMsg('Banner inicial: próximamente.');
+    });
     this._bindTap(history.querySelector('#gacha-history-close-btn'), () => this._closeHistory());
+    this._bindTap(rates.querySelector('#gacha-rates-close-btn'), () => this._closeRates());
 
     overlay.querySelector('#gacha-showcase-name').textContent = FEATURED_DISPLAY.epico;
+
+    this._buildRatesList();
+  }
+
+  _buildRatesList() {
+    const list = this._rates_el.querySelector('#gacha-rates-list');
+    const g = this.gacha;
+    const rows = [
+      { rarity: 'epico', pct: g.getRateEpico ? g.getRateEpico() : 0.6 },
+      { rarity: 'raro', pct: g.getRateRaro ? g.getRateRaro() : 5.1 },
+      { rarity: 'comun', pct: g.getRateComun ? g.getRateComun() : 94.3 },
+    ];
+    list.innerHTML = rows.map(r => {
+      const color = RARITY_COLORS[r.rarity];
+      const example = RATE_EXAMPLES[r.rarity];
+      return `
+        <div class="gacha-rates-row">
+          <div class="gacha-rates-ph" style="${_placeholderStyle(r.rarity)}"></div>
+          <div class="gacha-rates-info">
+            <div class="gacha-rates-rarity-label" style="color:${color}">
+              ${RARITY_FULL[r.rarity]} (${RARITY_LABELS[r.rarity]})
+            </div>
+            ${example ? `<div class="gacha-rates-example">Ej: ${example.name} — ${example.sub}</div>` : ''}
+          </div>
+          <div class="gacha-rates-pct" style="color:${color}">${r.pct}%</div>
+        </div>
+      `;
+    }).join('');
   }
 
   _showMsg(text) {
@@ -490,9 +661,19 @@ export class GachaMenu {
     this._history_el.classList.remove('open');
   }
 
+  _openRates() {
+    this._rates_el.classList.add('open');
+  }
+
+  _closeRates() {
+    this._rates_el.classList.remove('open');
+  }
+
   _refresh() {
     const g = this.gacha;
-    this._overlay.querySelector('#gacha-gems-value').textContent = g.getGems();
+    this._overlay.querySelector('#gacha-deseos-value').textContent = g.getGems();
+    this._overlay.querySelector('#gacha-banner-coin-value').textContent = this._bannerCoins;
+    this._overlay.querySelector('#gacha-total-pulls').textContent = this._totalPulls;
 
     const dotsWrap = this._overlay.querySelector('#gacha-dots-raro');
     dotsWrap.innerHTML = '';
@@ -551,6 +732,7 @@ export class GachaMenu {
     this._refresh();
     if (!results) return;
 
+    this._totalPulls += times;
     results.forEach(r => this._history.unshift({ rarity: r.rarity, name: r.name, featured: r.featured }));
     if (this._history.length > 200) this._history.length = 200;
 
@@ -589,7 +771,9 @@ export class GachaMenu {
     }
   }
 
-  // Reemplaza el contenido del showcase con el/los resultado(s), con botón para volver al featured.
+  // Reemplaza el contenido del showcase con el/los resultado(s):
+  // 1x → vista individual grande con placeholder de imagen.
+  // 10x → grid 5 columnas, solo lectura, sin interacción.
   _showResultInShowcase(results, times) {
     const frame = this._overlay.querySelector('#gacha-showcase-frame');
     frame.innerHTML = '';
@@ -599,23 +783,27 @@ export class GachaMenu {
       const color = RARITY_COLORS[item.rarity] || '#fff';
       frame.innerHTML = `
         <div class="gacha-showcase-label">${RARITY_FULL[item.rarity] || item.rarity}</div>
+        <div class="gacha-showcase-duo">
+          <div class="gacha-placeholder-box gacha-ph-character" style="${_placeholderStyle(item.rarity)}">★</div>
+        </div>
         <div class="gacha-showcase-rarity" style="color:${color}">${RARITY_LABELS[item.rarity] || item.rarity}</div>
         <div class="gacha-showcase-name">${item.name}</div>
         ${item.featured === true ? '<div class="gacha-showcase-featured">DESTACADO</div>' : ''}
         <button class="gacha-showcase-continue" id="gacha-showcase-continue">Continuar</button>
       `;
     } else {
-      const rows = results.map(item => {
-        const color = RARITY_COLORS[item.rarity] || '#fff';
-        const tag = item.featured === true ? ' ★' : '';
-        return `<div style="font-size:10px; margin-bottom:3px;">
-          <span style="color:${color}; font-family:Georgia,serif;">${RARITY_LABELS[item.rarity] || item.rarity}</span>
-          — ${item.name}${tag}
-        </div>`;
+      const cells = results.map(item => {
+        const isFeatured = item.featured === true;
+        return `
+          <div class="gacha-result-cell${isFeatured ? ' is-featured' : ''}">
+            <div class="gacha-result-ph" style="${_placeholderStyle(item.rarity)}"></div>
+            <div class="gacha-result-cell-label">${item.name}</div>
+          </div>
+        `;
       }).join('');
       frame.innerHTML = `
         <div class="gacha-showcase-label">Resultados x${times}</div>
-        <div style="max-height:140px; overflow-y:auto; text-align:left; margin-top:6px;">${rows}</div>
+        <div class="gacha-result-grid">${cells}</div>
         <button class="gacha-showcase-continue" id="gacha-showcase-continue">Continuar</button>
       `;
     }
@@ -627,6 +815,10 @@ export class GachaMenu {
     const frame = this._overlay.querySelector('#gacha-showcase-frame');
     frame.innerHTML = `
       <div class="gacha-showcase-label" id="gacha-showcase-label">Velo destacado</div>
+      <div class="gacha-showcase-duo">
+        <div class="gacha-placeholder-box gacha-ph-character" style="${_placeholderStyle('epico')}">★</div>
+        <div class="gacha-placeholder-box gacha-ph-weapon" style="${_placeholderStyle('epico')}">⚔</div>
+      </div>
       <div class="gacha-showcase-name" id="gacha-showcase-name">${FEATURED_DISPLAY.epico}</div>
     `;
   }
