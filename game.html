@@ -529,31 +529,24 @@ allEnemies.forEach(e => {
     inventoryUI.syncMaterials(building);
     const subtypeMenu = new SubtypeMenu(progression, skillBar);
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
-
     const mapUI = new MapUI(player);
     window._mapUI = mapUI;
-    setInterval(() => {
-  if (window._dungeonManager?._active) return;
-  const pos    = player.root.position;
-  const inside = buildZone.isInsideZone(pos.x, pos.z);
-  if (inside) window._tutorial?.notifyNearBuild?.();  // ← aquí
-  ...
-}, 500);
+
     const keyboardControls = new KeyboardControls();
     window._keyboard = keyboardControls;
     const keybindMenu = new KeybindMenu(keyboardControls);
     window._keybindMenu = keybindMenu;
 
     const radialMenu = new RadialMenu([
-  { icon: '👤', label: 'Personaje',  action: () => characterMenu.open(),   locked: false },
-  { icon: '⚔️', label: 'Equipo',     action: () => partyMenu.toggle(),     locked: false },
-  { icon: '🗺️', label: 'Mapa',       action: () => { if (!window._dungeonManager?._active) mapUI.toggle(); }, locked: false },
-  { icon: '🎒', label: 'Inventario', action: () => inventoryUI.open(),     locked: false },
-  { icon: '📖', label: 'Bestiario',  action: () => bestiaryScreen.open(),  locked: false },
-  { icon: '🕐', label: 'Tiempo',     action: () => timeMenu.open(),        locked: false },
- //{ icon: '⌨️', label: 'Controles',  action: () => keybindMenu.open(),     locked: false },
-  { icon: '🔮', label: 'Eco Astral', action: () => gachaMenu.toggle(),     locked: false },
-]);
+      { icon: '👤', label: 'Personaje',  action: () => characterMenu.open(),   locked: false },
+      { icon: '⚔️', label: 'Equipo',     action: () => partyMenu.toggle(),     locked: false },
+      { icon: '🗺️', label: 'Mapa',       action: () => { if (!window._dungeonManager?._active) mapUI.toggle(); }, locked: false },
+      { icon: '🎒', label: 'Inventario', action: () => inventoryUI.open(),     locked: false },
+      { icon: '📖', label: 'Bestiario',  action: () => bestiaryScreen.open(),  locked: false },
+      { icon: '🕐', label: 'Tiempo',     action: () => timeMenu.open(),        locked: false },
+      { icon: '🔮', label: 'Eco Astral', action: () => gachaMenu.toggle(),     locked: false },
+    ]);
+
     const pauseMenu = new PauseMenu({
       onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
       onFusion  : () => { pauseMenu.close(); fusionMenu.open(combat._weaponType); },
@@ -598,6 +591,9 @@ allEnemies.forEach(e => {
       if (window._dungeonManager?._active) return;
       const pos    = player.root.position;
       const inside = buildZone.isInsideZone(pos.x, pos.z);
+
+      if (inside) window._tutorial?.notifyNearBuild?.();
+
       if (buildCamera._btn) {
         buildCamera._btn.style.display = inside ? 'flex' : 'none';
         if (!inside && buildCamera.isActive()) buildCamera.deactivate();
@@ -628,6 +624,7 @@ allEnemies.forEach(e => {
     const loading = document.getElementById('loading');
     loading.classList.add('hidden');
     setTimeout(() => loading.remove(), 900);
+          
 } catch (err) {
     const msg = (err?.message || String(err)) + '\n\n' + (err?.stack || '');
     txt.textContent = msg.slice(0, 300);
