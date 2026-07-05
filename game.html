@@ -148,7 +148,9 @@ function _setWorldEnemiesVisible(visible) {
 
 async function boot() {
   try {
-
+   window.onerror = (msg, src, line) => {
+      document.body.innerHTML = `<pre style="color:#ff4444;padding:16px;font-size:11px;">${msg}\n${src}:${line}</pre>`;
+   };
     setProgress(5, 'Verificando...');
     await new Promise(r => setTimeout(r, 200));
 
