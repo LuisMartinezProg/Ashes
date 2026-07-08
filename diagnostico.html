@@ -7,7 +7,7 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Cinzel:wght@400;700&display=swap');
   :root {
-       --bg: #080a0e; --panel: #0d1117; --border: #1e2a38;
+    --bg: #080a0e; --panel: #0d1117; --border: #1e2a38;
     --accent: #c8922a; --accent2: #4a9eff; --ok: #3ddc84;
     --err: #ff4d4d; --pending: #555e6e; --text: #a8b8cc;
     --text-bright: #dce8f5; --mono: 'Share Tech Mono', monospace; --serif: 'Cinzel', serif;
@@ -129,7 +129,7 @@ const MANIFEST = [
     ]
   },
   {
-    id: 'core8', icon: '📖', label: 'Core — Fase 8 (Narrativa)',
+    id: 'core8', icon: '📖', label: 'Core — Narrativa',
     files: [
       { path: './core/narrative.js',   exp: 'NarrativeSystem' },
       { path: './core/triggers.js',    exp: 'WorldTriggers' },
@@ -149,24 +149,25 @@ const MANIFEST = [
   {
     id: 'coreMain', icon: '⚙️', label: 'Core — Principal',
     files: [
-      { path: './core/scene.js',                    exp: 'initScene' },
-      { path: './core/loop.js',                     exp: 'startLoop' },
-      { path: './core/combat.js',                   exp: 'CombatSystem' },
-      { path: './core/enemy.js',                    exp: 'spawnEnemies' },
-      { path: './core/npc.js',                      exp: 'spawnNPCs' },
-      { path: './core/inventory.js',                exp: 'inventory' },
-      { path: './core/companion.js',                exp: 'Companion' },
-      { path: './core/partyManager.js',             exp: 'PartyManager' },
-      { path: './core/mikaProgression.js',          exp: 'createMikaProgression' },
-      { path: './core/keyboardControls.js',         exp: 'KeyboardControls' },
-      { path: './core/buildCamera.js',              exp: 'BuildCamera' },
-      { path: './core/buildZone.js',                exp: 'BuildZone' },
-      { path: './core/worldLOD.js',                 exp: 'registerLODObjects' },
-      { path: './core/dungeons/DungeonManager.js',  exp: 'DungeonManager' },
-      { path: './data/items.js',                    exp: 'ITEMS' },
-      { path: './core/currency.js', 
-       exp: 'CurrencySystem' },
-      { path: './core/bestiary.js', exp: 'BESTIARY_DATA' },
+      { path: './core/scene.js',                   exp: 'initScene' },
+      { path: './core/loop.js',                    exp: 'startLoop' },
+      { path: './core/combat.js',                  exp: 'CombatSystem' },
+      { path: './core/enemy.js',                   exp: 'spawnEnemies' },
+      { path: './core/npc.js',                     exp: 'spawnNPCs' },
+      { path: './core/inventory.js',               exp: 'inventory' },
+      { path: './core/companion.js',               exp: 'Companion' },
+      { path: './core/partyManager.js',            exp: 'PartyManager' },
+      { path: './core/mikaProgression.js',         exp: 'createMikaProgression' },
+      { path: './core/keyboardControls.js',        exp: 'KeyboardControls' },
+      { path: './core/buildCamera.js',             exp: 'BuildCamera' },
+      { path: './core/buildZone.js',               exp: 'BuildZone' },
+      { path: './core/worldLOD.js',                exp: 'registerLODObjects' },
+      { path: './core/dungeons/DungeonManager.js', exp: 'DungeonManager' },
+      { path: './data/items.js',                   exp: 'ITEMS' },
+      { path: './core/currency.js',                exp: 'CurrencySystem' },
+      { path: './core/bestiary.js',                exp: 'BESTIARY_DATA' },
+      { path: './core/relics.js',                  exp: 'refreshAllEffectiveStats' },
+      { path: './core/gameOverSystem.js',          exp: 'notifyCharacterDown' },
     ]
   },
   {
@@ -190,54 +191,32 @@ const MANIFEST = [
       { path: './core/enemies/Berserker.js',       exp: 'Berserker' },
       { path: './core/enemies/YamiMage.js',        exp: 'YamiMage' },
       { path: './core/enemies/ShadowCaptain.js',   exp: 'ShadowCaptain' },
-    ]
-  },
-  {
-    id: 'coreFuture', icon: '🗺️', label: 'Core — Futuro',
-    files: [
-      { path: './core/worldMap.js',  exp: 'WorldMap',  pending: true },
-      { path: './core/dayNight.js',  exp: 'DayNight',  pending: true },
-      { path: './core/weather.js',   exp: 'Weather',   pending: true },
-      { path: './core/relations.js', exp: 'Relations', pending: true },
-      { path: './core/cinematic.js', exp: 'Cinematic', pending: true },
-    ]
-  },
-  {
-    id: 'coreEconomy', icon: '💰', label: 'Core — Economía / Tienda (Futuro)',
-    files: [
-      { path: './ui/shopNew.js',     exp: 'ShopUI',        pending: true },
-      { path: './core/banner.js',    exp: 'BannerSystem',  pending: true },
-      { path: './ui/bannerUI.js',    exp: 'BannerUI',      pending: true },
+      { path: './core/enemies/Thug.js',            exp: 'Thug' },
     ]
   },
   {
     id: 'uiExist', icon: '🎮', label: 'UI — Existente',
     files: [
-      { path: './ui/hud.js',           exp: 'HUD' },
-      { path: './ui/weaponSelect.js',  exp: 'showWeaponSelect' },
-      { path: './ui/dialogue.js',      exp: 'DialogueUI' },
-      { path: './ui/shop.js',          exp: 'ShopUI' },
-      { path: './ui/skillBar.js',      exp: 'SkillBar' },
-      { path: './ui/subtypeMenu.js',   exp: 'SubtypeMenu' },
-      { path: './ui/pauseMenu.js',     exp: 'PauseMenu' },
-      { path: './ui/fusionMenu.js',    exp: 'FusionMenu' },
-      { path: './ui/characterMenu.js', exp: 'CharacterMenu' },
-      { path: './ui/inventory.js',     exp: 'InventoryUI' },
-      { path: './ui/keybindMenu.js',   exp: 'KeybindMenu' },
-      { path: './ui/mapUI.js',         exp: 'MapUI' },
-      { path: './ui/buildMenu.js',     exp: 'BuildMenu' },
-      { path: './ui/skillTree.js',     exp: 'SkillTree' },
-      { path: './ui/radialMenu.js',    exp: 'RadialMenu' },
-      { path: './core/bestiary.js',     exp: 'onKill' },
+      { path: './ui/hud.js',            exp: 'HUD' },
+      { path: './ui/weaponSelect.js',   exp: 'showWeaponSelect' },
+      { path: './ui/dialogue.js',       exp: 'DialogueUI' },
+      { path: './ui/shop.js',           exp: 'ShopUI' },
+      { path: './ui/skillBar.js',       exp: 'SkillBar' },
+      { path: './ui/subtypeMenu.js',    exp: 'SubtypeMenu' },
+      { path: './ui/pauseMenu.js',      exp: 'PauseMenu' },
+      { path: './ui/fusionMenu.js',     exp: 'FusionMenu' },
+      { path: './ui/characterMenu.js',  exp: 'CharacterMenu' },
+      { path: './ui/inventory.js',      exp: 'InventoryUI' },
+      { path: './ui/keybindMenu.js',    exp: 'KeybindMenu' },
+      { path: './ui/mapUI.js',          exp: 'MapUI' },
+      { path: './ui/buildMenu.js',      exp: 'BuildMenu' },
+      { path: './ui/skillTree.js',      exp: 'SkillTree' },
+      { path: './ui/radialMenu.js',     exp: 'RadialMenu' },
       { path: './ui/bestiaryPopup.js',  exp: 'BestiaryPopup' },
       { path: './ui/bestiaryScreen.js', exp: 'BestiaryScreen' },
-    ]
-  },
-  {
-    id: 'uiFuture', icon: '🎮', label: 'UI — Futuro',
-    files: [
-      { path: './ui/relationBar.js', exp: 'RelationBar', pending: true },
-      { path: './ui/craftMenu.js',   exp: 'CraftMenu',   pending: true },
+      { path: './ui/tutorial.js',       exp: 'TutorialSystem' },
+      { path: './ui/settingsMenu.js',   exp: 'SettingsMenu' },
+      { path: './core/bestiary.js',     exp: 'onKill' },
     ]
   },
   {
@@ -259,29 +238,16 @@ const MANIFEST = [
     ]
   },
   {
-    id: 'skillsSword', icon: '🗡️', label: 'Skills — Espada',
+    id: 'pendiente', icon: '🔮', label: 'Pendiente — Próximas entregas',
     files: [
-      { path: './skills/sword/heavyStrike.js', exp: 'HeavyStrike', pending: true },
-      { path: './skills/sword/shieldBash.js',  exp: 'ShieldBash',  pending: true },
-      { path: './skills/sword/whirlwind.js',   exp: 'Whirlwind',   pending: true },
-      { path: './skills/sword/lastStand.js',   exp: 'LastStand',   pending: true },
-    ]
-  },
-  {
-    id: 'skillsBow', icon: '🏹', label: 'Skills — Arco',
-    files: [
-      { path: './skills/bow/precisionShot.js', exp: 'PrecisionShot', pending: true },
-      { path: './skills/bow/multiShot.js',     exp: 'MultiShot',     pending: true },
-      { path: './skills/bow/smokeTrap.js',     exp: 'SmokeTrap',     pending: true },
-      { path: './skills/bow/eagleEye.js',      exp: 'EagleEye',      pending: true },
-    ]
-  },
-  {
-    id: 'enemiesFuture', icon: '💀', label: 'Enemies — Futuro',
-    files: [
-      { path: './core/enemies/bossSystem.js', exp: 'BossSystem', pending: true },
-      { path: './core/enemies/forestPack.js', exp: 'ForestPack', pending: true },
-      { path: './core/enemies/eliteEnemy.js', exp: 'EliteEnemy', pending: true },
+      { path: './core/dungeons/DungeonManager.js', exp: 'respawnInCurrentRoom', pending: true },
+      { path: './data/relics.js',                  exp: 'Efectos 18 reliquias',  pending: true },
+      { path: './ui/mainMenu.js',                  exp: 'MainMenu',              pending: true },
+      { path: './core/audio.js',                   exp: 'AudioSystem',           pending: true },
+      { path: './ui/craftMenu.js',                 exp: 'CraftMenu',             pending: true },
+      { path: './ui/relationBar.js',               exp: 'RelationBar',           pending: true },
+      { path: './core/relations.js',               exp: 'Relations',             pending: true },
+      { path: './core/cinematic.js',               exp: 'Cinematic',             pending: true },
     ]
   },
 ];
@@ -314,8 +280,8 @@ function renderSection(sec, secResults) {
   div.id = 'sec-' + sec.id;
 
   const statsHtml = [
-    ok   ? `<span class="stat-ok">✓${ok}</span>`       : '',
-    err  ? `<span class="stat-err">✗${err}</span>`     : '',
+    ok   ? `<span class="stat-ok">✓${ok}</span>`        : '',
+    err  ? `<span class="stat-err">✗${err}</span>`      : '',
     pend ? `<span class="stat-pending">○${pend}</span>` : '',
   ].filter(Boolean).join(' ');
 
@@ -458,7 +424,6 @@ window.exportLog = function() {
 };
 
 window.runDiag = runDiag;
-
 runDiag();
 </script>
 </body>
