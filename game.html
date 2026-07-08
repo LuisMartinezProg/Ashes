@@ -118,6 +118,7 @@ import { GachaSystem } from './core/gacha.js';
 import { GachaMenu } from './ui/gachaMenu.js';
 import { refreshAllEffectiveStats } from './core/relics.js';
 import { TutorialSystem } from './ui/tutorial.js';
+import { SettingsMenu } from './ui/settingsMenu.js';
   
 const bar = document.getElementById('load-bar');
 const txt = document.getElementById('load-text');
@@ -517,6 +518,8 @@ allEnemies.forEach(e => {
     window._skillBar  = skillBar;
     const tutorial = new TutorialSystem(dialogueUI);
     window._tutorial = tutorial;
+    const settingsMenu = new SettingsMenu();
+     window._settings   = settingsMenu;
     const characterMenu = new CharacterMenu(progression, skillBar);
     window._characterMenu = characterMenu;
     const partyMenu = new PartyMenu();
