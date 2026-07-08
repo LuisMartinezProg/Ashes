@@ -109,6 +109,13 @@ export class PauseMenu {
         locked : !this._getFusionUnlocked(),
       },
       {
+      icon  : '⚙️',
+      label : 'Configuración',
+      sub   : 'Audio, brillo, idioma y más',
+      action: () => { this.close(); window._settings?.open?.(); },
+      show  : true,
+},
+      {
         icon   : '▶',
         label  : 'Continuar',
         sub    : 'Volver al juego',
