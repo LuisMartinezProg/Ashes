@@ -277,6 +277,7 @@ async function boot() {
     window._prog = progression;
     combat.setProgression(progression);
     buildZone.setProgression(progression);
+    building.rebuildScene();
 
     setProgress(69, 'ParrySystem...');
     const parry = new ParrySystem(player, combat);
