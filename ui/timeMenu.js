@@ -83,10 +83,25 @@ export class TimeMenu {
     Object.assign(headerRow.style, {
       width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     });
-
-    const spacer = document.createElement('div');
-    spacer.style.width = '48px';
-
+const spacer = document.createElement('button');
+Object.assign(spacer.style, {
+  width      : '48px',
+  height     : '28px',
+  background : 'none',
+  border     : 'none',
+  color      : 'rgba(201,168,76,0.5)',
+  fontSize   : '18px',
+  cursor     : 'pointer',
+  pointerEvents: 'all',
+  WebkitTapHighlightColor: 'transparent',
+  textAlign  : 'right',
+  paddingRight: '4px',
+});
+spacer.textContent = '✕';
+const onClose = (e) => { e.preventDefault(); this.close(); };
+spacer.addEventListener('touchstart', onClose, { passive: false });
+spacer.addEventListener('click', onClose);
+    
     const title = document.createElement('div');
     Object.assign(title.style, {
       fontFamily   : "'Cinzel',serif",
