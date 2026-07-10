@@ -1,7 +1,7 @@
 {
   "name": "Ashes of the Reborn",
   "short_name": "Ashes",
-  "start_url": "./index.html",
+  "start_url": "./game.html",
   "display": "fullscreen",
   "orientation": "landscape",
   "background_color": "#04040A",
