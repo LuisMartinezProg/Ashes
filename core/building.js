@@ -1,28 +1,31 @@
 /**
  * core/building.js — Sistema de construcción
- * USO desde game.html:
- *   import { BuildingSystem } from './core/building.js';
- *   const building = new BuildingSystem(scene, player);
- *   building.setProgression(progression);
+ * Ashes of the Reborn | Valiant Gaming
  */
 
 import * as THREE from 'three';
 import { STRUCTURES, TOOLS } from '../data/structures.js';
+
+// Radio de proximidad para efectos pasivos (en unidades Three.js)
+const EFFECT_CHECK_INTERVAL = 1000; // ms
 
 export class BuildingSystem {
   constructor(scene, player) {
     this._scene      = scene;
     this._player     = player;
     this._prog       = null;
+    this._zone       = null;
     this._inventory  = {};
     this._tool       = 'punos';
     this._built      = [];
     this._placing    = null;
     this._ghost      = null;
     this._townName   = null;
+    this._effectMeshes = new Map(); // meshName → luz u objetos extra
 
     this._initInventory();
     this._loadFromStorage();
+    this._startEffectLoop();
   }
 
   setProgression(p) { this._prog = p; }
@@ -66,18 +69,16 @@ export class BuildingSystem {
     }
     const amount = tool.multiplicador;
     this.addMaterial(resourceType, amount);
-    // Sincronizar al InventoryUI
-if (window._inventory) {
-  window._inventory.addItem({
-    id     : resourceType,
-    name   : resourceType.charAt(0).toUpperCase() + resourceType.slice(1),
-    icon   : { madera:'🪵', piedra:'🪨', hierro:'⚙️', mineral:'💎' }[resourceType] ?? '📦',
-    section: 'materiales',
-    rarity : 'comun',
-    qty    : amount,
-  });
-}
-    console.log(`[Building] +${amount} ${resourceType} (total: ${this._inventory[resourceType]})`);
+    if (window._inventory) {
+      window._inventory.addItem({
+        id     : resourceType,
+        name   : resourceType.charAt(0).toUpperCase() + resourceType.slice(1),
+        icon   : { madera:'🪵', piedra:'🪨', hierro:'⚙️', mineral:'💎' }[resourceType] ?? '📦',
+        section: 'materiales',
+        rarity : 'comun',
+        qty    : amount,
+      });
+    }
     return amount;
   }
 
@@ -113,10 +114,7 @@ if (window._inventory) {
     if (this._ghost) this._scene.remove(this._ghost);
     const geo = new THREE.BoxGeometry(...size);
     const mat = new THREE.MeshBasicMaterial({
-      color: 0x44aaff,
-      transparent: true,
-      opacity: 0.4,
-      wireframe: false,
+      color: 0x44aaff, transparent: true, opacity: 0.4,
     });
     this._ghost = new THREE.Mesh(geo, mat);
     this._ghost.name = 'build_ghost';
@@ -156,23 +154,16 @@ if (window._inventory) {
 
   _placeStructure(structureId, tier, def, tierData) {
     const pos = this._ghost.position.clone();
-
-    const geo = new THREE.BoxGeometry(...tierData.size);
-    const mat = new THREE.MeshLambertMaterial({
-      color: this._getTierColor(tier),
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.copy(pos);
-    mesh.name = `structure_${structureId}_${Date.now()}`;
-    mesh.castShadow    = false;
-    mesh.receiveShadow = false;
+    const mesh = this._buildMesh(tierData.size, tier, `structure_${structureId}_${Date.now()}`, pos);
     this._scene.add(mesh);
 
     const record = {
-      id: structureId, tier,
-      position: pos.toArray(),
-      hp: tierData.hp, maxHp: tierData.hp,
-      meshName: mesh.name,
+      id       : structureId,
+      tier,
+      position : pos.toArray(),
+      hp       : tierData.hp,
+      maxHp    : tierData.hp,
+      meshName : mesh.name,
     };
     this._built.push(record);
     this._saveToStorage();
@@ -184,9 +175,34 @@ if (window._inventory) {
     this._placing = null;
 
     this._applyEffect(def.effect, mesh);
-
-    console.log(`[Building] Construido: ${def.label} (${tier}) en`, pos);
     this._onBuildComplete?.(record);
+    console.log(`[Building] Construido: ${def.label} (${tier}) en`, pos);
+  }
+
+  // Reconstruye meshes al cargar desde localStorage
+  _rebuildFromStorage() {
+    for (const record of this._built) {
+      const def      = STRUCTURES[record.id];
+      const tierData = def?.tiers?.[record.tier];
+      if (!def || !tierData) continue;
+
+      const pos  = new THREE.Vector3(...record.position);
+      const mesh = this._buildMesh(tierData.size, record.tier, record.meshName, pos);
+      this._scene.add(mesh);
+      this._applyEffect(def.effect, mesh);
+    }
+  }
+
+  _buildMesh(size, tier, name, pos) {
+    const geo  = new THREE.BoxGeometry(...size);
+    const mat  = new THREE.MeshLambertMaterial({ color: this._getTierColor(tier) });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(pos);
+    mesh.position.y = size[1] / 2;
+    mesh.name = name;
+    mesh.castShadow    = false;
+    mesh.receiveShadow = false;
+    return mesh;
   }
 
   cancelPlacing() {
@@ -202,11 +218,133 @@ if (window._inventory) {
   // ─────────────────────────────────────────────
   _applyEffect(effect, mesh) {
     if (!effect) return;
-    if (effect.type === 'regen') {
-      const light = new THREE.PointLight(0xff6600, 1.5, effect.radius * 2);
-      light.position.copy(mesh.position);
-      light.position.y += 1;
-      this._scene.add(light);
+
+    switch (effect.type) {
+
+      case 'regen': {
+        // Fogata: luz naranja + regenera HP del jugador si está cerca
+        const light = new THREE.PointLight(0xff6600, 1.5, (effect.radius ?? 5) * 2);
+        light.position.copy(mesh.position);
+        light.position.y += 1;
+        this._scene.add(light);
+        this._effectMeshes.set(mesh.name, { type: 'regen', light, radius: effect.radius ?? 5, amount: effect.amount ?? 2 });
+        break;
+      }
+
+      case 'stamina_regen': {
+        // Fuente: luz azul + regenera stamina si está cerca
+        const light = new THREE.PointLight(0x4488ff, 1.2, (effect.radius ?? 8) * 2);
+        light.position.copy(mesh.position);
+        light.position.y += 1.5;
+        this._scene.add(light);
+        this._effectMeshes.set(mesh.name, { type: 'stamina_regen', light, radius: effect.radius ?? 8, amount: effect.amount ?? 5 });
+        break;
+      }
+
+      case 'heal': {
+        // Enfermería: luz verde + cura HP si está cerca
+        const light = new THREE.PointLight(0x44ff88, 1.0, (effect.radius ?? 6) * 2);
+        light.position.copy(mesh.position);
+        light.position.y += 1;
+        this._scene.add(light);
+        this._effectMeshes.set(mesh.name, { type: 'heal', light, radius: effect.radius ?? 6, amount: effect.amount ?? 10 });
+        break;
+      }
+
+      case 'respawn': {
+        // Refugio: marca este punto como punto de respawn del jugador
+        const pos = mesh.position.clone();
+        window._worldSpawnPoint = { x: pos.x, z: pos.z };
+        this._effectMeshes.set(mesh.name, { type: 'respawn', pos });
+        console.log('[Building] Punto de respawn actualizado:', pos);
+        break;
+      }
+
+      case 'detection': {
+        // Torre: aumenta el rango de detección de enemigos cercanos
+        // Se aplica en el loop de efectos
+        this._effectMeshes.set(mesh.name, { type: 'detection', pos: mesh.position.clone(), radius: effect.radius ?? 20 });
+        break;
+      }
+
+      case 'home':
+      case 'crafting':
+      case 'barrier':
+      case 'gate':
+      case 'climb':
+      case 'relation':
+        // Efectos narrativos/mecánicos pendientes de implementación completa
+        // Se registran para uso futuro
+        this._effectMeshes.set(mesh.name, { type: effect.type, pos: mesh.position.clone() });
+        break;
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // LOOP DE EFECTOS PASIVOS (cada segundo)
+  // ─────────────────────────────────────────────
+  _startEffectLoop() {
+    setInterval(() => this._tickEffects(), EFFECT_CHECK_INTERVAL);
+  }
+
+  _tickEffects() {
+    const player = window._player;
+    if (!player?.root) return;
+    const playerPos = player.root.position;
+
+    for (const [meshName, fx] of this._effectMeshes) {
+      const fxPos = fx.pos ?? fx.light?.position;
+      if (!fxPos) continue;
+
+      const dx   = playerPos.x - fxPos.x;
+      const dz   = playerPos.z - fxPos.z;
+      const dist = Math.sqrt(dx*dx + dz*dz);
+
+      if (dist > fx.radius) continue;
+
+      switch (fx.type) {
+        case 'regen': {
+          // Regenera HP del personaje activo
+          const activeChar = window._partyManager?.getActiveCharacter() ?? player;
+          if (activeChar && activeChar.hp < activeChar.maxHp) {
+            activeChar.hp = Math.min(activeChar.maxHp, activeChar.hp + fx.amount);
+            activeChar.onDamage?.(activeChar.hp, activeChar.maxHp);
+          }
+          break;
+        }
+        case 'stamina_regen': {
+          // Regenera stamina de Kael
+          if (player.stamina < player.maxStamina) {
+            player.stamina = Math.min(player.maxStamina, player.stamina + fx.amount);
+            player.onStaminaUpdate?.(player.stamina, player.maxStamina);
+          }
+          break;
+        }
+        case 'heal': {
+          // Cura HP de ambos personajes si están cerca
+          const chars = [player, window._companion].filter(Boolean);
+          for (const c of chars) {
+            if (c.hp < c.maxHp) {
+              c.hp = Math.min(c.maxHp, c.hp + fx.amount);
+              c.onDamage?.(c.hp, c.maxHp);
+            }
+          }
+          break;
+        }
+        case 'detection': {
+          // Torre: marca enemigos cercanos como "detectados" para el HUD
+          const enemies = window._enemies ?? [];
+          for (const e of enemies) {
+            if (!e.mesh || e.isDead?.()) continue;
+            const ex = e.mesh.position.x - fxPos.x;
+            const ez = e.mesh.position.z - fxPos.z;
+            if (Math.sqrt(ex*ex + ez*ez) <= fx.radius) {
+              e._detected = true; // el HUD puede usar esto para resaltarlos
+            }
+          }
+          break;
+        }
+      }
     }
   }
 
@@ -224,6 +362,17 @@ if (window._inventory) {
   _destroyStructure(record) {
     const mesh = this._scene.getObjectByName(record.meshName);
     if (mesh) this._scene.remove(mesh);
+
+    // Limpiar efectos asociados
+    const fx = this._effectMeshes.get(record.meshName);
+    if (fx?.light) this._scene.remove(fx.light);
+    this._effectMeshes.delete(record.meshName);
+
+    // Si era el refugio, limpiar el punto de respawn
+    if (record.id === 'refugio') {
+      window._worldSpawnPoint = null;
+    }
+
     this._built = this._built.filter(b => b.meshName !== record.meshName);
     this._saveToStorage();
     console.log(`[Building] Destruida: ${record.id}`);
@@ -296,13 +445,12 @@ if (window._inventory) {
   // ─────────────────────────────────────────────
   _saveToStorage() {
     try {
-      const data = {
+      localStorage.setItem('ashes_building', JSON.stringify({
         inventory : this._inventory,
         tool      : this._tool,
         built     : this._built,
         townName  : this._townName,
-      };
-      localStorage.setItem('ashes_building', JSON.stringify(data));
+      }));
     } catch(e) { console.warn('[Building] Error guardando:', e); }
   }
 
@@ -315,6 +463,13 @@ if (window._inventory) {
       if (data.tool)      this._tool      = data.tool;
       if (data.townName)  this._townName  = data.townName;
       if (data.built)     this._built     = data.built;
+      // Reconstruir meshes visuales tras cargar
+      // (se llama desde boot después de que la escena esté lista)
     } catch(e) { console.warn('[Building] Error cargando:', e); }
+  }
+
+  // Llamar desde boot después de que la escena esté lista
+  rebuildScene() {
+    this._rebuildFromStorage();
   }
 }
