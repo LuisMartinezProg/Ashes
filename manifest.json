@@ -1,0 +1,16 @@
+{
+  "name": "Ashes of the Reborn",
+  "short_name": "Ashes",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#04040A",
+  "theme_color": "#C9A84C",
+  "icons": [
+    {
+      "src": "valiant.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
