@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { STRUCTURES, TOOLS } from '../data/structures.js';
 
 // Radio de proximidad para efectos pasivos (en unidades Three.js)
-const EFFECT_CHECK_INTERVAL = 1000; // ms
+const EFFECT_CHECK_INTERVAL = 1000; 
 
 export class BuildingSystem {
   constructor(scene, player) {
@@ -23,16 +23,18 @@ export class BuildingSystem {
     this._townName   = null;
     this._effectMeshes = new Map(); // meshName → luz u objetos extra
 
-    init() {
-  this._rebuildFromStorage();
-  this._startEffectLoop();
-    }
+    this.init();
+  }
+
+  init() {
+    this._rebuildFromStorage();
     this._startEffectLoop();
-  
+  }
 
   setProgression(p) { this._prog = p; }
   setZone(zone)     { this._zone = zone; }
 
+  // ... el resto del archivo sigue igual sin cambios
   // ─────────────────────────────────────────────
   // INVENTARIO
   // ─────────────────────────────────────────────
