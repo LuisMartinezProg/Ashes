@@ -28,7 +28,7 @@ export class BuildingSystem {
   this._startEffectLoop();
     }
     this._startEffectLoop();
-  }
+  
 
   setProgression(p) { this._prog = p; }
   setZone(zone)     { this._zone = zone; }
