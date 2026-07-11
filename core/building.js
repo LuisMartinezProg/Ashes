@@ -23,8 +23,10 @@ export class BuildingSystem {
     this._townName   = null;
     this._effectMeshes = new Map(); // meshName → luz u objetos extra
 
-    this._initInventory();
-    this._loadFromStorage();
+    init() {
+  this._rebuildFromStorage();
+  this._startEffectLoop();
+    }
     this._startEffectLoop();
   }
 
