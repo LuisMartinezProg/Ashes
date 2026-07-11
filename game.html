@@ -277,7 +277,7 @@ async function boot() {
     window._prog = progression;
     combat.setProgression(progression);
     buildZone.setProgression(progression);
-    building.rebuildScene();
+    
 
     setProgress(69, 'ParrySystem...');
     const parry = new ParrySystem(player, combat);
@@ -480,6 +480,7 @@ allEnemies.forEach(e => {
     const building = new BuildingSystem(scene, player);
     building.setProgression(progression);
     building.setZone(buildZone);
+    building.init();
     const buildMenu = new BuildMenu(building);
     if (buildMenu._buildBtn) buildMenu._buildBtn.style.display = 'none';
     window._building    = building;
