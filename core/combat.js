@@ -189,8 +189,13 @@ export class CombatSystem {
       if (target) {
         let dmg = this.weapon.getDamage(hitIndex);
 
-        const weaponBonus = prog.getWeaponDamageBonus?.(this._weaponType);
-        if (weaponBonus) dmg = Math.floor(dmg * weaponBonus);
+        // ── Bonus de arma: usa el arma EQUIPADA si existe (sus stats.ATK
+        // reemplazan la fórmula), o si no hay ninguna equipada, cae a la
+        // fórmula original por nivel de arma. Antes esto llamaba a un método
+        // que no existía en prog (getWeaponDamageBonus no era método de
+        // instancia), por lo que el bonus nunca se aplicaba: bug corregido.
+        const weaponDamage = prog.getEffectiveWeaponDamage?.(this._weaponType) ?? 0;
+        if (weaponDamage) dmg += weaponDamage;
 
         const eff    = this._getEffectiveStats();
         const atkMod = eff.atk ?? prog.getStats().atk;
