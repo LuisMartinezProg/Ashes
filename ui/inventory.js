@@ -2,14 +2,37 @@
 
 import { getEquippedBy } from '../core/relics.js';
 
-const SECTIONS = ['materiales', 'equipos', 'reliquias', 'consumibles'];
+const SECTIONS = ['materiales', 'armas', 'armaduras', 'accesorios', 'reliquias', 'consumibles'];
 
 const SECTION_LABELS = {
   materiales : '🪵 Materiales',
-  equipos    : '⚔️ Equipos',
+  armas      : '⚔️ Armas',
+  armaduras  : '🛡️ Armaduras',
+  accesorios : '📿 Accesorios',
   reliquias  : '💠 Reliquias',
   consumibles: '🧪 Consumibles',
 };
+
+// Rareza → color (paleta MochiGo)
+const RARITY_COLOR = {
+  comun      : '#7EB8D4', // Navia claro
+  raro       : '#4CAF88', // Jahoda verde
+  epico      : '#7B4FBF', // Clorinde
+  legendario : '#EDD47A', // Acento global
+};
+
+// Slots de equipo que usan progression.js (arma/armadura/accesorio)
+const EQUIP_SECTIONS = {
+  armas      : { slot: 'arma',      equipFn: 'equipWeapon',     unequipFn: 'unequipWeapon',     getFn: 'getEquippedWeapon'     },
+  armaduras  : { slot: 'armadura',  equipFn: 'equipArmor',      unequipFn: 'unequipArmor',      getFn: 'getEquippedArmor'      },
+  accesorios : { slot: 'accesorio', equipFn: 'equipAccessory',  unequipFn: 'unequipAccessory',  getFn: 'getEquippedAccessory'  },
+};
+
+// Progression activa por personaje (ajustar según tus globals reales)
+function _getProgression(charId) {
+  if (charId === 'mika') return window._mikaProgression;
+  return window._prog; // kael por defecto
+}
 
 export class InventoryUI {
   constructor() {
@@ -17,7 +40,9 @@ export class InventoryUI {
     this._section = 'materiales';
     this._items   = {
       materiales : [],
-      equipos    : [],
+      armas      : [],
+      armaduras  : [],
+      accesorios : [],
       reliquias  : [],
       consumibles: [],
     };
@@ -101,22 +126,29 @@ export class InventoryUI {
 
     header.append(title, currencyWrap, closeBtn);
 
+    // ── Tab bar (scrolleable horizontalmente: ahora hay 6 tabs) ───────────
+    this._tabBarWrap = document.createElement('div');
+    Object.assign(this._tabBarWrap.style, {
+      width      : '100%',
+      maxWidth   : '420px',
+      overflowX  : 'auto',
+      overflowY  : 'hidden',
+      WebkitOverflowScrolling: 'touch',
+    });
+
     this._tabBar = document.createElement('div');
     Object.assign(this._tabBar.style, {
-      width         : '100%',
-      maxWidth      : '420px',
       display       : 'flex',
-      justifyContent: 'space-around',
       padding       : '10px 8px',
       gap           : '6px',
+      minWidth      : 'max-content',
     });
 
     this._tabs = {};
     for (const sec of SECTIONS) {
       const tab = document.createElement('button');
       Object.assign(tab.style, {
-        flex         : '1',
-        padding      : '8px 4px',
+        padding      : '8px 10px',
         borderRadius : '10px',
         border       : '1px solid rgba(201,168,76,0.3)',
         background   : 'rgba(201,168,76,0.06)',
@@ -127,6 +159,8 @@ export class InventoryUI {
         cursor       : 'pointer',
         pointerEvents: 'all',
         transition   : 'all 0.2s',
+        whiteSpace   : 'nowrap',
+        flexShrink   : '0',
       });
       tab.textContent = SECTION_LABELS[sec];
       tab.addEventListener('click', () => this._switchSection(sec));
@@ -134,6 +168,7 @@ export class InventoryUI {
       this._tabs[sec] = tab;
       this._tabBar.appendChild(tab);
     }
+    this._tabBarWrap.appendChild(this._tabBar);
 
     this._grid = document.createElement('div');
     Object.assign(this._grid.style, {
@@ -174,7 +209,7 @@ export class InventoryUI {
       pointerEvents: 'none',
     });
 
-    this._overlay.append(header, this._tabBar, this._grid, this._emptyMsg);
+    this._overlay.append(header, this._tabBarWrap, this._grid, this._emptyMsg);
     document.body.append(this._overlay, this._tooltip);
 
     this._switchSection('materiales');
@@ -193,9 +228,15 @@ export class InventoryUI {
     this._renderGrid();
   }
 
+  // Orden por rareza (mayor a menor) dentro de cada tab
+  _sortByRarity(items) {
+    const order = { legendario: 0, epico: 1, raro: 2, comun: 3 };
+    return [...items].sort((a, b) => (order[a.rarity] ?? 4) - (order[b.rarity] ?? 4));
+  }
+
   _renderGrid() {
     this._grid.innerHTML = '';
-    const items = this._items[this._section];
+    const items = this._sortByRarity(this._items[this._section]);
     if (items.length === 0) {
       this._emptyMsg.style.display = 'block';
       this._grid.style.display     = 'none';
@@ -213,6 +254,11 @@ export class InventoryUI {
       this._grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
       for (const item of items) {
         this._grid.appendChild(this._buildRelicSlot(item));
+      }
+    } else if (EQUIP_SECTIONS[this._section]) {
+      this._grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+      for (const item of items) {
+        this._grid.appendChild(this._buildEquipSlot(item, this._section));
       }
     } else {
       this._grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
@@ -280,6 +326,129 @@ export class InventoryUI {
     slot.addEventListener('click', (e) => this._showTooltip(item, e));
     slot.addEventListener('touchstart', (e) => { e.preventDefault(); this._showTooltip(item, e); }, { passive: false });
     return slot;
+  }
+
+  // ── Slot de equipo (armas / armaduras / accesorios) ──────────────────────
+  // Mismo patrón visual que reliquias: tap → tooltip con botón Equipar (por
+  // personaje) o Quitar, según corresponda.
+
+  _buildEquipSlot(item, section) {
+    const slot = document.createElement('div');
+    Object.assign(slot.style, {
+      background   : 'rgba(201,168,76,0.06)',
+      border       : `1px solid ${this._rarityColor(item.rarity)}`,
+      borderRadius : '10px',
+      padding      : '8px 4px',
+      display      : 'flex',
+      flexDirection: 'column',
+      alignItems   : 'center',
+      gap          : '4px',
+      cursor       : 'pointer',
+      position     : 'relative',
+      minHeight    : '72px',
+    });
+
+    const icon = document.createElement('div');
+    icon.style.fontSize = '24px';
+    icon.textContent = item.icon ?? '📦';
+
+    const name = document.createElement('div');
+    Object.assign(name.style, {
+      fontFamily: 'monospace',
+      fontSize  : '9px',
+      color     : '#C9A84C',
+      textAlign : 'center',
+      lineHeight: '1.2',
+    });
+    name.textContent = item.name;
+
+    slot.append(icon, name);
+    slot.addEventListener('click', (e) => this._showEquipTooltip(item, section, e));
+    slot.addEventListener('touchstart', (e) => { e.preventDefault(); this._showEquipTooltip(item, section, e); }, { passive: false });
+    return slot;
+  }
+
+  _showEquipTooltip(item, section, e) {
+    const cfg = EQUIP_SECTIONS[section];
+    const lines = [item.name];
+    if (item.desc) lines.push(item.desc);
+    if (item.stats) {
+      for (const [k, v] of Object.entries(item.stats)) lines.push(`${k}: +${v}`);
+    }
+    if (item.rarity) lines.push(`[${item.rarity}]`);
+
+    this._tooltip.innerHTML = lines.map((l, i) =>
+      `<div style="opacity:${i===0?1:0.7};margin-bottom:2px">${l}</div>`
+    ).join('');
+
+    const actions = document.createElement('div');
+    Object.assign(actions.style, { display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' });
+
+    const makeBtn = (label, onClick) => {
+      const b = document.createElement('button');
+      Object.assign(b.style, {
+        flex         : '1',
+        minWidth     : '90px',
+        padding      : '6px 8px',
+        borderRadius : '8px',
+        border       : '1px solid rgba(201,168,76,0.5)',
+        background   : 'rgba(201,168,76,0.12)',
+        color        : '#C9A84C',
+        fontFamily   : 'monospace',
+        fontSize     : '9px',
+        cursor       : 'pointer',
+        pointerEvents: 'all',
+      });
+      b.textContent = label;
+      b.addEventListener('click', onClick);
+      b.addEventListener('touchstart', (ev) => { ev.preventDefault(); onClick(); }, { passive: false });
+      return b;
+    };
+
+    // Kael
+    const kaelProg = _getProgression('kael');
+    const kaelEquipped = kaelProg?.[cfg.getFn]?.();
+    if (kaelEquipped?.id === item.id) {
+      actions.appendChild(makeBtn('Quitar de Kael', () => {
+        kaelProg[cfg.unequipFn]?.();
+        this._closeTooltip();
+        this._renderGrid();
+      }));
+    } else {
+      actions.appendChild(makeBtn('Equipar a Kael', () => {
+        kaelProg?.[cfg.equipFn]?.(item);
+        this._closeTooltip();
+        this._renderGrid();
+      }));
+    }
+
+    // Mika — solo aplica si el arma es tipo 'bow' (su único weaponType), o si es armadura/accesorio (universal)
+    const mikaProg = _getProgression('mika');
+    const mikaCanUse = section !== 'armas' || item.weaponType === 'bow';
+    if (mikaCanUse) {
+      const mikaEquipped = mikaProg?.[cfg.getFn]?.();
+      if (mikaEquipped?.id === item.id) {
+        actions.appendChild(makeBtn('Quitar de Mika', () => {
+          mikaProg[cfg.unequipFn]?.();
+          this._closeTooltip();
+          this._renderGrid();
+        }));
+      } else {
+        actions.appendChild(makeBtn('Equipar a Mika', () => {
+          mikaProg?.[cfg.equipFn]?.(item);
+          this._closeTooltip();
+          this._renderGrid();
+        }));
+      }
+    }
+
+    this._tooltip.appendChild(actions);
+
+    const rect = e.target.closest('div').getBoundingClientRect();
+    this._tooltip.style.display       = 'block';
+    this._tooltip.style.pointerEvents = 'all';
+    this._tooltip.style.left          = Math.min(rect.left, window.innerWidth - 230) + 'px';
+    this._tooltip.style.top           = (rect.top - 10) + 'px';
   }
 
   // ── Slot de reliquia ──────────────────────────────────────────────────────
@@ -652,15 +821,7 @@ export class InventoryUI {
   }
 
   _rarityColor(rarity) {
-    switch (rarity) {
-      case 'comun'     : return 'rgba(180,180,180,0.3)';
-      case 'rara'      : return 'rgba(80,120,255,0.5)';
-      case 'epica'     : return 'rgba(160,60,255,0.5)';
-      case 'raro'      : return 'rgba(80,120,255,0.5)';
-      case 'epico'     : return 'rgba(160,60,255,0.5)';
-      case 'legendario': return 'rgba(255,160,0,0.6)';
-      default          : return 'rgba(201,168,76,0.2)';
-    }
+    return RARITY_COLOR[rarity] ?? 'rgba(201,168,76,0.2)';
   }
 
   _showTooltip(item, e) {
@@ -717,11 +878,24 @@ export class InventoryUI {
     const existing = this._items[sec].find(i => i.id === item.id);
     if (existing) {
       if (sec === 'reliquias') return; // únicas, no se acumulan
+      if (EQUIP_SECTIONS[sec]) return; // armas/armaduras/accesorios: únicas, no se acumulan
       existing.qty = (existing.qty ?? 1) + (item.qty ?? 1);
     } else {
       this._items[sec].push({ qty: 1, ...item });
     }
     if (this._open && this._section === sec) this._renderGrid();
+  }
+
+  // Quita UNA unidad única de un ítem de equipo (arma/armadura/accesorio)
+  // sin importar su qty — se usa al equipar, para sacarlo de la mochila.
+  removeUniqueItem(id, section) {
+    const sec = section ?? SECTIONS.find(s => this._items[s]?.some(i => i.id === id));
+    if (!sec || !this._items[sec]) return false;
+    const idx = this._items[sec].findIndex(i => i.id === id);
+    if (idx === -1) return false;
+    this._items[sec].splice(idx, 1);
+    if (this._open && this._section === sec) this._renderGrid();
+    return true;
   }
 
   removeItem(id, qty = 1) {
