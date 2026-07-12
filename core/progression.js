@@ -76,6 +76,11 @@ class ProgressionBase {
     this._trialsPassed   = {};
     this._equippedRelic  = null;
 
+    // ── Slots de equipo (arma / armadura / accesorio) ────────────────────
+    this._equippedWeapon     = null; // { id, weaponType, stats, ... } — item completo de items.js
+    this._equippedArmor      = null;
+    this._equippedAccessory  = null;
+
     this.onLevelUp        = null;
     this.onWeaponLevelUp  = null;
     this.onXPGain         = null;
@@ -83,6 +88,7 @@ class ProgressionBase {
     this.onNewSkillSlot   = null;
     this.onReputationGain = null;
     this.onEnergyUpdate   = null;
+    this.onEquipChange    = null; // (slotType, item|null) => void
   }
 
   _initTrees() {
@@ -100,8 +106,32 @@ class ProgressionBase {
 
   getLevel()   { return this._level;   }
   getTotalXP() { return this._totalXP; }
-  getStats()   { return this._statsFn(this._level); }
   getCharId()  { return this._charId;  }
+
+  // ── Stats finales (base por nivel + equipo) ──────────────────────────────
+  // El arma equipada REEMPLAZA el bonus de daño por nivel (getWeaponDamageBonus)
+  // solo para el weaponType actualmente activo. Armadura y accesorio SUMAN
+  // siempre sus stats propios, sin reemplazar nada.
+  getStats() {
+    const base = this._statsFn(this._level);
+    const out  = { ...base };
+
+    // Armadura: suma directa de todos sus stats
+    if (this._equippedArmor?.stats) {
+      for (const [k, v] of Object.entries(this._equippedArmor.stats)) {
+        out[k] = (out[k] ?? 0) + v;
+      }
+    }
+
+    // Accesorio: suma directa de todos sus stats
+    if (this._equippedAccessory?.stats) {
+      for (const [k, v] of Object.entries(this._equippedAccessory.stats)) {
+        out[k] = (out[k] ?? 0) + v;
+      }
+    }
+
+    return out;
+  }
 
   getXPForNextLevel() { return LEVEL_XP[this._level] ?? null; }
 
@@ -193,7 +223,7 @@ class ProgressionBase {
     }, 3000);
   }
 
-  // ── Armas ─────────────────────────────────────────────────────────────────
+  // ── Armas (nivel/XP del weaponType — sigue existiendo para armas SIN equipar) ──
 
   getWeaponLevel(weapon)   { return this._weaponLevels[weapon] ?? 1; }
   getWeaponXP(weapon)      { return this._weaponXP[weapon]     ?? 0; }
@@ -284,6 +314,15 @@ class ProgressionBase {
       el.style.opacity = '0';
       setTimeout(() => el.remove(), 1000);
     }, 2500);
+  }
+
+  // ── Daño de arma efectivo (equipada reemplaza la fórmula; si no hay, usa la fórmula) ──
+
+  getEffectiveWeaponDamage(weapon) {
+    if (this._equippedWeapon?.weaponType === weapon && this._equippedWeapon.stats?.ATK != null) {
+      return this._equippedWeapon.stats.ATK;
+    }
+    return getWeaponDamageBonus(weapon, this.getWeaponLevel(weapon));
   }
 
   // ── Árbol de habilidades ──────────────────────────────────────────────────
@@ -461,6 +500,78 @@ class ProgressionBase {
     refreshEffectiveStats(this._charId);
   }
 
+  // ── Equipo: Arma / Armadura / Accesorio ──────────────────────────────────
+  // Regla: 1 solo ítem por slot. Al equipar, el ítem sale de la mochila
+  // (se maneja como "único", igual que las reliquias). Al desequipar, vuelve
+  // a la mochila (window._inventory.addItem).
+
+  getEquippedWeapon()     { return this._equippedWeapon;    }
+  getEquippedArmor()      { return this._equippedArmor;     }
+  getEquippedAccessory()  { return this._equippedAccessory; }
+
+  equipWeapon(item) {
+    if (!item || item.slot !== 'arma') return false;
+    const prev = this._equippedWeapon;
+    this._equippedWeapon = item;
+    if (prev) window._inventory?.addItem?.(prev);
+    window._inventory?.removeUniqueItem?.(item.id, 'armas');
+    if (this.onEquipChange) this.onEquipChange('arma', item);
+    refreshEffectiveStats(this._charId);
+    return true;
+  }
+
+  unequipWeapon() {
+    const prev = this._equippedWeapon;
+    if (!prev) return false;
+    this._equippedWeapon = null;
+    window._inventory?.addItem?.(prev);
+    if (this.onEquipChange) this.onEquipChange('arma', null);
+    refreshEffectiveStats(this._charId);
+    return true;
+  }
+
+  equipArmor(item) {
+    if (!item || item.slot !== 'armadura') return false;
+    const prev = this._equippedArmor;
+    this._equippedArmor = item;
+    if (prev) window._inventory?.addItem?.(prev);
+    window._inventory?.removeUniqueItem?.(item.id, 'armaduras');
+    if (this.onEquipChange) this.onEquipChange('armadura', item);
+    refreshEffectiveStats(this._charId);
+    return true;
+  }
+
+  unequipArmor() {
+    const prev = this._equippedArmor;
+    if (!prev) return false;
+    this._equippedArmor = null;
+    window._inventory?.addItem?.(prev);
+    if (this.onEquipChange) this.onEquipChange('armadura', null);
+    refreshEffectiveStats(this._charId);
+    return true;
+  }
+
+  equipAccessory(item) {
+    if (!item || item.slot !== 'accesorio') return false;
+    const prev = this._equippedAccessory;
+    this._equippedAccessory = item;
+    if (prev) window._inventory?.addItem?.(prev);
+    window._inventory?.removeUniqueItem?.(item.id, 'accesorios');
+    if (this.onEquipChange) this.onEquipChange('accesorio', item);
+    refreshEffectiveStats(this._charId);
+    return true;
+  }
+
+  unequipAccessory() {
+    const prev = this._equippedAccessory;
+    if (!prev) return false;
+    this._equippedAccessory = null;
+    window._inventory?.addItem?.(prev);
+    if (this.onEquipChange) this.onEquipChange('accesorio', null);
+    refreshEffectiveStats(this._charId);
+    return true;
+  }
+
   // ── Serialización ─────────────────────────────────────────────────────────
 
   serialize() {
@@ -481,6 +592,9 @@ class ProgressionBase {
       reputation   : this._reputation,
       trialsPassed : this._trialsPassed,
       equippedRelic: this._equippedRelic,
+      equippedWeapon    : this._equippedWeapon,
+      equippedArmor     : this._equippedArmor,
+      equippedAccessory : this._equippedAccessory,
     };
   }
 
@@ -501,6 +615,9 @@ class ProgressionBase {
     if (data.reputation     !== undefined) this._reputation    = data.reputation;
     if (data.trialsPassed)                 this._trialsPassed  = data.trialsPassed;
     if (data.equippedRelic  !== undefined) this._equippedRelic = data.equippedRelic;
+    if (data.equippedWeapon     !== undefined) this._equippedWeapon     = data.equippedWeapon;
+    if (data.equippedArmor      !== undefined) this._equippedArmor      = data.equippedArmor;
+    if (data.equippedAccessory  !== undefined) this._equippedAccessory  = data.equippedAccessory;
     this._initMissingTrees();
     refreshEffectiveStats(this._charId);
   }
