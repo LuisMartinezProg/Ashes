@@ -327,8 +327,7 @@ export class InventoryUI {
     slot.addEventListener('touchstart', (e) => { e.preventDefault(); this._showTooltip(item, e); }, { passive: false });
     return slot;
   }
-
-  // ── Slot de equipo (armas / armaduras / accesorios) ──────────────────────
+// ── Slot de equipo (armas / armaduras / accesorios) ──────────────────────
   // Mismo patrón visual que reliquias: tap → tooltip con botón Equipar (por
   // personaje) o Quitar, según corresponda.
 
@@ -362,11 +361,40 @@ export class InventoryUI {
     });
     name.textContent = item.name;
 
+    // ── Indicador de equipado (badge por personaje) ──────────────────────
+    const cfg = EQUIP_SECTIONS[section];
+    const equippedOnKael = _getProgression('kael')?.[cfg.getFn]?.()?.id === item.id;
+    const equippedOnMika = _getProgression('mika')?.[cfg.getFn]?.()?.id === item.id;
+
+    if (equippedOnKael || equippedOnMika) {
+      const badge = document.createElement('div');
+      Object.assign(badge.style, {
+        position  : 'absolute',
+        top       : '3px',
+        right     : '4px',
+        fontSize  : '8px',
+        color     : '#44ff88',
+        display   : 'flex',
+        gap       : '2px',
+      });
+      // Muestra ícono de personaje si equipado por ambos, o solo el check si es uno
+      if (equippedOnKael && equippedOnMika) {
+        badge.textContent = '✓✓';
+      } else {
+        badge.textContent = '✓';
+      }
+      slot.appendChild(badge);
+
+      // Sutil resaltado de borde para reforzar visualmente que está equipado
+      slot.style.border = `1.5px solid #44ff88`;
+    }
+
     slot.append(icon, name);
     slot.addEventListener('click', (e) => this._showEquipTooltip(item, section, e));
     slot.addEventListener('touchstart', (e) => { e.preventDefault(); this._showEquipTooltip(item, section, e); }, { passive: false });
     return slot;
   }
+  
 
   _showEquipTooltip(item, section, e) {
     const cfg = EQUIP_SECTIONS[section];
