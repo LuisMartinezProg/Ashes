@@ -86,77 +86,77 @@ export const ITEMS = {
     effect: { type: 'buff', stat: 'def', value: 0.2, duration: 60 },
   },
 
-  // ── EQUIPOS — ARMAS ───────────────────────────────────────────
+  // ── ARMAS ─────────────────────────────────────────────────────
   espadaHierro: {
     id: 'espadaHierro', name: 'Espada de Hierro', icon: '⚔️',
-    section: 'equipos', rarity: 'comun',
+    section: 'armas', rarity: 'comun',
     desc: 'Espada forjada con hierro de las ruinas.',
     slot: 'arma', weaponType: 'sword',
     stats: { ATK: 12, VEL: 2 },
   },
   espadaRunica: {
     id: 'espadaRunica', name: 'Espada Rúnica', icon: '🗡️',
-    section: 'equipos', rarity: 'raro',
+    section: 'armas', rarity: 'raro',
     desc: 'Grabada con runas antiguas.',
     slot: 'arma', weaponType: 'sword',
     stats: { ATK: 22, VEL: 3, MAGIA: 5 },
   },
   katanaOscura: {
     id: 'katanaOscura', name: 'Katana Oscura', icon: '🔪',
-    section: 'equipos', rarity: 'epico',
+    section: 'armas', rarity: 'epico',
     desc: 'Forjada en las sombras de Khazeron.',
     slot: 'arma', weaponType: 'katana',
     stats: { ATK: 35, VEL: 8, CRIT: 10 },
   },
   arcoElfico: {
     id: 'arcoElfico', name: 'Arco Élfico', icon: '🏹',
-    section: 'equipos', rarity: 'raro',
+    section: 'armas', rarity: 'raro',
     desc: 'Ligero y preciso.',
     slot: 'arma', weaponType: 'bow',
     stats: { ATK: 18, VEL: 6, RANGO: 5 },
   },
   bastónCristal: {
     id: 'bastónCristal', name: 'Bastón de Cristal', icon: '🔮',
-    section: 'equipos', rarity: 'epico',
+    section: 'armas', rarity: 'epico',
     desc: 'Amplifica la magia elemental.',
     slot: 'arma', weaponType: 'magic',
     stats: { MAGIA: 40, ATK: 10, MANA: 20 },
   },
 
-  // ── EQUIPOS — ARMADURAS ───────────────────────────────────────
+  // ── ARMADURAS ─────────────────────────────────────────────────
   armaduraHierro: {
     id: 'armaduraHierro', name: 'Armadura de Hierro', icon: '🥋',
-    section: 'equipos', rarity: 'comun',
+    section: 'armaduras', rarity: 'comun',
     desc: 'Protección básica forjada en hierro.',
     slot: 'armadura',
     stats: { DEF: 15, HP: 20 },
   },
   armaduraRunica: {
     id: 'armaduraRunica', name: 'Armadura Rúnica', icon: '🛡️',
-    section: 'equipos', rarity: 'raro',
+    section: 'armaduras', rarity: 'raro',
     desc: 'Reforzada con inscripciones mágicas.',
     slot: 'armadura',
     stats: { DEF: 28, HP: 40, MAGIA: 8 },
   },
   mantoDeSombra: {
     id: 'mantoDeSombra', name: 'Manto de Sombra', icon: '🌑',
-    section: 'equipos', rarity: 'epico',
+    section: 'armaduras', rarity: 'epico',
     desc: 'Reduce la detección enemiga.',
     slot: 'armadura',
     stats: { DEF: 20, VEL: 5, SIGILO: 10 },
   },
 
-  // ── EQUIPOS — ACCESORIOS ──────────────────────────────────────
+  // ── ACCESORIOS ────────────────────────────────────────────────
   anilloFuerza: {
     id: 'anilloFuerza', name: 'Anillo de Fuerza', icon: '💍',
-    section: 'equipos', rarity: 'raro',
+    section: 'accesorios', rarity: 'raro',
     desc: 'Incrementa el poder de ataque.',
     slot: 'accesorio',
     stats: { ATK: 10, CRIT: 5 },
   },
   amuletoCristal: {
     id: 'amuletoCristal', name: 'Amuleto de Cristal', icon: '📿',
-    section: 'equipos', rarity: 'epico',
+    section: 'accesorios', rarity: 'epico',
     desc: 'Amplifica la energía mágica.',
     slot: 'accesorio',
     stats: { MAGIA: 15, MANA: 25 },
