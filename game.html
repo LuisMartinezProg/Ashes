@@ -6,6 +6,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Ashes of the Reborn</title>
+  <link rel="stylesheet" href="css/mochigo.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
@@ -15,19 +16,19 @@
     #fps { position: absolute; top: 12px; left: 14px; font-family: monospace; font-size: 11px; color: rgba(74,179,232,0.6); letter-spacing: 0.1em; }
     #phase-label { position: absolute; top: 12px; right: 14px; font-family: monospace; font-size: 10px; color: rgba(123,79,191,0.5); letter-spacing: 0.15em; }
     #status { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-family: monospace; font-size: 11px; color: rgba(232,224,245,0.6); letter-spacing: 0.2em; text-align: center; }
-    #loading { position: fixed; inset: 0; background: #080810; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.8s ease; }
+    #loading { position: fixed; inset: 0; background: var(--skirk-black); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.8s ease; }
     #loading.hidden { opacity: 0; pointer-events: none; }
     .load-title {
       font-family: 'Georgia', serif;
       font-size: clamp(1rem, 3vw, 1.4rem);
       letter-spacing: 0.4em;
-      background: linear-gradient(120deg, #EDD47A 0%, #C9A84C 30%, #E8E0F5 55%, #4AB3E8 80%, #7B4FBF 100%);
+      background: linear-gradient(120deg, var(--accent) 0%, var(--jahoda-gold) 30%, var(--skirk-light) 55%, var(--furina-light) 80%, var(--clorinde-light) 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
       margin-bottom: 32px;
       text-transform: uppercase;
     }
     .load-bar-wrap { width: 200px; height: 2px; background: rgba(74,179,232,0.15); position: relative; overflow: hidden; }
-    .load-bar { height: 100%; background: linear-gradient(90deg, #3D1F6E, #7B4FBF, #4AB3E8, #EDD47A); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 8px rgba(74,179,232,0.5); }
+    .load-bar { height: 100%; background: linear-gradient(90deg, var(--skirk-dark), var(--clorinde-light), var(--furina-light), var(--accent)); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 8px rgba(74,179,232,0.5); }
     .load-text { margin-top: 16px; font-family: monospace; font-size: 10px; letter-spacing: 0.3em; color: rgba(74,179,232,0.5); }
       </style>
 </head>
@@ -60,6 +61,7 @@
 
 <script type="module">
 import * as THREE from 'three';
+import { MOCHIGO, THEME } from './data/palette.js';
 import { initScene }        from './core/scene.js';
 import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies,setNPCs, setDialogueUI, setTriggers, setResourceCallback } from './core/loop.js';
 import { initResize }       from './core/resize.js';
@@ -165,7 +167,7 @@ async function boot() {
     setProgress(5, 'Verificando...');
     await new Promise(r => setTimeout(r, 200));
 
-    txt.style.color = '#4AB3E8';
+    txt.style.color = MOCHIGO.furina.light;
     setProgress(10, 'THREE.JS...');
     await new Promise(r => setTimeout(r, 100));
 
@@ -503,8 +505,8 @@ allEnemies.forEach(e => {
       Object.assign(flagBtn.style, {
   position:'fixed', top:'8px', right:'100px',
   height:'36px', padding:'0 12px', borderRadius:'8px',
-  border:'1px solid rgba(74,179,232,0.4)',
-  background:'rgba(8,8,16,0.85)', color:'#4AB3E8',
+  border:`1px solid ${MOCHIGO.furina.light}66`,
+  background:'rgba(8,8,16,0.85)', color: MOCHIGO.furina.light,
   fontSize:'16px', fontFamily:'monospace',
   cursor:'pointer', pointerEvents:'all',
   zIndex:'150', WebkitTapHighlightColor:'transparent',
@@ -591,8 +593,8 @@ allEnemies.forEach(e => {
     Object.assign(pauseBtn.style, {
   position:'fixed', top:'8px', left:'14px',
   width:'36px', height:'36px', borderRadius:'8px',
-  border:'1px solid rgba(123,79,191,0.5)',
-  background:'rgba(8,8,16,0.85)', color:'#E8E0F5',
+  border:`1px solid ${MOCHIGO.clorinde.light}80`,
+  background:'rgba(8,8,16,0.85)', color: MOCHIGO.skirk.light,
   fontSize:'18px', cursor:'pointer', pointerEvents:'all',
   zIndex:'150', display:'flex', alignItems:'center',
   justifyContent:'center', WebkitTapHighlightColor:'transparent',
