@@ -157,7 +157,11 @@ function _respawn() {
 }
 
 function _respawnWorldSpawn() {
-  const spawn = window._worldSpawnPoint ?? { x: 0, z: -20 };
+  // Prioriza el último waypoint (fogata) activado por el jugador. Si nunca
+  // activó ninguno, cae al spawn fijo original como fallback.
+  const wpPos = window._waypoints?.getLastActivePosition?.();
+  const spawn = wpPos ?? (window._worldSpawnPoint ?? { x: 0, z: -20 });
+
   const p = window._player;
   if (p?.root) p.root.position.set(spawn.x, 0, spawn.z);
   const m = window._companion;
