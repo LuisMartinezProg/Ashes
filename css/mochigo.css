@@ -1,0 +1,47 @@
+/* css/mochigo.css — Ashes of the Reborn | Valiant Gaming
+   Paleta MochiGo — fuente única de verdad para toda la UI del juego.
+   Cambiar la paleta completa = editar solo este archivo. */
+
+:root {
+  /* ── Personajes (par oscuro/claro cada uno) ── */
+  --furina-dark:    #0D2B4E;
+  --furina-light:   #4AB3E8;
+
+  --clorinde-dark:  #2D1B4E;
+  --clorinde-light: #7B4FBF;
+
+  --skirk-light:    #E8E0F5;
+  --skirk-dark:     #3D1F6E;
+  --skirk-teal:     #4DD9D9;
+  --skirk-black:    #080810;
+
+  --navia-dark:     #2E5478;
+  --navia-light:    #7EB8D4;
+
+  --jahoda-gold:    #C9A84C;
+  --jahoda-purple:  #B07FEF;
+  --jahoda-green:   #4CAF88;
+
+  /* ── Acento global ── */
+  --accent: #EDD47A;
+
+  /* ── Roles semánticos (usados por el menú / UI general) ──
+     Mezcla Furina/Navia (fríos) + acento dorado para texto,
+     según lo definido para index.html/game.html. */
+  --gold:       var(--accent);
+  --gold-light: var(--furina-light);
+  --gold-dim:   var(--navia-dark);
+  --ash-deep:   var(--furina-dark);
+  --ash-mid:    #142E4A;
+  --ash:        #1E3A5C;
+  --smoke:      #24405E;
+  --text:       #D4C9A8;
+  --text-dim:   #6A7F94;
+  --ember:      #8B2A0A; /* contraste cálido intencional, sin cambios */
+
+  /* ── Rareza (usado en inventario, gacha, equipo) ── */
+  --rarity-comun:      var(--navia-light);
+  --rarity-raro:       var(--jahoda-green);
+  --rarity-epico:      var(--clorinde-light);
+  --rarity-legendario: var(--accent);
+}
