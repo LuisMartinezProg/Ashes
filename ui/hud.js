@@ -55,8 +55,8 @@ export class HUD {
       zIndex       : '120',
     });
 
-    this._p1Card = this._makePartyCard({ name: 'KAEL', color: '#88aaff', active: true,  idx: 0 });
-    this._p2Card = this._makePartyCard({ name: 'MIKA', color: '#ff88aa', active: false, idx: 1 });
+    this._p1Card = this._makePartyCard({ name: 'KAEL', color: '#4AB3E8', active: true,  idx: 0 });
+    this._p2Card = this._makePartyCard({ name: 'MIKA', color: '#B07FEF', active: false, idx: 1 });
 
     this._partyEl.appendChild(this._p1Card.wrap);
     this._partyEl.appendChild(this._p2Card.wrap);
@@ -165,7 +165,7 @@ export class HUD {
 
   _onPartySwitch(idx) {
     const cards  = [this._p1Card, this._p2Card];
-    const colors = ['#88aaff', '#ff88aa'];
+    const colors = ['#4AB3E8', '#B07FEF'];
     const names  = ['KAEL', 'MIKA'];
 
     if (window._skillBar) {
@@ -202,8 +202,8 @@ export class HUD {
     // ── Color de barra HP y energía según personaje activo ────────────────
     if (this._playerHpFill) {
       this._playerHpFill.style.background = idx === 0
-        ? 'linear-gradient(90deg,#aa0000,#ff4444)'
-        : 'linear-gradient(90deg,#aa0044,#ff88aa)';
+        ? 'linear-gradient(90deg,#2E5478,#4AB3E8)'
+        : 'linear-gradient(90deg,#7B4FBF,#B07FEF)';
     }
     if (this._playerHpName) {
       this._playerHpName.textContent = names[idx];
@@ -211,8 +211,8 @@ export class HUD {
     }
     if (this._energyFill) {
       this._energyFill.style.background = idx === 0
-        ? 'linear-gradient(90deg,#2244cc,#66aaff)'
-        : 'linear-gradient(90deg,#aa2266,#ff88aa)';
+        ? 'linear-gradient(90deg,#0D2B4E,#4AB3E8)'
+        : 'linear-gradient(90deg,#3D1F6E,#B07FEF)';
     }
 
     // ── Stamina solo visible para Kael ────────────────────────────────────
@@ -289,11 +289,11 @@ export class HUD {
 
   _showReactionLabel(name) {
     const labels = {
-      vapor         : { text: '💨 VAPOR',           color: '#aaddff' },
-      discharge     : { text: '⚡ DESCARGA',         color: '#ffff44' },
-      blizzard      : { text: '❄️ VENTISCA',         color: '#88ccff' },
-      cyclone       : { text: '🌪️ CICLÓN',           color: '#aaeeff' },
-      dark_sentence : { text: '☠️ SENTENCIA OSCURA', color: '#cc44ff' },
+      vapor         : { text: '💨 VAPOR',           color: '#4AB3E8' },
+      discharge     : { text: '⚡ DESCARGA',         color: '#EDD47A' },
+      blizzard      : { text: '❄️ VENTISCA',         color: '#4AB3E8' },
+      cyclone       : { text: '🌪️ CICLÓN',           color: '#4DD9D9' },
+      dark_sentence : { text: '☠️ SENTENCIA OSCURA', color: '#7B4FBF' },
     };
     const data = labels[name] ?? { text: name.toUpperCase(), color: '#ffffff' };
     const el = document.createElement('div');
@@ -365,7 +365,7 @@ export class HUD {
     if (!this._staminaArc) return;
     const pct = Math.max(0, stamina / max);
     this._staminaArc.style.strokeDashoffset = `${this._ARC_LEN * (1 - pct)}`;
-    const color = pct > 0.5 ? '#f5d442' : pct > 0.25 ? '#f5a623' : '#e74c3c';
+    const color = pct > 0.5 ? '#EDD47A' : pct > 0.25 ? '#C9A84C' : '#e74c3c';
     this._staminaArc.style.stroke = color;
     if (pct >= 1) {
       if (this._staminaHideTimer) clearTimeout(this._staminaHideTimer);
@@ -441,7 +441,7 @@ export class HUD {
 
     this._playerHpName = document.createElement('div');
     Object.assign(this._playerHpName.style, {
-      color        : '#88aaff',
+      color        : '#4AB3E8',
       fontSize     : '8px',
       fontFamily   : 'monospace',
       letterSpacing: '2px',
@@ -461,7 +461,7 @@ export class HUD {
     block.appendChild(nameRow);
 
     const hpTrack = this._makeTrack('9px', '#220000');
-    this._playerHpFill = this._makeFill('linear-gradient(90deg,#aa0000,#ff4444)');
+    this._playerHpFill = this._makeFill('linear-gradient(90deg,#2E5478,#4AB3E8)');
     hpTrack.appendChild(this._playerHpFill);
 
     this._playerHpText = document.createElement('div');
@@ -475,7 +475,7 @@ export class HUD {
     this._playerHpText.textContent = '100/100';
 
     const enTrack = this._makeTrack('5px', '#1a1a2e');
-    this._energyFill = this._makeFill('linear-gradient(90deg,#2244cc,#66aaff)');
+    this._energyFill = this._makeFill('linear-gradient(90deg,#0D2B4E,#4AB3E8)');
     enTrack.appendChild(this._energyFill);
 
     block.appendChild(hpTrack);
@@ -528,7 +528,7 @@ export class HUD {
     this._staminaArc.setAttribute('cy', size / 2);
     this._staminaArc.setAttribute('r',  r);
     this._staminaArc.setAttribute('fill', 'none');
-    this._staminaArc.setAttribute('stroke', '#f5d442');
+    this._staminaArc.setAttribute('stroke', '#EDD47A');
     this._staminaArc.setAttribute('stroke-width', '3.5');
     this._staminaArc.setAttribute('stroke-linecap', 'round');
     this._staminaArc.style.strokeDasharray  = `${arcLen} ${circ}`;
@@ -543,7 +543,7 @@ export class HUD {
     label.setAttribute('y', '50%');
     label.setAttribute('text-anchor', 'middle');
     label.setAttribute('dominant-baseline', 'middle');
-    label.setAttribute('fill', '#f5d442');
+    label.setAttribute('fill', '#EDD47A');
     label.setAttribute('font-size', '13');
     label.setAttribute('font-family', 'monospace');
     label.textContent = '⚡';
@@ -563,14 +563,14 @@ export class HUD {
       width       : '50vw',
       maxWidth    : '280px',
       background  : 'rgba(0,0,0,0.7)',
-      border      : '1px solid rgba(180,100,255,0.3)',
+      border      : '1px solid rgba(123,79,191,0.4)',
       borderRadius: '6px',
       padding     : '6px 10px',
       display     : 'none',
     });
     this._bossNameEl = document.createElement('div');
     Object.assign(this._bossNameEl.style, {
-      color        : '#cc88ff',
+      color        : '#B07FEF',
       fontSize     : '10px',
       fontFamily   : 'monospace',
       marginBottom : '4px',
@@ -586,7 +586,7 @@ export class HUD {
     this._bossFillEl = document.createElement('div');
     Object.assign(this._bossFillEl.style, {
       height: '100%', width: '100%',
-      background: 'linear-gradient(90deg,#7700cc,#cc44ff)',
+      background: 'linear-gradient(90deg,#3D1F6E,#7B4FBF)',
       transition: 'width 0.15s ease',
     });
     this._bossTextEl = document.createElement('div');
@@ -614,7 +614,7 @@ export class HUD {
       fontFamily    : "'Cinzel',serif",
       fontSize      : '12px',
       letterSpacing : '2px',
-      color         : '#c9a84c',
+      color         : '#C9A84C',
       background    : 'rgba(10,8,20,0.92)',
       border        : '1px solid rgba(201,168,76,0.4)',
       borderRadius  : '24px',
@@ -637,8 +637,8 @@ export class HUD {
     this._bossTextEl.textContent = `${Math.ceil(e.hp)} / ${e.maxHp}`;
     this._bossNameEl.textContent = e._config?.name ?? 'JEFE';
     this._bossFillEl.style.background = pct > 50
-      ? 'linear-gradient(90deg,#7700cc,#cc44ff)'
-      : pct > 25 ? 'linear-gradient(90deg,#cc6600,#ff9900)'
+      ? 'linear-gradient(90deg,#3D1F6E,#7B4FBF)'
+      : pct > 25 ? 'linear-gradient(90deg,#B07FEF,#7B4FBF)'
       : 'linear-gradient(90deg,#882200,#cc2200)';
     this._bossBarEl.style.display = 'block';
   }
@@ -684,7 +684,7 @@ export class HUD {
     const name = document.createElement('div');
     name.className = 'en';
     Object.assign(name.style, {
-      color: '#ffddaa', fontSize: '9px', fontFamily: 'monospace',
+      color: '#EDD47A', fontSize: '9px', fontFamily: 'monospace',
       letterSpacing: '1px', textShadow: '0 1px 3px #000', textAlign: 'center',
     });
     const track = document.createElement('div');
@@ -761,7 +761,7 @@ export class HUD {
     }
   }
 
-  _showFloating(text, color = '#c9a84c') {
+  _showFloating(text, color = '#C9A84C') {
     const el = document.createElement('div');
     Object.assign(el.style, {
       position: 'fixed', left: '50%', bottom: '180px',
