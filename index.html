@@ -612,14 +612,9 @@
       <div class="menu-divider"></div>
       <div class="menu-studio">Valiant Gaming · Beta v0.1</div>
     </div>
-    <!-- DERECHA: opciones -->
+    <!-- DERECHA: opciones (se rellena dinámicamente por JS) -->
     <div class="menu-right">
-      <nav class="menu-options">
-        <button class="menu-btn primary" onclick="startGame()">Nueva Partida</button>
-        <button class="menu-btn" style="opacity:0.4;pointer-events:none">Continuar</button>
-        <button class="menu-btn" style="opacity:0.4;pointer-events:none">Opciones</button>
-        <button class="menu-btn" onclick="replayIntro()">Ver Introducción</button>
-      </nav>
+      <nav class="menu-options" id="menu-options-nav"></nav>
     </div>
   </div>
   <div class="menu-version">IRONFELL</div>
@@ -923,7 +918,7 @@ function showEndCard() {
 function skipToMenu() {
   seq = []; waiting = false; choiceCb = null;
   document.getElementById('skip-btn').classList.remove('visible');
-  fadeOut(() => { showScreen('menu'); fadeIn(null, 1800); }, 700);
+  fadeOut(() => { showScreen('menu'); fadeIn(null, 1800); renderMenuOptions(); }, 700);
 }
 
 function showSkip() { document.getElementById('skip-btn').classList.add('visible'); }
@@ -932,16 +927,97 @@ function hideSkip() { document.getElementById('skip-btn').classList.remove('visi
 // ── NAVIGATION ───────────────────────────────
 function goMenu() {
   hideSkip();
-  fadeOut(() => { showScreen('menu'); fadeIn(null, 1800); }, 1100);
+  fadeOut(() => { showScreen('menu'); fadeIn(null, 1800); renderMenuOptions(); }, 1100);
 }
 
-function startGame() {
+// ── MENÚ DINÁMICO: Continuar solo si hay guardado ──────────────
+// Lee directamente localStorage (el mismo formato que usa core/saveSystem.js
+// en game.html) sin depender de ningún objeto del juego, que aquí no existe.
+function hasSaveGame() {
+  return localStorage.getItem('ashes_savegame') !== null;
+}
+
+function getSaveInfo() {
+  const raw = localStorage.getItem('ashes_savegame');
+  if (!raw) return null;
+  try {
+    const data = JSON.parse(raw);
+    return { level: data.kael?.level ?? 1, timestamp: data.timestamp };
+  } catch (e) {
+    return null;
+  }
+}
+
+function formatSaveTime(timestamp) {
+  if (!timestamp) return '';
+  const diffMs = Date.now() - timestamp;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1)  return 'ahora mismo';
+  if (mins < 60) return `hace ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `hace ${hours}h`;
+  return `hace ${Math.floor(hours / 24)}d`;
+}
+
+function renderMenuOptions() {
+  const nav = document.getElementById('menu-options-nav');
+  const hasSave = hasSaveGame();
+  const info    = hasSave ? getSaveInfo() : null;
+
+  nav.innerHTML = '';
+
+  // Continuar (solo si hay save) — va primero, es la opción principal
+  if (hasSave) {
+    const contBtn = document.createElement('button');
+    contBtn.className = 'menu-btn primary';
+    contBtn.textContent = info
+      ? `Continuar · Nv.${info.level} · ${formatSaveTime(info.timestamp)}`
+      : 'Continuar';
+    contBtn.onclick = () => startGame(true);
+    nav.appendChild(contBtn);
+  }
+
+  // Nueva Partida / Jugar
+  const newBtn = document.createElement('button');
+  newBtn.className = 'menu-btn' + (hasSave ? '' : ' primary');
+  newBtn.textContent = 'Nueva Partida';
+  newBtn.onclick = () => {
+    if (hasSave) {
+      confirmOverwrite(() => {
+        localStorage.removeItem('ashes_savegame');
+        startGame(false);
+      });
+    } else {
+      startGame(false);
+    }
+  };
+  nav.appendChild(newBtn);
+
+  // Opciones (placeholder simple por ahora)
+  const optBtn = document.createElement('button');
+  optBtn.className = 'menu-btn';
+  optBtn.textContent = 'Opciones';
+  optBtn.onclick = () => alert('Opciones — pendiente de implementar');
+  nav.appendChild(optBtn);
+
+  // Ver introducción
+  const introBtn = document.createElement('button');
+  introBtn.className = 'menu-btn';
+  introBtn.textContent = 'Ver Introducción';
+  introBtn.onclick = replayIntro;
+  nav.appendChild(introBtn);
+}
+
+function confirmOverwrite(onConfirm) {
+  const ok = window.confirm('Iniciar una nueva partida borrará tu progreso guardado. ¿Continuar?');
+  if (ok) onConfirm();
+}
+
+function startGame(loadSave) {
   fadeOut(() => {
-    window.location.href = './game.html';
+    window.location.href = loadSave ? './game.html?load=1' : './game.html';
   }, 900);
 }
-  
-
 
 function replayIntro() {
   fadeOut(() => {
