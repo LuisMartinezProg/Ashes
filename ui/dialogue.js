@@ -1,6 +1,8 @@
 // ui/dialogue.js
 // Ashes of the Reborn | Valiant Gaming
 
+import { DIALOGUE_UI } from '../data/palette.js';
+
 export class DialogueUI {
   constructor() {
     this._active   = false;
@@ -71,14 +73,14 @@ export class DialogueUI {
       width          : '88vw',
       maxWidth       : '420px',
       background     : 'rgba(4,4,14,0.92)',
-      border         : '1px solid rgba(201,168,76,0.35)',
+      border         : `1px solid ${DIALOGUE_UI.border}`,
       borderRadius   : '8px',
       padding        : '14px 16px',
       flexDirection  : 'column',
       gap            : '10px',
       zIndex         : '200',
       pointerEvents  : 'all',
-      boxShadow      : '0 0 24px rgba(201,168,76,0.1)',
+      boxShadow      : `0 0 24px ${DIALOGUE_UI.glow}`,
     });
 
     const headerRow = document.createElement('div');
@@ -90,7 +92,7 @@ export class DialogueUI {
 
     this._nameEl = document.createElement('div');
     Object.assign(this._nameEl.style, {
-      color        : '#C9A84C',
+      color        : DIALOGUE_UI.name,
       fontFamily   : 'monospace',
       fontSize     : '11px',
       letterSpacing: '0.2em',
@@ -102,10 +104,10 @@ export class DialogueUI {
     Object.assign(this._shopBtn.style, {
       display      : 'none',
       padding      : '5px 12px',
-      background   : 'rgba(201,168,76,0.2)',
-      border       : '1px solid rgba(201,168,76,0.5)',
+      background   : DIALOGUE_UI.shopBtnBg,
+      border       : `1px solid ${DIALOGUE_UI.shopBtnBorder}`,
       borderRadius : '4px',
-      color        : '#C9A84C',
+      color        : DIALOGUE_UI.name,
       fontFamily   : 'monospace',
       fontSize     : '10px',
       cursor       : 'pointer',
@@ -128,7 +130,7 @@ export class DialogueUI {
 
     this._lineEl = document.createElement('div');
     Object.assign(this._lineEl.style, {
-      color      : 'rgba(255,245,220,0.88)',
+      color      : DIALOGUE_UI.text,
       fontFamily : 'monospace',
       fontSize   : '13px',
       lineHeight : '1.6',
@@ -139,10 +141,10 @@ export class DialogueUI {
     Object.assign(this._nextBtn.style, {
       alignSelf       : 'flex-end',
       padding         : '6px 18px',
-      background      : 'rgba(201,168,76,0.15)',
-      border          : '1px solid rgba(201,168,76,0.4)',
+      background      : DIALOGUE_UI.nextBtnBg,
+      border          : `1px solid ${DIALOGUE_UI.nextBtnBorder}`,
       borderRadius    : '4px',
-      color           : '#C9A84C',
+      color           : DIALOGUE_UI.name,
       fontFamily      : 'monospace',
       fontSize        : '11px',
       letterSpacing   : '0.15em',
@@ -174,10 +176,10 @@ export class DialogueUI {
       left            : '50%',
       transform       : 'translateX(-50%)',
       padding         : '10px 24px',
-      background      : 'rgba(4,4,14,0.85)',
-      border          : '1px solid rgba(201,168,76,0.5)',
+      background      : DIALOGUE_UI.talkBtnBg,
+      border          : `1px solid ${DIALOGUE_UI.talkBtnBorder}`,
       borderRadius    : '20px',
-      color           : '#C9A84C',
+      color           : DIALOGUE_UI.name,
       fontFamily      : 'monospace',
       fontSize        : '12px',
       letterSpacing   : '0.15em',
@@ -186,7 +188,7 @@ export class DialogueUI {
       zIndex          : '200',
       outline         : 'none',
       WebkitTapHighlightColor: 'transparent',
-      boxShadow       : '0 0 12px rgba(201,168,76,0.2)',
+      boxShadow       : `0 0 12px ${DIALOGUE_UI.glow}`,
     });
     document.body.appendChild(this._talkBtn);
   }
