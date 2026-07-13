@@ -1,6 +1,7 @@
 // ui/bestiaryPopup.js — Ashes of the Reborn | Valiant Gaming
 
 import { BESTIARY_DATA } from '../core/bestiary.js';
+import { BESTIARY_POPUP } from '../data/palette.js';
 
 export class BestiaryPopup {
   constructor() {
@@ -18,8 +19,8 @@ export class BestiaryPopup {
       top: '18%',
       right: '-320px',
       width: '260px',
-      background: 'linear-gradient(135deg, rgba(10,8,20,0.97) 0%, rgba(20,14,35,0.97) 100%)',
-      border: '1px solid rgba(201,168,76,0.35)',
+      background: BESTIARY_POPUP.bg,
+      border: `1px solid ${BESTIARY_POPUP.border}`,
       borderRadius: '10px',
       padding: '12px 14px',
       zIndex: '500',
@@ -38,7 +39,7 @@ export class BestiaryPopup {
       fontFamily: 'monospace',
       fontSize: '9px',
       letterSpacing: '0.25em',
-      color: 'rgba(201,168,76,0.55)',
+      color: BESTIARY_POPUP.title,
       textTransform: 'uppercase',
     });
     title.textContent = 'Enemigo descubierto';
@@ -80,7 +81,7 @@ export class BestiaryPopup {
     Object.assign(name.style, {
       fontFamily: 'Georgia, serif',
       fontSize: '14px',
-      color: '#E8C97A',
+      color: BESTIARY_POPUP.name,
       letterSpacing: '0.05em',
     });
 
@@ -89,7 +90,7 @@ export class BestiaryPopup {
     Object.assign(zone.style, {
       fontFamily: 'monospace',
       fontSize: '10px',
-      color: 'rgba(201,168,76,0.45)',
+      color: BESTIARY_POPUP.zone,
     });
 
     const type = document.createElement('div');
@@ -97,7 +98,7 @@ export class BestiaryPopup {
     Object.assign(type.style, {
       fontFamily: 'monospace',
       fontSize: '10px',
-      color: 'rgba(160,130,200,0.7)',
+      color: BESTIARY_POPUP.type,
     });
 
     info.append(name, zone, type);
@@ -109,7 +110,7 @@ export class BestiaryPopup {
     Object.assign(desc.style, {
       fontFamily: 'monospace',
       fontSize: '9.5px',
-      color: 'rgba(201,168,76,0.38)',
+      color: BESTIARY_POPUP.desc,
       lineHeight: '1.5',
       borderTop: '1px solid rgba(201,168,76,0.1)',
       paddingTop: '6px',
@@ -130,7 +131,7 @@ export class BestiaryPopup {
     Object.assign(bar.style, {
       height: '100%',
       width: '100%',
-      background: 'linear-gradient(90deg, #7A6030, #C9A84C)',
+      background: BESTIARY_POPUP.barGradient,
       borderRadius: '2px',
       transition: 'width linear',
     });
