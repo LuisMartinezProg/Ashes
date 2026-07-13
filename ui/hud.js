@@ -1,5 +1,7 @@
 // ui/hud.js — Ashes of the Reborn | Valiant Gaming
 
+import { HUD_CHARACTERS, HUD_BOSS_BAR, HUD_REACTIONS, HUD_STAMINA, HUD_MATERIALS, HUD_DANGER } from '../data/palette.js';
+
 export class HUD {
   constructor(combatSystem, skillSystem = null) {
     this.combat            = combatSystem;
@@ -55,8 +57,8 @@ export class HUD {
       zIndex       : '120',
     });
 
-    this._p1Card = this._makePartyCard({ name: 'KAEL', color: '#7B4FBF', active: true,  idx: 0 });
-    this._p2Card = this._makePartyCard({ name: 'MIKA', color: 'rgba(123,79,191,0.55)', active: false, idx: 1 });
+    this._p1Card = this._makePartyCard({ name: 'KAEL', color: HUD_CHARACTERS.kael.active, active: true,  idx: 0 });
+    this._p2Card = this._makePartyCard({ name: 'MIKA', color: HUD_CHARACTERS.mika.inactive, active: false, idx: 1 });
 
     this._partyEl.appendChild(this._p1Card.wrap);
     this._partyEl.appendChild(this._p2Card.wrap);
@@ -74,7 +76,7 @@ export class HUD {
       background   : 'rgba(0,0,0,0.5)',
       borderRadius : '20px',
       padding      : '3px 8px 3px 3px',
-      border       : `1px solid ${active ? '#7B4FBF88' : 'rgba(255,255,255,0.1)'}`,
+      border       : `1px solid ${active ? HUD_CHARACTERS.kael.borderActive : 'rgba(255,255,255,0.1)'}`,
       transition   : 'border 0.2s',
     });
 
@@ -85,7 +87,7 @@ export class HUD {
       borderRadius  : '50%',
       background    : `radial-gradient(circle at 35% 35%, ${color}, ${color})`,
       border        : `2px solid ${color}`,
-      boxShadow     : active ? `0 0 8px rgba(123,79,191,0.55)` : 'none',
+      boxShadow     : active ? `0 0 8px ${HUD_CHARACTERS.kael.glow}` : 'none',
       transition    : 'all 0.2s',
       display       : 'flex',
       alignItems    : 'center',
@@ -165,7 +167,7 @@ export class HUD {
 
   _onPartySwitch(idx) {
     const cards  = [this._p1Card, this._p2Card];
-    const colors = ['#7B4FBF', 'rgba(123,79,191,0.55)'];
+    const colors = [HUD_CHARACTERS.kael.active, HUD_CHARACTERS.mika.inactive];
     const names  = ['KAEL', 'MIKA'];
 
     if (window._skillBar) {
@@ -181,9 +183,9 @@ export class HUD {
       card.avatar.style.height     = active ? '36px' : '28px';
       card.avatar.style.fontSize   = active ? '14px' : '11px';
       card.avatar.style.border     = `2px solid ${color}`;
-      card.avatar.style.boxShadow  = active ? `0 0 8px rgba(123,79,191,0.55)` : 'none';
+      card.avatar.style.boxShadow  = active ? `0 0 8px ${HUD_CHARACTERS.kael.glow}` : 'none';
       card.label.style.color       = color;
-      card.wrap.style.border       = `1px solid ${active ? '#7B4FBF88' : 'rgba(255,255,255,0.1)'}`;
+      card.wrap.style.border       = `1px solid ${active ? HUD_CHARACTERS.kael.borderActive : 'rgba(255,255,255,0.1)'}`;
     });
 
     const prevIdx  = idx === 0 ? 1 : 0;
@@ -202,8 +204,8 @@ export class HUD {
     // ── Color de barra HP y energía según personaje activo ────────────────
     if (this._playerHpFill) {
       this._playerHpFill.style.background = idx === 0
-        ? 'linear-gradient(90deg,#3D1F6E,#7B4FBF)'
-        : 'linear-gradient(90deg,rgba(61,31,110,0.5),rgba(123,79,191,0.55))';
+        ? HUD_CHARACTERS.kael.hpGradient
+        : HUD_CHARACTERS.mika.hpGradient;
     }
     if (this._playerHpName) {
       this._playerHpName.textContent = names[idx];
@@ -211,8 +213,8 @@ export class HUD {
     }
     if (this._energyFill) {
       this._energyFill.style.background = idx === 0
-        ? 'linear-gradient(90deg,#3D1F6E,#7B4FBF)'
-        : 'linear-gradient(90deg,rgba(61,31,110,0.5),rgba(123,79,191,0.55))';
+        ? HUD_CHARACTERS.kael.hpGradient
+        : HUD_CHARACTERS.mika.hpGradient;
     }
 
     // ── Stamina solo visible para Kael ────────────────────────────────────
@@ -270,7 +272,6 @@ export class HUD {
   _updateMikaHp(hp, max) {
     if (!this._p2Card) return;
 
-    // Usar maxHp efectivo de Mika si está disponible
     const effectiveMax = (window._effectiveStatsMika ?? window._mikaProgression?.getStats())?.maxHp ?? max;
     const pct = Math.max(0, hp / effectiveMax) * 100;
     this._p2Card.hpFill.style.width = `${pct}%`;
@@ -288,14 +289,7 @@ export class HUD {
   }
 
   _showReactionLabel(name) {
-    const labels = {
-      vapor         : { text: '💨 VAPOR',           color: '#7B4FBF' },
-      discharge     : { text: '⚡ DESCARGA',         color: '#EDD47A' },
-      blizzard      : { text: '❄️ VENTISCA',         color: '#7B4FBF' },
-      cyclone       : { text: '🌪️ CICLÓN',           color: '#7B4FBF' },
-      dark_sentence : { text: '☠️ SENTENCIA OSCURA', color: '#3D1F6E' },
-    };
-    const data = labels[name] ?? { text: name.toUpperCase(), color: '#ffffff' };
+    const data = HUD_REACTIONS[name] ?? { text: name.toUpperCase(), color: '#ffffff' };
     const el = document.createElement('div');
     Object.assign(el.style, {
       position     : 'fixed',
@@ -337,24 +331,20 @@ export class HUD {
 
   updatePlayerHp(hp, max) {
     if (!this._playerHpFill) return;
-    // Actualizar barra principal solo si el personaje activo es Kael
     if (!this._partyManager || this._partyManager.getActiveIdx() === 0) {
       const pct = Math.max(0, hp / max) * 100;
       this._playerHpFill.style.width = `${pct}%`;
       if (this._playerHpText) this._playerHpText.textContent = `${Math.ceil(hp)}/${max}`;
     }
-    // Siempre actualizar la mini-card de Kael
     this.updateProtagonistHp(hp, max);
   }
 
   updateLevel(level) {
-    // Solo actualizar si Kael es el activo, o si no hay partyManager todavía
     if (!this._partyManager || this._partyManager.getActiveIdx() === 0) {
       if (this._levelLabel) this._levelLabel.textContent = `Nv.${level}`;
     }
   }
 
-  // Llamar esto cuando Mika sube de nivel
   updateMikaLevel(level) {
     if (this._partyManager?.getActiveIdx() === 1) {
       if (this._levelLabel) this._levelLabel.textContent = `Nv.${level}`;
@@ -365,7 +355,7 @@ export class HUD {
     if (!this._staminaArc) return;
     const pct = Math.max(0, stamina / max);
     this._staminaArc.style.strokeDashoffset = `${this._ARC_LEN * (1 - pct)}`;
-    const color = pct > 0.5 ? '#EDD47A' : pct > 0.25 ? '#C9A84C' : '#e74c3c';
+    const color = pct > 0.5 ? HUD_STAMINA.high : pct > 0.25 ? HUD_STAMINA.mid : HUD_STAMINA.low;
     this._staminaArc.style.stroke = color;
     if (pct >= 1) {
       if (this._staminaHideTimer) clearTimeout(this._staminaHideTimer);
@@ -441,7 +431,7 @@ export class HUD {
 
     this._playerHpName = document.createElement('div');
     Object.assign(this._playerHpName.style, {
-      color        : '#7B4FBF',
+      color        : HUD_CHARACTERS.kael.active,
       fontSize     : '8px',
       fontFamily   : 'monospace',
       letterSpacing: '2px',
@@ -461,7 +451,7 @@ export class HUD {
     block.appendChild(nameRow);
 
     const hpTrack = this._makeTrack('9px', '#220000');
-    this._playerHpFill = this._makeFill('linear-gradient(90deg,#3D1F6E,#7B4FBF)');
+    this._playerHpFill = this._makeFill(HUD_CHARACTERS.kael.hpGradient);
     hpTrack.appendChild(this._playerHpFill);
 
     this._playerHpText = document.createElement('div');
@@ -475,7 +465,7 @@ export class HUD {
     this._playerHpText.textContent = '100/100';
 
     const enTrack = this._makeTrack('5px', '#1a1a2e');
-    this._energyFill = this._makeFill('linear-gradient(90deg,#3D1F6E,#7B4FBF)');
+    this._energyFill = this._makeFill(HUD_CHARACTERS.kael.hpGradient);
     enTrack.appendChild(this._energyFill);
 
     block.appendChild(hpTrack);
@@ -528,7 +518,7 @@ export class HUD {
     this._staminaArc.setAttribute('cy', size / 2);
     this._staminaArc.setAttribute('r',  r);
     this._staminaArc.setAttribute('fill', 'none');
-    this._staminaArc.setAttribute('stroke', '#EDD47A');
+    this._staminaArc.setAttribute('stroke', HUD_STAMINA.high);
     this._staminaArc.setAttribute('stroke-width', '3.5');
     this._staminaArc.setAttribute('stroke-linecap', 'round');
     this._staminaArc.style.strokeDasharray  = `${arcLen} ${circ}`;
@@ -543,7 +533,7 @@ export class HUD {
     label.setAttribute('y', '50%');
     label.setAttribute('text-anchor', 'middle');
     label.setAttribute('dominant-baseline', 'middle');
-    label.setAttribute('fill', '#EDD47A');
+    label.setAttribute('fill', HUD_STAMINA.high);
     label.setAttribute('font-size', '13');
     label.setAttribute('font-family', 'monospace');
     label.textContent = '⚡';
@@ -563,14 +553,14 @@ export class HUD {
       width       : '50vw',
       maxWidth    : '280px',
       background  : 'rgba(0,0,0,0.7)',
-      border      : '1px solid rgba(123,79,191,0.4)',
+      border      : `1px solid ${HUD_BOSS_BAR.border}`,
       borderRadius: '6px',
       padding     : '6px 10px',
       display     : 'none',
     });
     this._bossNameEl = document.createElement('div');
     Object.assign(this._bossNameEl.style, {
-      color        : '#7B4FBF',
+      color        : HUD_BOSS_BAR.name,
       fontSize     : '10px',
       fontFamily   : 'monospace',
       marginBottom : '4px',
@@ -586,7 +576,7 @@ export class HUD {
     this._bossFillEl = document.createElement('div');
     Object.assign(this._bossFillEl.style, {
       height: '100%', width: '100%',
-      background: 'linear-gradient(90deg,#3D1F6E,#7B4FBF)',
+      background: HUD_BOSS_BAR.fillHigh,
       transition: 'width 0.15s ease',
     });
     this._bossTextEl = document.createElement('div');
@@ -637,9 +627,9 @@ export class HUD {
     this._bossTextEl.textContent = `${Math.ceil(e.hp)} / ${e.maxHp}`;
     this._bossNameEl.textContent = e._config?.name ?? 'JEFE';
     this._bossFillEl.style.background = pct > 50
-      ? 'linear-gradient(90deg,#3D1F6E,#7B4FBF)'
-      : pct > 25 ? 'linear-gradient(90deg,#7B4FBF,#B07FEF)'
-      : 'linear-gradient(90deg,#882200,#cc2200)';
+      ? HUD_BOSS_BAR.fillHigh
+      : pct > 25 ? HUD_BOSS_BAR.fillMid
+      : HUD_BOSS_BAR.fillLow;
     this._bossBarEl.style.display = 'block';
   }
 
@@ -659,9 +649,9 @@ export class HUD {
     const pct = Math.max(0, e.hp / e.maxHp) * 100;
     el.querySelector('.ef').style.width = `${pct}%`;
     el.querySelector('.ef').style.background = pct > 50
-      ? 'linear-gradient(90deg,#cc2222,#ff4444)'
-      : pct > 25 ? 'linear-gradient(90deg,#cc6600,#ff9900)'
-      : 'linear-gradient(90deg,#882200,#cc2200)';
+      ? HUD_DANGER.fillHigh
+      : pct > 25 ? HUD_DANGER.fillMid
+      : HUD_DANGER.fillLow;
     el.querySelector('.et').textContent = `${Math.ceil(e.hp)}/${e.maxHp}`;
     el.querySelector('.en').textContent = e._config?.name ?? 'Enemigo';
     el.style.display = 'block';
@@ -697,7 +687,7 @@ export class HUD {
     fill.className = 'ef';
     Object.assign(fill.style, {
       height: '100%', width: '100%',
-      background: 'linear-gradient(90deg,#cc2222,#ff4444)',
+      background: HUD_DANGER.fillHigh,
       transition: 'width 0.15s ease',
     });
     const text = document.createElement('div');
@@ -744,16 +734,15 @@ export class HUD {
     setTimeout(() => this._collectBtn.style.transform = 'scale(1)', 140);
     res.hp -= power;
     window._building?.addMaterial?.(res.type, power);
-    const icons = { madera:'🪵', piedra:'🪨', hierro:'⚙️', mineral:'💎' };
     window._inventory?.addItem?.({
     id     : res.type,
     name   : res.type.charAt(0).toUpperCase() + res.type.slice(1),
-    icon   : icons[res.type] ?? '📦',
+    icon   : HUD_MATERIALS[res.type]?.icon ?? '📦',
     section: 'materiales',
     rarity : 'comun',
     qty    : power,
     });
-    this._showFloating(`+${power} ${res.type}`, res.type === 'madera' ? '#8B6340' : '#888078');
+    this._showFloating(`+${power} ${res.type}`, HUD_MATERIALS[res.type]?.color ?? '#EDD47A');
     if (res.hp <= 0) {
       res.depleted = true; res.mesh.visible = false;
       this._hideCollectBtn();
