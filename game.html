@@ -12,16 +12,24 @@
     #canvas-container { position: fixed; inset: 0; }
     #canvas-container canvas { display: block; width: 100% !important; height: 100% !important; }
     #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
-    #fps { position: absolute; top: 12px; left: 14px; font-family: monospace; font-size: 11px; color: rgba(201,168,76,0.6); letter-spacing: 0.1em; }
-    #phase-label { position: absolute; top: 12px; right: 14px; font-family: monospace; font-size: 10px; color: rgba(201,168,76,0.4); letter-spacing: 0.15em; }
-    #status { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-family: monospace; font-size: 11px; color: rgba(201,168,76,0.5); letter-spacing: 0.2em; text-align: center; }
-    #loading { position: fixed; inset: 0; background: #04040A; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.8s ease; }
+    #fps { position: absolute; top: 12px; left: 14px; font-family: monospace; font-size: 11px; color: rgba(74,179,232,0.6); letter-spacing: 0.1em; }
+    #phase-label { position: absolute; top: 12px; right: 14px; font-family: monospace; font-size: 10px; color: rgba(123,79,191,0.5); letter-spacing: 0.15em; }
+    #status { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-family: monospace; font-size: 11px; color: rgba(232,224,245,0.6); letter-spacing: 0.2em; text-align: center; }
+    #loading { position: fixed; inset: 0; background: #080810; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.8s ease; }
     #loading.hidden { opacity: 0; pointer-events: none; }
-    .load-title { font-family: 'Georgia', serif; font-size: clamp(1rem, 3vw, 1.4rem); letter-spacing: 0.4em; color: #C9A84C; margin-bottom: 32px; text-transform: uppercase; }
-    .load-bar-wrap { width: 200px; height: 2px; background: rgba(201,168,76,0.15); position: relative; overflow: hidden; }
-    .load-bar { height: 100%; background: linear-gradient(90deg, #7A6030, #C9A84C, #E8C97A); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 8px rgba(201,168,76,0.5); }
-    .load-text { margin-top: 16px; font-family: monospace; font-size: 10px; letter-spacing: 0.3em; color: rgba(201,168,76,0.4); }
-  </style>
+    .load-title {
+      font-family: 'Georgia', serif;
+      font-size: clamp(1rem, 3vw, 1.4rem);
+      letter-spacing: 0.4em;
+      background: linear-gradient(120deg, #EDD47A 0%, #C9A84C 30%, #E8E0F5 55%, #4AB3E8 80%, #7B4FBF 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 32px;
+      text-transform: uppercase;
+    }
+    .load-bar-wrap { width: 200px; height: 2px; background: rgba(74,179,232,0.15); position: relative; overflow: hidden; }
+    .load-bar { height: 100%; background: linear-gradient(90deg, #3D1F6E, #7B4FBF, #4AB3E8, #EDD47A); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 8px rgba(74,179,232,0.5); }
+    .load-text { margin-top: 16px; font-family: monospace; font-size: 10px; letter-spacing: 0.3em; color: rgba(74,179,232,0.5); }
+      </style>
 </head>
 <body>
 
@@ -157,7 +165,7 @@ async function boot() {
     setProgress(5, 'Verificando...');
     await new Promise(r => setTimeout(r, 200));
 
-    txt.style.color = '#C9A84C';
+    txt.style.color = '#4AB3E8';
     setProgress(10, 'THREE.JS...');
     await new Promise(r => setTimeout(r, 100));
 
@@ -493,14 +501,15 @@ allEnemies.forEach(e => {
       flagBtn.textContent = '🚩';
       flagBtn.title = 'Clavar bandera';
       Object.assign(flagBtn.style, {
-        position:'fixed', top:'8px', right:'100px',
-        height:'36px', padding:'0 12px', borderRadius:'8px',
-        border:'1px solid rgba(201,168,76,0.4)',
-        background:'rgba(10,8,20,0.8)', color:'#C9A84C',
-        fontSize:'16px', fontFamily:'monospace',
-        cursor:'pointer', pointerEvents:'all',
-        zIndex:'150', WebkitTapHighlightColor:'transparent',
-      });
+  position:'fixed', top:'8px', right:'100px',
+  height:'36px', padding:'0 12px', borderRadius:'8px',
+  border:'1px solid rgba(74,179,232,0.4)',
+  background:'rgba(8,8,16,0.85)', color:'#4AB3E8',
+  fontSize:'16px', fontFamily:'monospace',
+  cursor:'pointer', pointerEvents:'all',
+  zIndex:'150', WebkitTapHighlightColor:'transparent',
+});
+      
       const openFlag = (e) => {
         e.preventDefault();
         buildZone.startChoosing(player.root.position, () => {
@@ -580,14 +589,14 @@ allEnemies.forEach(e => {
     const pauseBtn = document.createElement('button');
     pauseBtn.textContent = '☰';
     Object.assign(pauseBtn.style, {
-      position:'fixed', top:'8px', left:'14px',
-      width:'36px', height:'36px', borderRadius:'8px',
-      border:'1px solid rgba(201,168,76,0.4)',
-      background:'rgba(10,8,20,0.8)', color:'#C9A84C',
-      fontSize:'18px', cursor:'pointer', pointerEvents:'all',
-      zIndex:'150', display:'flex', alignItems:'center',
-      justifyContent:'center', WebkitTapHighlightColor:'transparent',
-    });
+  position:'fixed', top:'8px', left:'14px',
+  width:'36px', height:'36px', borderRadius:'8px',
+  border:'1px solid rgba(123,79,191,0.5)',
+  background:'rgba(8,8,16,0.85)', color:'#E8E0F5',
+  fontSize:'18px', cursor:'pointer', pointerEvents:'all',
+  zIndex:'150', display:'flex', alignItems:'center',
+  justifyContent:'center', WebkitTapHighlightColor:'transparent',
+});
     const openPause = (e) => { e.preventDefault(); pauseMenu.open(); };
     pauseBtn.addEventListener('click', openPause);
     pauseBtn.addEventListener('touchstart', openPause, { passive: false });
