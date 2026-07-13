@@ -10,21 +10,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/mochigo.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --gold:       #C9A84C;
-      --gold-light: #E8C97A;
-      --gold-dim:   #7A6030;
-      --ash:        #1A1A1E;
-      --ash-mid:    #12121A;
-      --ash-deep:   #0A0A10;
-      --ember:      #8B2A0A;
-      --smoke:      #2E2E38;
-      --text:       #D4C9A8;
-      --text-dim:   #7A7060;
-    }
 
     html, body {
       width: 100%; height: 100%;
@@ -90,12 +78,12 @@
     .rotate-text {
       font-family: 'Cinzel', serif;
       font-size: 0.8rem; letter-spacing: 0.3em;
-      color: #C9A84C; text-align: center;
+      color: var(--gold); text-align: center;
       text-transform: uppercase;
     }
     .rotate-sub {
       font-family: 'EB Garamond', serif;
-      font-size: 0.9rem; color: rgba(201,168,76,0.45);
+      font-size: 0.9rem; color: rgba(237,212,122,0.45);
       text-align: center; font-style: italic;
     }
 
@@ -222,7 +210,7 @@
         flex-direction: column;
         text-align: center;
       }
-      #screen-menu .menu-left { border-right: none; border-bottom: 1px solid rgba(201,168,76,0.1); padding-bottom: 20px; }
+      #screen-menu .menu-left { border-right: none; border-bottom: 1px solid rgba(237,212,122,0.1); padding-bottom: 20px; }
       #screen-menu .menu-title { font-size: 1.6rem; }
       #screen-menu .menu-subtitle { font-size: 0.6rem; }
     }
@@ -233,7 +221,7 @@
         radial-gradient(ellipse 70% 60% at 100% 100%,
           rgba(139,42,10,0.28) 0%, transparent 55%),
         radial-gradient(ellipse 40% 50% at 0% 0%,
-          rgba(201,168,76,0.05) 0%, transparent 50%),
+          rgba(237,212,122,0.05) 0%, transparent 50%),
         linear-gradient(135deg, #04040A 0%, #0A0A16 100%);
     }
 
@@ -252,7 +240,7 @@
       display: flex; flex-direction: column;
       justify-content: center;
       padding-right: 5vw;
-      border-right: 1px solid rgba(201,168,76,0.12);
+      border-right: 1px solid rgba(237,212,122,0.12);
     }
 
     .menu-right {
@@ -288,7 +276,7 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      filter: drop-shadow(0 0 24px rgba(201,168,76,0.2));
+      filter: drop-shadow(0 0 24px rgba(237,212,122,0.2));
       position: relative;
       line-height: 1.15;
     }
@@ -373,14 +361,14 @@
       font-size: 0.65rem; letter-spacing: 0.25em;
       color: var(--gold-dim);
       background: rgba(8,8,14,0.7);
-      border: 1px solid rgba(201,168,76,0.2);
+      border: 1px solid rgba(237,212,122,0.2);
       padding: 8px 16px;
       cursor: pointer; z-index: 200;
       opacity: 0; pointer-events: none;
       transition: opacity 0.4s, color 0.2s, border-color 0.2s;
     }
     #skip-btn.visible { opacity: 1; pointer-events: all; }
-    #skip-btn:active { color: var(--gold); border-color: rgba(201,168,76,0.5); }
+    #skip-btn:active { color: var(--gold); border-color: rgba(237,212,122,0.5); }
 
     /* ─── CINEMATIC AREA (arriba de la caja) ─── */
     .cinematic-area {
@@ -404,7 +392,7 @@
       bottom: 0; left: 0; right: 0;   /* full width, pegado al fondo */
       width: 100%;
       background: rgba(6,6,12,0.95);
-      border-top: 2px solid rgba(201,168,76,0.5);
+      border-top: 2px solid rgba(237,212,122,0.5);
       border-bottom: none;
       padding: 14px 20px 12px;
       backdrop-filter: blur(12px);
@@ -468,7 +456,7 @@
       opacity: 0; pointer-events: none;
       transition: opacity 0.5s;
       background: rgba(6,6,12,0.95);
-      border-top: 2px solid rgba(201,168,76,0.5);
+      border-top: 2px solid rgba(237,212,122,0.5);
     }
     .choice-box.visible { opacity: 1; pointer-events: all; }
 
@@ -485,14 +473,14 @@
       letter-spacing: 0.04em; color: var(--text);
       background: transparent;
       border: none;
-      border-top: 1px solid rgba(201,168,76,0.1);
+      border-top: 1px solid rgba(237,212,122,0.1);
       padding: 14px 24px; cursor: pointer;
       text-align: left;
       transition: all 0.18s;
       position: relative; overflow: hidden;
-      -webkit-tap-highlight-color: rgba(201,168,76,0.1);
+      -webkit-tap-highlight-color: rgba(237,212,122,0.1);
     }
-    .choice-btn:first-of-type { border-top: 1px solid rgba(201,168,76,0.15); }
+    .choice-btn:first-of-type { border-top: 1px solid rgba(237,212,122,0.15); }
     .choice-btn::before {
       content: '';
       position: absolute; left: 0; top: 0; bottom: 0;
@@ -500,7 +488,7 @@
       transform: scaleY(0); transition: transform 0.18s;
     }
     .choice-btn:active {
-      background: rgba(201,168,76,0.06);
+      background: rgba(237,212,122,0.06);
       color: var(--gold-light); padding-left: 32px;
     }
     .choice-btn:active::before { transform: scaleY(1); }
@@ -898,17 +886,17 @@ function showEndCard() {
   el.style.cssText = 'position:fixed;inset:0;background:#04040A;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:300;opacity:0;transition:opacity 1.6s;';
   el.innerHTML = `
     <p style="font-family:'EB Garamond',serif;font-style:italic;
-       font-size:clamp(1rem,1.9vw,1.28rem);color:#C9A84C;
+       font-size:clamp(1rem,1.9vw,1.28rem);color:#EDD47A;
        text-align:center;line-height:2.1;max-width:480px;padding:0 24px;">
       "Algunos eligen el descanso.<br>
       Aeltherion sigue esperando<br>a alguien que no lo haga."
     </p>
     <button onclick="location.reload()" style="margin-top:52px;font-family:'Cinzel',serif;
-      font-size:0.65rem;letter-spacing:0.32em;color:#7A6030;
-      background:none;border:1px solid #7A6030;padding:13px 34px;
+      font-size:0.65rem;letter-spacing:0.32em;color:#2E5478;
+      background:none;border:1px solid #2E5478;padding:13px 34px;
       cursor:pointer;transition:all 0.25s;"
-      onmouseover="this.style.color='#C9A84C';this.style.borderColor='#C9A84C'"
-      onmouseout="this.style.color='#7A6030';this.style.borderColor='#7A6030'">
+      onmouseover="this.style.color='#EDD47A';this.style.borderColor='#EDD47A'"
+      onmouseout="this.style.color='#2E5478';this.style.borderColor='#2E5478'">
       VOLVER AL INICIO
     </button>`;
   document.body.appendChild(el);
@@ -931,8 +919,6 @@ function goMenu() {
 }
 
 // ── MENÚ DINÁMICO: Continuar solo si hay guardado ──────────────
-// Lee directamente localStorage (el mismo formato que usa core/saveSystem.js
-// en game.html) sin depender de ningún objeto del juego, que aquí no existe.
 function hasSaveGame() {
   return localStorage.getItem('ashes_savegame') !== null;
 }
@@ -966,7 +952,6 @@ function renderMenuOptions() {
 
   nav.innerHTML = '';
 
-  // Continuar (solo si hay save) — va primero, es la opción principal
   if (hasSave) {
     const contBtn = document.createElement('button');
     contBtn.className = 'menu-btn primary';
@@ -977,7 +962,6 @@ function renderMenuOptions() {
     nav.appendChild(contBtn);
   }
 
-  // Nueva Partida / Jugar
   const newBtn = document.createElement('button');
   newBtn.className = 'menu-btn' + (hasSave ? '' : ' primary');
   newBtn.textContent = 'Nueva Partida';
@@ -993,14 +977,12 @@ function renderMenuOptions() {
   };
   nav.appendChild(newBtn);
 
-  // Opciones (placeholder simple por ahora)
   const optBtn = document.createElement('button');
   optBtn.className = 'menu-btn';
   optBtn.textContent = 'Opciones';
   optBtn.onclick = () => alert('Opciones — pendiente de implementar');
   nav.appendChild(optBtn);
 
-  // Ver introducción
   const introBtn = document.createElement('button');
   introBtn.className = 'menu-btn';
   introBtn.textContent = 'Ver Introducción';
