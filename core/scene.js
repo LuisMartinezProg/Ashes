@@ -1,6 +1,6 @@
 // core/scene.js — Ashes of the Reborn | Valiant Gaming
 import * as THREE from 'three';
-
+import { WaypointSystem } from './waypoints.js';
 export const FOREST_RESOURCES   = [];
 export const SCENE_ANIMATABLES  = [];
 
@@ -73,7 +73,8 @@ export async function initScene() {
     x: 30,  z: -200,
     color: 0x1a0a2a, glow: 0x9933ff, torchColor: 0x9933ff,
   });
-
+window._waypoints = new WaypointSystem();
+window._waypoints.buildAll(worldGroup);
 console.log('[SCENE] Mundo inicializado');
   return { scene, camera, renderer, lights: { ambient: ambientLight, sun, hemisphere: hemiLight } };
 }
