@@ -55,8 +55,8 @@ export class HUD {
       zIndex       : '120',
     });
 
-    this._p1Card = this._makePartyCard({ name: 'KAEL', color: '#4AB3E8', active: true,  idx: 0 });
-    this._p2Card = this._makePartyCard({ name: 'MIKA', color: '#B07FEF', active: false, idx: 1 });
+    this._p1Card = this._makePartyCard({ name: 'KAEL', color: '#7B4FBF', active: true,  idx: 0 });
+    this._p2Card = this._makePartyCard({ name: 'MIKA', color: 'rgba(123,79,191,0.55)', active: false, idx: 1 });
 
     this._partyEl.appendChild(this._p1Card.wrap);
     this._partyEl.appendChild(this._p2Card.wrap);
@@ -74,7 +74,7 @@ export class HUD {
       background   : 'rgba(0,0,0,0.5)',
       borderRadius : '20px',
       padding      : '3px 8px 3px 3px',
-      border       : `1px solid ${active ? color + '88' : 'rgba(255,255,255,0.1)'}`,
+      border       : `1px solid ${active ? '#7B4FBF88' : 'rgba(255,255,255,0.1)'}`,
       transition   : 'border 0.2s',
     });
 
@@ -83,9 +83,9 @@ export class HUD {
       width         : active ? '36px' : '28px',
       height        : active ? '36px' : '28px',
       borderRadius  : '50%',
-      background    : `radial-gradient(circle at 35% 35%, ${color}, ${color}66)`,
-      border        : `2px solid ${active ? color : color + '44'}`,
-      boxShadow     : active ? `0 0 8px ${color}88` : 'none',
+      background    : `radial-gradient(circle at 35% 35%, ${color}, ${color})`,
+      border        : `2px solid ${color}`,
+      boxShadow     : active ? `0 0 8px rgba(123,79,191,0.55)` : 'none',
       transition    : 'all 0.2s',
       display       : 'flex',
       alignItems    : 'center',
@@ -108,7 +108,7 @@ export class HUD {
     Object.assign(label.style, {
       fontFamily   : 'monospace',
       fontSize     : '7px',
-      color        : active ? color : color + '88',
+      color        : color,
       letterSpacing: '1px',
       transition   : 'color 0.2s',
     });
@@ -165,7 +165,7 @@ export class HUD {
 
   _onPartySwitch(idx) {
     const cards  = [this._p1Card, this._p2Card];
-    const colors = ['#4AB3E8', '#B07FEF'];
+    const colors = ['#7B4FBF', 'rgba(123,79,191,0.55)'];
     const names  = ['KAEL', 'MIKA'];
 
     if (window._skillBar) {
@@ -180,10 +180,10 @@ export class HUD {
       card.avatar.style.width      = active ? '36px' : '28px';
       card.avatar.style.height     = active ? '36px' : '28px';
       card.avatar.style.fontSize   = active ? '14px' : '11px';
-      card.avatar.style.border     = `2px solid ${active ? color : color + '44'}`;
-      card.avatar.style.boxShadow  = active ? `0 0 8px ${color}88` : 'none';
-      card.label.style.color       = active ? color : color + '88';
-      card.wrap.style.border       = `1px solid ${active ? color + '88' : 'rgba(255,255,255,0.1)'}`;
+      card.avatar.style.border     = `2px solid ${color}`;
+      card.avatar.style.boxShadow  = active ? `0 0 8px rgba(123,79,191,0.55)` : 'none';
+      card.label.style.color       = color;
+      card.wrap.style.border       = `1px solid ${active ? '#7B4FBF88' : 'rgba(255,255,255,0.1)'}`;
     });
 
     const prevIdx  = idx === 0 ? 1 : 0;
@@ -202,8 +202,8 @@ export class HUD {
     // ── Color de barra HP y energía según personaje activo ────────────────
     if (this._playerHpFill) {
       this._playerHpFill.style.background = idx === 0
-        ? 'linear-gradient(90deg,#2E5478,#4AB3E8)'
-        : 'linear-gradient(90deg,#7B4FBF,#B07FEF)';
+        ? 'linear-gradient(90deg,#3D1F6E,#7B4FBF)'
+        : 'linear-gradient(90deg,rgba(61,31,110,0.5),rgba(123,79,191,0.55))';
     }
     if (this._playerHpName) {
       this._playerHpName.textContent = names[idx];
@@ -211,8 +211,8 @@ export class HUD {
     }
     if (this._energyFill) {
       this._energyFill.style.background = idx === 0
-        ? 'linear-gradient(90deg,#0D2B4E,#4AB3E8)'
-        : 'linear-gradient(90deg,#3D1F6E,#B07FEF)';
+        ? 'linear-gradient(90deg,#3D1F6E,#7B4FBF)'
+        : 'linear-gradient(90deg,rgba(61,31,110,0.5),rgba(123,79,191,0.55))';
     }
 
     // ── Stamina solo visible para Kael ────────────────────────────────────
@@ -289,11 +289,11 @@ export class HUD {
 
   _showReactionLabel(name) {
     const labels = {
-      vapor         : { text: '💨 VAPOR',           color: '#4AB3E8' },
+      vapor         : { text: '💨 VAPOR',           color: '#7B4FBF' },
       discharge     : { text: '⚡ DESCARGA',         color: '#EDD47A' },
-      blizzard      : { text: '❄️ VENTISCA',         color: '#4AB3E8' },
-      cyclone       : { text: '🌪️ CICLÓN',           color: '#4DD9D9' },
-      dark_sentence : { text: '☠️ SENTENCIA OSCURA', color: '#7B4FBF' },
+      blizzard      : { text: '❄️ VENTISCA',         color: '#7B4FBF' },
+      cyclone       : { text: '🌪️ CICLÓN',           color: '#7B4FBF' },
+      dark_sentence : { text: '☠️ SENTENCIA OSCURA', color: '#3D1F6E' },
     };
     const data = labels[name] ?? { text: name.toUpperCase(), color: '#ffffff' };
     const el = document.createElement('div');
@@ -441,7 +441,7 @@ export class HUD {
 
     this._playerHpName = document.createElement('div');
     Object.assign(this._playerHpName.style, {
-      color        : '#4AB3E8',
+      color        : '#7B4FBF',
       fontSize     : '8px',
       fontFamily   : 'monospace',
       letterSpacing: '2px',
@@ -461,12 +461,12 @@ export class HUD {
     block.appendChild(nameRow);
 
     const hpTrack = this._makeTrack('9px', '#220000');
-    this._playerHpFill = this._makeFill('linear-gradient(90deg,#2E5478,#4AB3E8)');
+    this._playerHpFill = this._makeFill('linear-gradient(90deg,#3D1F6E,#7B4FBF)');
     hpTrack.appendChild(this._playerHpFill);
 
     this._playerHpText = document.createElement('div');
     Object.assign(this._playerHpText.style, {
-      color        : 'rgba(255,180,180,0.8)',
+      color        : 'rgba(230,220,245,0.8)',
       fontSize     : '7px',
       fontFamily   : 'monospace',
       textAlign    : 'center',
@@ -475,7 +475,7 @@ export class HUD {
     this._playerHpText.textContent = '100/100';
 
     const enTrack = this._makeTrack('5px', '#1a1a2e');
-    this._energyFill = this._makeFill('linear-gradient(90deg,#0D2B4E,#4AB3E8)');
+    this._energyFill = this._makeFill('linear-gradient(90deg,#3D1F6E,#7B4FBF)');
     enTrack.appendChild(this._energyFill);
 
     block.appendChild(hpTrack);
@@ -570,7 +570,7 @@ export class HUD {
     });
     this._bossNameEl = document.createElement('div');
     Object.assign(this._bossNameEl.style, {
-      color        : '#B07FEF',
+      color        : '#7B4FBF',
       fontSize     : '10px',
       fontFamily   : 'monospace',
       marginBottom : '4px',
@@ -614,9 +614,9 @@ export class HUD {
       fontFamily    : "'Cinzel',serif",
       fontSize      : '12px',
       letterSpacing : '2px',
-      color         : '#C9A84C',
+      color         : '#EDD47A',
       background    : 'rgba(10,8,20,0.92)',
-      border        : '1px solid rgba(201,168,76,0.4)',
+      border        : '1px solid rgba(123,79,191,0.4)',
       borderRadius  : '24px',
       padding       : '10px 24px',
       cursor        : 'pointer',
@@ -638,7 +638,7 @@ export class HUD {
     this._bossNameEl.textContent = e._config?.name ?? 'JEFE';
     this._bossFillEl.style.background = pct > 50
       ? 'linear-gradient(90deg,#3D1F6E,#7B4FBF)'
-      : pct > 25 ? 'linear-gradient(90deg,#B07FEF,#7B4FBF)'
+      : pct > 25 ? 'linear-gradient(90deg,#7B4FBF,#B07FEF)'
       : 'linear-gradient(90deg,#882200,#cc2200)';
     this._bossBarEl.style.display = 'block';
   }
@@ -761,7 +761,7 @@ export class HUD {
     }
   }
 
-  _showFloating(text, color = '#C9A84C') {
+  _showFloating(text, color = '#EDD47A') {
     const el = document.createElement('div');
     Object.assign(el.style, {
       position: 'fixed', left: '50%', bottom: '180px',
