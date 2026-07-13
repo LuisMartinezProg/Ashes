@@ -123,6 +123,7 @@ function _tick(timestamp) {
   if (!kb._keys[binds.switch]) kb._switchHeld = false;
     }
     if (_triggers) _triggers.update(_player.root.position);
+    window._waypoints?.update(_player.root.position);
     _thirdCam.update(delta);
   }
 
