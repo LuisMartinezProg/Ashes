@@ -23,14 +23,12 @@
       cursor: default;
     }
 
-    /* ─── PARTICLE CANVAS ─── */
     #particles {
       position: fixed; inset: 0;
       pointer-events: none;
       z-index: 0;
     }
 
-    /* ─── VIGNETTE ─── */
     .vignette {
       position: fixed; inset: 0;
       background: radial-gradient(ellipse at center,
@@ -41,7 +39,6 @@
       z-index: 1;
     }
 
-    /* ─── SCREENS ─── */
     .screen {
       position: fixed; inset: 0;
       display: flex; flex-direction: column;
@@ -56,7 +53,6 @@
       pointer-events: all;
     }
 
-    /* ══ AVISO GIRAR DISPOSITIVO ══ */
     #rotate-warning {
       position: fixed; inset: 0;
       background: #0F1E30;
@@ -87,7 +83,6 @@
       text-align: center; font-style: italic;
     }
 
-    /* ══ SCREEN 1: VALIANT GAMING LOGO ══ */
 #screen-logo {
   background: #0d1e35;
 }
@@ -116,7 +111,6 @@
     }
     .studio-name, .studio-sub { display: none; }
 
-    /* ══ SCREEN 2: DEATH SCENE ══ */
     #screen-death { background: #07070F; }
 
     .rain-overlay {
@@ -153,7 +147,6 @@
       19%,23%,54% { opacity: 0.25; }
     }
 
-    /* ══ SCREEN 3: LIMBO ══ */
     #screen-limbo { background: #F2EEE4; }
 
     .limbo-fog {
@@ -201,16 +194,15 @@
     #screen-limbo .choice-btn:hover { color: #6A5020; border-color: rgba(150,120,60,0.6); }
     #screen-limbo .choice-btn::before { background: #8A6830; }
 
-    /* ══ SCREEN 4: MENU PRINCIPAL ══ */
-    #screen-menu { background: var(--ash-deep); }
+    /* ══ SCREEN 4: MENU PRINCIPAL — Paleta MochiGo combinada ══ */
+    #screen-menu { background: #080810; }
 
-    /* Forzar orientación horizontal via CSS hint */
     @media (orientation: portrait) {
       #screen-menu .menu-layout {
         flex-direction: column;
         text-align: center;
       }
-      #screen-menu .menu-left { border-right: none; border-bottom: 1px solid rgba(237,212,122,0.1); padding-bottom: 20px; }
+      #screen-menu .menu-left { border-right: none; border-bottom: 1px solid rgba(74,179,232,0.15); padding-bottom: 20px; }
       #screen-menu .menu-title { font-size: 1.6rem; }
       #screen-menu .menu-subtitle { font-size: 0.6rem; }
     }
@@ -218,14 +210,15 @@
     .menu-bg {
       position: absolute; inset: 0;
       background:
-        radial-gradient(ellipse 70% 60% at 100% 100%,
-          rgba(139,42,10,0.28) 0%, transparent 55%),
-        radial-gradient(ellipse 40% 50% at 0% 0%,
-          rgba(237,212,122,0.05) 0%, transparent 50%),
-        linear-gradient(135deg, #04040A 0%, #0A0A16 100%);
+        radial-gradient(ellipse 55% 45% at 100% 100%,
+          rgba(123,79,191,0.30) 0%, transparent 55%),
+        radial-gradient(ellipse 45% 50% at 0% 0%,
+          rgba(74,179,232,0.14) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 60% at 30% 70%,
+          rgba(61,31,110,0.35) 0%, transparent 65%),
+        linear-gradient(135deg, #080810 0%, #0D1E35 100%);
     }
 
-    /* Layout horizontal: izquierda = título, derecha = opciones */
     .menu-layout {
       position: relative; z-index: 2;
       display: flex; flex-direction: row;
@@ -240,7 +233,7 @@
       display: flex; flex-direction: column;
       justify-content: center;
       padding-right: 5vw;
-      border-right: 1px solid rgba(237,212,122,0.12);
+      border-right: 1px solid rgba(74,179,232,0.18);
     }
 
     .menu-right {
@@ -258,25 +251,27 @@
       font-size: clamp(1.4rem, 4.5vw, 4rem);
       font-weight: 900;
       color: transparent;
-      -webkit-text-stroke: 1px var(--gold-dim);
+      -webkit-text-stroke: 1px #4AB3E8;
       position: absolute; top: 50%; left: 0;
       transform: translateY(-50%);
       white-space: nowrap;
-      opacity: 0.1; pointer-events: none;
+      opacity: 0.12; pointer-events: none;
       filter: blur(2px);
     }
     .menu-title {
       font-family: 'Cinzel Decorative', serif;
       font-size: clamp(1.4rem, 4.5vw, 4rem);
       font-weight: 900;
-      background: linear-gradient(175deg,
-        var(--gold-light) 0%,
-        var(--gold) 45%,
-        var(--gold-dim) 100%);
+      background: linear-gradient(120deg,
+        #EDD47A 0%,
+        #C9A84C 30%,
+        #E8E0F5 55%,
+        #4AB3E8 80%,
+        #7B4FBF 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      filter: drop-shadow(0 0 24px rgba(237,212,122,0.2));
+      filter: drop-shadow(0 0 24px rgba(74,179,232,0.35));
       position: relative;
       line-height: 1.15;
     }
@@ -284,13 +279,13 @@
       font-family: 'Cinzel', serif;
       font-size: clamp(0.52rem, 1vw, 0.72rem);
       letter-spacing: 0.4em;
-      color: var(--gold-dim);
+      color: #E8E0F5;
       margin-top: 14px;
       text-transform: uppercase;
     }
     .menu-divider {
       width: 120px; height: 1px;
-      background: linear-gradient(90deg, var(--gold), transparent);
+      background: linear-gradient(90deg, #7B4FBF, #4AB3E8, transparent);
       margin: 20px 0;
       position: relative;
     }
@@ -298,13 +293,13 @@
       content: '✦';
       position: absolute; top: 50%; left: 0;
       transform: translateY(-50%);
-      color: var(--gold); font-size: 0.6rem;
-      background: var(--ash-deep); padding-right: 8px;
+      color: #EDD47A; font-size: 0.6rem;
+      background: #080810; padding-right: 8px;
     }
     .menu-studio {
       font-family: 'Cinzel', serif;
       font-size: 0.58rem; letter-spacing: 0.3em;
-      color: var(--gold-dim); opacity: 0.5;
+      color: #4AB3E8; opacity: 0.6;
       text-transform: uppercase;
     }
 
@@ -331,30 +326,24 @@
       position: absolute; left: 0; top: 50%;
       transform: translateY(-50%) scaleY(0);
       width: 2px; height: 60%;
-      background: var(--gold);
+      background: #4AB3E8;
       transition: transform 0.2s;
     }
     .menu-btn:active, .menu-btn:hover {
-      color: var(--gold-light); padding-left: 22px;
+      color: #EDD47A; padding-left: 22px;
     }
     .menu-btn:active::before, .menu-btn:hover::before { transform: translateY(-50%) scaleY(1); }
     .menu-btn.primary {
-      color: var(--gold-light);
+      color: #E8E0F5;
       font-size: clamp(0.9rem, 2vw, 1rem);
     }
-    .menu-btn.primary:active, .menu-btn.primary:hover { color: #fff; }
-    .menu-version {
-      position: absolute; bottom: 16px; right: 20px;
-      font-family: 'Cinzel', serif; font-size: 0.55rem;
-      letter-spacing: 0.2em; color: var(--text-dim); opacity: 0.3;
-    }
+    .menu-btn.primary:active, .menu-btn.primary:hover { color: #4AB3E8; }
     .menu-version {
       position: absolute; bottom: 22px; right: 30px;
       font-family: 'Cinzel', serif; font-size: 0.58rem;
-      letter-spacing: 0.2em; color: var(--text-dim); opacity: 0.35;
+      letter-spacing: 0.2em; color: #7B4FBF; opacity: 0.5;
     }
 
-    /* ─── SKIP BUTTON ─── */
     #skip-btn {
       position: fixed; top: 14px; right: 16px;
       font-family: 'Cinzel', serif;
@@ -370,15 +359,13 @@
     #skip-btn.visible { opacity: 1; pointer-events: all; }
     #skip-btn:active { color: var(--gold); border-color: rgba(237,212,122,0.5); }
 
-    /* ─── CINEMATIC AREA (arriba de la caja) ─── */
     .cinematic-area {
       position: absolute;
       top: 0; left: 0; right: 0;
-      bottom: 28vh; /* deja espacio para la caja abajo */
+      bottom: 28vh;
       display: flex; align-items: center; justify-content: center;
       overflow: hidden;
     }
-    /* placeholder visual hasta tener imagen/video real */
     .cinematic-placeholder {
       width: 100%; height: 100%;
       background: linear-gradient(180deg,
@@ -386,10 +373,9 @@
         rgba(10,13,20,0.6) 100%);
     }
 
-    /* ─── DIALOGUE BOX ─── */
     .dialogue-box {
       position: absolute;
-      bottom: 0; left: 0; right: 0;   /* full width, pegado al fondo */
+      bottom: 0; left: 0; right: 0;
       width: 100%;
       background: rgba(6,6,12,0.95);
       border-top: 2px solid rgba(237,212,122,0.5);
@@ -398,7 +384,6 @@
       backdrop-filter: blur(12px);
       opacity: 0;
       transition: opacity 0.5s;
-      /* altura fija para no invadir la cinemática */
       min-height: 26vh;
       max-height: 30vh;
       display: flex; flex-direction: column; justify-content: center;
@@ -421,7 +406,7 @@
     }
     .dialogue-text {
       font-family: 'EB Garamond', serif;
-      font-size: 1.05rem;          /* fijo — legible en móvil */
+      font-size: 1.05rem;
       line-height: 1.6; color: var(--text);
       min-height: 1.8em;
     }
@@ -431,7 +416,7 @@
     .direction-text {
       font-family: 'EB Garamond', serif;
       font-style: italic;
-      font-size: 0.95rem;          /* fijo — legible en móvil */
+      font-size: 0.95rem;
       color: var(--text-dim); line-height: 1.55;
       min-height: 1.6em;
     }
@@ -447,7 +432,6 @@
       0%,100% { opacity: 0.35; } 50% { opacity: 0.9; }
     }
 
-    /* ─── CHOICE BOX ─── */
     .choice-box {
       position: absolute;
       bottom: 0; left: 0; right: 0;
@@ -493,7 +477,6 @@
     }
     .choice-btn:active::before { transform: scaleY(1); }
 
-    /* ─── OVERLAYS ─── */
     #flash {
       position: fixed; inset: 0; background: #fff;
       opacity: 0; pointer-events: none; z-index: 100;
@@ -526,7 +509,6 @@
 </head>
 <body>
 
-<!-- AVISO GIRAR -->
 <div id="rotate-warning">
   <div class="rotate-icon">📱</div>
   <div class="rotate-text">Gira tu dispositivo</div>
@@ -538,22 +520,18 @@
 <div id="flash"></div>
 <div id="fade"></div>
 
-<!-- SCREEN 1: LOGO -->
 <div class="screen" id="screen-logo">
   <div class="studio-logo" id="studioLogo">
     <img src="valiant.png" class="logo-emblem" alt="Valiant Gaming" />
   </div>
 </div>
 
-<!-- SKIP BUTTON (visible durante intro) -->
 <button id="skip-btn" onclick="skipToMenu()">SALTAR ›</button>
 
-<!-- SCREEN 2: MUERTE -->
 <div class="screen" id="screen-death">
   <div class="rain-overlay" id="rain"></div>
   <div class="street-glow"></div>
   <div class="neon-flicker"></div>
-  <!-- Área cinemática superior — aquí irá imagen/video -->
   <div class="cinematic-area">
     <div class="cinematic-placeholder"></div>
   </div>
@@ -565,11 +543,9 @@
   </div>
 </div>
 
-<!-- SCREEN 3: LIMBO -->
 <div class="screen" id="screen-limbo">
   <div class="limbo-fog"></div>
   <div class="limbo-light"></div>
-  <!-- Área cinemática superior -->
   <div class="cinematic-area">
     <div class="cinematic-placeholder"></div>
   </div>
@@ -586,11 +562,9 @@
   </div>
 </div>
 
-<!-- SCREEN 4: MENÚ -->
 <div class="screen" id="screen-menu">
   <div class="menu-bg"></div>
   <div class="menu-layout">
-    <!-- IZQUIERDA: título -->
     <div class="menu-left">
       <div class="menu-title-wrap">
         <div class="menu-title-bg">ASHES OF<br>THE REBORN</div>
@@ -600,7 +574,6 @@
       <div class="menu-divider"></div>
       <div class="menu-studio">Valiant Gaming · Beta v0.1</div>
     </div>
-    <!-- DERECHA: opciones (se rellena dinámicamente por JS) -->
     <div class="menu-right">
       <nav class="menu-options" id="menu-options-nav"></nav>
     </div>
@@ -616,12 +589,7 @@
     ERROR: ${msg}<br>Línea: ${line}
   </div>`;
 };
-// ══════════════════════════════════════════════
-//  ASHES OF THE REBORN — INTRO ENGINE
-//  Valiant Gaming © 2026
-// ══════════════════════════════════════════════
 
-// ── PARTICLES ────────────────────────────────
 const canvas = document.getElementById('particles');
 const ctx    = canvas.getContext('2d');
 
@@ -664,7 +632,6 @@ class Particle {
 const parts = Array.from({length:90}, () => new Particle());
 (function loop() { ctx.clearRect(0,0,canvas.width,canvas.height); parts.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(loop); })();
 
-// ── SCREEN MANAGER ───────────────────────────
 const SCREENS = {
   logo:  document.getElementById('screen-logo'),
   death: document.getElementById('screen-death'),
@@ -710,7 +677,6 @@ function gunFlash(cb) {
   }));
 }
 
-// ── TYPEWRITER ───────────────────────────────
 function typewrite(el, text, speed, cb) {
   el.textContent = '';
   let i = 0;
@@ -721,7 +687,6 @@ function typewrite(el, text, speed, cb) {
   return t;
 }
 
-// ── DIALOGUE ENGINE ──────────────────────────
 let seq = [], step = 0, waiting = false, onSeqDone = null;
 let choiceCb = null;
 
@@ -778,8 +743,6 @@ function advance() {
   step++;
   nextStep();
 }
-
-// ── SEQUENCES ────────────────────────────────
 
 const SEQ_DEATH = [
   {type:'dir',  box:'death', text:'Colombia. Mañana. El protagonista en la parte trasera del bus. Último día antes del vuelo.'},
@@ -912,13 +875,11 @@ function skipToMenu() {
 function showSkip() { document.getElementById('skip-btn').classList.add('visible'); }
 function hideSkip() { document.getElementById('skip-btn').classList.remove('visible'); }
 
-// ── NAVIGATION ───────────────────────────────
 function goMenu() {
   hideSkip();
   fadeOut(() => { showScreen('menu'); fadeIn(null, 1800); renderMenuOptions(); }, 1100);
 }
 
-// ── MENÚ DINÁMICO: Continuar solo si hay guardado ──────────────
 function hasSaveGame() {
   return localStorage.getItem('ashes_savegame') !== null;
 }
@@ -1008,7 +969,6 @@ function replayIntro() {
   }, 700);
 }
 
-// ── INPUT ────────────────────────────────────
 document.addEventListener('click', e => {
   if (e.target.classList.contains('choice-btn')) {
     if (choiceCb) choiceCb(e.target.dataset.choice);
@@ -1025,7 +985,6 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ── BOOT ─────────────────────────────────────
 function runIntro() {
   showScreen('logo');
   const logo = document.getElementById('studioLogo');
@@ -1040,7 +999,6 @@ function runIntro() {
     setTimeout(() => note.classList.remove('show'), 3800);
   }, 600);
 
-  // Logo → Death scene
   setTimeout(() => {
     fadeOut(() => {
       showScreen('death');
@@ -1054,12 +1012,10 @@ function runIntro() {
 }
 
 window.addEventListener('load', () => {
-  // Intentar forzar landscape
   if (screen.orientation && screen.orientation.lock) {
     screen.orientation.lock('landscape').catch(() => {});
   }
 
-  // Aviso de girar si está en vertical
   const warning = document.getElementById('rotate-warning');
   function checkOrientation() {
     const isPortrait = window.innerHeight > window.innerWidth;
