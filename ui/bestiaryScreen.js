@@ -2,31 +2,7 @@
 
 import { getBestiaryList } from '../core/bestiary.js';
 import { ITEMS } from '../data/items.js';
-
-const ZONE_COLORS = {
-  'Bosque':                '#2d5a1b',
-  'Bosque Profundo':       '#1a4020',
-  'Llanuras':              '#5a4a1b',
-  'Camino':                '#3a3020',
-  'Territorio Yami':       '#2a1040',
-  'Mazmorras':             '#1a1a2a',
-  'Mazmorra — Jefe':       '#3a0a0a',
-  'Mazmorra — Jefe Final': '#4a0000',
-};
-
-const TYPE_COLORS = {
-  'Animal':     '#4a7a30',
-  'Criatura':   '#306a40',
-  'Elemental':  '#304a7a',
-  'Bestia':     '#6a3020',
-  'No-Muerto':  '#504060',
-  'Humano':     '#504030',
-  'Sombra':     '#302040',
-  'Yami':       '#401040',
-  'Constructo': '#304050',
-  'Jefe':       '#6a1010',
-  'Jefe Final': '#8a0808',
-};
+import { BESTIARY_ZONES, BESTIARY_TYPES } from '../data/palette.js';
 
 export class BestiaryScreen {
   constructor() {
@@ -351,9 +327,9 @@ export class BestiaryScreen {
         fontSize      : '18px',
         cursor        : enemy.discovered ? 'pointer' : 'default',
         background    : isSelected
-          ? `linear-gradient(135deg, ${ZONE_COLORS[enemy.zone] || '#1a1a2a'}cc, rgba(100,60,200,0.2))`
+          ? `linear-gradient(135deg, ${BESTIARY_ZONES[enemy.zone] || '#1a1a2a'}cc, rgba(100,60,200,0.2))`
           : enemy.discovered
-            ? `linear-gradient(135deg, ${ZONE_COLORS[enemy.zone] || '#1a1a2a'}66, rgba(10,8,20,0.8))`
+            ? `linear-gradient(135deg, ${BESTIARY_ZONES[enemy.zone] || '#1a1a2a'}66, rgba(10,8,20,0.8))`
             : 'rgba(8,6,16,0.8)',
         border        : `1px solid ${isSelected
           ? 'rgba(201,168,76,0.5)'
@@ -392,15 +368,15 @@ export class BestiaryScreen {
     this._sketchIcon.textContent      = enemy.icon;
     this._sketchTypeBadge.textContent = enemy.type;
     this._sketchTypeBadge.style.background =
-      (TYPE_COLORS[enemy.type] || '#222') + '44';
+      (BESTIARY_TYPES[enemy.type] || '#222') + '44';
     this._sketchKillsBadge.textContent = `×${enemy.kills}`;
     this._sketchBg.style.background = `
-      radial-gradient(circle at 50% 50%, ${ZONE_COLORS[enemy.zone] || '#1a1a2a'}33 0%, transparent 65%),
+      radial-gradient(circle at 50% 50%, ${BESTIARY_ZONES[enemy.zone] || '#1a1a2a'}33 0%, transparent 65%),
       repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(201,168,76,0.02) 30px, rgba(201,168,76,0.02) 31px),
       repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(201,168,76,0.02) 30px, rgba(201,168,76,0.02) 31px)
     `;
     this._sketchRing.style.borderColor =
-      (ZONE_COLORS[enemy.zone] || '#C9A84C') + '22';
+      (BESTIARY_ZONES[enemy.zone] || '#C9A84C') + '22';
 
     // ── Info ─────────────────────────────────────────────────
     this._infoEmpty.style.display   = 'none';
