@@ -1,15 +1,10 @@
 // ui/skillBar.js — Ashes of the Reborn | Valiant Gaming
 
 import { activateRelic, isRelicActive, getRelicCooldownPct, getEquippedRelic } from '../core/relics.js';
+import { SKILL_LAYERS } from '../data/palette.js';
 
 const BASE_W = 800;
 const BASE_H = 450;
-
-const LAYER_COLORS = {
-  basico: 'rgba(200,200,200,0.6)',
-  medio : 'rgba(100,180,255,0.8)',
-  arcano: 'rgba(180,80,255,0.9)',
-};
 
 export class SkillBar {
   constructor(skillSystem, progression) {
@@ -416,7 +411,7 @@ export class SkillBar {
     layerDot.style.cssText = `
       position:absolute;bottom:3px;right:3px;
       width:6px;height:6px;border-radius:50%;
-      background:rgba(200,200,200,0.6);
+      background:${SKILL_LAYERS.basico};
       pointer-events:none;
     `;
 
@@ -453,7 +448,7 @@ export class SkillBar {
     btn.dataset.skillId = skill.id;
     btn.querySelector('.skill-icon').textContent = skill.icon ?? '✨';
     const layer      = skill.layer ?? 'basico';
-    const layerColor = LAYER_COLORS[layer] ?? LAYER_COLORS.basico;
+    const layerColor = SKILL_LAYERS[layer] ?? SKILL_LAYERS.basico;
     btn.style.borderColor = layerColor;
     btn.style.opacity     = '1';
     const dot = btn.querySelector('.skill-layer');
