@@ -1,6 +1,8 @@
 // ui/mapUI.js — Minimapa + Mapa completo
 // Ashes of the Reborn | Valiant Gaming
 
+import { MAP_ZONES, MAP_DUNGEONS, MAP_PINS } from '../data/palette.js';
+
 export class MapUI {
   constructor(player) {
     this._player  = player;
@@ -13,18 +15,12 @@ export class MapUI {
       minZ: -80, maxZ: 100,
     };
 
-    this._zones = [
-      { label: 'Greymantle',   color: '#1A3A10', minZ: -80, maxZ: -40 },
-      { label: 'Bosque claro', color: '#2A5A1A', minZ: -40, maxZ: -10 },
-      { label: 'Planicie',     color: '#3A7A28', minZ: -10, maxZ:  30 },
-      { label: 'Camino',       color: '#4A8A38', minZ:  30, maxZ:  60 },
-      { label: 'Ironfell',     color: '#5A6A4A', minZ:  60, maxZ: 100 },
-    ];
+    this._zones = MAP_ZONES;
 
     this._dungeons = [
-      { x:   0, z: -120, color: '#C9A84C', label: 'Mazmorra I'   },
-      { x: -30, z: -160, color: '#44aaff', label: 'Mazmorra II'  },
-      { x:  30, z: -200, color: '#9933ff', label: 'Mazmorra III' },
+      { x:   0, z: -120, color: MAP_DUNGEONS[1].color, label: MAP_DUNGEONS[1].label },
+      { x: -30, z: -160, color: MAP_DUNGEONS[2].color, label: MAP_DUNGEONS[2].label },
+      { x:  30, z: -200, color: MAP_DUNGEONS[3].color, label: MAP_DUNGEONS[3].label },
     ];
 
     this._pins = JSON.parse(localStorage.getItem('ashes_map_pins') || '[]');
@@ -424,7 +420,6 @@ export class MapUI {
     const y = (1 - (wz - minZ) / (maxZ - minZ)) * canvasH;
     return { x, y };
   }
-
   // ── Pins ──────────────────────────────────────────────────────────────────
 
   _savePins() {
@@ -459,16 +454,7 @@ export class MapUI {
     const pos = this._player?.root?.position;
     if (!pos) return;
 
-    const PIN_TYPES = [
-      { icon: '🏠', label: 'Refugio',      color: '#44aa88' },
-      { icon: '⚔️', label: 'Combate',      color: '#ff4444' },
-      { icon: '🏪', label: 'Comercio',     color: '#ffaa44' },
-      { icon: '⛏️', label: 'Recursos',     color: '#aaaaff' },
-      { icon: '🏛️', label: 'Monumento',    color: '#ffcc44' },
-      { icon: '🚩', label: 'Base',         color: '#C9A84C' },
-      { icon: '⚠️', label: 'Peligro',      color: '#ff6622' },
-      { icon: '🔮', label: 'Lugar mágico', color: '#cc44ff' },
-    ];
+    const PIN_TYPES = MAP_PINS;
 
     let selectedType = PIN_TYPES[0];
 
@@ -649,4 +635,3 @@ showMinimap() {
   if (this._minimap) this._minimap.style.display = 'block';
 }
 }
-
