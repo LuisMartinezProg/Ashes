@@ -1,6 +1,7 @@
 // ui/inventory.js — Ashes of the Reborn | Valiant Gaming
 
 import { getEquippedBy } from '../core/relics.js';
+import { RARITY_COLOR } from '../data/palette.js';
 
 const SECTIONS = ['materiales', 'armas', 'armaduras', 'accesorios', 'reliquias', 'consumibles'];
 
@@ -11,14 +12,6 @@ const SECTION_LABELS = {
   accesorios : '📿 Accesorios',
   reliquias  : '💠 Reliquias',
   consumibles: '🧪 Consumibles',
-};
-
-// Rareza → color (paleta MochiGo)
-const RARITY_COLOR = {
-  comun      : '#7EB8D4', // Navia claro
-  raro       : '#4CAF88', // Jahoda verde
-  epico      : '#7B4FBF', // Clorinde
-  legendario : '#EDD47A', // Acento global
 };
 
 // Slots de equipo que usan progression.js (arma/armadura/accesorio)
@@ -328,8 +321,6 @@ export class InventoryUI {
     return slot;
   }
 // ── Slot de equipo (armas / armaduras / accesorios) ──────────────────────
-  // Mismo patrón visual que reliquias: tap → tooltip con botón Equipar (por
-  // personaje) o Quitar, según corresponda.
 
   _buildEquipSlot(item, section) {
     const slot = document.createElement('div');
@@ -377,7 +368,6 @@ export class InventoryUI {
         display   : 'flex',
         gap       : '2px',
       });
-      // Muestra ícono de personaje si equipado por ambos, o solo el check si es uno
       if (equippedOnKael && equippedOnMika) {
         badge.textContent = '✓✓';
       } else {
@@ -385,7 +375,6 @@ export class InventoryUI {
       }
       slot.appendChild(badge);
 
-      // Sutil resaltado de borde para reforzar visualmente que está equipado
       slot.style.border = `1.5px solid #44ff88`;
     }
 
@@ -905,8 +894,8 @@ export class InventoryUI {
     if (!this._items[sec]) return;
     const existing = this._items[sec].find(i => i.id === item.id);
     if (existing) {
-      if (sec === 'reliquias') return; // únicas, no se acumulan
-      if (EQUIP_SECTIONS[sec]) return; // armas/armaduras/accesorios: únicas, no se acumulan
+      if (sec === 'reliquias') return;
+      if (EQUIP_SECTIONS[sec]) return;
       existing.qty = (existing.qty ?? 1) + (item.qty ?? 1);
     } else {
       this._items[sec].push({ qty: 1, ...item });
@@ -914,8 +903,6 @@ export class InventoryUI {
     if (this._open && this._section === sec) this._renderGrid();
   }
 
-  // Quita UNA unidad única de un ítem de equipo (arma/armadura/accesorio)
-  // sin importar su qty — se usa al equipar, para sacarlo de la mochila.
   removeUniqueItem(id, section) {
     const sec = section ?? SECTIONS.find(s => this._items[s]?.some(i => i.id === id));
     if (!sec || !this._items[sec]) return false;
