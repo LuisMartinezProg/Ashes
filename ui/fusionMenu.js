@@ -1,5 +1,7 @@
 // ui/fusionMenu.js — Ashes of the Reborn | Valiant Gaming
 
+import { FUSION_SCHOOLS } from '../data/palette.js';
+
 export class FusionMenu {
   constructor(progression, skillBar, skillSystem) {
     this.progression = progression;
@@ -113,17 +115,10 @@ export class FusionMenu {
   }
 
   _renderSchools() {
-    const schools = [
-      { id: 'fuego',   emoji: '🔥', name: 'Fuego',   desc: 'QUEMADURA',  effect: 'Daño por segundo al atacar',  color: '#ff6633' },
-      { id: 'hielo',   emoji: '❄️', name: 'Hielo',   desc: 'RALENTIZAR', effect: 'Reduce velocidad enemiga',    color: '#66ccff' },
-      { id: 'viento',  emoji: '💨', name: 'Viento',  desc: 'IMPULSO',    effect: 'Te lanza lejos al golpear',   color: '#aaeeff' },
-      { id: 'soporte', emoji: '💚', name: 'Soporte', desc: 'VITALIDAD',  effect: 'Recuperas 5% del daño hecho', color: '#66ff88' },
-    ];
-
-    return schools.map(s => {
-      const selected = this._selectedSchool === s.id;
+    return Object.entries(FUSION_SCHOOLS).map(([id, s]) => {
+      const selected = this._selectedSchool === id;
       return `
-        <div class="fusion-school-item" data-school="${s.id}" style="
+        <div class="fusion-school-item" data-school="${id}" style="
           display:flex;flex-direction:column;align-items:center;text-align:center;
           padding:16px 8px;
           border:2px solid ${selected ? s.color : 'rgba(201,168,76,0.2)'};
@@ -144,16 +139,10 @@ export class FusionMenu {
 
   _selectSchool(school) {
     this._selectedSchool = school;
-    const schoolsData = [
-      { id: 'fuego',   color: '#ff6633' },
-      { id: 'hielo',   color: '#66ccff' },
-      { id: 'viento',  color: '#aaeeff' },
-      { id: 'soporte', color: '#66ff88' },
-    ];
 
     this._overlay.querySelectorAll('.fusion-school-item').forEach(item => {
       const sid      = item.dataset.school;
-      const color    = schoolsData.find(s => s.id === sid)?.color ?? '#C9A84C';
+      const color    = FUSION_SCHOOLS[sid]?.color ?? '#C9A84C';
       const selected = sid === school;
 
       item.style.border     = `2px solid ${selected ? color : 'rgba(201,168,76,0.2)'}`;
