@@ -4,9 +4,10 @@
 // oscuro + UI encima. Muestra "Continuar" solo si hay partida guardada.
 
 import { hasSaveGame, getSaveInfo, loadGame, deleteSaveGame } from '../core/saveSystem.js';
+import { MOCHIGO } from '../data/palette.js';
 
-const ACCENT       = '#EDD47A'; // Acento global MochiGo
-const BG_DARK       = 'rgba(4,4,10,0.55)';
+const ACCENT   = MOCHIGO.accent; // Acento global MochiGo
+const BG_DARK  = 'rgba(4,4,10,0.55)';
 
 export class MainMenu {
   constructor() {
@@ -92,7 +93,7 @@ export class MainMenu {
     Object.assign(btn.style, {
       padding      : '14px 20px',
       borderRadius : '10px',
-      border       : primary ? `1.5px solid ${ACCENT}` : '1px solid rgba(237,212,122,0.35)',
+      border       : primary ? `1.5px solid ${ACCENT}` : 'rgba(237,212,122,0.35)',
       background   : primary ? 'rgba(237,212,122,0.16)' : 'rgba(10,8,20,0.55)',
       color        : primary ? ACCENT : 'rgba(237,212,122,0.75)',
       fontFamily   : "'Cinzel', serif",
@@ -119,7 +120,6 @@ export class MainMenu {
       this.hide();
       this._onContinue?.();
     } else {
-      // Save corrupto o inexistente pese al chequeo: re-renderiza sin "Continuar"
       this._renderButtons();
     }
   }
@@ -203,7 +203,7 @@ export class MainMenu {
   onSettings(cb) { this._onSettings = cb; }
 
   show() {
-    this._renderButtons(); // re-chequea si hay save cada vez que se muestra
+    this._renderButtons();
     this._overlay.style.display = 'flex';
     this._visible = true;
   }
