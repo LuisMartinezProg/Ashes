@@ -4,6 +4,7 @@
  */
 
 import { STRUCTURES } from '../data/structures.js';
+import { BUILD_TIERS, HUD_MATERIALS } from '../data/palette.js';
 
 const CATEGORY_MAP = {
   basico      : ['fogata', 'refugio', 'escalera'],
@@ -20,17 +21,10 @@ const CATEGORY_ICONS = {
 };
 
 const MATERIAL_ICONS = {
-  madera : '🪵',
-  piedra : '🪨',
-  hierro : '⚙️',
-  mineral: '💎',
-};
-
-const TIER_COLORS = {
-  madera : '#8B6340',
-  piedra : '#888888',
-  hierro : '#8090a0',
-  mineral: '#b090ff',
+  madera : HUD_MATERIALS.madera.icon,
+  piedra : HUD_MATERIALS.piedra.icon,
+  hierro : HUD_MATERIALS.hierro.icon,
+  mineral: HUD_MATERIALS.mineral.icon,
 };
 
 export class BuildMenu {
@@ -290,7 +284,6 @@ export class BuildMenu {
 
     body.appendChild(craftCol);
   }
-
   // ── Panel de crafteo con cuadrícula 3x3 ──────────────────────────────────
 
   _renderCraftPanel(container, def) {
@@ -314,13 +307,14 @@ export class BuildMenu {
     Object.keys(def.tiers).forEach(tier => {
       const btn = document.createElement('button');
       const isActive = tier === this._selectedTier;
+      const tierColor = BUILD_TIERS[tier] ?? '#888888';
       btn.style.cssText = `
         padding:4px 10px;border-radius:6px;
         background:${isActive
-          ? `rgba(${this._hexToRgb(TIER_COLORS[tier])},0.3)`
+          ? `rgba(${this._hexToRgb(tierColor)},0.3)`
           : 'rgba(255,255,255,0.04)'};
-        border:1px solid ${isActive ? TIER_COLORS[tier] : 'rgba(255,255,255,0.08)'};
-        color:${isActive ? TIER_COLORS[tier] : '#555577'};
+        border:1px solid ${isActive ? tierColor : 'rgba(255,255,255,0.08)'};
+        color:${isActive ? tierColor : '#555577'};
         font-size:9px;letter-spacing:1px;cursor:pointer;
         font-family:monospace;
         WebkitTapHighlightColor:transparent;
