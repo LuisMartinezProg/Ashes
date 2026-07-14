@@ -1,5 +1,7 @@
 // ui/weaponSelect.js — Ashes of the Reborn | Valiant Gaming
 
+import { WEAPON_ACCENTS } from '../data/palette.js';
+
 const WEAPONS = [
   {
     type  : 'katana',
@@ -8,8 +10,8 @@ const WEAPONS = [
     icon  : '🗡️',
     range : 'CUERPO A CUERPO',
     stats : { VEL: 90, ALC: 45, DMG: 70 },
-    accent: '#e8c9a0',
-    glow  : 'rgba(232,201,160,0.35)',
+    accent: WEAPON_ACCENTS.katana.accent,
+    glow  : WEAPON_ACCENTS.katana.glow,
     desc  : 'Corte veloz + tajo descendente. Elegante y letal.',
   },
   {
@@ -19,8 +21,8 @@ const WEAPONS = [
     icon  : '⚔️',
     range : 'CUERPO A CUERPO',
     stats : { VEL: 65, ALC: 70, DMG: 80 },
-    accent: '#a8c8ff',
-    glow  : 'rgba(168,200,255,0.3)',
+    accent: WEAPON_ACCENTS.sword.accent,
+    glow  : WEAPON_ACCENTS.sword.glow,
     desc  : 'Golpe de arco amplio. Corta a través de varios enemigos.',
   },
   {
@@ -30,8 +32,8 @@ const WEAPONS = [
     icon  : '🔮',
     range : 'PROYECTIL GUIADO',
     stats : { VEL: 50, ALC: 90, DMG: 75 },
-    accent: '#c47aff',
-    glow  : 'rgba(196,122,255,0.35)',
+    accent: WEAPON_ACCENTS.magic.accent,
+    glow  : WEAPON_ACCENTS.magic.glow,
     desc  : 'Orbe que persigue al objetivo. Drena energía arcana.',
   },
   {
@@ -41,8 +43,8 @@ const WEAPONS = [
     icon  : '🏹',
     range : 'LÍNEA RECTA',
     stats : { VEL: 70, ALC: 85, DMG: 60 },
-    accent: '#6dcc8a',
-    glow  : 'rgba(109,204,138,0.3)',
+    accent: WEAPON_ACCENTS.bow.accent,
+    glow  : WEAPON_ACCENTS.bow.glow,
     desc  : 'Flecha en línea recta. Carga para un disparo devastador.',
   },
 ];
@@ -282,4 +284,4 @@ export function showWeaponSelect() {
     confirmBtn.addEventListener('click', confirm);
     confirmBtn.addEventListener('touchstart', confirm, { passive: false });
   });
-                                             }
+}
