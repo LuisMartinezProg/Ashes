@@ -9,6 +9,7 @@
 import { PULL_COST, PITY_EPICO_THRESHOLD, PITY_RARO_THRESHOLD } from './../core/gacha.js';
 import { GachaBoard } from './../core/gachaBoard.js';
 import { GachaBoardView } from './gachaBoardView.js';
+import { GACHA_RARITY } from '../data/palette.js';
 
 const RARITY_LABELS = {
   comun: 'Polvo',
@@ -20,12 +21,6 @@ const RARITY_FULL = {
   comun: 'Común',
   raro: 'Raro',
   epico: 'Épico',
-};
-
-const RARITY_COLORS = {
-  comun: '#B8AFD0',
-  raro: '#9D7FE8',
-  epico: '#E8C97A',
 };
 
 const FEATURED_DISPLAY = {
@@ -274,10 +269,9 @@ function _injectStyles() {
 }
 
 function _placeholderStyle(rarity) {
-  const color = RARITY_COLORS[rarity] || '#7A63B8';
+  const color = GACHA_RARITY[rarity] || '#7A63B8';
   return `background: linear-gradient(160deg, ${color}55, ${color}15); border-color: ${color}88;`;
 }
-
 export class GachaMenu {
   constructor(gacha) {
     this.gacha = gacha;
@@ -435,7 +429,7 @@ export class GachaMenu {
       { rarity: 'comun', pct: g.getRateComun ? g.getRateComun() : 94.3 },
     ];
     list.innerHTML = rows.map(r => {
-      const color = RARITY_COLORS[r.rarity];
+      const color = GACHA_RARITY[r.rarity];
       const example = RATE_EXAMPLES[r.rarity];
       return `
         <div class="gacha-rates-row">
@@ -480,7 +474,7 @@ export class GachaMenu {
         const line = document.createElement('div');
         line.className = 'gacha-history-line';
         const label = RARITY_LABELS[item.rarity] || item.rarity;
-        const color = RARITY_COLORS[item.rarity] || '#fff';
+        const color = GACHA_RARITY[item.rarity] || '#fff';
         let tag = '';
         if (item.featured === true) tag = '<span class="gacha-history-featured">DESTACADO</span>';
         line.innerHTML = `
@@ -539,8 +533,6 @@ export class GachaMenu {
     }
     this._showMsg('');
 
-    // Reserva/gasta las gemas correspondientes a la tanda completa de una vez,
-    // igual que antes — el tablero solo anima, no vuelve a cobrar por turno.
     const results = this.gacha.pull(times);
     if (!results) return;
     let cursor = 0;
@@ -550,9 +542,6 @@ export class GachaMenu {
       getPullResult: () => results[cursor++],
       onEachBonus: (bonus) => {
         if (bonus.kind === 'gems') {
-          // Bonus de casilla: se refleja en el contador de Deseos.
-          // (getGems() ya lee de core/gacha.js; este bonus se guarda aparte
-          // hasta que core/gacha.js exponga un método para sumarlo directo.)
           this._pendingGemBonus = (this._pendingGemBonus || 0) + bonus.amount;
         }
         if (bonus.kind === 'bannerCoin') {
