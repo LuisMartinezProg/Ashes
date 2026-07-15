@@ -1,47 +1,35 @@
 // ui/skillTree.js — Ashes of the Reborn | Valiant Gaming
 
-// ── Rarezas ──────────────────────────────────────────────────────────────────
-const RARITY = {
-  comun:      { label: 'Común',      color: '#aaaaaa', glow: '#888888', size: 24, cost: 1 },
-  rara:       { label: 'Rara',       color: '#4488ff', glow: '#2266dd', size: 28, cost: 2 },
-  epica:      { label: 'Épica',      color: '#aa44ff', glow: '#8822dd', size: 32, cost: 3 },
-  legendaria: { label: 'Legendaria', color: '#ffaa00', glow: '#cc7700', size: 36, cost: 4 },
-  mitica:     { label: 'Mítica',     color: '#ff4444', glow: '#cc1111', size: 40, cost: 5 },
-  divina:     { label: 'Divina',     color: '#ffffff', glow: '#aaddff', size: 46, cost: 8 },
-};
+import { SKILLTREE_RARITY, SKILLTREE_CATEGORIES } from '../data/palette.js';
 
-// ── Categorías ────────────────────────────────────────────────────────────────
+const RARITY = SKILLTREE_RARITY;
+
+// ── Categorías con árbol de nodos (colores desde palette, estructura local) ──
 const CATEGORIES = {
   ofensiva: {
-    label: 'Ofensiva', icon: '⚔️', color: '#ff4400',
+    ...SKILLTREE_CATEGORIES.ofensiva,
     tree: {
       nucleo: { id: 'of_nucleo', label: 'Llama Primordial',      icon: '🔥', rareza: 'comun',      limitante: 'Habilidad base',                       req: [] },
       nodes: [
-        // Comunes — nivel 1
         { id: 'of_c1', label: 'Golpe Ígneo',          icon: '👊', rareza: 'comun',      limitante: 'Daño básico de fuego',                 req: ['of_nucleo'], col: 0 },
         { id: 'of_c2', label: 'Destello Menor',        icon: '✨', rareza: 'comun',      limitante: 'Cegado 1 segundo',                     req: ['of_nucleo'], col: 1 },
         { id: 'of_c3', label: 'Empuje de Fuerza',      icon: '💨', rareza: 'comun',      limitante: 'Solo empuja, no daña',                 req: ['of_nucleo'], col: 2 },
-        // Raras — nivel 2
         { id: 'of_r1', label: 'Chispa en Cadena',      icon: '⚡', rareza: 'rara',       limitante: 'Necesita 2 enemigos cerca',             req: ['of_c1'],     col: 0 },
         { id: 'of_r2', label: 'Lanza de Hielo',        icon: '🧊', rareza: 'rara',       limitante: 'Congela solo 2 segundos',               req: ['of_c2'],     col: 1 },
         { id: 'of_r3', label: 'Onda Sísmica',          icon: '🌊', rareza: 'rara',       limitante: 'No funciona en el aire',                req: ['of_c3'],     col: 2 },
-        // Épicas — nivel 3
         { id: 'of_e1', label: 'Meteoro Pequeño',       icon: '🌑', rareza: 'epica',      limitante: '4 segundos antes de caer',              req: ['of_r1'],     col: 0 },
         { id: 'of_e2', label: 'Lanza de Plasma',       icon: '💜', rareza: 'epica',      limitante: 'Recarga de 10 segundos',                req: ['of_r2'],     col: 1 },
         { id: 'of_e3', label: 'Vortex de Fuego',       icon: '🌪️', rareza: 'epica',      limitante: 'Solo desorienta, no mata directo',      req: ['of_r3'],     col: 2 },
-        // Legendarias — nivel 4
         { id: 'of_l1', label: 'Nova Devastadora',      icon: '💥', rareza: 'legendaria', limitante: 'Sin energía 30 segundos',               req: ['of_e1','of_e2'], col: 0 },
         { id: 'of_l2', label: 'Colapso Dimensional',   icon: '🕳️', rareza: 'legendaria', limitante: 'Una vez por batalla',                   req: ['of_e2','of_e3'], col: 2 },
-        // Míticas — nivel 5
         { id: 'of_m1', label: 'Fragmentación Cósmica', icon: '☄️', rareza: 'mitica',     limitante: 'Daña aliados cercanos',                 req: ['of_l1'],     col: 0 },
         { id: 'of_m2', label: 'Tormenta de Plasma',    icon: '🌠', rareza: 'mitica',     limitante: 'Consume toda la energía',               req: ['of_l2'],     col: 2 },
-        // Divina — nivel 6
         { id: 'of_d1', label: 'Juicio del Cosmos',     icon: '🌌', rareza: 'divina',     limitante: 'Una vez por guerra. Daña a todos',      req: ['of_m1','of_m2'], col: 1 },
       ],
     },
   },
   defensiva: {
-    label: 'Defensiva', icon: '🛡️', color: '#4488ff',
+    ...SKILLTREE_CATEGORIES.defensiva,
     tree: {
       nucleo: { id: 'de_nucleo', label: 'Manto Pétreo',          icon: '🪨', rareza: 'comun',      limitante: 'Defensa base',                         req: [] },
       nodes: [
@@ -63,7 +51,7 @@ const CATEGORIES = {
     },
   },
   movilidad: {
-    label: 'Movilidad', icon: '💨', color: '#44cc44',
+    ...SKILLTREE_CATEGORIES.movilidad,
     tree: {
       nucleo: { id: 'mo_nucleo', label: 'Paso Veloz',             icon: '🏃', rareza: 'comun',      limitante: 'Velocidad base',                       req: [] },
       nodes: [
@@ -85,7 +73,7 @@ const CATEGORIES = {
     },
   },
   soporte: {
-    label: 'Soporte', icon: '💚', color: '#ffaa00',
+    ...SKILLTREE_CATEGORIES.soporte,
     tree: {
       nucleo: { id: 'so_nucleo', label: 'Toque Sanador',          icon: '💚', rareza: 'comun',      limitante: 'Curación base',                        req: [] },
       nodes: [
@@ -107,7 +95,7 @@ const CATEGORIES = {
     },
   },
   estrategica: {
-    label: 'Estratégica', icon: '⭐', color: '#aa44ff',
+    ...SKILLTREE_CATEGORIES.estrategica,
     tree: {
       nucleo: { id: 'es_nucleo', label: 'Mente Táctica',          icon: '🧩', rareza: 'comun',      limitante: 'Estrategia base',                      req: [] },
       nodes: [
@@ -159,7 +147,6 @@ export class SkillTree {
     this._skillPoints  = 3;
     this._worldLevel   = 1;
 
-    // Núcleos desbloqueados por defecto
     this._unlocked = {
       of_nucleo: true, de_nucleo: true,
       mo_nucleo: true, so_nucleo: true, es_nucleo: true,
@@ -222,7 +209,6 @@ export class SkillTree {
     };
     this._animFrame = requestAnimationFrame(loop);
   }
-
   // ── Build DOM ─────────────────────────────────────────────────────────────
 
   _build() {
@@ -465,16 +451,13 @@ export class SkillTree {
     const W     = this._canvas.offsetWidth;
     const H     = this._canvas.offsetHeight;
 
-    // Niveles: nucleo=0, comun=1, rara=2, epica=3, legendaria=4, mitica=5, divina=6
     const RARITY_LEVEL = { comun: 1, rara: 2, epica: 3, legendaria: 4, mitica: 5, divina: 6 };
 
-    // Espaciado horizontal por nivel
     const levels    = 7;
     const padLeft   = 80;
     const padRight  = 60;
     const levelW    = (W - padLeft - padRight) / (levels - 1);
 
-    // Agrupar nodos por nivel
     const byLevel = { 0: [{ ...tree.nucleo, _isNucleo: true }] };
     tree.nodes.forEach(n => {
       const lv = RARITY_LEVEL[n.rareza];
@@ -482,7 +465,6 @@ export class SkillTree {
       byLevel[lv].push(n);
     });
 
-    // Calcular posiciones Y por columna dentro de cada nivel
     const nodes = [];
     Object.entries(byLevel).forEach(([lv, sks]) => {
       const x      = padLeft + parseInt(lv) * levelW;
@@ -495,8 +477,6 @@ export class SkillTree {
         const r        = RARITY[sk.rareza]?.size ?? 24;
         const unlocked = !!this._unlocked[sk.id];
 
-        // Puede desbloquear si todos sus req están desbloqueados,
-        // tiene puntos suficientes y el worldLevel es adecuado
         const reqMet   = (sk.req ?? []).every(rid => this._unlocked[rid]);
         const cost     = RARITY[sk.rareza]?.cost ?? 1;
         const wldReq   = RARITY_WORLD_REQ[sk.rareza] ?? 0;
@@ -515,7 +495,6 @@ export class SkillTree {
 
     return nodes;
   }
-
   // ── Render ────────────────────────────────────────────────────────────────
 
   _renderTree() {
@@ -582,7 +561,6 @@ export class SkillTree {
 
   _drawStars(ctx, W, H, t) {
     ctx.save();
-    // Estrellas estáticas pequeñas
     const seed = 42;
     for (let i = 0; i < 80; i++) {
       const x    = ((Math.sin(i * 127.1 + seed) * 0.5 + 0.5)) * W;
@@ -605,12 +583,10 @@ export class SkillTree {
     ctx.beginPath();
     ctx.moveTo(from.x, from.y);
 
-    // Línea curva suave
     const cpx = (from.x + to.x) / 2;
     ctx.bezierCurveTo(cpx, from.y, cpx, to.y, to.x, to.y);
 
     if (bothUnlocked) {
-      // Línea animada brillante
       const grad = ctx.createLinearGradient(from.x, from.y, to.x, to.y);
       grad.addColorStop(0,   catColor + 'ff');
       grad.addColorStop(0.5, catColor + 'aa');
@@ -631,10 +607,8 @@ export class SkillTree {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Partícula viajando por la línea si ambos desbloqueados
     if (bothUnlocked) {
       const progress = (t * 0.4 + from.x * 0.01) % 1;
-      // Punto a lo largo de la curva bezier
       const bx = this._bezierPoint(from.x, cpx, cpx, to.x, progress);
       const by = this._bezierPoint(from.y, from.y, to.y, to.y, progress);
       ctx.beginPath();
@@ -663,7 +637,6 @@ export class SkillTree {
 
     ctx.save();
 
-    // Glow exterior
     if (n.unlocked) {
       ctx.shadowColor = color;
       ctx.shadowBlur  = isSel ? 40 : 20 + pulse * 10;
@@ -672,7 +645,6 @@ export class SkillTree {
       ctx.shadowBlur  = 15 + pulse * 8;
     }
 
-    // Círculo exterior decorativo (solo rarezas altas)
     if (n.skill.rareza === 'legendaria' || n.skill.rareza === 'mitica' || n.skill.rareza === 'divina') {
       const segments = n.skill.rareza === 'divina' ? 8 : n.skill.rareza === 'mitica' ? 6 : 4;
       ctx.beginPath();
@@ -687,7 +659,6 @@ export class SkillTree {
       }
     }
 
-    // Fondo del nodo
     const grad = ctx.createRadialGradient(n.x - r*0.3, n.y - r*0.3, 0, n.x, n.y, r);
     if (n.unlocked) {
       grad.addColorStop(0, n.isNucleo ? '#2a1a40' : '#1a1030');
@@ -705,7 +676,6 @@ export class SkillTree {
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // Borde
     ctx.beginPath();
     ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
     ctx.strokeStyle = n.unlocked
@@ -714,7 +684,6 @@ export class SkillTree {
     ctx.lineWidth = n.isNucleo ? 3 : isSel ? 2.5 : 1.5;
     ctx.stroke();
 
-    // Ícono
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     if (n.locked && !n.isNucleo) {
@@ -731,13 +700,11 @@ export class SkillTree {
       ctx.globalAlpha = 1;
     }
 
-    // Badge rareza
     ctx.font      = `bold 6px monospace`;
     ctx.fillStyle = n.unlocked ? color : 'rgba(80,80,80,0.5)';
     ctx.textAlign = 'center';
     ctx.fillText(RARITY[n.skill.rareza].label.toUpperCase(), n.x, n.y + r + 10);
 
-    // Nombre del nodo (solo si desbloqueado o puede desbloquear)
     if (n.unlocked || n.canUnlock || isSel) {
       ctx.font      = `bold 7px monospace`;
       ctx.fillStyle = n.unlocked ? '#ffffff99' : '#ffdd8866';
@@ -748,7 +715,6 @@ export class SkillTree {
       ctx.fillText(label, n.x, n.y - r - 8);
     }
 
-    // Check desbloqueado
     if (n.unlocked) {
       ctx.beginPath();
       ctx.arc(n.x + r * 0.68, n.y - r * 0.68, 7, 0, Math.PI * 2);
@@ -763,7 +729,6 @@ export class SkillTree {
       ctx.fillText('✓', n.x + r * 0.68, n.y - r * 0.68);
     }
 
-    // Coste si puede desbloquear
     if (n.canUnlock) {
       const cost = RARITY[n.skill.rareza]?.cost ?? 1;
       ctx.font      = 'bold 7px monospace';
@@ -772,7 +737,6 @@ export class SkillTree {
       ctx.fillText(`${cost}pts`, n.x, n.y - r - 18);
     }
 
-    // Núcleo — anillo extra animado
     if (n.isNucleo && n.unlocked) {
       const rOuter = r + 10 + Math.sin(t * 1.5) * 3;
       ctx.beginPath();
@@ -945,3 +909,4 @@ export class SkillTree {
     }, 2800);
   }
 }
+  
