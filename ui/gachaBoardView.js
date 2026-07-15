@@ -13,25 +13,12 @@
 // da GachaBoard.playTurn() y los anima.
 
 import { BOARD_SIZE } from './../core/gachaBoard.js';
-
-const RARITY_COLORS = {
-  comun: '#B8AFD0',
-  raro: '#9D7FE8',
-  epico: '#E8C97A',
-};
+import { GACHA_RARITY, GACHA_TILES } from '../data/palette.js';
 
 const RARITY_LABELS = {
   comun: 'Polvo',
   raro: 'Eco',
   epico: 'Velo',
-};
-
-const TILE_TYPE_COLORS = {
-  plain: '#6E6280',
-  gems: '#7FC8E8',
-  coin: '#E8B87F',
-  echo: '#9D7FE8',
-  veil: '#E8C97A',
 };
 
 const TILE_TYPE_ICONS = {
@@ -311,7 +298,7 @@ export class GachaBoardView {
       icon.setAttribute('x', pos.x);
       icon.setAttribute('y', pos.y - 4);
       icon.setAttribute('class', 'gboard-tile-icon');
-      icon.setAttribute('fill', TILE_TYPE_COLORS[tile.type] || '#6E6280');
+      icon.setAttribute('fill', GACHA_TILES[tile.type] || '#6E6280');
       icon.textContent = TILE_TYPE_ICONS[tile.type] || '·';
       g.appendChild(icon);
 
@@ -369,11 +356,6 @@ export class GachaBoardView {
   }
 
   // Abre la vista y reproduce automáticamente `times` turnos completos.
-  // getPullResult debe ser una función que, llamada, devuelva UN resultado real
-  // de core/gacha.js (ya con rareza/pity resueltos) para ese turno individual.
-  // onEachBonus(bonus) se llama por cada turno con el bonus de casilla (o null),
-  // para que gachaMenu.js pueda sumarlo a gemas/moneda del banner.
-  // onFinished(summaryArray) se llama al terminar toda la secuencia.
   open({ times, getPullResult, onEachBonus, onFinished }) {
     this._overlay.classList.toggle('transformed', this.board.isTransformed());
     this._overlay.classList.add('open');
@@ -443,7 +425,7 @@ export class GachaBoardView {
   }
 
   _renderReveal(turn) {
-    const color = RARITY_COLORS[turn.pull.rarity] || '#fff';
+    const color = GACHA_RARITY[turn.pull.rarity] || '#fff';
     const label = RARITY_LABELS[turn.pull.rarity] || turn.pull.rarity;
     let bonusHtml = '';
     if (turn.bonus) {
@@ -463,7 +445,7 @@ export class GachaBoardView {
   _renderSummary(summary) {
     if (summary.length <= 1) return; // el reveal individual ya alcanza para x1
     this._summaryListEl.innerHTML = summary.map(item => {
-      const color = RARITY_COLORS[item.rarity] || '#fff';
+      const color = GACHA_RARITY[item.rarity] || '#fff';
       const label = RARITY_LABELS[item.rarity] || item.rarity;
       return `
         <div class="gboard-summary-line">
