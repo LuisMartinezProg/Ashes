@@ -161,22 +161,20 @@ export class SkillSystem {
   getSkill(skillId) { return this._skills[skillId] ?? null; }
 
   castSkill(skillId) {
-  const skill = this._skills[skillId];
-  if (!skill) return false;
-  const cost = SKILL_COST[skillId] ?? 30;
-  if (!skill.isReady()) return false;
-  if (this.energy < cost) return false;
-  const success = skill.cast(this.enemies);
-  if (success) {
-      window._tutorial?.notifyUsedSkill?.();  // ← aquí
-  this.energy -= cost;
- 
-    this.energy -= cost;
-    if (this.onEnergyUpdate) this.onEnergyUpdate(this.energy, this.maxEnergy);
-    // ── Notificar al puzzle activo ────────────────────────────────────────
-    window._dungeonManager?._activePuzzle?.tryActivatePedestal(skillId);
-  }
-  return success;
+    const skill = this._skills[skillId];
+    if (!skill) return false;
+    const cost = SKILL_COST[skillId] ?? 30;
+    if (!skill.isReady()) return false;
+    if (this.energy < cost) return false;
+    const success = skill.cast(this.enemies);
+    if (success) {
+      window._tutorial?.notifyUsedSkill?.();
+      this.energy -= cost; // FIX: se restaba dos veces (bug de copy-paste)
+      if (this.onEnergyUpdate) this.onEnergyUpdate(this.energy, this.maxEnergy);
+      // ── Notificar al puzzle activo ────────────────────────────────────
+      window._dungeonManager?._activePuzzle?.tryActivatePedestal(skillId);
+    }
+    return success;
   }
 
   update(delta) {
