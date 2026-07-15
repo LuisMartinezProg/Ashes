@@ -363,3 +363,254 @@ export class PartyMenu {
     elCol.appendChild(this._buildElementCircle());
     this._panelBody.appendChild(elCol);
   }
+// ── Picker de personaje ──────────────────────────────────────────────────
+
+  _showCharPicker(slotIdx) {
+    const existing = document.getElementById('char-picker');
+    if (existing) existing.remove();
+
+    const picker = document.createElement('div');
+    picker.id = 'char-picker';
+    Object.assign(picker.style, {
+      position      : 'fixed',
+      inset         : '0',
+      background    : 'rgba(0,0,0,0.75)',
+      zIndex        : '210',
+      display       : 'flex',
+      alignItems    : 'center',
+      justifyContent: 'center',
+      backdropFilter: 'blur(4px)',
+    });
+
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+      background  : 'rgba(8,6,20,0.98)',
+      border      : '1px solid rgba(255,255,255,0.1)',
+      borderRadius: '16px',
+      padding     : '16px',
+      width       : '90vw',
+      maxWidth    : '400px',
+      fontFamily  : 'monospace',
+    });
+
+    const title = document.createElement('div');
+    title.textContent = 'SELECCIONAR PERSONAJE';
+    title.style.cssText = 'font-size:9px;color:#666688;letter-spacing:3px;margin-bottom:14px;text-align:center;';
+    box.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:8px;';
+
+    ALL_CHARS.forEach(char => {
+      const inTeam = this._team.includes(char.id);
+      const el     = ELEMENTS.find(e => e.id === char.element);
+
+      const btn = document.createElement('div');
+      Object.assign(btn.style, {
+        background  : inTeam
+          ? `linear-gradient(135deg, ${char.color}44, rgba(8,6,18,0.95))`
+          : 'rgba(12,10,24,0.9)',
+        border      : `2px solid ${inTeam ? char.color : 'rgba(255,255,255,0.08)'}`,
+        borderRadius: '10px',
+        padding     : '10px 4px',
+        display     : 'flex',
+        flexDirection: 'column',
+        alignItems  : 'center',
+        gap         : '4px',
+        opacity     : char.unlocked ? '1' : '0.35',
+        cursor      : char.unlocked && !inTeam && slotIdx !== -1 ? 'pointer' : 'default',
+        position    : 'relative',
+        WebkitTapHighlightColor: 'transparent',
+      });
+
+      btn.innerHTML = `
+        <div style="
+          width:38px;height:38px;border-radius:50%;
+          background:radial-gradient(circle at 35% 35%, ${char.color}55, rgba(8,6,18,0.95));
+          border:2px solid ${char.color};
+          display:flex;align-items:center;justify-content:center;
+          font-size:15px;font-weight:bold;color:#fff;
+        ">${char.avatar}</div>
+        <div style="font-size:9px;color:${char.unlocked ? '#fff' : '#444'};letter-spacing:1px;">${char.name}</div>
+        <div style="font-size:12px;">${el?.icon ?? ''}</div>
+        ${inTeam ? `<div style="font-size:7px;color:${char.color};letter-spacing:1px;">EN EQUIPO</div>` : ''}
+        ${!char.unlocked ? `<div style="position:absolute;top:3px;right:4px;font-size:9px;">🔒</div>` : ''}
+      `;
+
+      if (char.unlocked && !inTeam && slotIdx !== -1) {
+        const onPick = (e) => {
+          e.preventDefault();
+          if (slotIdx < this._team.length) {
+            this._team[slotIdx] = char.id;
+          } else {
+            this._team.push(char.id);
+          }
+          picker.remove();
+          this._renderPanel();
+          this._updateFloat();
+        };
+        btn.addEventListener('touchstart', onPick, { passive: false });
+        btn.addEventListener('click', onPick);
+      }
+
+      grid.appendChild(btn);
+    });
+
+    box.appendChild(grid);
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancelar';
+    cancelBtn.style.cssText = `
+      margin-top:14px;width:100%;background:transparent;
+      border:1px solid rgba(255,255,255,0.08);color:#555577;
+      padding:7px;border-radius:8px;cursor:pointer;
+      font-family:monospace;font-size:10px;letter-spacing:2px;
+    `;
+    const onCancel = (e) => { e.preventDefault(); picker.remove(); };
+    cancelBtn.addEventListener('touchstart', onCancel, { passive: false });
+    cancelBtn.addEventListener('click', onCancel);
+    box.appendChild(cancelBtn);
+
+    picker.appendChild(box);
+    picker.addEventListener('click', (e) => { if (e.target === picker) picker.remove(); });
+    document.body.appendChild(picker);
+  }
+
+  // ── Círculo de elementos ─────────────────────────────────────────────────
+
+  _buildElementCircle() {
+    const activeElements = this._team
+      .map(id => ALL_CHARS.find(c => c.id === id)?.element)
+      .filter(Boolean);
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;width:200px;height:200px;';
+
+    const cx = 100, cy = 100, r = 72;
+
+    ELEMENTS.forEach((el, i) => {
+      const angle = (Math.PI * 2 / ELEMENTS.length) * i - Math.PI / 2;
+      const x = cx + r * Math.cos(angle) - 22;
+      const y = cy + r * Math.sin(angle) - 22;
+      const isActive = activeElements.includes(el.id);
+
+      const node = document.createElement('div');
+      node.style.cssText = `
+        position:absolute;
+        left:${x}px;top:${y}px;
+        width:44px;height:44px;
+        border-radius:50%;
+        border:2px solid ${isActive ? el.color : 'rgba(255,255,255,0.08)'};
+        background:${isActive
+          ? `radial-gradient(circle at 35% 35%, ${el.color}55, rgba(8,6,18,0.95))`
+          : 'rgba(8,6,18,0.8)'};
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        cursor:pointer;
+        box-shadow:${isActive ? `0 0 16px ${el.color}99` : 'none'};
+        gap:1px;
+        WebkitTapHighlightColor:transparent;
+        transition:box-shadow 0.2s,border-color 0.2s;
+      `;
+      node.innerHTML = `
+        <div style="font-size:16px;line-height:1;">${el.icon}</div>
+        <div style="font-size:7px;color:${isActive ? el.color : '#333355'};letter-spacing:0.5px;">${el.label}</div>
+      `;
+
+      const onPress = (e) => {
+        e.preventDefault();
+        this._showReactions(el, node);
+      };
+      node.addEventListener('touchstart', onPress, { passive: false });
+      node.addEventListener('click', onPress);
+      wrap.appendChild(node);
+    });
+
+    return wrap;
+  }
+
+  // ── Tooltip reacciones ───────────────────────────────────────────────────
+
+  _buildReactionTip() {
+    this._reactionTip = document.createElement('div');
+    Object.assign(this._reactionTip.style, {
+      position     : 'fixed',
+      background   : 'rgba(8,6,20,0.98)',
+      border       : '1px solid rgba(255,255,255,0.12)',
+      borderRadius : '12px',
+      padding      : '12px',
+      zIndex       : '220',
+      fontFamily   : 'monospace',
+      width        : '220px',
+      display      : 'none',
+      flexDirection: 'column',
+      gap          : '8px',
+      boxShadow    : '0 4px 20px rgba(0,0,0,0.7)',
+    });
+    document.body.appendChild(this._reactionTip);
+  }
+
+  _showReactions(el, node) {
+    const tip = this._reactionTip;
+    tip.innerHTML = '';
+
+    const title = document.createElement('div');
+    title.style.cssText = `
+      display:flex;align-items:center;gap:6px;
+      padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.06);
+    `;
+    title.innerHTML = `
+      <span style="font-size:18px;">${el.icon}</span>
+      <span style="font-size:10px;color:${el.color};letter-spacing:2px;">${el.label.toUpperCase()}</span>
+    `;
+    tip.appendChild(title);
+
+    let found = false;
+    Object.entries(REACTIONS).forEach(([key, rxn]) => {
+      const [a, b] = key.split('+');
+      if (a !== el.id && b !== el.id) return;
+      found = true;
+      const otherId = a === el.id ? b : a;
+      const other   = ELEMENTS.find(e => e.id === otherId);
+
+      const row = document.createElement('div');
+      row.style.cssText = `
+        display:flex;align-items:flex-start;gap:8px;
+        background:rgba(255,255,255,0.03);
+        border-radius:8px;padding:7px 8px;
+      `;
+      row.innerHTML = `
+        <div style="font-size:18px;line-height:1;">${rxn.icon}</div>
+        <div style="display:flex;flex-direction:column;gap:2px;flex:1;">
+          <div style="font-size:9px;color:${rxn.color};letter-spacing:1px;">${rxn.name}</div>
+          <div style="font-size:8px;color:#555577;">${el.icon} + ${other?.icon ?? ''} ${other?.label ?? ''}</div>
+          <div style="font-size:8px;color:#888899;line-height:1.4;">${rxn.desc}</div>
+        </div>
+      `;
+      tip.appendChild(row);
+    });
+
+    if (!found) {
+      const none = document.createElement('div');
+      none.textContent = 'Sin reacciones disponibles.';
+      none.style.cssText = 'font-size:9px;color:#333355;text-align:center;padding:8px 0;';
+      tip.appendChild(none);
+    }
+
+    const closeR = document.createElement('button');
+    closeR.textContent = 'Cerrar';
+    closeR.style.cssText = `
+      background:transparent;border:1px solid rgba(255,255,255,0.07);
+      color:#444466;padding:5px;border-radius:6px;cursor:pointer;
+      font-family:monospace;font-size:9px;letter-spacing:1px;
+    `;
+    const onCloseR = (e) => { e.preventDefault(); tip.style.display = 'none'; };
+    closeR.addEventListener('touchstart', onCloseR, { passive: false });
+    closeR.addEventListener('click', onCloseR);
+    tip.appendChild(closeR);
+
+    const rect = node.getBoundingClientRect();
+    tip.style.display = 'flex';
+    tip.style.left = `${Math.min(rect.left + 50, window.innerWidth - 240)}px`;
+    tip.style.top  = `${Math.max(rect.top - 20, 10)}px`;
+  }
+}
