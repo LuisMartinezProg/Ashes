@@ -1,5 +1,7 @@
 // core/branchMissions.js — Ashes of the Reborn | Valiant Gaming
 
+import { getBranch } from './skillData.js';
+
 /**
  * Cada rama tiene una misión con 3 objetivos:
  *   1. Daño total infligido con esa rama
@@ -287,9 +289,10 @@ export class BranchMissionSystem {
 
     // Desbloquear todas las habilidades de la rama en progression
     this._progression.passTrialForSkill(`${weapon}.${subtypeId}`); // marca global
-    const subtype = require('../core/skillData.js').SKILL_DATA[weapon]?.subtypes[subtypeId];
-    if (subtype) {
-      subtype.skills.forEach(skill => {
+
+    const branch = getBranch(weapon, subtypeId);
+    if (branch?.skills) {
+      branch.skills.forEach(skill => {
         this._progression.passTrialForSkill(skill.id);
       });
     }
