@@ -4,6 +4,14 @@ import { SKILLTREE_RARITY, SKILLTREE_CATEGORIES } from '../data/palette.js';
 
 const RARITY = SKILLTREE_RARITY;
 
+// ── Umbrales de nivel de personaje por rareza ────────────────────────────────
+// El nodo núcleo de cada categoría se desbloquea desde nivel 1 (ver _unlocked
+// inicial más abajo). Las demás rarezas se desbloquean TODAS de una vez al
+// alcanzar el nivel de personaje correspondiente — sin costo ni elección.
+const RARITY_LEVEL_REQ = {
+  comun: 20, rara: 30, epica: 40, legendaria: 60, mitica: 70, divina: 80,
+};
+
 // ── Categorías con árbol de nodos (colores desde palette, estructura local) ──
 const CATEGORIES = {
   ofensiva: {
@@ -128,25 +136,21 @@ const WEAPON_CATEGORIES = {
   default: ['ofensiva', 'defensiva', 'movilidad'],
 };
 
-// Puntos requeridos por rareza para desbloquear
-const RARITY_WORLD_REQ = {
-  comun: 0, rara: 2, epica: 4, legendaria: 6, mitica: 8, divina: 10,
-};
-
 export class SkillTree {
   constructor(progression) {
-    this._progression  = progression ?? null;
-    this._container    = null;
-    this._canvas       = null;
-    this._ctx          = null;
-    this._category     = 'ofensiva';
-    this._weaponType   = 'default';
-    this._nodes        = [];
-    this._selectedNode = null;
-    this._visible      = false;
-    this._skillPoints  = 3;
-    this._worldLevel   = 1;
+    this._progression   = progression ?? null;
+    this._container     = null;
+    this._canvas        = null;
+    this._ctx           = null;
+    this._category      = 'ofensiva';
+    this._weaponType    = 'default';
+    this._nodes         = [];
+    this._selectedNode  = null;
+    this._visible       = false;
+    this._characterLevel = 1;
 
+    // Núcleo desbloqueado desde el inicio; el resto se calcula por nivel
+    // en _isRarityUnlocked() a partir de RARITY_LEVEL_REQ.
     this._unlocked = {
       of_nucleo: true, de_nucleo: true,
       mo_nucleo: true, so_nucleo: true, es_nucleo: true,
@@ -189,14 +193,24 @@ export class SkillTree {
 
   toggle(weaponType) { this._visible ? this.close() : this.open(weaponType); }
 
-  setWorldLevel(level) {
-    this._worldLevel = level;
+  // Llamar cada vez que el nivel de personaje cambie (ver onLevelUp en
+  // progression.js). Todas las skills de rarezas ya alcanzadas se
+  // desbloquean automáticamente, sin costo ni elección.
+  setCharacterLevel(level) {
+    this._characterLevel = level;
+    this._syncUnlocksFromLevel();
     if (this._visible) this._renderTree();
   }
 
-  addSkillPoints(n) {
-    this._skillPoints += n;
-    if (this._visible) this._renderTree();
+  _syncUnlocksFromLevel() {
+    for (const [rareza, reqLevel] of Object.entries(RARITY_LEVEL_REQ)) {
+      if (this._characterLevel < reqLevel) continue;
+      for (const cat of Object.values(CATEGORIES)) {
+        cat.tree.nodes.forEach(n => {
+          if (n.rareza === rareza) this._unlocked[n.id] = true;
+        });
+      }
+    }
   }
 
   // ── Animación continua ────────────────────────────────────────────────────
@@ -237,13 +251,6 @@ export class SkillTree {
     Object.assign(title.style, { color: '#c9a84c', fontSize: '11px', letterSpacing: '3px', whiteSpace: 'nowrap' });
     title.textContent = 'ÁRBOL DE HABILIDADES';
 
-    this._pointsEl = document.createElement('div');
-    Object.assign(this._pointsEl.style, {
-      background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.4)',
-      borderRadius: '6px', padding: '3px 8px', color: '#c9a84c',
-      fontSize: '9px', letterSpacing: '1px', whiteSpace: 'nowrap',
-    });
-
     this._levelEl = document.createElement('div');
     Object.assign(this._levelEl.style, {
       background: 'rgba(100,180,255,0.1)', border: '1px solid rgba(100,180,255,0.3)',
@@ -259,7 +266,6 @@ export class SkillTree {
     });
 
     left.appendChild(title);
-    left.appendChild(this._pointsEl);
     left.appendChild(this._levelEl);
     left.appendChild(this._weaponEl);
 
@@ -297,7 +303,6 @@ export class SkillTree {
       tab.addEventListener('click', () => {
         const allowed = WEAPON_CATEGORIES[this._weaponType] ?? WEAPON_CATEGORIES.default;
         if (!allowed.includes(key)) return;
-        if (key === 'estrategica' && this._worldLevel < 5) return;
         this._category     = key;
         this._selectedNode = null;
         this._resetView();
@@ -477,12 +482,9 @@ export class SkillTree {
         const r        = RARITY[sk.rareza]?.size ?? 24;
         const unlocked = !!this._unlocked[sk.id];
 
-        const reqMet   = (sk.req ?? []).every(rid => this._unlocked[rid]);
-        const cost     = RARITY[sk.rareza]?.cost ?? 1;
-        const wldReq   = RARITY_WORLD_REQ[sk.rareza] ?? 0;
-        const canUnlock = !unlocked && reqMet
-                        && this._skillPoints >= cost
-                        && this._worldLevel  >= wldReq;
+        const reqMet    = (sk.req ?? []).every(rid => this._unlocked[rid]);
+        const levelReq  = RARITY_LEVEL_REQ[sk.rareza] ?? 0;
+        const canUnlock = !unlocked && reqMet && this._characterLevel >= levelReq;
         const locked    = !unlocked && !canUnlock;
 
         nodes.push({
@@ -504,16 +506,14 @@ export class SkillTree {
     const t       = this._particleTime * 0.001;
 
     // Header
-    this._pointsEl.textContent = `✦ ${this._skillPoints} pts`;
-    this._levelEl.textContent  = `NIV MUNDO ${this._worldLevel}`;
+    this._levelEl.textContent  = `NIV. ${this._characterLevel}`;
     this._weaponEl.textContent = `⚔ ${this._weaponType.toUpperCase()}`;
 
     // Tabs
     Object.entries(this._tabs).forEach(([key, tab]) => {
       const active    = key === this._category;
       const permitted = allowed.includes(key);
-      const needsLvl  = key === 'estrategica' && this._worldLevel < 5;
-      const blocked   = !permitted || needsLvl;
+      const blocked   = !permitted;
       const c         = CATEGORIES[key];
       tab.style.background  = active ? `${c.color}33` : 'rgba(255,255,255,0.05)';
       tab.style.borderColor = active ? `${c.color}99` : 'rgba(255,255,255,0.1)';
@@ -729,14 +729,6 @@ export class SkillTree {
       ctx.fillText('✓', n.x + r * 0.68, n.y - r * 0.68);
     }
 
-    if (n.canUnlock) {
-      const cost = RARITY[n.skill.rareza]?.cost ?? 1;
-      ctx.font      = 'bold 7px monospace';
-      ctx.fillStyle = '#ffdd88';
-      ctx.textAlign = 'center';
-      ctx.fillText(`${cost}pts`, n.x, n.y - r - 18);
-    }
-
     if (n.isNucleo && n.unlocked) {
       const rOuter = r + 10 + Math.sin(t * 1.5) * 3;
       ctx.beginPath();
@@ -753,19 +745,20 @@ export class SkillTree {
 
   _showPanel(n) {
     this._panel.style.width = '220px';
-    const skill  = n.skill;
-    const cat    = CATEGORIES[this._category];
-    const rar    = RARITY[skill.rareza];
-    const cost   = rar.cost;
-    const wldReq = RARITY_WORLD_REQ[skill.rareza] ?? 0;
+    const skill    = n.skill;
+    const cat      = CATEGORIES[this._category];
+    const rar      = RARITY[skill.rareza];
+    const levelReq = RARITY_LEVEL_REQ[skill.rareza] ?? 0;
 
     let statusHtml = '';
     if (n.unlocked) {
       statusHtml = `<div style="color:#4cff88;font-size:9px;letter-spacing:1px;">✓ DESBLOQUEADA</div>`;
     } else if (n.canUnlock) {
+      // Todas las skills de esta rareza se desbloquean solas al alcanzar
+      // el nivel — si llegamos acá con canUnlock=true es un estado
+      // transitorio de un frame (el próximo _syncUnlocksFromLevel lo cierra).
       statusHtml = `
-        <div style="color:#ffdd88;font-size:9px;letter-spacing:1px;">⬆ LISTA PARA DESBLOQUEAR</div>
-        <div style="color:#888;font-size:9px;margin-top:2px;">Coste: ${cost} punto${cost !== 1 ? 's' : ''}</div>
+        <div style="color:#ffdd88;font-size:9px;letter-spacing:1px;">⬆ DESBLOQUEANDO...</div>
       `;
     } else {
       const reasons = [];
@@ -778,10 +771,8 @@ export class SkillTree {
         });
         reasons.push(`Requiere: ${names.join(', ')}`);
       }
-      if (this._worldLevel < wldReq)
-        reasons.push(`Nivel de mundo ${wldReq} requerido`);
-      if (this._skillPoints < cost)
-        reasons.push(`Faltan ${cost - this._skillPoints} puntos`);
+      if (this._characterLevel < levelReq)
+        reasons.push(`Nivel de personaje ${levelReq} requerido`);
       statusHtml = `
         <div style="color:#ff6644;font-size:9px;letter-spacing:1px;">🔒 BLOQUEADA</div>
         ${reasons.map(r => `<div style="color:#555;font-size:9px;margin-top:3px;">· ${r}</div>`).join('')}
@@ -789,15 +780,7 @@ export class SkillTree {
     }
 
     let actionHtml = '';
-    if (n.canUnlock) {
-      actionHtml = `
-        <button data-action="unlock" style="
-          background:rgba(255,221,136,0.2);border:1px solid #ffdd8888;
-          border-radius:6px;color:#ffdd88;font-family:'Cinzel',serif;
-          font-size:9px;letter-spacing:2px;padding:10px;cursor:pointer;width:100%;
-        ">✦ DESBLOQUEAR (${cost} pts)</button>
-      `;
-    } else if (n.unlocked) {
+    if (n.unlocked) {
       actionHtml = `
         <button data-action="equip" style="
           background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.5);
@@ -828,12 +811,8 @@ export class SkillTree {
 
       <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;display:flex;flex-direction:column;gap:4px;">
         <div style="display:flex;justify-content:space-between;">
-          <span style="color:#555;font-size:8px;">NIV. MUNDO REQ.</span>
-          <span style="color:#88ccff;font-size:9px;">${wldReq === 0 ? 'Disponible' : `Mundo ${wldReq}`}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;">
-          <span style="color:#555;font-size:8px;">COSTE</span>
-          <span style="color:#ffdd88;font-size:9px;">${cost} pts</span>
+          <span style="color:#555;font-size:8px;">NIV. PERSONAJE REQ.</span>
+          <span style="color:#88ccff;font-size:9px;">${levelReq === 0 ? 'Disponible' : `Nivel ${levelReq}`}</span>
         </div>
         <div style="display:flex;justify-content:space-between;">
           <span style="color:#555;font-size:8px;">RAREZA</span>
@@ -850,20 +829,7 @@ export class SkillTree {
       </div>
     `;
 
-    const unlockBtn = this._panelInner.querySelector('[data-action="unlock"]');
-    const equipBtn  = this._panelInner.querySelector('[data-action="equip"]');
-
-    if (unlockBtn) {
-      unlockBtn.addEventListener('click', () => {
-        const c = RARITY[skill.rareza]?.cost ?? 1;
-        if (this._skillPoints < c) return;
-        this._skillPoints       -= c;
-        this._unlocked[skill.id] = true;
-        this._selectedNode       = null;
-        this._hidePanel();
-        this._showFeedback(skill, rar.color, cat.color);
-      });
-    }
+    const equipBtn = this._panelInner.querySelector('[data-action="equip"]');
 
     if (equipBtn) {
       equipBtn.addEventListener('click', () => {
@@ -908,5 +874,22 @@ export class SkillTree {
       setTimeout(() => el.remove(), 500);
     }, 2800);
   }
+
+  // ── Serialización ─────────────────────────────────────────────────────────
+
+  serialize() {
+    return {
+      unlocked      : this._unlocked,
+      characterLevel: this._characterLevel,
+    };
+  }
+
+  load(data) {
+    if (!data) return;
+    if (data.unlocked)                     this._unlocked       = data.unlocked;
+    if (data.characterLevel !== undefined) this._characterLevel = data.characterLevel;
+    // Por si el save es de una versión anterior con menos rarezas
+    // desbloqueadas de las que el nivel cargado ya justificaría.
+    this._syncUnlocksFromLevel();
+  }
 }
-  
