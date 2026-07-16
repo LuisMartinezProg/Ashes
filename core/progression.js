@@ -1,6 +1,5 @@
 // core/progression.js — Ashes of the Reborn | Valiant Gaming
 
-import { WEAPON_TREES, getTreeKey } from './skillData.js';
 import { WEAPON_CRYSTAL_MAP       } from './skillData.js';
 import { refreshEffectiveStats    } from './relics.js';
 
@@ -62,10 +61,6 @@ class ProgressionBase {
     this._weaponLevels = Object.fromEntries(startWeapons.map(w => [w, 1]));
     this._weaponXP     = Object.fromEntries(startWeapons.map(w => [w, 0]));
 
-    this._treeUnlocked = {};
-    this._loadout      = {};
-    this._initTrees();
-
     this._activeSubtype  = Object.fromEntries(startWeapons.map(w => [w, 'default']));
     this._activeFusion   = {};
     this.fusionUnlocked  = false;
@@ -89,19 +84,6 @@ class ProgressionBase {
     this.onReputationGain = null;
     this.onEnergyUpdate   = null;
     this.onEquipChange    = null; // (slotType, item|null) => void
-  }
-
-  _initTrees() {
-    for (const [key, tree] of Object.entries(WEAPON_TREES)) {
-      if (!key.startsWith(this._charId)) continue;
-      this._treeUnlocked[key] = {};
-      this._loadout[key]      = { medio: null, arcano: null };
-      for (const [, skills] of Object.entries(tree.layers)) {
-        for (const skill of skills) {
-          this._treeUnlocked[key][skill.id] = skill.unlocked ?? false;
-        }
-      }
-    }
   }
 
   getLevel()   { return this._level;   }
@@ -160,6 +142,8 @@ class ProgressionBase {
         this._level++;
         this._applyLevelUpEffects();
         if (this.onLevelUp) this.onLevelUp(this._level, this.getStats());
+        // Avisar al árbol de habilidades: puede destrabar una rareza entera.
+        window._skillTree?.setCharacterLevel(this._level);
         this._showLevelUpNotification();
       } else break;
     }
@@ -325,125 +309,6 @@ class ProgressionBase {
     return getWeaponDamageBonus(weapon, this.getWeaponLevel(weapon));
   }
 
-  // ── Árbol de habilidades ──────────────────────────────────────────────────
-
-  isSkillUnlocked(charId, weapon, skillId) {
-    const key = getTreeKey(charId, weapon);
-    return this._treeUnlocked[key]?.[skillId] ?? false;
-  }
-
-  canUnlockSkill(charId, weapon, skillId) {
-    const key  = getTreeKey(charId, weapon);
-    const tree = WEAPON_TREES[key];
-    if (!tree) return false;
-    const { skill, layerName } = this._findSkill(key, skillId);
-    if (!skill) return false;
-    if (this._treeUnlocked[key]?.[skillId]) return false;
-    const weaponXP = this._weaponXP[weapon] ?? 0;
-    if (weaponXP < skill.cost.xp) return false;
-    const crystalId = WEAPON_CRYSTAL_MAP[weapon];
-    const inv       = window._inventory;
-    const qty       = inv?._items?.materiales?.find?.(i => i.id === crystalId)?.qty ?? 0;
-    if (qty < skill.cost.cristales) return false;
-    return this._checkLayerPrereqs(key, layerName);
-  }
-
-  _checkLayerPrereqs(treeKey, layerName) {
-    const tree = WEAPON_TREES[treeKey];
-    if (!tree) return false;
-    if (layerName === 'basico') return true;
-    const order = ['basico', 'nv1', 'nv2', 'nv3', 'arcano'];
-    const idx   = order.indexOf(layerName);
-    if (idx <= 0) return true;
-    const prevLayer     = order[idx - 1];
-    const prevSkills    = tree.layers[prevLayer] ?? [];
-    const unlockedCount = prevSkills.filter(s => this._treeUnlocked[treeKey]?.[s.id]).length;
-    if (layerName === 'nv2')    return unlockedCount >= 2;
-    if (layerName === 'nv3')    return unlockedCount >= 3;
-    if (layerName === 'arcano') return unlockedCount >= 3;
-    return unlockedCount >= 1;
-  }
-
-  unlockSkill(charId, weapon, skillId) {
-    if (!this.canUnlockSkill(charId, weapon, skillId)) return false;
-    const key   = getTreeKey(charId, weapon);
-    const { skill } = this._findSkill(key, skillId);
-    if (!skill) return false;
-    const crystalId = WEAPON_CRYSTAL_MAP[weapon];
-    const inv       = window._inventory;
-    const mat       = inv?._items?.materiales?.find?.(i => i.id === crystalId);
-    if (mat && skill.cost.cristales > 0) mat.qty -= skill.cost.cristales;
-    if (!this._treeUnlocked[key]) this._treeUnlocked[key] = {};
-    this._treeUnlocked[key][skillId] = true;
-    if (this.onUnlock) this.onUnlock(charId, weapon, skillId);
-    return true;
-  }
-
-  _findSkill(treeKey, skillId) {
-    const tree = WEAPON_TREES[treeKey];
-    if (!tree) return { skill: null, layerName: null };
-    for (const [layerName, skills] of Object.entries(tree.layers)) {
-      const skill = skills.find(s => s.id === skillId);
-      if (skill) return { skill, layerName };
-    }
-    return { skill: null, layerName: null };
-  }
-
-  getUnlockedSkills(charId, weapon) {
-    const key = getTreeKey(charId, weapon);
-    return Object.entries(this._treeUnlocked[key] ?? {})
-      .filter(([, v]) => v)
-      .map(([id]) => id);
-  }
-
-  getLoadout(charId, weapon) {
-    const key = getTreeKey(charId, weapon);
-    return this._loadout[key] ?? { medio: null, arcano: null };
-  }
-
-  setLoadoutMedio(charId, weapon, skillId) {
-    const key = getTreeKey(charId, weapon);
-    if (!this._treeUnlocked[key]?.[skillId]) return false;
-    const { layerName } = this._findSkill(key, skillId);
-    if (layerName === 'basico' || layerName === 'arcano') return false;
-    if (!this._loadout[key]) this._loadout[key] = { medio: null, arcano: null };
-    this._loadout[key].medio = skillId;
-    return true;
-  }
-
-  setLoadoutArcano(charId, weapon, skillId) {
-    const key = getTreeKey(charId, weapon);
-    if (!this._treeUnlocked[key]?.[skillId]) return false;
-    const { layerName } = this._findSkill(key, skillId);
-    if (layerName !== 'arcano') return false;
-    if (!this._loadout[key]) this._loadout[key] = { medio: null, arcano: null };
-    this._loadout[key].arcano = skillId;
-    return true;
-  }
-
-  getActiveLoadoutSkills(charId, weapon) {
-    const key     = getTreeKey(charId, weapon);
-    const tree    = WEAPON_TREES[key];
-    if (!tree) return [];
-    const loadout = this._loadout[key] ?? { medio: null, arcano: null };
-    const result  = [];
-    const basico  = tree.layers.basico?.[0];
-    if (basico) result.push({ ...basico, layer: 'basico' });
-    if (loadout.medio) {
-      const { skill } = this._findSkill(key, loadout.medio);
-      if (skill) result.push({ ...skill, layer: 'medio' });
-    }
-    if (loadout.arcano) {
-      const { skill } = this._findSkill(key, loadout.arcano);
-      if (skill) result.push({ ...skill, layer: 'arcano' });
-    }
-    return result;
-  }
-
-  getActiveSkills(weapon) {
-    return this.getActiveLoadoutSkills(this._charId, weapon);
-  }
-
   // ── Sistemas comunes ──────────────────────────────────────────────────────
 
   getActiveSubtype(weapon)         { return this._activeSubtype[weapon] ?? null; }
@@ -581,8 +446,6 @@ class ProgressionBase {
       totalXP      : this._totalXP,
       weaponLevels : this._weaponLevels,
       weaponXP     : this._weaponXP,
-      treeUnlocked : this._treeUnlocked,
-      loadout      : this._loadout,
       activeSubtype: this._activeSubtype,
       activeFusion : this._activeFusion,
       fusionUnlocked: this.fusionUnlocked,
@@ -604,8 +467,6 @@ class ProgressionBase {
     if (data.totalXP       !== undefined) this._totalXP       = data.totalXP;
     if (data.weaponLevels)                this._weaponLevels  = data.weaponLevels;
     if (data.weaponXP)                    this._weaponXP      = data.weaponXP;
-    if (data.treeUnlocked)                this._treeUnlocked  = data.treeUnlocked;
-    if (data.loadout)                     this._loadout       = data.loadout;
     if (data.activeSubtype)               this._activeSubtype = data.activeSubtype;
     if (data.activeFusion)                this._activeFusion  = data.activeFusion;
     if (data.fusionUnlocked !== undefined) this.fusionUnlocked = data.fusionUnlocked;
@@ -618,23 +479,10 @@ class ProgressionBase {
     if (data.equippedWeapon     !== undefined) this._equippedWeapon     = data.equippedWeapon;
     if (data.equippedArmor      !== undefined) this._equippedArmor      = data.equippedArmor;
     if (data.equippedAccessory  !== undefined) this._equippedAccessory  = data.equippedAccessory;
-    this._initMissingTrees();
+    // Avisar al árbol de habilidades el nivel cargado, por si desbloquea
+    // rarezas que el save previo aún no tenía registradas.
+    window._skillTree?.setCharacterLevel(this._level);
     refreshEffectiveStats(this._charId);
-  }
-
-  _initMissingTrees() {
-    for (const [key, tree] of Object.entries(WEAPON_TREES)) {
-      if (!key.startsWith(this._charId)) continue;
-      if (!this._treeUnlocked[key]) this._treeUnlocked[key] = {};
-      if (!this._loadout[key])      this._loadout[key] = { medio: null, arcano: null };
-      for (const [, skills] of Object.entries(tree.layers)) {
-        for (const skill of skills) {
-          if (this._treeUnlocked[key][skill.id] === undefined) {
-            this._treeUnlocked[key][skill.id] = skill.unlocked ?? false;
-          }
-        }
-      }
-    }
   }
 }
 
