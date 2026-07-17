@@ -42,6 +42,7 @@ import { VoidDance }    from '../skills/bow/voidDance.js';
 import { AstralArrow      } from '../skills/mika/astralArrow.js';
 import { AstralRain       } from '../skills/mika/astralRain.js';
 import { StellarCollapse  } from '../skills/mika/stellarCollapse.js';
+import { getSkillById } from './skillData.js';
 
 const MAX_ENERGY   = 100;
 const ENERGY_REGEN = 3;
@@ -175,6 +176,16 @@ export class SkillSystem {
       window._dungeonManager?._activePuzzle?.tryActivatePedestal(skillId);
     }
     return success;
+  }
+
+  // ── Puente con skillData.js: castea una skill del árbol de armas ──────────
+  // slotId es el id de skillData.js (ej. 'katana_vel_7'), no el skillId real.
+  // Traduce vía getSkillById + progression.hasPassedTrial antes de permitir el cast.
+  castTreeSkill(weapon, branchId, slotId, progression) {
+    const slot = getSkillById(weapon, branchId, slotId);
+    if (!slot) return false;
+    if (!progression?.hasPassedTrial(slotId)) return false; // no desbloqueada aún
+    return this.castSkill(slot.effect);
   }
 
   update(delta) {
