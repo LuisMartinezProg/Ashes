@@ -6,13 +6,12 @@ import { SwordWeapon  } from './weapons/sword.js';
 import { MagicWeapon  } from './weapons/magic.js';
 import { BowWeapon    } from './weapons/bow.js';
 import { BranchMissionSystem } from './branchMissions.js';
-import { isRelicActive } from './relics.js';
+import { isRelicActive, onRelicHitConnected } from './relics.js';
 
 const ATTACK_RANGE        = 2.5;
 const COMBO_WINDOW        = 600;
 const SHAKE_DURATION      = 180;
 const SHAKE_STRENGTH      = 0.18;
-const RELIC_ENERGY_BONUS  = 5; // placeholder — pendiente de balance
 
 const RANGED_WEAPONS = new Set(['magic', 'bow']);
 
@@ -80,22 +79,23 @@ export class CombatSystem {
       ?? this._progression.getStats();
   }
 
-  // ── Reliquia: bonus de energía si el combo conecta mientras está activa ──
-  _grantRelicEnergyIfActive() {
+  // ── Reliquia: bono de energía + efectos por golpe si está activa ────────
+  // CAMBIO: antes esta función movía el medidor equivocado (window._hud
+  // .addMikaEnergy o window._skillSystem.energy, ninguno era magicEnergy).
+  // Ahora delega TODO a onRelicHitConnected() de core/relics.js, que ya
+  // sabe sumarle al medidor correcto (progression.addMagicEnergy) y además
+  // dispara el efecto específico de las 18 reliquias (quemar, curar,
+  // empujar, dar escudo, etc.) — antes esos 18 efectos no existían.
+  // target es opcional: los ataques a distancia sin objetivo fijo pueden
+  // pasar null, y los efectos que no necesitan un enemigo (curación, buffs
+  // de movimiento) funcionan igual.
+  _grantRelicEnergyIfActive(target = null) {
     const active = window._partyManager?.getActiveCharacter?.();
     const charId = (active && active === window._companion) ? 'mika' : 'kael';
 
     if (!isRelicActive(charId)) return;
 
-    if (charId === 'mika') {
-      window._hud?.addMikaEnergy?.(RELIC_ENERGY_BONUS);
-    } else {
-      const sys = window._skillSystem;
-      if (sys) {
-        sys.energy = Math.min(sys.maxEnergy, sys.energy + RELIC_ENERGY_BONUS);
-        if (sys.onEnergyUpdate) sys.onEnergyUpdate(sys.energy, sys.maxEnergy);
-      }
-    }
+    onRelicHitConnected(charId, target);
   }
 
   setWeapon(type) {
@@ -175,7 +175,14 @@ export class CombatSystem {
     if (isRanged) {
       this.weapon.execute(hitIndex, this.enemies);
       this._triggerShake(0.5);
-      this._grantRelicEnergyIfActive();
+      // CAMBIO: antes no pasaba ningún objetivo (la función vieja no lo
+      // necesitaba). Ahora se busca el enemigo más cercano en rango para
+      // que efectos como "Lluvia de Brasas" o "Punta de Escarcha" (que
+      // necesitan saber A QUIÉN afectar) tengan un objetivo válido cuando
+      // exista uno cerca. Si no hay ninguno, pasa null y los efectos que
+      // no dependen de un enemigo (curación, empuje del jugador) igual
+      // funcionan sin problema.
+      this._grantRelicEnergyIfActive(this.closestEnemyInRange());
 
       if (subtypeId && this._missions) {
         const estimatedDmg = this.weapon.getDamage?.(hitIndex) ?? 0;
@@ -204,7 +211,11 @@ export class CombatSystem {
 
         target.takeDamage(dmg);
         this._triggerShake(1.0);
-        this._grantRelicEnergyIfActive();
+        // CAMBIO: ahora pasa 'target' (antes la función vieja no recibía
+        // ningún argumento) para que los efectos de reliquia que actúan
+        // sobre el enemigo golpeado (quemar, ralentizar, aturdir) sepan
+        // a quién aplicarse.
+        this._grantRelicEnergyIfActive(target);
 
         if (subtypeId && this._missions) {
           this._missions.registerDamage(this._weaponType, subtypeId, dmg);
