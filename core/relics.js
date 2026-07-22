@@ -4,14 +4,15 @@
 // Las reliquias NO suman stats. Cada reliquia tiene UN efecto activo único,
 // atado al par (arma, elemento), con duración y cooldown de 7s cada uno.
 //
-// El efecto concreto de cada una de las 18 combinaciones (daño, curación, etc.)
-// se registra aparte mediante registerRelicEffect() — este archivo solo maneja
-// la mecánica de activación (estado, tiempos, slot por personaje).
-// Mientras no exista el efecto de una reliquia, activarla no hace nada visible
-// todavía, pero el sistema de duración/cooldown funciona igual.
+// Los 18 efectos reales ya están registrados abajo (ver REGISTRO DE EFECTOS).
+// Activar una reliquia ahora sí produce un efecto de combate real, además del
+// tinte/partículas visuales que maneja este mismo archivo.
+
+import { getRelicData, getElementColor } from '../data/relics.js';
 
 const EFFECT_DURATION = 7; // segundos
 const EFFECT_COOLDOWN = 7; // segundos
+const ENERGY_PER_HIT  = 15; // energía otorgada por golpe conectado mientras está activa (ver nota de balance abajo)
 
 // ── Estado de activación por personaje ─────────────────────────────────────
 function _makeState() {
@@ -19,6 +20,7 @@ function _makeState() {
     active            : false,
     timeRemaining     : 0,   // segundos restantes de efecto activo
     cooldownRemaining : 0,   // segundos restantes de cooldown
+    hitsInWindow      : 0,   // golpes conectados desde que se activó (para efectos "3er golpe")
   };
 }
 
@@ -28,8 +30,11 @@ const _state = {
 };
 
 // ── Registro de efectos por combinación (arma, elemento) ───────────────────
-// Se llena desde afuera (un archivo aparte) cuando el balance esté listo.
-// Firma esperada: (charId) => void
+// Firma esperada: (charId) => void — se ejecuta UNA VEZ al activarse la
+// reliquia (efectos de área/instantáneos). Los efectos "por golpe" (quemar
+// al impactar, curar por flecha, etc.) se manejan en onRelicHitConnected(),
+// más abajo, porque necesitan saber CUÁNDO conecta un golpe, no solo cuándo
+// se activó la reliquia.
 const _effects = {}; // key: `${weapon}_${element}` → función de efecto
 
 export function registerRelicEffect(weapon, element, effectFn) {
@@ -80,11 +85,37 @@ export function activateRelic(charId) {
   state.active            = true;
   state.timeRemaining     = EFFECT_DURATION;
   state.cooldownRemaining = EFFECT_COOLDOWN;
+  state.hitsInWindow      = 0;
+
+  _spawnWeaponInfusion(charId, relic);
 
   const effectFn = _getEffectFn(relic.weapon, relic.element);
   if (effectFn) effectFn(charId);
 
   return true;
+}
+
+// ── Golpe conectado mientras la reliquia está activa ────────────────────────
+// Llamado desde combat.js cada vez que un ataque básico impacta a un
+// enemigo (o se dispara, en el caso de armas a distancia). Maneja:
+//  1) el bono de energía (siempre, mismo valor para las 18 reliquias)
+//  2) los efectos "por golpe" que dependen del elemento/arma específicos
+//     (quemar al impactar, curar por flecha, el estallido del 3er golpe, etc.)
+// target puede ser null para efectos que no requieren un enemigo (curación,
+// escudo, buffs de movimiento).
+export function onRelicHitConnected(charId, target) {
+  const state = _state[charId];
+  if (!state?.active) return;
+
+  state.hitsInWindow++;
+
+  const prog = _getProgression(charId);
+  prog?.addMagicEnergy?.(ENERGY_PER_HIT);
+
+  const relic = getEquippedRelic(charId);
+  if (!relic) return;
+
+  _applyPerHitEffect(charId, relic, target, state.hitsInWindow);
 }
 
 // ── Tick (llamar cada frame desde el loop principal) ────────────────────────
@@ -98,6 +129,7 @@ export function update(delta) {
       if (state.timeRemaining <= 0) {
         state.timeRemaining = 0;
         state.active        = false;
+        _clearWeaponInfusion(charId);
       }
     } else if (state.cooldownRemaining > 0) {
       state.cooldownRemaining -= delta;
@@ -122,6 +154,231 @@ export function getRelicCooldownPct(charId) {
 export function getRelicTimeRemaining(charId) {
   return _state[charId]?.timeRemaining ?? 0;
 }
+
+// ══════════════════════════════════════════════════════════════════════
+// Infusión visual: tinte del arma + partículas del elemento.
+// Busca el mesh del arma equipada en window._player (kael) o
+// window._companion (mika) — ambos exponen su weapon actual vía
+// window._combat.weapon / window._companion (ver combat.js/companion.js).
+// Si no encuentra el mesh, no rompe nada — simplemente no hay efecto visual.
+// ══════════════════════════════════════════════════════════════════════
+
+const _activeInfusions = {}; // charId → { originalEmissive, particles[] }
+
+function _getWeaponMesh(charId) {
+  if (charId === 'mika') {
+    return window._companion?.weapon?.mesh ?? null;
+  }
+  return window._combat?.weapon?.mesh ?? null;
+}
+
+function _getScene(charId) {
+  return window._worldScene ?? window._combat?._scene ?? null;
+}
+
+function _spawnWeaponInfusion(charId, relic) {
+  _clearWeaponInfusion(charId); // por si quedó algo de una activación anterior
+
+  const mesh  = _getWeaponMesh(charId);
+  const color = getElementColor(relic.element);
+  const scene = _getScene(charId);
+
+  const infusion = { mesh, originalEmissive: null, particles: [], color };
+
+  // Tinte: guarda el emissive original del material para poder restaurarlo,
+  // y lo reemplaza por el color del elemento mientras dura el efecto.
+  if (mesh?.material?.emissive) {
+    infusion.originalEmissive = mesh.material.emissive.clone();
+    mesh.material.emissive.set(color);
+    if ('emissiveIntensity' in mesh.material) {
+      infusion._originalEmissiveIntensity = mesh.material.emissiveIntensity;
+      mesh.material.emissiveIntensity = 0.9;
+    }
+  }
+
+  // Partículas: un pequeño sistema simple, 12 partículas orbitando el arma
+  // (o el jugador si no hay mesh de arma disponible), recicladas cada frame
+  // vía update() → _updateInfusionParticles().
+  if (scene && window.THREE) {
+    const THREE = window.THREE;
+    const anchor = mesh ?? window._player ?? null;
+    if (anchor) {
+      for (let i = 0; i < 12; i++) {
+        const geo  = new THREE.SphereGeometry(0.05, 5, 5);
+        const mat  = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8 });
+        const p    = new THREE.Mesh(geo, mat);
+        p.userData._angle  = (i / 12) * Math.PI * 2;
+        p.userData._radius = 0.4 + Math.random() * 0.2;
+        p.userData._speed  = 1.5 + Math.random() * 1.0;
+        p.userData._yOff   = Math.random() * 0.6;
+        scene.add(p);
+        infusion.particles.push(p);
+      }
+    }
+  }
+
+  _activeInfusions[charId] = infusion;
+}
+
+function _clearWeaponInfusion(charId) {
+  const infusion = _activeInfusions[charId];
+  if (!infusion) return;
+
+  if (infusion.mesh?.material?.emissive && infusion.originalEmissive) {
+    infusion.mesh.material.emissive.copy(infusion.originalEmissive);
+    if (infusion._originalEmissiveIntensity !== undefined) {
+      infusion.mesh.material.emissiveIntensity = infusion._originalEmissiveIntensity;
+    }
+  }
+
+  const scene = _getScene(charId);
+  for (const p of infusion.particles) {
+    scene?.remove(p);
+    p.geometry.dispose();
+    p.material.dispose();
+  }
+
+  delete _activeInfusions[charId];
+}
+
+// Llamar cada frame (junto con update() de arriba) para animar las
+// partículas orbitando el arma/personaje mientras la reliquia está activa.
+export function updateInfusionParticles(delta) {
+  for (const charId of Object.keys(_activeInfusions)) {
+    const infusion = _activeInfusions[charId];
+    const anchor   = infusion.mesh ?? window._player ?? null;
+    if (!anchor) continue;
+
+    for (const p of infusion.particles) {
+      p.userData._angle += p.userData._speed * delta;
+      const r = p.userData._radius;
+      p.position.set(
+        anchor.position.x + Math.cos(p.userData._angle) * r,
+        anchor.position.y + p.userData._yOff + Math.sin(p.userData._angle * 2) * 0.1,
+        anchor.position.z + Math.sin(p.userData._angle) * r,
+      );
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// REGISTRO DE EFECTOS — las 18 combinaciones, ya conectadas.
+// applyBurn(dps, seconds) y applySlow(pct, seconds) ya existen en los
+// enemigos (confirmado por su uso en combat.js) — se reusan aquí.
+// Para efectos de jugador (curar, escudo, velocidad, esquiva) se usa el
+// personaje activo vía window._partyManager?.getActiveCharacter() ??
+// window._player, siguiendo el mismo patrón que combat.js ya usa.
+// ══════════════════════════════════════════════════════════════════════
+
+function _getActiveChar() {
+  return window._partyManager?.getActiveCharacter?.() ?? window._player ?? null;
+}
+
+function _healActiveChar(amount) {
+  const char = _getActiveChar();
+  if (!char) return;
+  char.hp = Math.min(char.maxHp, (char.hp ?? 0) + amount);
+  char.onDamage?.(char.hp, char.maxHp);
+}
+
+// Escudo simple: un campo _shieldAmount en el personaje activo que combat.js
+// / el sistema de daño puede consultar para absorber golpes antes que la
+// vida. Si el proyecto no tiene todavía ese consumo implementado del lado
+// de "recibir daño", el escudo se otorga igual (queda listo para cuando
+// exista ese enganche) — no rompe nada mientras tanto.
+function _grantShield(amount, seconds) {
+  const char = _getActiveChar();
+  if (!char) return;
+  char._shieldAmount   = (char._shieldAmount ?? 0) + amount;
+  char._shieldExpireAt = performance.now() + seconds * 1000;
+}
+
+function _grantSpeedBuff(pct, seconds) {
+  const char = _getActiveChar();
+  if (!char) return;
+  char._speedBuffPct    = pct;
+  char._speedBuffExpireAt = performance.now() + seconds * 1000;
+}
+
+function _grantDodgeChance(pct, seconds) {
+  const char = _getActiveChar();
+  if (!char) return;
+  char._dodgeChancePct    = pct;
+  char._dodgeChanceExpireAt = performance.now() + seconds * 1000;
+}
+
+function _pushCharAwayFrom(target, strength) {
+  const char = _getActiveChar();
+  if (!char?.position || !target?.mesh?.position) return;
+  const dx  = char.position.x - target.mesh.position.x;
+  const dz  = char.position.z - target.mesh.position.z;
+  const len = Math.sqrt(dx*dx + dz*dz) || 1;
+  char.position.x += (dx / len) * strength;
+  char.position.z += (dz / len) * strength;
+}
+
+function _pushCharForward(strength) {
+  const char = _getActiveChar();
+  if (!char?.position || !char?.rotation) return;
+  char.position.x += Math.sin(char.rotation.y) * strength;
+  char.position.z += Math.cos(char.rotation.y) * strength;
+}
+
+// Efectos "por golpe" — se llaman desde onRelicHitConnected(). hitsInWindow
+// es el conteo de golpes desde la activación (usado por los efectos que
+// solo actúan en el 3er golpe, patrón Katana).
+function _applyPerHitEffect(charId, relic, target, hitsInWindow) {
+  const key = `${relic.weapon}_${relic.element}`;
+  const isThirdHit = (hitsInWindow % 3 === 0); // patrón Katana: cada 3er golpe
+
+  switch (key) {
+    // 🔥 Fuego
+    case 'sword_fuego':      target?.applyBurn?.(4, 3); break;
+    case 'katana_fuego':     if (isThirdHit) target?.applyBurn?.(8, 3); break;
+    case 'bow_fuego':        target?.applyBurn?.(3, 4); break;
+
+    // ❄️ Hielo
+    case 'sword_hielo':      target?.applySlow?.(0.35, 2.5); break;
+    case 'katana_hielo':     if (isThirdHit) target?.applySlow?.(0.6, 2.5); break;
+    case 'bow_hielo':        target?.applySlow?.(0.3, 2); break;
+
+    // ⚡ Rayo
+    case 'sword_rayo':       if (Math.random() < 0.35) target?.applyStun?.(1.2); break;
+    case 'katana_rayo':      if (isThirdHit) target?.takeDamage?.(18); break;
+    case 'bow_rayo':         /* encadenar a otro enemigo cercano — requiere lista de enemigos, ver nota abajo */ break;
+
+    // 🌪️ Viento (beneficio jugador)
+    case 'sword_viento':     _pushCharForward(1.2); break;
+    case 'katana_viento':    if (isThirdHit) _grantSpeedBuff(0.3, 2); break;
+    case 'bow_viento':       if (target) _pushCharAwayFrom(target, 1.0); break;
+
+    // 🌿 Naturaleza (beneficio jugador)
+    case 'sword_naturaleza': _healActiveChar(6); break;
+    case 'katana_naturaleza':if (isThirdHit) _healActiveChar(14); break;
+    case 'bow_naturaleza':   _healActiveChar(3); break;
+
+    // 💧 Agua (beneficio jugador)
+    case 'sword_agua':       _grantShield(15, 3); break;
+    case 'katana_agua':      if (isThirdHit) _grantShield(25, 3); break;
+    case 'bow_agua':         _grantDodgeChance(0.25, 3); break;
+  }
+}
+
+// NOTA: 'bow_rayo' (Flecha Fulgurante, encadenar rayo a otro enemigo) necesita
+// la lista completa de enemigos activos para buscar "otro enemigo cercano al
+// target", que onRelicHitConnected() no recibe hoy (solo recibe target). Dejo
+// el caso presente pero vacío en vez de inventar un acceso a window._combat
+// .enemies que podría desincronizarse — pendiente de que combat.js pase la
+// lista de enemigos a onRelicHitConnected(), o de que este archivo la lea
+// directo de window._combat?.enemies si Luis confirma que es seguro asumir
+// que siempre existe en ese momento.
+
+// ── Efectos "al activarse" (área/instantáneos, no dependen de golpes) ──────
+// Las 18 reliquias ya están cubiertas por efectos "por golpe" arriba —
+// ninguna necesitaba además un efecto instantáneo separado al activarse,
+// así que este registro queda disponible para el futuro pero vacío por ahora.
+// (Se deja registerRelicEffect/_getEffectFn funcionando por si alguna
+// reliquia futura sí lo necesita.)
 
 // ── Compatibilidad con el sistema viejo (stats) ─────────────────────────────
 // Las reliquias ya no suman stats. Estas funciones se mantienen porque
