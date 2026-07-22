@@ -1,6 +1,6 @@
 // core/progression.js — Ashes of the Reborn | Valiant Gaming
 
-import { WEAPON_CRYSTAL_MAP       } from './skillData.js';
+import { WEAPON_CRYSTAL_MAP, getBranch, canUnlockSkill } from './skillData.js';
 import { refreshEffectiveStats    } from './relics.js';
 
 const LEVEL_XP = [
@@ -84,6 +84,7 @@ class ProgressionBase {
     this.onReputationGain = null;
     this.onEnergyUpdate   = null;
     this.onEquipChange    = null; // (slotType, item|null) => void
+    this.onTreeSkillUnlock = null; // (weapon, branchId, slotId, skill) => void — nuevo, ver unlockTreeSkill()
   }
 
   getLevel()   { return this._level;   }
@@ -237,9 +238,7 @@ class ProgressionBase {
     const xp        = this._weaponXP[weapon] ?? 0;
     const crystals  = this.getWeaponCrystalCost(weapon);
     const crystalId = WEAPON_CRYSTAL_MAP[weapon];
-    const inv       = window._inventory;
-    const qty       = inv?._items?.materiales?.find?.(i => i.id === crystalId)?.qty ?? 0;
-    return xp >= needed && qty >= crystals;
+    return xp >= needed && this._getMaterialQty(crystalId) >= crystals;
   }
 
   levelUpWeapon(weapon) {
@@ -435,6 +434,112 @@ class ProgressionBase {
     if (this.onEquipChange) this.onEquipChange('accesorio', null);
     refreshEffectiveStats(this._charId);
     return true;
+  }
+
+  // ── Árbol de skills por rama (skillData.js): estado y desbloqueo ────────
+  // Lee el material del inventario en un solo lugar (compartido con
+  // canLevelUpWeapon/levelUpWeapon de arriba, que hacían la misma búsqueda
+  // duplicada inline).
+  _getMaterialQty(crystalId) {
+    const inv = window._inventory;
+    return inv?._items?.materiales?.find?.(i => i.id === crystalId)?.qty ?? 0;
+  }
+
+  // Arma el estado {xp, reputacion, cristales} que canUnlockSkill() de
+  // skillData.js espera para validar tier 1/2 (unlockType 'xp_rep').
+  // NOTA DE DISEÑO (asumido por Claude, Luis dejó la decisión abierta):
+  //   - xp: usa _weaponXP[weapon], el TOTAL compartido del arma — no hay
+  //     tracking por rama todavía, así que las 4 ramas de un arma comparten
+  //     el mismo progreso de xp. Comprar el arma XP cuenta para las 4 ramas.
+  //   - reputacion: usa _reputation, el único valor compartido que existe
+  //     hoy (no hay reputación separada por arma o por personaje).
+  //   - cristales: cantidad actual en inventario para el cristal de ESE arma
+  //     (WEAPON_CRYSTAL_MAP), el mismo recurso que ya usa levelUpWeapon().
+  // Para tier 3 (level_cap / level_cap+dungeon / level_cap+dungeon_repeat)
+  // este estado no aplica — esa lógica sigue PENDIENTE de diseño narrativo,
+  // ver notas de balance. Devuelve null si no hay estado tier-3 disponible
+  // en vez de inventar level/dungeonCompletions.
+  getSkillUnlockState(weapon) {
+    const crystalId = WEAPON_CRYSTAL_MAP[weapon];
+    return {
+      xp        : this._weaponXP[weapon] ?? 0,
+      reputacion: this._reputation,
+      cristales : this._getMaterialQty(crystalId),
+    };
+  }
+
+  // Verifica si un slot específico de una rama puede desbloquearse ya.
+  // Solo soporta tier 1/2 (unlockType 'xp_rep') por ahora — tier 3 siempre
+  // devuelve false porque su lógica (level_cap+dungeon) está pendiente de
+  // diseño narrativo y no debe fallar silenciosamente como "desbloqueable".
+  canUnlockTreeSkill(weapon, branchId, slotId) {
+    const branch = getBranch(weapon, branchId);
+    const skill  = branch?.skills.find(s => s.id === slotId);
+    if (!skill) return false;
+    if (skill.unlockType !== 'xp_rep') return false; // tier 3: pendiente, nunca "listo"
+    if (this.hasPassedTrial(slotId)) return false;   // ya desbloqueada, nada que hacer
+    return canUnlockSkill(skill, this.getSkillUnlockState(weapon));
+  }
+
+  // Ejecuta el desbloqueo: valida de nuevo (nunca confiar en un check previo
+  // del caller), cobra los cristales del inventario, y registra el
+  // desbloqueo reusando _trialsPassed (mismo campo que branchMissions.js).
+  // Devuelve { ok:true, skill } o { ok:false, reason } — nunca lanza.
+  unlockTreeSkill(weapon, branchId, slotId) {
+    const branch = getBranch(weapon, branchId);
+    const skill  = branch?.skills.find(s => s.id === slotId);
+    if (!skill) return { ok: false, reason: 'skill_not_found' };
+    if (skill.unlockType !== 'xp_rep') return { ok: false, reason: 'tier3_pending_design' };
+    if (this.hasPassedTrial(slotId)) return { ok: false, reason: 'already_unlocked' };
+    if (!canUnlockSkill(skill, this.getSkillUnlockState(weapon))) {
+      return { ok: false, reason: 'requirements_not_met' };
+    }
+
+    // Cobrar cristales (xp y reputación son acumulados de lectura, no se
+    // "gastan" — solo el recurso de inventario se descuenta, igual que
+    // levelUpWeapon() hace con WEAPON_CRYSTAL_MAP).
+    const crystalId = WEAPON_CRYSTAL_MAP[weapon];
+    const inv       = window._inventory;
+    const mat       = inv?._items?.materiales?.find?.(i => i.id === crystalId);
+    if (mat) mat.qty -= skill.cost.cristales;
+
+    this.passTrialForSkill(slotId);
+    if (this.onTreeSkillUnlock) this.onTreeSkillUnlock(weapon, branchId, slotId, skill);
+    this._showTreeSkillUnlockNotification(skill);
+    return { ok: true, skill };
+  }
+
+  _showTreeSkillUnlockNotification(skill) {
+    const el = document.createElement('div');
+    Object.assign(el.style, {
+      position     : 'fixed',
+      top          : '25%',
+      left         : '50%',
+      transform    : 'translateX(-50%)',
+      fontFamily   : "'Cinzel',serif",
+      fontSize     : '12px',
+      letterSpacing: '2px',
+      color        : '#8affc1',
+      background   : 'rgba(4,4,10,0.97)',
+      border       : '1px solid rgba(138,255,193,0.55)',
+      borderRadius : '10px',
+      padding      : '14px 26px',
+      zIndex       : '600',
+      pointerEvents: 'none',
+      textAlign    : 'center',
+      boxShadow    : '0 0 20px rgba(138,255,193,0.35)',
+      opacity      : '1',
+      transition   : 'opacity 1s',
+    });
+    el.innerHTML = `
+      ${skill.icon ?? '✨'} HABILIDAD DESBLOQUEADA<br>
+      <span style="font-size:11px;color:#eee">${skill.name}</span>
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 1000);
+    }, 2800);
   }
 
   // ── Serialización ─────────────────────────────────────────────────────────
