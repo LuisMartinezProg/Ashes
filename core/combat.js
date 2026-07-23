@@ -80,22 +80,18 @@ export class CombatSystem {
   }
 
   // ── Reliquia: bono de energía + efectos por golpe si está activa ────────
-  // CAMBIO: antes esta función movía el medidor equivocado (window._hud
-  // .addMikaEnergy o window._skillSystem.energy, ninguno era magicEnergy).
-  // Ahora delega TODO a onRelicHitConnected() de core/relics.js, que ya
-  // sabe sumarle al medidor correcto (progression.addMagicEnergy) y además
-  // dispara el efecto específico de las 18 reliquias (quemar, curar,
-  // empujar, dar escudo, etc.) — antes esos 18 efectos no existían.
-  // target es opcional: los ataques a distancia sin objetivo fijo pueden
-  // pasar null, y los efectos que no necesitan un enemigo (curación, buffs
-  // de movimiento) funcionan igual.
+  // CAMBIO: ahora también pasa this.enemies (la lista completa de enemigos
+  // en pantalla) a onRelicHitConnected(), porque el efecto de la reliquia
+  // 'Flecha Fulgurante' (rayo del arco) necesita esa lista para encontrar
+  // a qué otro enemigo cercano encadenar el rayo. El resto de los 17
+  // efectos de reliquia ignoran esta lista sin problema.
   _grantRelicEnergyIfActive(target = null) {
     const active = window._partyManager?.getActiveCharacter?.();
     const charId = (active && active === window._companion) ? 'mika' : 'kael';
 
     if (!isRelicActive(charId)) return;
 
-    onRelicHitConnected(charId, target);
+    onRelicHitConnected(charId, target, this.enemies);
   }
 
   setWeapon(type) {
@@ -175,13 +171,6 @@ export class CombatSystem {
     if (isRanged) {
       this.weapon.execute(hitIndex, this.enemies);
       this._triggerShake(0.5);
-      // CAMBIO: antes no pasaba ningún objetivo (la función vieja no lo
-      // necesitaba). Ahora se busca el enemigo más cercano en rango para
-      // que efectos como "Lluvia de Brasas" o "Punta de Escarcha" (que
-      // necesitan saber A QUIÉN afectar) tengan un objetivo válido cuando
-      // exista uno cerca. Si no hay ninguno, pasa null y los efectos que
-      // no dependen de un enemigo (curación, empuje del jugador) igual
-      // funcionan sin problema.
       this._grantRelicEnergyIfActive(this.closestEnemyInRange());
 
       if (subtypeId && this._missions) {
@@ -211,10 +200,6 @@ export class CombatSystem {
 
         target.takeDamage(dmg);
         this._triggerShake(1.0);
-        // CAMBIO: ahora pasa 'target' (antes la función vieja no recibía
-        // ningún argumento) para que los efectos de reliquia que actúan
-        // sobre el enemigo golpeado (quemar, ralentizar, aturdir) sepan
-        // a quién aplicarse.
         this._grantRelicEnergyIfActive(target);
 
         if (subtypeId && this._missions) {
