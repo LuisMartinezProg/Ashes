@@ -13,6 +13,7 @@ import { getRelicData, getElementColor } from '../data/relics.js';
 const EFFECT_DURATION = 7; // segundos
 const EFFECT_COOLDOWN = 7; // segundos
 const ENERGY_PER_HIT  = 15; // energía otorgada por golpe conectado mientras está activa (ver nota de balance abajo)
+const CHAIN_LIGHTNING_IMMUNITY = 3; // segundos que un enemigo queda "a salvo" de volver a ser blanco del rayo encadenado
 
 // ── Estado de activación por personaje ─────────────────────────────────────
 function _makeState() {
@@ -102,8 +103,10 @@ export function activateRelic(charId) {
 //  2) los efectos "por golpe" que dependen del elemento/arma específicos
 //     (quemar al impactar, curar por flecha, el estallido del 3er golpe, etc.)
 // target puede ser null para efectos que no requieren un enemigo (curación,
-// escudo, buffs de movimiento).
-export function onRelicHitConnected(charId, target) {
+// escudo, buffs de movimiento). allEnemies es la lista completa de enemigos
+// activos en este momento — la necesita 'bow_rayo' (Flecha Fulgurante) para
+// encontrar a quién encadenar el rayo; el resto de efectos la ignoran.
+export function onRelicHitConnected(charId, target, allEnemies = []) {
   const state = _state[charId];
   if (!state?.active) return;
 
@@ -115,7 +118,7 @@ export function onRelicHitConnected(charId, target) {
   const relic = getEquippedRelic(charId);
   if (!relic) return;
 
-  _applyPerHitEffect(charId, relic, target, state.hitsInWindow);
+  _applyPerHitEffect(charId, relic, target, state.hitsInWindow, allEnemies);
 }
 
 // ── Tick (llamar cada frame desde el loop principal) ────────────────────────
@@ -324,10 +327,32 @@ function _pushCharForward(strength) {
   char.position.z += Math.cos(char.rotation.y) * strength;
 }
 
+// Busca, dentro de allEnemies, al enemigo vivo más cercano a 'from' que NO
+// tenga la marca de inmunidad al encadenado activa todavía. Usado por
+// 'bow_rayo' (Flecha Fulgurante) para no rebotar siempre entre los mismos 2.
+function _findChainTarget(from, allEnemies) {
+  if (!from?.mesh?.position) return null;
+  const now = performance.now();
+  let closest = null, minDist = Infinity;
+
+  for (const e of allEnemies) {
+    if (!e || e === from) continue;
+    if (typeof e.isDead === 'function' && e.isDead()) continue;
+    if (!e.mesh) continue;
+    if (e._chainLightningImmuneUntil && e._chainLightningImmuneUntil > now) continue;
+
+    const d = e.mesh.position.distanceTo(from.mesh.position);
+    if (d < minDist) { minDist = d; closest = e; }
+  }
+
+  return closest;
+}
+
 // Efectos "por golpe" — se llaman desde onRelicHitConnected(). hitsInWindow
 // es el conteo de golpes desde la activación (usado por los efectos que
-// solo actúan en el 3er golpe, patrón Katana).
-function _applyPerHitEffect(charId, relic, target, hitsInWindow) {
+// solo actúan en el 3er golpe, patrón Katana). allEnemies solo lo usa
+// 'bow_rayo' para el encadenado — el resto de casos lo ignora.
+function _applyPerHitEffect(charId, relic, target, hitsInWindow, allEnemies) {
   const key = `${relic.weapon}_${relic.element}`;
   const isThirdHit = (hitsInWindow % 3 === 0); // patrón Katana: cada 3er golpe
 
@@ -345,7 +370,18 @@ function _applyPerHitEffect(charId, relic, target, hitsInWindow) {
     // ⚡ Rayo
     case 'sword_rayo':       if (Math.random() < 0.35) target?.applyStun?.(1.2); break;
     case 'katana_rayo':      if (isThirdHit) target?.takeDamage?.(18); break;
-    case 'bow_rayo':         /* encadenar a otro enemigo cercano — requiere lista de enemigos, ver nota abajo */ break;
+    case 'bow_rayo': {
+      // Flecha Fulgurante: encadena el rayo al enemigo vivo más cercano al
+      // golpeado que no esté ya "inmune" al encadenado (evita rebotar
+      // siempre entre los mismos 2). Si no hay ninguno disponible, el
+      // golpe simplemente no encadena esta vez — no rompe nada.
+      const chainTarget = _findChainTarget(target, allEnemies);
+      if (chainTarget) {
+        chainTarget.takeDamage?.(10);
+        chainTarget._chainLightningImmuneUntil = performance.now() + CHAIN_LIGHTNING_IMMUNITY * 1000;
+      }
+      break;
+    }
 
     // 🌪️ Viento (beneficio jugador)
     case 'sword_viento':     _pushCharForward(1.2); break;
@@ -363,15 +399,6 @@ function _applyPerHitEffect(charId, relic, target, hitsInWindow) {
     case 'bow_agua':         _grantDodgeChance(0.25, 3); break;
   }
 }
-
-// NOTA: 'bow_rayo' (Flecha Fulgurante, encadenar rayo a otro enemigo) necesita
-// la lista completa de enemigos activos para buscar "otro enemigo cercano al
-// target", que onRelicHitConnected() no recibe hoy (solo recibe target). Dejo
-// el caso presente pero vacío en vez de inventar un acceso a window._combat
-// .enemies que podría desincronizarse — pendiente de que combat.js pase la
-// lista de enemigos a onRelicHitConnected(), o de que este archivo la lea
-// directo de window._combat?.enemies si Luis confirma que es seguro asumir
-// que siempre existe en ese momento.
 
 // ── Efectos "al activarse" (área/instantáneos, no dependen de golpes) ──────
 // Las 18 reliquias ya están cubiertas por efectos "por golpe" arriba —
