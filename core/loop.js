@@ -45,6 +45,47 @@ function _getActivePosition() {
   return active?.root?.position ?? active?.position ?? _player.root.position;
 }
 
+// ── Skill-cast por teclado: mismo patrón que combat.js usa para distinguir
+// personaje activo (window._partyManager?.getActiveCharacter()). Devuelve
+// { sys, prog, weapon } — el sistema de skills, la progresión, y el arma
+// correctos para quien esté activo en este momento (Kael o Mika). Si algo
+// no está listo todavía (ej. arranque muy temprano del juego), devuelve
+// null y el caller simplemente no hace nada ese frame — no rompe nada.
+function _getActiveSkillContext() {
+  const active = window._partyManager?.getActiveCharacter?.();
+  const isMika = active && active === window._companion;
+
+  if (isMika) {
+    const sys  = window._companion?.skillSystem ?? null;
+    const prog = window._mikaProgression ?? null;
+    if (!sys || !prog) return null;
+    return { sys, prog, weapon: 'bow' };
+  }
+
+  const sys  = window._skillSystem ?? null;
+  const prog = window._prog ?? null;
+  if (!sys || !prog) return null;
+  return { sys, prog, weapon: window._combat?._weaponType ?? null };
+}
+
+// Lee el slotId + branchId de un botón de la barra de skills y, si ambos
+// existen, lanza la skill vía castTreeSkill() usando el contexto activo
+// (Kael o Mika). Mismo patrón que ya usa el botón táctil en skillBar.js —
+// antes esto llamaba directo a castSkill(id) sin branchId ni distinguir
+// personaje, lo cual quedó desincronizado cuando skillBar.js migró al
+// árbol de ramas.
+function _castSkillButtonByKeyboard(buttonIndex) {
+  const btn = window._skillBar?._buttons?.[buttonIndex];
+  const skillId  = btn?.dataset?.skillId;
+  const branchId = btn?.dataset?.branchId;
+  if (!skillId || !branchId) return;
+
+  const ctx = _getActiveSkillContext();
+  if (!ctx) return;
+
+  ctx.sys.castTreeSkill?.(ctx.weapon, branchId, skillId, ctx.prog);
+}
+
 function _tick(timestamp) {
   if (!_running) return;
   requestAnimationFrame(_tick);
@@ -95,24 +136,26 @@ function _tick(timestamp) {
   }
   if (!kb._keys[binds.attack]) kb._attackHeld = false;
 
+  // CAMBIO: las 3 teclas de skill ahora usan _castSkillButtonByKeyboard(),
+  // que lee slotId+branchId del botón y llama a castTreeSkill() con el
+  // sistema/progresión del personaje activo (Kael o Mika) — reemplaza la
+  // llamada directa vieja a window._skillSystem.castSkill(id), que no
+  // conocía branchId ni distinguía personaje activo.
   if (kb._keys[binds.skill1] && !kb._sk1Held) {
     kb._sk1Held = true;
-    const id = window._skillBar?._buttons[0]?.dataset?.skillId;
-    if (id) window._skillSystem?.castSkill?.(id);
+    _castSkillButtonByKeyboard(0);
   }
   if (!kb._keys[binds.skill1]) kb._sk1Held = false;
 
   if (kb._keys[binds.skill2] && !kb._sk2Held) {
     kb._sk2Held = true;
-    const id = window._skillBar?._buttons[1]?.dataset?.skillId;
-    if (id) window._skillSystem?.castSkill?.(id);
+    _castSkillButtonByKeyboard(1);
   }
   if (!kb._keys[binds.skill2]) kb._sk2Held = false;
 
   if (kb._keys[binds.skill3] && !kb._sk3Held) {
     kb._sk3Held = true;
-    const id = window._skillBar?._buttons[2]?.dataset?.skillId;
-    if (id) window._skillSystem?.castSkill?.(id);
+    _castSkillButtonByKeyboard(2);
   }
   if (!kb._keys[binds.skill3]) kb._sk3Held = false;
 
