@@ -61,6 +61,8 @@
 
 <script type="module">
 import * as THREE from 'three';
+window.addEventListener('error', e => document.title = 'ERR: ' + e.message);
+window.addEventListener('unhandledrejection', e => document.title = 'ERR: ' + (e.reason?.message || e.reason));
 import { MOCHIGO, THEME } from './data/palette.js';
 import { initScene }        from './core/scene.js';
 import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies,setNPCs, setDialogueUI, setTriggers, setResourceCallback } from './core/loop.js';
