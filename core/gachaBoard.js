@@ -6,10 +6,15 @@
 //   2) determina qué "tipo de casilla" cae bajo la ficha, para darle un bonus
 //      visual/menor (gemas o monedas del banner) por encima de la rareza real
 //   3) gestiona la transformación fuerte del tablero cuando el pity Épico se acerca
+//   4) APLICA ese bonus directamente (gemas van a gacha.addGems(); bannerCoin
+//      se acumula en su propio storage) — antes este paso faltaba y el bonus
+//      se calculaba pero nunca se entregaba a ningún lado.
 //
-// La posición de la ficha persiste en localStorage y nunca se resetea.
+// La posición de la ficha y el saldo de bannerCoin persisten en localStorage
+// y nunca se resetean.
 
 const STORAGE_KEY = 'valiant_gacha_board_v1';
+const BANNER_COIN_KEY = 'valiant_gacha_banner_coin_v1';
 
 // Cantidad de casillas del circuito. Con dado 1-6 y este tamaño, la ficha
 // da una vuelta completa aprox. cada 6-7 tiradas en promedio.
@@ -102,13 +107,38 @@ function _saveState(state) {
   }
 }
 
+// ---- Banner Coin: moneda nueva propia, independiente de gemas/monedas/oro. ----
+// Por ahora es solo un acumulador (sumar/leer) — no existe todavía ningún shop
+// o sistema que la gaste. Cuando se defina qué comprar con ella, esta misma
+// clase es el lugar natural para agregar un método _spendBannerCoin().
+
+function _loadBannerCoins() {
+  try {
+    const saved = localStorage.getItem(BANNER_COIN_KEY);
+    return saved ? (parseInt(saved, 10) || 0) : 0;
+  } catch (e) {
+    return 0;
+  }
+}
+
+function _saveBannerCoins(amount) {
+  try {
+    localStorage.setItem(BANNER_COIN_KEY, String(amount));
+  } catch (e) {
+    // localStorage no disponible; el saldo no persiste esta sesión.
+  }
+}
+
 export class GachaBoard {
   constructor(gacha) {
-    this.gacha = gacha; // referencia a la instancia de core/gacha.js (para leer pity actual)
+    this.gacha = gacha; // referencia a la instancia de core/gacha.js (para leer pity actual y entregar gemas)
     const state = _loadState();
     this.position = state.position;
     this._normalTiles = _buildNormalBoard();
     this._transformedTiles = _buildTransformedBoard();
+
+    this._bannerCoins = _loadBannerCoins();
+    this._bannerCoinSubscribers = [];
   }
 
   // ¿El tablero debe mostrarse transformado ahora mismo?
@@ -128,6 +158,30 @@ export class GachaBoard {
 
   getCurrentPosition() {
     return this.position;
+  }
+
+  // ---------- Banner Coin ----------
+  getBannerCoins() {
+    return this._bannerCoins;
+  }
+
+  addBannerCoins(amount) {
+    if (amount <= 0) return;
+    this._bannerCoins += amount;
+    _saveBannerCoins(this._bannerCoins);
+    this._notifyBannerCoinChange();
+  }
+
+  onBannerCoinChange(cb) {
+    if (typeof cb === 'function') this._bannerCoinSubscribers.push(cb);
+  }
+
+  offBannerCoinChange(cb) {
+    this._bannerCoinSubscribers = this._bannerCoinSubscribers.filter(s => s !== cb);
+  }
+
+  _notifyBannerCoinChange() {
+    this._bannerCoinSubscribers.forEach(cb => cb(this._bannerCoins));
   }
 
   // Tira un dado libre 1-6 (sin trucos: no depende de la rareza del pull).
@@ -154,13 +208,31 @@ export class GachaBoard {
     return { from, to, landedTile, passedTiles };
   }
 
+  // Aplica el bonus de una casilla ya calculado. Gemas van directo a
+  // gacha.addGems() (mismo pozo que usan las compras normales de tiradas);
+  // bannerCoin se acumula en el storage propio de esta clase.
+  // Devuelve el mismo objeto bonus recibido, sin modificar, para que el
+  // caller pueda seguir usándolo para mostrar texto/animación.
+  _applyTileBonus(bonus) {
+    if (!bonus) return bonus;
+
+    if (bonus.kind === 'gems') {
+      this.gacha.addGems(bonus.amount);
+    } else if (bonus.kind === 'bannerCoin') {
+      this.addBannerCoins(bonus.amount);
+    }
+
+    return bonus;
+  }
+
   // Dado un resultado de pull ya calculado por core/gacha.js ({rarity, name, featured}),
-  // ejecuta un turno completo del tablero: tira dado, mueve ficha, calcula bonus
-  // de la casilla de aterrizaje. NO decide ni modifica la rareza real.
+  // ejecuta un turno completo del tablero: tira dado, mueve ficha, calcula Y APLICA
+  // el bonus de la casilla de aterrizaje. NO decide ni modifica la rareza real.
   playTurn(pullResult) {
     const steps = this.rollDie();
     const { from, to, landedTile, passedTiles } = this.advance(steps);
-    const bonus = TILE_BONUS[landedTile.type] || null;
+    const rawBonus = TILE_BONUS[landedTile.type] || null;
+    const bonus = this._applyTileBonus(rawBonus);
 
     return {
       diceValue: steps,
@@ -168,7 +240,7 @@ export class GachaBoard {
       to,
       landedTile,
       passedTiles,
-      bonus, // { kind: 'gems'|'bannerCoin', amount } o null
+      bonus, // { kind: 'gems'|'bannerCoin', amount } o null — YA APLICADO al llegar acá
       pull: pullResult, // el resultado real de rareza, sin modificar
     };
   }
