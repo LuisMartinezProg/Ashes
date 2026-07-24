@@ -1,4 +1,3 @@
-//index.html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -84,9 +83,9 @@
       text-align: center; font-style: italic;
     }
 
-#screen-logo {
-  background: var(--furina-dark);
-}
+    #screen-logo {
+      background: var(--furina-dark);
+    }
     .studio-logo {
       display: flex; flex-direction: column;
       align-items: center; gap: 0;
@@ -112,90 +111,7 @@
     }
     .studio-name, .studio-sub { display: none; }
 
-    #screen-death { background: var(--skirk-black); }
-
-    .rain-overlay {
-      position: absolute; inset: 0;
-      background: repeating-linear-gradient(
-        180deg,
-        transparent 0px, transparent 3px,
-        rgba(100,120,160,0.025) 3px, rgba(100,120,160,0.025) 4px
-      );
-      animation: rainFall 0.35s linear infinite;
-      opacity: 0;
-      transition: opacity 1.8s;
-    }
-    .rain-overlay.visible { opacity: 1; }
-    @keyframes rainFall {
-      from { background-position: 0 0; }
-      to   { background-position: 18px 72px; }
-    }
-    .street-glow {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      height: 35%;
-      background: linear-gradient(to top, rgba(50,70,110,0.12) 0%, transparent 100%);
-      pointer-events: none;
-    }
-    .neon-flicker {
-      position: absolute; top: 16%; right: 14%;
-      width: 5px; height: 5px; border-radius: 50%;
-      background: rgba(140,170,255,0.55);
-      box-shadow: 0 0 18px 7px rgba(110,140,255,0.15);
-      animation: flicker 4s steps(1) infinite;
-    }
-    @keyframes flicker {
-      0%,17%,21%,24%,52%,56%,100% { opacity: 1; }
-      19%,23%,54% { opacity: 0.25; }
-    }
-
-    #screen-limbo { background: var(--skirk-light); }
-
-    .limbo-fog {
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse 85% 65% at 50% 50%,
-        rgba(255,255,255,0.96) 0%,
-        rgba(228,222,210,0.88) 50%,
-        rgba(195,188,175,0.72) 100%);
-      animation: fogPulse 7s ease-in-out infinite;
-    }
-    @keyframes fogPulse {
-      0%,100% { opacity: 0.88; transform: scale(1); }
-      50%      { opacity: 1;   transform: scale(1.025); }
-    }
-    .limbo-light {
-      position: absolute;
-      width: 280px; height: 280px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,245,1) 0%, transparent 70%);
-      top: 50%; left: 50%;
-      transform: translate(-50%, -62%);
-      filter: blur(45px);
-      animation: lightFloat 9s ease-in-out infinite;
-    }
-    @keyframes lightFloat {
-      0%,100% { transform: translate(-50%, -62%); opacity: 0.55; }
-      50%      { transform: translate(-50%, -56%); opacity: 0.9; }
-    }
-    #screen-limbo .dialogue-box {
-      background: rgba(240,235,220,0.92);
-      border-color: rgba(120,100,60,0.25);
-      border-top-color: rgba(120,100,60,0.55);
-    }
-    #screen-limbo .dialogue-box::before {
-      background: linear-gradient(90deg, transparent, rgba(150,120,60,0.7), transparent);
-    }
-    #screen-limbo .dialogue-text { color: #28221A; }
-    #screen-limbo .speaker-name  { color: #6A5020; }
-    #screen-limbo .direction-text { color: #8A7850; }
-    #screen-limbo .continue-hint { color: #9A8A60; }
-    #screen-limbo .choice-btn {
-      background: rgba(240,235,220,0.9);
-      border-color: rgba(120,100,60,0.22);
-      color: #2A2018;
-    }
-    #screen-limbo .choice-btn:hover { color: #6A5020; border-color: rgba(150,120,60,0.6); }
-    #screen-limbo .choice-btn::before { background: #8A6830; }
-
-    /* ══ SCREEN 4: MENU PRINCIPAL — Clorinde dominante ══ */
+    /* ══ MENU PRINCIPAL — Clorinde dominante ══ */
     #screen-menu { background: var(--skirk-black); }
 
     @media (orientation: portrait) {
@@ -358,124 +274,6 @@
     #skip-btn.visible { opacity: 1; pointer-events: all; }
     #skip-btn:active { color: var(--accent); border-color: rgba(123,79,191,0.6); }
 
-    .cinematic-area {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      bottom: 28vh;
-      display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
-    }
-    .cinematic-placeholder {
-      width: 100%; height: 100%;
-      background: linear-gradient(180deg,
-        rgba(10,13,20,0.0) 0%,
-        rgba(10,13,20,0.6) 100%);
-    }
-
-    .dialogue-box {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      width: 100%;
-      background: rgba(6,6,12,0.95);
-      border-top: 2px solid rgba(123,79,191,0.5);
-      border-bottom: none;
-      padding: 14px 20px 12px;
-      backdrop-filter: blur(12px);
-      opacity: 0;
-      transition: opacity 0.5s;
-      min-height: 26vh;
-      max-height: 30vh;
-      display: flex; flex-direction: column; justify-content: center;
-    }
-    @media (orientation: landscape) {
-      .dialogue-box { min-height: 32vh; max-height: 36vh; padding: 10px 28px 10px; }
-      .cinematic-area { bottom: 34vh; }
-    }
-    .dialogue-box.visible { opacity: 1; }
-    .dialogue-box::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--clorinde-light), transparent);
-    }
-    .speaker-name {
-      font-family: 'Cinzel', serif;
-      font-size: 0.75rem; letter-spacing: 0.28em;
-      color: var(--jahoda-purple); text-transform: uppercase;
-      margin-bottom: 6px; min-height: 1em;
-    }
-    .dialogue-text {
-      font-family: 'EB Garamond', serif;
-      font-size: 1.05rem;
-      line-height: 1.6; color: var(--text);
-      min-height: 1.8em;
-    }
-    @media (orientation: landscape) {
-      .dialogue-text { font-size: 1rem; }
-    }
-    .direction-text {
-      font-family: 'EB Garamond', serif;
-      font-style: italic;
-      font-size: 0.95rem;
-      color: var(--text-dim); line-height: 1.55;
-      min-height: 1.6em;
-    }
-    .continue-hint {
-      text-align: right; margin-top: 8px;
-      font-family: 'Cinzel', serif; font-size: 0.6rem;
-      letter-spacing: 0.28em; color: var(--clorinde-light);
-      opacity: 0; transition: opacity 0.4s;
-      animation: blink 2s ease-in-out infinite;
-    }
-    .continue-hint.visible { opacity: 1; }
-    @keyframes blink {
-      0%,100% { opacity: 0.35; } 50% { opacity: 0.9; }
-    }
-
-    .choice-box {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      width: 100%;
-      display: flex; flex-direction: column; gap: 0;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.5s;
-      background: rgba(6,6,12,0.95);
-      border-top: 2px solid rgba(123,79,191,0.5);
-    }
-    .choice-box.visible { opacity: 1; pointer-events: all; }
-
-    .choice-label {
-      font-family: 'Cinzel', serif;
-      font-size: 0.65rem; letter-spacing: 0.3em;
-      color: var(--clorinde-light); text-transform: uppercase;
-      padding: 10px 20px 4px;
-    }
-
-    .choice-btn {
-      font-family: 'EB Garamond', serif;
-      font-size: 1rem;
-      letter-spacing: 0.04em; color: var(--text);
-      background: transparent;
-      border: none;
-      border-top: 1px solid rgba(123,79,191,0.15);
-      padding: 14px 24px; cursor: pointer;
-      text-align: left;
-      transition: all 0.18s;
-      position: relative; overflow: hidden;
-      -webkit-tap-highlight-color: rgba(123,79,191,0.15);
-    }
-    .choice-btn:first-of-type { border-top: 1px solid rgba(123,79,191,0.2); }
-    .choice-btn::before {
-      content: '';
-      position: absolute; left: 0; top: 0; bottom: 0;
-      width: 3px; background: var(--clorinde-light);
-      transform: scaleY(0); transition: transform 0.18s;
-    }
-    .choice-btn:active {
-      background: rgba(123,79,191,0.08);
-      color: var(--accent); padding-left: 32px;
-    }
-    .choice-btn:active::before { transform: scaleY(1); }
-
     #flash {
       position: fixed; inset: 0; background: #fff;
       opacity: 0; pointer-events: none; z-index: 100;
@@ -486,14 +284,6 @@
       transition: opacity 1.2s ease;
     }
     #fade.clear { opacity: 0; }
-
-    .ripple {
-      position: fixed; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.5);
-      transform: scale(0); pointer-events: none; z-index: 99;
-      animation: rippleOut 0.65s ease-out forwards;
-    }
-    @keyframes rippleOut { to { transform: scale(9); opacity: 0; } }
 
     #audio-note {
       position: fixed; bottom: 18px; left: 50%;
@@ -526,40 +316,6 @@
 </div>
 
 <button id="skip-btn" onclick="skipToMenu()">SALTAR ›</button>
-
-<div class="screen" id="screen-death">
-  <div class="rain-overlay" id="rain"></div>
-  <div class="street-glow"></div>
-  <div class="neon-flicker"></div>
-  <div class="cinematic-area">
-    <div class="cinematic-placeholder"></div>
-  </div>
-  <div class="dialogue-box" id="death-dialogue">
-    <div class="speaker-name"  id="death-speaker"></div>
-    <div class="direction-text" id="death-dir"></div>
-    <div class="dialogue-text"  id="death-text"></div>
-    <div class="continue-hint"  id="death-hint">[ TOCA PARA CONTINUAR ]</div>
-  </div>
-</div>
-
-<div class="screen" id="screen-limbo">
-  <div class="limbo-fog"></div>
-  <div class="limbo-light"></div>
-  <div class="cinematic-area">
-    <div class="cinematic-placeholder"></div>
-  </div>
-  <div class="dialogue-box" id="limbo-dialogue">
-    <div class="speaker-name"  id="limbo-speaker"></div>
-    <div class="direction-text" id="limbo-dir"></div>
-    <div class="dialogue-text"  id="limbo-text"></div>
-    <div class="continue-hint"  id="limbo-hint">[ TOCA PARA CONTINUAR ]</div>
-  </div>
-  <div class="choice-box" id="limbo-choices">
-    <div class="choice-label">¿Qué decides?</div>
-    <button class="choice-btn" data-choice="accept">— De acuerdo.</button>
-    <button class="choice-btn" data-choice="refuse">— No.</button>
-  </div>
-</div>
 
 <div class="screen" id="screen-menu">
   <div class="menu-bg"></div>
@@ -633,8 +389,6 @@ const parts = Array.from({length:140}, () => new Particle());
 
 const SCREENS = {
   logo:  document.getElementById('screen-logo'),
-  death: document.getElementById('screen-death'),
-  limbo: document.getElementById('screen-limbo'),
   menu:  document.getElementById('screen-menu'),
 };
 
@@ -661,223 +415,13 @@ function fadeOut(cb, ms=1000) {
   setTimeout(() => cb&&cb(), ms);
 }
 
-const flashEl = document.getElementById('flash');
-function gunFlash(cb) {
-  flashEl.style.transition = 'none';
-  flashEl.style.opacity = '1';
-  const r = Object.assign(document.createElement('div'), { className:'ripple' });
-  Object.assign(r.style, { width:'50px', height:'50px', top:'44%', left:'47%', marginLeft:'-25px', marginTop:'-25px' });
-  document.body.appendChild(r);
-  setTimeout(() => r.remove(), 750);
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    flashEl.style.transition = 'opacity 0.85s ease';
-    flashEl.style.opacity = '0';
-    setTimeout(() => cb&&cb(), 950);
-  }));
-}
-
-function typewrite(el, text, speed, cb) {
-  el.textContent = '';
-  let i = 0;
-  const t = setInterval(() => {
-    el.textContent += text[i++];
-    if (i >= text.length) { clearInterval(t); cb&&setTimeout(cb,250); }
-  }, speed||26);
-  return t;
-}
-
-let seq = [], step = 0, waiting = false, onSeqDone = null;
-let choiceCb = null;
-
-function runSeq(sequence, done) {
-  seq = sequence; step = 0; waiting = false; onSeqDone = done;
-  nextStep();
-}
-
-function nextStep() {
-  if (step >= seq.length) { onSeqDone&&onSeqDone(); return; }
-  const s = seq[step];
-
-  if (s.type === 'dir' || s.type === 'line') {
-    const box  = document.getElementById(s.box+'-dialogue');
-    const spk  = document.getElementById(s.box+'-speaker');
-    const dir  = document.getElementById(s.box+'-dir');
-    const txt  = document.getElementById(s.box+'-text');
-    const hint = document.getElementById(s.box+'-hint');
-
-    box.classList.add('visible');
-    hint.classList.remove('visible');
-
-    if (s.type === 'dir') {
-      spk.textContent = '';
-      txt.textContent = '';
-      typewrite(dir, s.text, 20, () => { waiting = true; hint.classList.add('visible'); });
-    } else {
-      dir.textContent = '';
-      spk.textContent = (s.speaker||'').toUpperCase();
-      typewrite(txt, '— '+s.text, 25, () => { waiting = true; hint.classList.add('visible'); });
-    }
-  }
-
-  else if (s.type === 'action') {
-    s.fn(() => { step++; nextStep(); });
-  }
-
-  else if (s.type === 'choice') {
-    document.getElementById(s.box+'-dialogue').classList.remove('visible');
-    const cbox = document.getElementById(s.box+'-choices');
-    cbox.classList.add('visible');
-    choiceCb = (choice) => {
-      cbox.classList.remove('visible');
-      choiceCb = null;
-      if (s.branches&&s.branches[choice]) s.branches[choice]();
-      else { step++; nextStep(); }
-    };
-  }
-}
-
-function advance() {
-  if (!waiting) return;
-  waiting = false;
-  step++;
-  nextStep();
-}
-
-const SEQ_DEATH = [
-  {type:'dir',  box:'death', text:'Colombia. Mañana. El protagonista en la parte trasera del bus. Último día antes del vuelo.'},
-  {type:'dir',  box:'death', text:'Audífonos puestos. Tiquete de avión en la mano. Todo estaba bien.'},
-  {type:'dir',  box:'death', text:'El bus frena de golpe. Dos hombres encapuchados. Armas visibles. Los pasajeros se congelan.'},
-  {type:'line', box:'death', speaker:'Asaltante', text:'¡Todo el mundo quieto! ¡Manos donde las vea! ¡Esto es un atraco!'},
-  {type:'dir',  box:'death', text:'El protagonista mira el tiquete. La mochila. El reloj de su padre en la muñeca. Años de trabajo. La fiesta de esta noche. El vuelo de mañana.'},
-  {type:'line', box:'death', speaker:'Asaltante', text:'Tú. La mochila. Ya.'},
-  {type:'dir',  box:'death', text:'El protagonista no la suelta. Un segundo de duda — uno solo. Suficiente.'},
-  {type:'action', fn(next) {
-    waiting = false;
-    document.getElementById('death-dialogue').classList.remove('visible');
-    setTimeout(() => {
-      gunFlash(() => {
-        fadeOut(() => {
-          showScreen('limbo');
-          fadeIn(() => {
-            document.getElementById('rain').classList.remove('visible');
-            runSeq(SEQ_LIMBO, goMenu);
-            document.getElementById('limbo-dialogue').classList.add('visible');
-          }, 1600);
-        }, 1500);
-      });
-    }, 500);
-  }}
-];
-
-const SEQ_LIMBO = [
-  {type:'dir',  box:'limbo', text:'Silencio absoluto. Luz blanca sin forma. Sin suelo. Sin horizonte. Sin dolor.'},
-  {type:'dir',  box:'limbo', text:'El protagonista está de pie. Mira sus manos. Las cierra. Las abre. No está soñando.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Qué...? ¿Dónde...?'},
-  {type:'dir',  box:'limbo', text:'Una presencia. No llega caminando — simplemente está ahí. Sor. Una figura de luz blanca sin forma fija.'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'Bienvenido. Llevas tiempo sin estar consciente de mí, pero yo sí he estado consciente de ti.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Perdón? ¿Quién eres? ¿Dónde estoy? ¿Qué fue lo que pasó en el bus?'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'Eso ya no importa.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'A mí sí me importa. Estaba en un bus. Había un robo. Y ahora estoy aquí, en... esto. ¿Qué es esto, exactamente?'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'Un espacio entre lo que eras y lo que serás. No tienes acceso a lo que pasó porque en este momento no es relevante para lo que viene.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Estoy muerto?'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'Sí.'},
-  {type:'dir',  box:'limbo', text:'Silencio. El protagonista lo procesa. No llora. No entra en pánico. Solo asiente despacio.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'Okay. ¿Y tú qué quieres de mí?'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'Enviarte a otro mundo. Uno que necesita alguien como tú.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Y por qué yo?'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'Porque observé a muchos. Y tú eres el tipo de persona que actúa con firmeza sin necesitar hacerle daño a nadie para lograrlo. Eso es más difícil de encontrar de lo que crees.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'Me estuviste observando.'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'Sí.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Cuánto tiempo?'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'El suficiente.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'Eso es raro. Pero bueno. ¿Y qué me das para ir a este otro mundo? ¿Poderes? ¿Una espada legendaria? ¿Algo?'},
-  {type:'dir',  box:'limbo', text:'Aparece una mochila en el suelo frente al protagonista. La levanta. La abre. Comida para tres días. Un cuchillo.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿En serio?'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'El resto depende de ti.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Hay algo más que deba saber antes de que me mandes?'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'Hay un conflicto. Otros antes que tú intentaron resolverlo. No pudieron.'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'Tú puedes.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'Qué motivador. Gracias.'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'¿Qué decides?'},
-  {type:'choice', box:'limbo', branches:{
-    accept: () => runSeq(SEQ_ACCEPT, goMenu),
-    refuse: () => runSeq(SEQ_REFUSE1, null),
-  }}
-];
-
-const SEQ_ACCEPT = [
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'De acuerdo.'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'Bien.'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'Llegarás sin nada. Sin recuerdos de este lugar. Solo con lo que siempre fuiste.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'Espera — ¿cómo sabré qué hacer?'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'Lo mismo que hiciste esta noche. Dar un paso al frente.'},
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'¿Volveré a verte?'},
-  {type:'line', box:'limbo', speaker:'Sor', text:'Al final de todo... puede que descubras que siempre estuve ahí.'},
-  {type:'dir',  box:'limbo', text:'Sor no responde. La luz del pasaje aumenta lentamente hasta cubrirlo todo.'},
-  {type:'action', fn(next) {
-    document.getElementById('limbo-dialogue').classList.remove('visible');
-    fadeOut(() => next(), 2000);
-  }}
-];
-const SEQ_REFUSE1 = [
-  {type:'line', box:'limbo', speaker:'Protagonista', text:'No.'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Entendible.'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Hay personas en Aeltherion que morirán sin que nadie dé ese paso. No te lo digo para convencerte. Solo para que lo sepas.'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'La decisión sigue siendo tuya.'},
-  {type:'choice', box:'limbo', branches:{
-    accept: () => runSeq(SEQ_ACCEPT, goMenu),
-    refuse: () => runSeq(SEQ_REFUSE2, null),
-  }}
-];
-
-const SEQ_REFUSE2 = [
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Está bien.'},
-  {type:'line', box:'limbo', speaker:'Aeondris',     text:'Fue un honor conocerte.'},
-  {type:'dir',  box:'limbo', text:'El blanco lo consume todo. Una calma extraña. Y luego — nada.'},
-  {type:'action', fn(next) {
-    document.getElementById('limbo-dialogue').classList.remove('visible');
-    fadeOut(() => {
-      showScreen(null);
-      setTimeout(showEndCard, 400);
-    }, 2200);
-  }}
-];
-
-function showEndCard() {
-  const el = document.createElement('div');
-  el.style.cssText = 'position:fixed;inset:0;background:#04040A;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:300;opacity:0;transition:opacity 1.6s;';
-  el.innerHTML = `
-    <p style="font-family:'EB Garamond',serif;font-style:italic;
-       font-size:clamp(1rem,1.9vw,1.28rem);color:#B07FEF;
-       text-align:center;line-height:2.1;max-width:480px;padding:0 24px;">
-      "Algunos eligen el descanso.<br>
-      Aeltherion sigue esperando<br>a alguien que no lo haga."
-    </p>
-    <button onclick="location.reload()" style="margin-top:52px;font-family:'Cinzel',serif;
-      font-size:0.65rem;letter-spacing:0.32em;color:#7B4FBF;
-      background:none;border:1px solid #7B4FBF;padding:13px 34px;
-      cursor:pointer;transition:all 0.25s;"
-      onmouseover="this.style.color='#EDD47A';this.style.borderColor='#EDD47A'"
-      onmouseout="this.style.color='#7B4FBF';this.style.borderColor='#7B4FBF'">
-      VOLVER AL INICIO
-    </button>`;
-  document.body.appendChild(el);
-  requestAnimationFrame(() => requestAnimationFrame(() => el.style.opacity='1'));
-}
-
 function skipToMenu() {
-  seq = []; waiting = false; choiceCb = null;
   document.getElementById('skip-btn').classList.remove('visible');
   fadeOut(() => { showScreen('menu'); fadeIn(null, 1800); renderMenuOptions(); }, 700);
 }
 
 function showSkip() { document.getElementById('skip-btn').classList.add('visible'); }
 function hideSkip() { document.getElementById('skip-btn').classList.remove('visible'); }
-
-function goMenu() {
-  hideSkip();
-  fadeOut(() => { showScreen('menu'); fadeIn(null, 1800); renderMenuOptions(); }, 1100);
-}
 
 function hasSaveGame() {
   return localStorage.getItem('ashes_savegame') !== null;
@@ -942,12 +486,6 @@ function renderMenuOptions() {
   optBtn.textContent = 'Opciones';
   optBtn.onclick = () => alert('Opciones — pendiente de implementar');
   nav.appendChild(optBtn);
-
-  const introBtn = document.createElement('button');
-  introBtn.className = 'menu-btn';
-  introBtn.textContent = 'Ver Introducción';
-  introBtn.onclick = replayIntro;
-  nav.appendChild(introBtn);
 }
 
 function confirmOverwrite(onConfirm) {
@@ -959,55 +497,6 @@ function startGame(loadSave) {
   fadeOut(() => {
     window.location.href = loadSave ? './game.html?load=1' : './game.html';
   }, 900);
-}
-
-function replayIntro() {
-  fadeOut(() => {
-    showScreen(null);
-    setTimeout(runIntro, 300);
-  }, 700);
-}
-
-document.addEventListener('click', e => {
-  if (e.target.classList.contains('choice-btn')) {
-    if (choiceCb) choiceCb(e.target.dataset.choice);
-    return;
-  }
-  if (e.target.classList.contains('menu-btn')) return;
-  advance();
-});
-
-document.addEventListener('keydown', e => {
-  if (e.code === 'Space' || e.code === 'Enter') {
-    if (choiceCb) return;
-    advance();
-  }
-});
-
-function runIntro() {
-  showScreen('logo');
-  const logo = document.getElementById('studioLogo');
-  logo.classList.remove('reveal');
-  void logo.offsetWidth;
-  logo.classList.add('reveal');
-  fadeIn(null, 900);
-
-  setTimeout(() => {
-    const note = document.getElementById('audio-note');
-    note.classList.add('show');
-    setTimeout(() => note.classList.remove('show'), 3800);
-  }, 600);
-
-  setTimeout(() => {
-    fadeOut(() => {
-      showScreen('death');
-      fadeIn(() => {
-        document.getElementById('rain').classList.add('visible');
-        showSkip();
-        runSeq(SEQ_DEATH, null);
-      }, 1300);
-    }, 1100);
-  }, 5200);
 }
 
 window.addEventListener('load', () => {
@@ -1024,7 +513,30 @@ window.addEventListener('load', () => {
   window.addEventListener('resize', checkOrientation);
   window.addEventListener('orientationchange', checkOrientation);
 
-  setTimeout(runIntro, 250);
+  // Logo del estudio → menú principal directo (sin narrativa)
+  showScreen('logo');
+  const logo = document.getElementById('studioLogo');
+  logo.classList.remove('reveal');
+  void logo.offsetWidth;
+  logo.classList.add('reveal');
+  fadeIn(null, 900);
+
+  setTimeout(() => {
+    const note = document.getElementById('audio-note');
+    note.classList.add('show');
+    setTimeout(() => note.classList.remove('show'), 3800);
+  }, 600);
+
+  showSkip();
+
+  setTimeout(() => {
+    fadeOut(() => {
+      hideSkip();
+      showScreen('menu');
+      fadeIn(null, 1800);
+      renderMenuOptions();
+    }, 1100);
+  }, 5200);
 });
 </script>
 </body>
