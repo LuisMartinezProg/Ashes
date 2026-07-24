@@ -77,7 +77,6 @@ import { ShopUI }           from './ui/shop.js';
 import { inventory }        from './core/inventory.js';
 import { Progression }      from './core/progression.js';
 import { SkillBar }         from './ui/skillBar.js';
-import { SubtypeMenu }      from './ui/subtypeMenu.js';
 import { PauseMenu }        from './ui/pauseMenu.js';
 import { FusionMenu }       from './ui/fusionMenu.js';
 import { NarrativeSystem }  from './core/narrative.js';
@@ -547,7 +546,6 @@ allEnemies.forEach(e => {
     window._inventory = inventoryUI;
     window._itemDrops = { ITEMS, rollDrops, rollCurrency };
     inventoryUI.syncMaterials(building);
-    const subtypeMenu = new SubtypeMenu(progression, skillBar);
     const fusionMenu  = new FusionMenu(progression, skillBar, skills);
     const mapUI = new MapUI(player);
     window._mapUI = mapUI;
@@ -568,7 +566,6 @@ allEnemies.forEach(e => {
     ]);
 
     const pauseMenu = new PauseMenu({
-      onSubtype : () => { pauseMenu.close(); subtypeMenu.open(combat._weaponType); },
       onFusion  : () => { pauseMenu.close(); fusionMenu.open(combat._weaponType); },
       onResume  : () => pauseMenu.close(),
       getFusionUnlocked: () => progression.fusionUnlocked,
@@ -586,7 +583,6 @@ allEnemies.forEach(e => {
 
     skillBar.setWeapon(weaponType);
     skillBar.show();
-    subtypeMenu.setWeapon(weaponType);
     fusionMenu.setWeapon(weaponType);
     progression.fusionUnlocked = true;
 
