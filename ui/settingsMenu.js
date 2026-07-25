@@ -1,8 +1,8 @@
 // ui/settingsMenu.js — Ashes of the Reborn | Valiant Gaming
 
-const SAVE_KEY       = 'ashes_settings';
-const CHAR_CHANGE_KEY = 'ashes_lastCharChange'; // timestamp ms del último cambio de personaje
-const CHAR_CHANGE_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24h exactas
+const SAVE_KEY        = 'ashes_settings';
+const CHAR_CHANGE_KEY = 'ashes_lastCharChange'; // timestamp ms del último cambio de arma+reliquia
+const CHAR_CHANGE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 días exactos
 
 const DEFAULTS = {
   musicVolume : 80,
@@ -36,9 +36,9 @@ export class SettingsMenu {
     this._settings = this._load();
     this._panel    = null;
 
-    // Estado interno del sub-panel "Cambiar Personaje" (paso 0=arma, 1=elemento)
-    this._charChangeOpen = false;
-    this._charChangeStep = 0;
+    // Estado interno del sub-panel "Cambiar Arma y Reliquia" (paso 0=arma, 1=elemento)
+    this._charChangeOpen   = false;
+    this._charChangeStep   = 0;
     this._charChangeChoice = { weapon: null, element: null };
     this._charChangePanel  = null;
     this._cooldownInterval = null;
@@ -100,7 +100,7 @@ export class SettingsMenu {
     this._apply();
   }
 
-  // ── Cambiar Personaje: cooldown de 24h exactas desde el último cambio ──
+  // ── Cambiar Arma y Reliquia: cooldown de 7 días exactos ──────────────────
 
   _getLastCharChangeTime() {
     const raw = localStorage.getItem(CHAR_CHANGE_KEY);
@@ -120,9 +120,11 @@ export class SettingsMenu {
 
   _formatRemaining(ms) {
     const totalSec = Math.ceil(ms / 1000);
-    const h = Math.floor(totalSec / 3600);
+    const d = Math.floor(totalSec / 86400);
+    const h = Math.floor((totalSec % 86400) / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
     const s = totalSec % 60;
+    if (d > 0) return `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m`;
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   }
 
@@ -455,7 +457,7 @@ export class SettingsMenu {
     return wrap;
   }
 
-  // ── Sección "Cambiar Personaje" dentro del panel principal ─────────────
+  // ── Sección "Cambiar Arma y Reliquia" dentro del panel principal ────────
 
   _makeCharChangeSection() {
     const wrap = document.createElement('div');
@@ -471,7 +473,7 @@ export class SettingsMenu {
       fontFamily: 'monospace',
       fontSize  : '11px',
     });
-    lbl.textContent = '⚔️ Personaje';
+    lbl.textContent = '⚔️ Arma y Reliquia';
 
     const btn = document.createElement('button');
     Object.assign(btn.style, {
@@ -526,7 +528,7 @@ export class SettingsMenu {
     }
   }
 
-  // ── Sub-panel "Cambiar Personaje" — mismo patrón de 2 pasos que index.html ──
+  // ── Sub-panel "Cambiar Arma y Reliquia" — mismo patrón de 2 pasos que index.html ──
 
   _buildCharChangePanel() {
     this._charChangePanel = document.createElement('div');
@@ -549,9 +551,9 @@ export class SettingsMenu {
   }
 
   _openCharChangePanel() {
-    this._charChangeStep = 0;
+    this._charChangeStep   = 0;
     this._charChangeChoice = { weapon: null, element: null };
-    this._charChangeOpen = true;
+    this._charChangeOpen   = true;
     this._charChangePanel.style.display = 'flex';
     requestAnimationFrame(() => { this._charChangePanel.style.opacity = '1'; });
     this._renderCharChangeStep();
@@ -596,7 +598,7 @@ export class SettingsMenu {
       fontStyle : 'italic',
       maxWidth  : '260px',
     });
-    warn.textContent = 'Este cambio quedará bloqueado por 24 horas una vez confirmado.';
+    warn.textContent = 'Este cambio quedará bloqueado por 7 días una vez confirmado.';
     box.appendChild(warn);
 
     const cardsRow = document.createElement('div');
@@ -689,8 +691,18 @@ export class SettingsMenu {
   }
 
   // Aplica el cambio EN CALIENTE (sin recargar la página), reutilizando
-  // combat.setWeapon() y progression.equipRelic() que ya existen — Claude
-  // asumió esto en vez de forzar un location.reload(), avisado a Luis.
+  // combat.setWeapon() y progression.equipRelic() que ya existen.
+  //
+  // NOTA IMPORTANTE (sin resolver aún, ver registro del proyecto): esto
+  // asume que window._itemDrops?.getRelicData?.(weapon, element) está
+  // accesible — pero getRelicData vive en data/relics.js, un archivo
+  // distinto al que expone window._itemDrops (que viene de data/items.js).
+  // Si no está expuesto, cae al fallback {id, weapon, element} — el cambio
+  // se guarda igual, pero la reliquia queda sin su effectId real hasta
+  // que el jugador cierre y reabra el juego (game.html's boot normal la
+  // carga completa desde ashesCharacter). Falta confirmar si getRelicData
+  // está expuesto en algún window._* antes de que esto quede 100% correcto
+  // en la misma sesión.
   _confirmCharChange() {
     const { weapon, element } = this._charChangeChoice;
 
@@ -706,9 +718,6 @@ export class SettingsMenu {
       window._hud?.setWeaponIcon?.(weapon);
       window._skillBar?.setWeapon?.(weapon);
 
-      // getRelicData no está importado aquí para no acoplar settingsMenu.js
-      // a data/relics.js vía import estático; si ese módulo ya está cargado
-      // en window (game.html lo importa), lo reusamos desde ahí.
       const relicData = window._itemDrops?.getRelicData?.(weapon, element)
         ?? { id: `relic_${weapon}_${element}`, weapon, element };
       prog.equipRelic(relicData);
@@ -717,9 +726,9 @@ export class SettingsMenu {
     this._refreshCharChangeButton();
     this._closeCharChangePanel();
 
-    // Pequeña confirmación visual, en el mismo estilo que las notificaciones
-    // de level-up ya existentes en progression.js — no se agrega un sistema
-    // de notificaciones nuevo, se replica el patrón visual existente.
+    // Confirmación visual reutilizando el mismo patrón que las notificaciones
+    // de level-up ya existentes en progression.js — no se crea un sistema
+    // de notificaciones nuevo, se replica el estilo visual existente.
     const el = document.createElement('div');
     Object.assign(el.style, {
       position     : 'fixed',
@@ -740,7 +749,7 @@ export class SettingsMenu {
       opacity      : '1',
       transition   : 'opacity 1s',
     });
-    el.textContent = '⚔️ Personaje actualizado';
+    el.textContent = '⚔️ Arma y reliquia actualizadas';
     document.body.appendChild(el);
     setTimeout(() => {
       el.style.opacity = '0';
