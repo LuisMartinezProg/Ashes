@@ -410,6 +410,14 @@ _openSub(type) {
       body.appendChild(row);
     }
 
+    // ── Reliquia equipada ────────────────────────────────────────────────
+    // Nuevo: muestra la reliquia del personaje activo. Kael siempre tiene
+    // una (elegida en el menú pre-partida o en Settings); Mika todavía no
+    // elige reliquia (decisión pendiente, confirmada por Luis), así que para
+    // Mika se muestra un estado "sin asignar" en vez de intentar leer algo
+    // que no existe.
+    body.appendChild(this._buildRelicSection(prog));
+
     const sep = document.createElement('div');
     Object.assign(sep.style, {
       borderTop : '1px solid rgba(201,168,76,0.15)',
@@ -500,6 +508,79 @@ _openSub(type) {
 
     xpRow.append(xpLabel, xpBarWrap, plusBtn);
     sep.appendChild(xpRow);
+  }
+
+  // Construye el bloque visual de la reliquia equipada. Reutiliza el mismo
+  // patrón de tarjeta que _fillEquipo() ya usa para arma/armadura/accesorio,
+  // para que se sienta consistente en vez de un widget distinto.
+  _buildRelicSection(prog) {
+    const wrap = document.createElement('div');
+    Object.assign(wrap.style, {
+      marginTop: '4px',
+      marginBottom: '4px',
+    });
+
+    const label = document.createElement('div');
+    Object.assign(label.style, {
+      fontFamily   : 'monospace',
+      fontSize     : '9px',
+      color        : 'rgba(201,168,76,0.5)',
+      letterSpacing: '1px',
+      marginBottom : '6px',
+    });
+    label.textContent = '🔮 RELIQUIA';
+    wrap.appendChild(label);
+
+    const relic = prog.getEquippedRelic?.();
+
+    const row = document.createElement('div');
+    Object.assign(row.style, {
+      display     : 'flex',
+      alignItems  : 'center',
+      gap         : '12px',
+      padding     : '10px 12px',
+      borderRadius: '10px',
+      border      : relic ? '1px solid rgba(201,168,76,0.25)' : '1px solid rgba(255,255,255,0.08)',
+      background  : relic ? 'rgba(201,168,76,0.05)' : 'rgba(255,255,255,0.02)',
+    });
+
+    if (relic) {
+      const iconEl = document.createElement('div');
+      iconEl.style.fontSize = '26px';
+      iconEl.style.filter   = relic.color ? `drop-shadow(0 0 6px ${relic.color})` : '';
+      iconEl.textContent    = relic.icon ?? '🔮';
+
+      const info = document.createElement('div');
+      info.style.flex = '1';
+      info.innerHTML = `
+        <div style="font-family:monospace;font-size:11px;color:${CHARACTER_MENU.gold}">
+          ${relic.name ?? `Reliquia de ${relic.element ?? '?'}`}
+        </div>
+        <div style="font-family:monospace;font-size:9px;color:rgba(255,255,255,0.45);margin-top:3px;line-height:1.4">
+          ${relic.desc ?? '—'}
+        </div>
+      `;
+      row.append(iconEl, info);
+    } else if (this._activeChar === 1) {
+      // Mika: la reliquia todavía no está diseñada para ella — mensaje
+      // claro en vez de una fila vacía o rota.
+      row.innerHTML = `
+        <div style="font-family:monospace;font-size:10px;color:rgba(255,255,255,0.3);width:100%;text-align:center;padding:4px 0">
+          Sin reliquia asignada
+        </div>
+      `;
+    } else {
+      // Kael sin reliquia sería inesperado (siempre debería tener una desde
+      // el menú pre-partida), pero se cubre por seguridad en vez de romper.
+      row.innerHTML = `
+        <div style="font-family:monospace;font-size:10px;color:rgba(255,150,150,0.6);width:100%;text-align:center;padding:4px 0">
+          Sin reliquia equipada
+        </div>
+      `;
+    }
+
+    wrap.appendChild(row);
+    return wrap;
   }
 
   _openLevelUpPanel(parentBody) {
