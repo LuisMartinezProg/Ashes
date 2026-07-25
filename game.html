@@ -1,660 +1,800 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <link rel="manifest" href="./manifest.json">
-  <meta name="mobile-web-app-capable" content="yes">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="screen-orientation" content="landscape" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Ashes of the Reborn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/mochigo.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-    #canvas-container { position: fixed; inset: 0; }
-    #canvas-container canvas { display: block; width: 100% !important; height: 100% !important; }
-    #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
-    #fps { position: absolute; top: 12px; left: 14px; font-family: monospace; font-size: 11px; color: rgba(74,179,232,0.6); letter-spacing: 0.1em; }
-    #phase-label { position: absolute; top: 12px; right: 14px; font-family: monospace; font-size: 10px; color: rgba(123,79,191,0.5); letter-spacing: 0.15em; }
-    #status { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-family: monospace; font-size: 11px; color: rgba(232,224,245,0.6); letter-spacing: 0.2em; text-align: center; }
-    #loading { position: fixed; inset: 0; background: var(--skirk-black); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.8s ease; }
-    #loading.hidden { opacity: 0; pointer-events: none; }
-    .load-title {
-      font-family: 'Georgia', serif;
-      font-size: clamp(1rem, 3vw, 1.4rem);
-      letter-spacing: 0.4em;
-      background: linear-gradient(120deg, var(--accent) 0%, var(--jahoda-gold) 30%, var(--skirk-light) 55%, var(--furina-light) 80%, var(--clorinde-light) 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      margin-bottom: 32px;
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--ash-deep);
+      font-family: 'EB Garamond', serif;
+      color: var(--text);
+      cursor: default;
+    }
+
+    #particles {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .vignette {
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center,
+        transparent 30%,
+        rgba(5,5,10,0.7) 80%,
+        rgba(5,5,10,0.97) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .screen {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10;
+      transition: opacity 0.05s;
+    }
+    .screen.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #rotate-warning {
+      position: fixed; inset: 0;
+      background: var(--furina-dark);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px;
+      z-index: 999;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s;
+    }
+    #rotate-warning.show { opacity: 1; pointer-events: all; }
+    .rotate-icon {
+      font-size: 2.8rem;
+      animation: rotateAnim 1.5s ease-in-out infinite;
+    }
+    @keyframes rotateAnim {
+      0%,100% { transform: rotate(0deg); }
+      50%      { transform: rotate(90deg); }
+    }
+    .rotate-text {
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem; letter-spacing: 0.3em;
+      color: var(--clorinde-light); text-align: center;
       text-transform: uppercase;
     }
-    .load-bar-wrap { width: 200px; height: 2px; background: rgba(74,179,232,0.15); position: relative; overflow: hidden; }
-    .load-bar { height: 100%; background: linear-gradient(90deg, var(--skirk-dark), var(--clorinde-light), var(--furina-light), var(--accent)); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 8px rgba(74,179,232,0.5); }
-    .load-text { margin-top: 16px; font-family: monospace; font-size: 10px; letter-spacing: 0.3em; color: rgba(74,179,232,0.5); }
-      </style>
+    .rotate-sub {
+      font-family: 'EB Garamond', serif;
+      font-size: 0.9rem; color: rgba(123,79,191,0.5);
+      text-align: center; font-style: italic;
+    }
+
+    #screen-logo {
+      background: var(--furina-dark);
+    }
+    .studio-logo {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 0;
+      opacity: 0;
+    }
+    .studio-logo.reveal {
+      animation: logoReveal 4.8s ease forwards;
+    }
+    @keyframes logoReveal {
+      0%   { opacity: 0; transform: scale(0.94) translateY(6px); }
+      18%  { opacity: 1; transform: scale(1) translateY(0); }
+      72%  { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.02); }
+    }
+    .logo-emblem {
+     width: min(480px, 88vw);
+      height: auto;
+      display: block;
+      border-radius: 12px;
+   }
+    @media (orientation: portrait) {
+      .logo-emblem { width: min(320px, 85vw); }
+    }
+    .studio-name, .studio-sub { display: none; }
+
+    /* ══ MENU PRINCIPAL — Clorinde dominante ══ */
+    #screen-menu { background: var(--skirk-black); }
+
+    @media (orientation: portrait) {
+      #screen-menu .menu-layout {
+        flex-direction: column;
+        text-align: center;
+      }
+      #screen-menu .menu-left { border-right: none; border-bottom: 1px solid rgba(123,79,191,0.18); padding-bottom: 20px; }
+      #screen-menu .menu-title { font-size: 1.6rem; }
+      #screen-menu .menu-subtitle { font-size: 0.6rem; }
+    }
+
+    .menu-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 55% 45% at 100% 100%,
+          rgba(123,79,191,0.35) 0%, transparent 55%),
+        radial-gradient(ellipse 45% 50% at 0% 0%,
+          rgba(123,79,191,0.10) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 60% at 30% 70%,
+          rgba(61,31,110,0.4) 0%, transparent 65%),
+        linear-gradient(135deg, var(--skirk-black) 0%, var(--skirk-dark) 100%);
+    }
+
+    .menu-layout {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: row;
+      align-items: center;
+      width: 100%; height: 100%;
+      padding: 0 6vw;
+      gap: 0;
+    }
+
+    .menu-left {
+      flex: 1;
+      display: flex; flex-direction: column;
+      justify-content: center;
+      padding-right: 5vw;
+      border-right: 1px solid rgba(123,79,191,0.2);
+    }
+
+    .menu-right {
+      flex: 0 0 auto;
+      display: flex; flex-direction: column;
+      justify-content: center;
+      padding-left: 5vw;
+      min-width: 200px;
+    }
+
+    .menu-title-wrap { position: relative; }
+
+    .menu-title-bg {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(1.4rem, 4.5vw, 4rem);
+      font-weight: 900;
+      color: transparent;
+      -webkit-text-stroke: 1px var(--clorinde-light);
+      position: absolute; top: 50%; left: 0;
+      transform: translateY(-50%);
+      white-space: nowrap;
+      opacity: 0.12; pointer-events: none;
+      filter: blur(2px);
+    }
+    .menu-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(1.4rem, 4.5vw, 4rem);
+      font-weight: 900;
+      background: linear-gradient(120deg,
+        var(--accent) 0%,
+        var(--clorinde-light) 45%,
+        var(--skirk-dark) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 24px rgba(123,79,191,0.35));
+      position: relative;
+      line-height: 1.15;
+    }
+    .menu-subtitle {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.52rem, 1vw, 0.72rem);
+      letter-spacing: 0.4em;
+      color: var(--jahoda-purple);
+      margin-top: 14px;
+      text-transform: uppercase;
+    }
+    .menu-divider {
+      width: 120px; height: 1px;
+      background: linear-gradient(90deg, var(--clorinde-light), transparent);
+      margin: 20px 0;
+      position: relative;
+    }
+    .menu-divider::before {
+      content: '✦';
+      position: absolute; top: 50%; left: 0;
+      transform: translateY(-50%);
+      color: var(--accent); font-size: 0.6rem;
+      background: var(--skirk-black); padding-right: 8px;
+    }
+    .menu-studio {
+      font-family: 'Cinzel', serif;
+      font-size: 0.58rem; letter-spacing: 0.3em;
+      color: var(--clorinde-light); opacity: 0.65;
+      text-transform: uppercase;
+    }
+
+    .menu-options {
+      display: flex; flex-direction: column;
+      align-items: flex-start; gap: 2px;
+    }
+    .menu-btn {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.82rem, 1.8vw, 0.95rem);
+      letter-spacing: 0.18em;
+      color: var(--text-dim);
+      background: none; border: none;
+      padding: 14px 0 14px 16px;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s, padding-left 0.2s;
+      text-transform: uppercase;
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+    }
+    .menu-btn::before {
+      content: '';
+      position: absolute; left: 0; top: 50%;
+      transform: translateY(-50%) scaleY(0);
+      width: 2px; height: 60%;
+      background: var(--clorinde-light);
+      transition: transform 0.2s;
+    }
+    .menu-btn:active, .menu-btn:hover {
+      color: var(--accent); padding-left: 22px;
+    }
+    .menu-btn:active::before, .menu-btn:hover::before { transform: translateY(-50%) scaleY(1); }
+    .menu-btn.primary {
+      color: var(--jahoda-purple);
+      font-size: clamp(0.9rem, 2vw, 1rem);
+    }
+    .menu-btn.primary:active, .menu-btn.primary:hover { color: var(--accent); }
+    .menu-version {
+      position: absolute; bottom: 22px; right: 30px;
+      font-family: 'Cinzel', serif; font-size: 0.58rem;
+      letter-spacing: 0.2em; color: var(--clorinde-light); opacity: 0.5;
+    }
+
+    #skip-btn {
+      position: fixed; top: 14px; right: 16px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem; letter-spacing: 0.25em;
+      color: var(--clorinde-light);
+      background: rgba(8,8,14,0.7);
+      border: 1px solid rgba(123,79,191,0.3);
+      padding: 8px 16px;
+      cursor: pointer; z-index: 200;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s, color 0.2s, border-color 0.2s;
+    }
+    #skip-btn.visible { opacity: 1; pointer-events: all; }
+    #skip-btn:active { color: var(--accent); border-color: rgba(123,79,191,0.6); }
+
+    #flash {
+      position: fixed; inset: 0; background: #fff;
+      opacity: 0; pointer-events: none; z-index: 100;
+    }
+    #fade {
+      position: fixed; inset: 0; background: var(--skirk-black);
+      opacity: 1; pointer-events: none; z-index: 50;
+      transition: opacity 1.2s ease;
+    }
+    #fade.clear { opacity: 0; }
+
+    #audio-note {
+      position: fixed; bottom: 18px; left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Cinzel', serif; font-size: 0.58rem;
+      letter-spacing: 0.28em; color: var(--clorinde-light);
+      opacity: 0; transition: opacity 1.2s; z-index: 200;
+      white-space: nowrap;
+    }
+    #audio-note.show { opacity: 0.45; }
+
+    /* ══ SELECCIÓN DE PERSONAJE — arma + reliquia de Kael, 2 pasos ══ */
+    #screen-chargen { background: var(--skirk-black); }
+
+    .chargen-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 55% 45% at 100% 0%,
+          rgba(123,79,191,0.3) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 50% at 0% 100%,
+          rgba(61,31,110,0.35) 0%, transparent 60%),
+        linear-gradient(160deg, var(--skirk-black) 0%, var(--skirk-dark) 100%);
+    }
+
+    .chargen-layout {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      width: 100%; height: 100%;
+      padding: 3vh 6vw;
+    }
+
+    .chargen-step-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-weight: 900;
+      font-size: clamp(1.1rem, 3vw, 1.7rem);
+      background: linear-gradient(120deg, var(--accent) 0%, var(--clorinde-light) 50%, var(--skirk-dark) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    .chargen-step-sub {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.55rem, 1.1vw, 0.68rem);
+      letter-spacing: 0.32em;
+      color: var(--jahoda-purple);
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 3.5vh;
+    }
+
+    .chargen-progress {
+      display: flex; gap: 8px;
+      margin-bottom: 2.5vh;
+    }
+    .chargen-progress-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(123,79,191,0.25);
+      transition: background 0.3s;
+    }
+    .chargen-progress-dot.done   { background: var(--clorinde-light); }
+    .chargen-progress-dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+
+    .chargen-cards {
+      display: flex; flex-direction: row;
+      gap: clamp(12px, 2.5vw, 26px);
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 700px;
+    }
+
+    .chargen-card {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px;
+      width: clamp(120px, 22vw, 176px);
+      height: clamp(120px, 22vw, 176px);
+      padding: 16px 12px;
+      background: rgba(12,10,20,0.65);
+      border: 1px solid rgba(123,79,191,0.25);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.18s;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      overflow: hidden;
+    }
+    .chargen-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 0%, var(--card-glow, rgba(123,79,191,0.18)) 0%, transparent 70%);
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .chargen-card:active,
+    .chargen-card.selected {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 26px rgba(123,79,191,0.28);
+    }
+    .chargen-card:active::before,
+    .chargen-card.selected::before { opacity: 1; }
+
+    .chargen-card-icon {
+      font-size: clamp(2rem, 4.5vw, 2.7rem);
+      line-height: 1;
+      filter: drop-shadow(0 0 10px var(--card-glow, rgba(123,79,191,0.45)));
+    }
+    .chargen-card-name {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.72rem, 1.4vw, 0.84rem);
+      letter-spacing: 0.1em;
+      color: var(--text);
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .chargen-nav {
+      display: flex; align-items: center; gap: 24px;
+      margin-top: 4vh;
+    }
+    .chargen-back-btn {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.62rem, 1.2vw, 0.72rem);
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+      background: none; border: none;
+      cursor: pointer; text-transform: uppercase;
+      padding: 8px 4px;
+      opacity: 0.7; transition: opacity 0.2s, color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .chargen-back-btn:active { opacity: 1; color: var(--clorinde-light); }
+    .chargen-back-btn.hidden { visibility: hidden; }
+
+    @media (orientation: portrait) {
+      .chargen-cards { max-width: 90vw; }
+      .chargen-card { width: 30vw; height: 30vw; }
+    }
+  </style>
 </head>
 <body>
 
-<div id="loading">
-  <div class="load-title">Aeltherion</div>
-  <div class="load-bar-wrap">
-    <div class="load-bar" id="load-bar"></div>
+<div id="rotate-warning">
+  <div class="rotate-icon">📱</div>
+  <div class="rotate-text">Gira tu dispositivo</div>
+  <div class="rotate-sub">Este juego está diseñado para modo horizontal</div>
+</div>
+
+<canvas id="particles"></canvas>
+<div class="vignette"></div>
+<div id="flash"></div>
+<div id="fade"></div>
+
+<div class="screen" id="screen-logo">
+  <div class="studio-logo" id="studioLogo">
+    <img src="valiant.png" class="logo-emblem" alt="Valiant Gaming" />
   </div>
-  <div class="load-text" id="load-text">INICIANDO...</div>
 </div>
 
-<div id="canvas-container"></div>
+<button id="skip-btn" onclick="skipToMenu()">SALTAR ›</button>
 
-<div id="hud">
-  <div id="fps">-- FPS</div>
-  <div id="phase-label">FASE 9</div>
-  <div id="status"></div>
+<div class="screen" id="screen-menu">
+  <div class="menu-bg"></div>
+  <div class="menu-layout">
+    <div class="menu-left">
+      <div class="menu-title-wrap">
+        <div class="menu-title-bg">ASHES OF<br>THE REBORN</div>
+        <div class="menu-title">ASHES OF<br>THE REBORN</div>
+      </div>
+      <div class="menu-subtitle">Un mundo aguarda. Un destino elegido.</div>
+      <div class="menu-divider"></div>
+      <div class="menu-studio">Valiant Gaming · Beta v0.1</div>
+    </div>
+    <div class="menu-right">
+      <nav class="menu-options" id="menu-options-nav"></nav>
+    </div>
+  </div>
+  <div class="menu-version">IRONFELL</div>
 </div>
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+<div class="screen" id="screen-chargen">
+  <div class="chargen-bg"></div>
+  <div class="chargen-layout">
+    <div class="chargen-progress">
+      <div class="chargen-progress-dot" id="chargen-dot-0"></div>
+      <div class="chargen-progress-dot" id="chargen-dot-1"></div>
+    </div>
+    <div class="chargen-step-title" id="chargen-title"></div>
+    <div class="chargen-step-sub" id="chargen-sub"></div>
+    <div class="chargen-cards" id="chargen-cards"></div>
+    <div class="chargen-nav">
+      <button class="chargen-back-btn" id="chargen-back">‹ Atrás</button>
+    </div>
+  </div>
+</div>
+
+<div id="audio-note">ACTIVA EL AUDIO PARA MEJOR EXPERIENCIA</div>
+
+<script>
+  window.onerror = (msg, src, line) => {
+  document.body.innerHTML = `<div style="color:red;padding:20px;font-family:monospace;font-size:14px;">
+    ERROR: ${msg}<br>Línea: ${line}
+  </div>`;
+};
+
+const canvas = document.getElementById('particles');
+const ctx    = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor() { this.reset(true); }
+  reset(random) {
+    this.x    = Math.random() * canvas.width;
+    this.y    = random ? Math.random() * canvas.height : -5;
+    this.size = Math.random() * 1.4 + 0.3;
+    this.vx   = (Math.random() - 0.5) * 0.06;
+    this.vy   = Math.random() * 0.18 + 0.05;
+    this.maxL = Math.random() * 280 + 160;
+    this.life = random ? Math.random() * this.maxL : 0;
+    this.hue  = 260;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy; this.life++;
+    if (this.life > this.maxL || this.y > canvas.height + 4) this.reset(false);
+  }
+  draw() {
+    const p = this.life / this.maxL;
+    const a = p < 0.12 ? p/0.12 : p > 0.78 ? (1-p)/0.22 : 1;
+    ctx.save();
+    ctx.globalAlpha = a * 0.35;
+    ctx.fillStyle = `hsl(${this.hue},40%,72%)`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
   }
 }
-</script>
 
-<script type="module">
-import * as THREE from 'three';
-window.addEventListener('error', e => document.title = 'ERR: ' + e.message);
-window.addEventListener('unhandledrejection', e => document.title = 'ERR: ' + (e.reason?.message || e.reason));
-import { MOCHIGO, THEME } from './data/palette.js';
-import { initScene }        from './core/scene.js';
-import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies,setNPCs, setDialogueUI, setTriggers, setResourceCallback } from './core/loop.js';
-import { initResize }       from './core/resize.js';
-import { CombatSystem }     from './core/combat.js';
-import { spawnEnemies }     from './core/enemy.js';
-import { HUD }              from './ui/hud.js';
-import { SkillSystem }      from './core/skillSystem.js';
-import { spawnNPCs }        from './core/npc.js';
-import { DialogueUI }       from './ui/dialogue.js';
-import { ShopUI }           from './ui/shop.js';
-import { inventory }        from './core/inventory.js';
-import { Progression }      from './core/progression.js';
-import { SkillBar }         from './ui/skillBar.js';
-import { PauseMenu }        from './ui/pauseMenu.js';
-import { FusionMenu }       from './ui/fusionMenu.js';
-import { NarrativeSystem }  from './core/narrative.js';
-import { STORY_EVENTS }     from './data/storyEvents.js';
-import { WorldTriggers }    from './core/triggers.js';
-import { BuildingSystem }   from './core/building.js';
-import { BuildMenu }        from './ui/buildMenu.js';
-import { SkillTree }        from './ui/skillTree.js';
-import { RadialMenu }       from './ui/radialMenu.js';
-import { ParrySystem }      from './core/parry.js';
-import { Wolf }             from './core/enemies/wolf.js';
-import { Bear }             from './core/enemies/bear.js';
-import { MapUI }            from './ui/mapUI.js';
-import { Mossling }         from './core/enemies/Mossling.js';
-import { Firefly }          from './core/enemies/Firefly.js';
-import { CrystalSpider }    from './core/enemies/CrystalSpider.js';
-import { Troll }            from './core/enemies/Troll.js';
-import { EarthGolem }       from './core/enemies/EarthGolem.js';
-import { WanderingSpirit }  from './core/enemies/WanderingSpirit.js';
-import { ShadowForest }     from './core/enemies/ShadowForest.js';
-import { StoneSnake }       from './core/enemies/StoneSnake.js';
-import { WarriorGhost }     from './core/enemies/WarriorGhost.js';
-import { EliteMercenary }   from './core/enemies/EliteMercenary.js';
-import { Bandit }           from './core/enemies/Bandit.js';
-import { ShadowSoldier }    from './core/enemies/ShadowSoldier.js';
-import { DarkArcher }       from './core/enemies/DarkArcher.js';
-import { Berserker }        from './core/enemies/Berserker.js';
-import { YamiMage }         from './core/enemies/YamiMage.js';
-import { ShadowCaptain }    from './core/enemies/ShadowCaptain.js';
-import { BuildCamera }      from './core/buildCamera.js';
-import { BuildZone }        from './core/buildZone.js';
-import { Companion }        from './core/companion.js';
-import { PartyManager }     from './core/partyManager.js';
-import { createMikaProgression } from './core/mikaProgression.js';
-import { KeyboardControls } from './core/keyboardControls.js';
-import { KeybindMenu }      from './ui/keybindMenu.js';
-import { DungeonManager }   from './core/dungeons/DungeonManager.js';
-import { registerLODObjects, updateWorldLOD } from './core/worldLOD.js';
-import { InventoryUI }      from './ui/inventory.js';
-import { ITEMS, rollDrops, rollCurrency } from './data/items.js';
-import { CharacterMenu }    from './ui/characterMenu.js';
-import { PartyMenu }        from './ui/partyMenu.js';
-import { onKill }        from './core/bestiary.js';
-import { BestiaryPopup } from './ui/bestiaryPopup.js';
-import { BestiaryScreen } from './ui/bestiaryScreen.js';
-import { CurrencySystem } from './core/currency.js';
-import { Thug } from './core/enemies/Thug.js';
-import { DayNightCycle } from './core/dayNight.js';
-import { TimeMenu } from './ui/timeMenu.js';
-import { WeatherSystem } from './core/weather.js';
-import { GachaSystem } from './core/gacha.js';
-import { GachaMenu } from './ui/gachaMenu.js';
-import { refreshAllEffectiveStats } from './core/relics.js';
-import { TutorialSystem } from './ui/tutorial.js';
-import { SettingsMenu } from './ui/settingsMenu.js';
-  
-const bar = document.getElementById('load-bar');
-const txt = document.getElementById('load-text');
+const parts = Array.from({length:140}, () => new Particle());
+(function loop() { ctx.clearRect(0,0,canvas.width,canvas.height); parts.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(loop); })();
 
-function setProgress(pct, label) {
-  bar.style.width = pct + '%';
-  txt.textContent = label;
+const SCREENS = {
+  logo:    document.getElementById('screen-logo'),
+  menu:    document.getElementById('screen-menu'),
+  chargen: document.getElementById('screen-chargen'),
+};
+
+function showScreen(id) {
+  Object.values(SCREENS).forEach(s => s.classList.remove('active'));
+  if (id && SCREENS[id]) SCREENS[id].classList.add('active');
 }
 
-function _save(progression, mikaProgression) {
-  localStorage.setItem('ashes_progression', JSON.stringify(progression.serialize()));
-  localStorage.setItem('ashes_mika',        JSON.stringify(mikaProgression.serialize()));
+const fadeEl = document.getElementById('fade');
+function fadeIn(cb, ms=1200) {
+  fadeEl.style.transition = 'none';
+  fadeEl.style.opacity = '1';
+  fadeEl.classList.remove('clear');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    fadeEl.style.transition = `opacity ${ms}ms ease`;
+    fadeEl.style.opacity = '0';
+    setTimeout(() => { fadeEl.classList.add('clear'); cb&&cb(); }, ms);
+  }));
+}
+function fadeOut(cb, ms=1000) {
+  fadeEl.classList.remove('clear');
+  fadeEl.style.transition = `opacity ${ms}ms ease`;
+  fadeEl.style.opacity = '1';
+  setTimeout(() => cb&&cb(), ms);
 }
 
-function _setWorldEnemiesVisible(visible) {
-  const lists = [
-    window._enemies,
-    window._wolves,
-  ];
-  for (const list of lists) {
-    if (!list) continue;
-    for (const e of list) {
-      if (e.mesh) e.mesh.visible = visible ? !e.isDead?.() : false;
-    }
-  }
-  if (window._bear?.mesh) window._bear.mesh.visible = visible ? !window._bear.isDead?.() : false;
+function skipToMenu() {
+  document.getElementById('skip-btn').classList.remove('visible');
+  fadeOut(() => { showScreen('menu'); fadeIn(null, 1800); renderMenuOptions(); }, 700);
 }
 
-async function boot() {
+function showSkip() { document.getElementById('skip-btn').classList.add('visible'); }
+function hideSkip() { document.getElementById('skip-btn').classList.remove('visible'); }
+
+function hasSaveGame() {
+  return localStorage.getItem('ashes_savegame') !== null;
+}
+
+function getSaveInfo() {
+  const raw = localStorage.getItem('ashes_savegame');
+  if (!raw) return null;
   try {
-   window.onerror = (msg, src, line) => {
-      document.body.innerHTML = `<pre style="color:#ff4444;padding:16px;font-size:11px;">${msg}\n${src}:${line}</pre>`;
-   };
-    setProgress(5, 'Verificando...');
-    await new Promise(r => setTimeout(r, 200));
-
-    txt.style.color = MOCHIGO.furina.light;
-    setProgress(10, 'THREE.JS...');
-    await new Promise(r => setTimeout(r, 100));
-
-    setProgress(20, 'initScene...');
-    const { scene, camera, renderer, lights } = await initScene();
-    await new Promise(r => setTimeout(r, 100));
-
-    const dungeonScene = new THREE.Scene();
-    dungeonScene.background = new THREE.Color(0x0a0a12);
-    dungeonScene.fog = new THREE.FogExp2(0x0a0a12, 0.025);
-    dungeonScene.add(new THREE.AmbientLight(0xffffff, 5.0));
-    const dungeonSun = new THREE.DirectionalLight(0xffffff, 2.5);
-    dungeonSun.position.set(10, 20, 10);
-    dungeonScene.add(dungeonSun);
-   dungeonScene.add(new THREE.HemisphereLight(0x6688cc, 0x332244, 1.5));
-    window._dungeonScene = dungeonScene;
-    window._worldScene   = scene;
-    window._activeScene  = scene;
-
-    setProgress(25, 'BuildCamera / BuildZone...');
-    const buildCamera = new BuildCamera(camera, renderer);
-    const buildZone   = new BuildZone(scene);
-
-    setProgress(30, 'initResize...');
-    initResize(camera, renderer);
-
-    setProgress(40, 'startLoop...');
-    startLoop(scene, camera, renderer);
-
-    setProgress(45, 'getPlayer...');
-    const player = getPlayer();
-    window._player = player;
-
-    setProgress(50, 'CombatSystem...');
-    const combat = new CombatSystem(player.root, camera);
-    combat.setScene(scene);
-    setCombatSystem(combat);
-    window._combat = combat;
-
-    setProgress(55, 'SkillSystem...');
-    const skills = new SkillSystem(scene, player.root);
-
-    setProgress(57, 'Progression...');
-    const progression     = new Progression();
-    const currency = new CurrencySystem();
-    const gacha = new GachaSystem();
-    const gachaMenu = new GachaMenu(gacha);
-    window._gachaMenu = gachaMenu;
-    window._gacha = gacha;
-    window._currency = currency;
-    const dayNight = new DayNightCycle(scene, lights);
-    dayNight.start(0.1); // arranca ligeramente entrado el día, ajustable
-    window._dayNight = dayNight;
-    const mikaProgression = createMikaProgression();
-     window._mikaProgression = mikaProgression;
-     const weather = new WeatherSystem(scene);
-     weather.start();
-     window._weather = weather;
-     const timeMenu = new TimeMenu(dayNight, weather);
-     window._timeMenu = timeMenu;
-    
-    setProgress(59, 'Companion...');
-    const companion = new Companion(scene, player.root.position);
-    window._companion = companion;
-
-    setProgress(61, 'PartyManager...');
-    const partyManager = new PartyManager(scene, player, companion);
-    partyManager.setSkillSystems(skills, companion.skillSystem);
-    window._partyManager = partyManager;
-
-    setProgress(62, 'DungeonManager...');
-    const dungeonManager = new DungeonManager(scene, player);
-    dungeonManager.onEnter = (def) => {
-      console.log(`[Dungeon] Entrando: ${def.name}`);
-      window._hud?._hideCollectBtn?.();
-      window._mapUI?.hideMinimap?.();
-      _setWorldEnemiesVisible(false);
-      if (window._worldGroup) window._worldGroup.visible = false;
-    };
-    dungeonManager.onExit = () => {
-      console.log('[Dungeon] Saliendo');
-      window._mapUI?.showMinimap?.();
-      _setWorldEnemiesVisible(true);
-      if (window._worldGroup) window._worldGroup.visible = true;
-    };
-    dungeonManager.onReward = (reward) => {
-      if (reward.xp)          progression.addXP(combat._weaponType ?? 'katana', reward.xp);
-      if (reward.magicEnergy) progression.addMagicEnergy?.(reward.magicEnergy);
-      gacha.addGems(80);
-      _save(progression, mikaProgression);
-    };
-    window._dungeonManager = dungeonManager;
-
-    setProgress(63, 'NarrativeSystem...');
-    const narrative = new NarrativeSystem();
-    narrative.setScene(scene);
-    narrative.onPause  = () => {};
-    narrative.onResume = () => {};
-    window._narrative  = narrative;
-
-    setProgress(65, 'WorldTriggers...');
-    const triggers = new WorldTriggers(narrative, player);
-    setTriggers(triggers);
-
-    setProgress(67, 'localStorage...');
-    const savedKael = localStorage.getItem('ashes_progression');
-    if (savedKael) {
-      try { progression.load(JSON.parse(savedKael)); console.log('[Save] Kael cargado'); }
-      catch(e) { console.warn('[Save] Error Kael:', e); }
-    }
-    const savedMika = localStorage.getItem('ashes_mika');
-    if (savedMika) {
-      try { mikaProgression.load(JSON.parse(savedMika)); console.log('[Save] Mika cargada'); }
-      catch(e) { console.warn('[Save] Error Mika:', e); }
-    }
-    refreshAllEffectiveStats();
-    window._prog = progression;
-    combat.setProgression(progression);
-    buildZone.setProgression(progression);
-    
-
-    setProgress(69, 'ParrySystem...');
-    const parry = new ParrySystem(player, combat);
-    window._parry  = parry;
-    window._camera = camera;
-
-    setProgress(71, 'HUD...');
-    const hud = new HUD(combat, skills);
-    window._hud = hud;
-    progression.onLevelUp     = (level) => hud.updateLevel(level);
-    mikaProgression.onLevelUp = (level) => hud.updateMikaLevel(level);
-    hud.setPartyManager(partyManager);
-    setResourceCallback((resource) => {
-      if (window._dungeonManager?._active) return;
-      hud.showCollectBtn(resource);
-    });
-    setProgress(73, 'spawnEnemies...');
-    const enemies = [
-  new Thug(scene, { x:  14, z: -28 }, player),
-  new Thug(scene, { x:  18, z: -32 }, player),
-  new Thug(scene, { x:  22, z: -26 }, player),
-  new Thug(scene, { x: -14, z: -30 }, player),
-  new Thug(scene, { x: -18, z: -26 }, player),
-];
-    enemies.forEach(e => combat.registerEnemy(e));
-    skills.registerEnemies(enemies);
-    setSkillSystem(skills);
-    setEnemies(enemies);
-    hud.setEnemies(enemies);
-    
-
-    setProgress(75, 'DialogueUI...');
-    const dialogueUI = new DialogueUI();
-    const shopUI     = new ShopUI();
-
-    setProgress(77, 'spawnNPCs...');
-    const npcs = spawnNPCs(scene);
-    setNPCs(npcs);
-    setDialogueUI(dialogueUI);
-
-    const mikaNPC = npcs.find(n => n.isMika);
-
-    setProgress(79, 'proximidad NPCs...');
-    let _nearNPC = null;
-    function _checkNPCProximity() {
-      if (window._dungeonManager?._active) return;
-      if (dialogueUI.isActive() || shopUI.isActive()) return;
-      const playerPos = player.root.position;
-      for (const npc of npcs) npc.update(performance.now() / 1000, playerPos);
-      let found = null;
-      for (const npc of npcs) {
-        if (npc.isPlayerInRange(playerPos)) { found = npc; break; }
-      }
-      if (found && found !== _nearNPC) {
-        _nearNPC = found;
-        dialogueUI.showTalkBtn(() => {
-          const lines = found.isMika ? found.getLines() : found.dialogue.lines;
-          dialogueUI.openDialogue(
-            found.dialogue.name, lines,
-            () => { _nearNPC = null; },
-            () => {
-              progression.addReputation(10);
-              _save(progression, mikaProgression);
-              if (found.isShop()) shopUI.open(found.dialogue.shop);
-            }
-          );
-        });
-      } else if (!found && _nearNPC) {
-        _nearNPC = null;
-        dialogueUI.hideTalkBtn();
-      }
-    }
-    setInterval(_checkNPCProximity, 200);
-
-    setProgress(81, 'callbacks...');
-    player.onDamage = (hp, max) => hud.updatePlayerHp(hp, max);
-    hud.updatePlayerHp(player.hp, player.maxHp);
-
-    enemies.forEach(e => {
-      e.onDeath = () => {
-        progression.addXP(combat._weaponType, 25);
-        _save(progression, mikaProgression);
-      };
-    });
-
-    setProgress(83, 'lobos y oso...');
-    const wolves = [
-      new Wolf(scene, { x: -12, z: -38 }, player),
-      new Wolf(scene, { x:  -8, z: -42 }, player),
-      new Wolf(scene, { x:   5, z: -45 }, player),
-      new Wolf(scene, { x:  10, z: -40 }, player),
-      new Wolf(scene, { x:  -3, z: -50 }, player),
-      new Wolf(scene, { x:  15, z: -44 }, player),
-    ];
-
-    const bear = new Bear(scene, { x: 0, z: -55 }, player, () => {
-      wolves.forEach(w => w.flee(bear.mesh.position));
-    });
-    bear.onDeath = () => {
-      setTimeout(() => wolves.forEach(w => w.startRoaming()), 3000);
-    };
-
-    const forestMonsters = [
-      new Mossling(scene,      { x: -15, z: -50 }, player),
-      new Mossling(scene,      { x:  12, z: -55 }, player),
-      new Mossling(scene,      { x:  -5, z: -65 }, player),
-      new Mossling(scene,      { x:  18, z: -48 }, player),
-      new Firefly(scene,       { x:  -8, z: -58 }, player),
-      new Firefly(scene,       { x:  10, z: -70 }, player),
-      new Firefly(scene,       { x: -20, z: -62 }, player),
-      new CrystalSpider(scene, { x:   5, z: -52 }, player),
-      new CrystalSpider(scene, { x: -12, z: -68 }, player),
-      new Troll(scene,         { x: -22, z: -72 }, player),
-      new Troll(scene,         { x:  20, z: -65 }, player),
-    ];
-
-    const plainsMonsters = [
-      new EarthGolem(scene,      { x: -18, z: 10 }, player),
-      new EarthGolem(scene,      { x:  20, z: 18 }, player),
-      new WanderingSpirit(scene, { x:  -8, z: 22 }, player),
-      new WanderingSpirit(scene, { x:  12, z:  5 }, player),
-      new WanderingSpirit(scene, { x: -22, z: 28 }, player),
-    ];
-
-    const roadMonsters = [
-      new ShadowForest(scene,   { x: -35, z: 35 }, player),
-      new ShadowForest(scene,   { x:  38, z: 38 }, player),
-      new StoneSnake(scene,     { x: -40, z: 34 }, player),
-      new StoneSnake(scene,     { x:  42, z: 36 }, player),
-      new WarriorGhost(scene,   { x: -38, z: 57 }, player),
-      new WarriorGhost(scene,   { x:  40, z: 58 }, player),
-      new EliteMercenary(scene, { x: -36, z: 56 }, player),
-      new EliteMercenary(scene, { x:  38, z: 59 }, player),
-    ];
-
-    const mikaBandits = [
-      new Bandit(scene, { x: -6, z: 36 }, player),
-      new Bandit(scene, { x:  6, z: 37 }, player),
-      new Bandit(scene, { x:  0, z: 35 }, player),
-    ];
-
-    let _mikaRescued = false;
-    function _checkMikaRescue() {
-      if (_mikaRescued || !mikaNPC) return;
-      if (mikaBandits.every(b => b.isDead?.())) {
-        _mikaRescued = true;
-        mikaNPC.rescue();
-        console.log('[Mika] Rescatada');
-      }
-    }
-    setInterval(_checkMikaRescue, 500);
-
-    const yamiArmy = [
-      new ShadowSoldier(scene,  { x: -12, z: 150 }, player),
-      new ShadowSoldier(scene,  { x:   8, z: 153 }, player),
-      new ShadowSoldier(scene,  { x:  -2, z: 156 }, player),
-      new DarkArcher(scene,     { x:  20, z: 151 }, player),
-      new DarkArcher(scene,     { x: -20, z: 154 }, player),
-      new Berserker(scene,      { x:   5, z: 157 }, player),
-      new Berserker(scene,      { x: -10, z: 160 }, player),
-      new YamiMage(scene,       { x:  15, z: 158 }, player),
-      new YamiMage(scene,       { x:  -5, z: 162 }, player),
-      new ShadowCaptain(scene,  { x:   0, z: 165 }, player),
-    ];
-
-    const allEnemies = [
-      ...enemies, ...wolves, bear,
-      ...forestMonsters, ...plainsMonsters,
-      ...roadMonsters, ...mikaBandits, ...yamiArmy,
-    ];
-    allEnemies.forEach(e => combat.registerEnemy(e));
-    skills.registerEnemies(allEnemies);
-    partyManager.registerEnemies(allEnemies);
-    setEnemies(allEnemies);
-    hud.setEnemies(allEnemies);
-    window._enemies        = allEnemies;
-    window._bear           = bear;
-    window._wolves         = wolves;
-    window._forestMonsters = forestMonsters;
-    window._plainsMonsters = plainsMonsters;
-    window._roadMonsters   = roadMonsters;
-    window._mikaBandits    = mikaBandits;
-    window._yamiArmy       = yamiArmy;
-    const bestiaryPopup = new BestiaryPopup();
-window._bestiaryPopup = bestiaryPopup;
-
-allEnemies.forEach(e => {
-  const _orig = e.onDeath;
-  e.onDeath = () => {
-    const type = e.type ?? e.constructor.name;
-    const isNew = onKill(type);
-    if (isNew) {
-      bestiaryPopup.show(type);
-      gacha.addGems(20);
-    }
-    _orig?.();
-  };
-});
-    setProgress(86, 'Building...');
-    const building = new BuildingSystem(scene, player);
-    building.setProgression(progression);
-    building.setZone(buildZone);
-    building.init();
-    const buildMenu = new BuildMenu(building);
-    if (buildMenu._buildBtn) buildMenu._buildBtn.style.display = 'none';
-    window._building    = building;
-    window._buildMenu   = buildMenu;
-    window._buildCamera = buildCamera;
-    window._buildZone   = buildZone;
-
-    if (!buildZone.hasZone()) {
-      const flagBtn = document.createElement('button');
-      flagBtn.textContent = '🚩';
-      flagBtn.title = 'Clavar bandera';
-      Object.assign(flagBtn.style, {
-  position:'fixed', top:'8px', right:'100px',
-  height:'36px', padding:'0 12px', borderRadius:'8px',
-  border:`1px solid ${MOCHIGO.furina.light}66`,
-  background:'rgba(8,8,16,0.85)', color: MOCHIGO.furina.light,
-  fontSize:'16px', fontFamily:'monospace',
-  cursor:'pointer', pointerEvents:'all',
-  zIndex:'150', WebkitTapHighlightColor:'transparent',
-});
-      
-      const openFlag = (e) => {
-        e.preventDefault();
-        buildZone.startChoosing(player.root.position, () => {
-          flagBtn.remove();
-          buildCamera.showBtn();
-        });
-      };
-      flagBtn.addEventListener('click', openFlag);
-      flagBtn.addEventListener('touchstart', openFlag, { passive: false });
-      document.body.appendChild(flagBtn);
-    } else {
-      buildCamera.showBtn();
-    }
-
-    setProgress(89, 'UI...');
-    const skillTree   = new SkillTree(progression);
-    window._skillTree = skillTree;
-    const skillBar    = new SkillBar(skills, progression);
-    window._skillBar  = skillBar;
-    const tutorial = new TutorialSystem(dialogueUI);
-    window._tutorial = tutorial;
-    const settingsMenu = new SettingsMenu();
-     window._settings   = settingsMenu;
-    const characterMenu = new CharacterMenu(progression, skillBar);
-    window._characterMenu = characterMenu;
-    const partyMenu = new PartyMenu();
-    window._partyMenu = partyMenu;
-    const inventoryUI = new InventoryUI();
-    const bestiaryScreen = new BestiaryScreen();
-    window._bestiaryScreen = bestiaryScreen;
-    window._inventory = inventoryUI;
-    window._itemDrops = { ITEMS, rollDrops, rollCurrency };
-    inventoryUI.syncMaterials(building);
-    const fusionMenu  = new FusionMenu(progression, skillBar, skills);
-    const mapUI = new MapUI(player);
-    window._mapUI = mapUI;
-
-    const keyboardControls = new KeyboardControls();
-    window._keyboard = keyboardControls;
-    const keybindMenu = new KeybindMenu(keyboardControls);
-    window._keybindMenu = keybindMenu;
-
-    const radialMenu = new RadialMenu([
-      { icon: '👤', label: 'Personaje',  action: () => characterMenu.open(),   locked: false },
-      { icon: '⚔️', label: 'Equipo',     action: () => partyMenu.toggle(),     locked: false },
-      { icon: '🗺️', label: 'Mapa',       action: () => { if (!window._dungeonManager?._active) mapUI.toggle(); }, locked: false },
-      { icon: '🎒', label: 'Inventario', action: () => inventoryUI.open(),     locked: false },
-      { icon: '📖', label: 'Bestiario',  action: () => bestiaryScreen.open(),  locked: false },
-      { icon: '🕐', label: 'Tiempo',     action: () => timeMenu.open(),        locked: false },
-      { icon: '🔮', label: 'Eco Astral', action: () => gachaMenu.toggle(),     locked: false },
-    ]);
-
-    const pauseMenu = new PauseMenu({
-      onFusion  : () => { pauseMenu.close(); fusionMenu.open(combat._weaponType); },
-      onResume  : () => pauseMenu.close(),
-      getFusionUnlocked: () => progression.fusionUnlocked,
-    });
-
-    setProgress(91, 'weapon...');
-    const charData   = JSON.parse(localStorage.getItem('ashesCharacter') || '{}');
-    const weaponType = charData.weapon || 'sword';
-    combat.setWeapon(weaponType);
-    hud.setWeaponIcon(weaponType);
-    hud.show();
-    hud.updateLevel(progression.getLevel());
-    hud.setCamera(camera);
-    player.onStaminaUpdate = (stamina, max) => hud.updateStamina(stamina, max);
-
-    skillBar.setWeapon(weaponType);
-    skillBar.show();
-    fusionMenu.setWeapon(weaponType);
-    progression.fusionUnlocked = true;
-
-    const pauseBtn = document.createElement('button');
-    pauseBtn.textContent = '☰';
-    Object.assign(pauseBtn.style, {
-  position:'fixed', top:'8px', left:'14px',
-  width:'36px', height:'36px', borderRadius:'8px',
-  border:`1px solid ${MOCHIGO.clorinde.light}80`,
-  background:'rgba(8,8,16,0.85)', color: MOCHIGO.skirk.light,
-  fontSize:'18px', cursor:'pointer', pointerEvents:'all',
-  zIndex:'150', display:'flex', alignItems:'center',
-  justifyContent:'center', WebkitTapHighlightColor:'transparent',
-});
-    const openPause = (e) => { e.preventDefault(); pauseMenu.open(); };
-    pauseBtn.addEventListener('click', openPause);
-    pauseBtn.addEventListener('touchstart', openPause, { passive: false });
-    document.body.appendChild(pauseBtn);
-
-    setProgress(96, 'intervalos...');
-    setInterval(() => {
-      if (window._dungeonManager?._active) return;
-      const pos    = player.root.position;
-      const inside = buildZone.isInsideZone(pos.x, pos.z);
-
-      if (inside) window._tutorial?.notifyNearBuild?.();
-
-      if (buildCamera._btn) {
-        buildCamera._btn.style.display = inside ? 'flex' : 'none';
-        if (!inside && buildCamera.isActive()) buildCamera.deactivate();
-      }
-      if (skillBar._buildBtn) {
-        skillBar._buildBtn.style.display = inside ? 'flex' : 'none';
-      }
-    }, 500);
-
-    let _lastDungeonTime = performance.now();
-    function _dungeonLoop() {
-      const now   = performance.now();
-      const delta = Math.min((now - _lastDungeonTime) * 0.001, 0.05);
-      _lastDungeonTime = now;
-      dungeonManager.update(delta, camera);
-      parry.update(delta);
-      window._weather?.updateRain(delta);
-      if (window._player) updateWorldLOD(window._player.root.position);
-      requestAnimationFrame(_dungeonLoop);
-    }
-    requestAnimationFrame(_dungeonLoop);
-
-    setInterval(() => hud.updateEnemyBar(player.root.position), 300);
-    setInterval(() => _save(progression, mikaProgression), 30000);
-
-    setProgress(100, 'LISTO');
-    await new Promise(r => setTimeout(r, 300));
-    const loading = document.getElementById('loading');
-    loading.classList.add('hidden');
-    setTimeout(() => loading.remove(), 900);
-          
-} catch (err) {
-    const msg = (err?.message || String(err)) + '\n\n' + (err?.stack || '');
-    txt.textContent = msg.slice(0, 300);
-    txt.style.color = '#ff4444';
-    txt.style.fontSize = '9px';
-    txt.style.whiteSpace = 'pre-wrap';
-    txt.style.maxWidth = '90vw';
-    bar.style.background = '#8B2A0A';
+    const data = JSON.parse(raw);
+    return { level: data.kael?.level ?? 1, timestamp: data.timestamp };
+  } catch (e) {
+    return null;
   }
-  
 }
 
-window.addEventListener('load', boot);
-</script>
+function formatSaveTime(timestamp) {
+  if (!timestamp) return '';
+  const diffMs = Date.now() - timestamp;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1)  return 'ahora mismo';
+  if (mins < 60) return `hace ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `hace ${hours}h`;
+  return `hace ${Math.floor(hours / 24)}d`;
+}
 
+function renderMenuOptions() {
+  const nav = document.getElementById('menu-options-nav');
+  const hasSave = hasSaveGame();
+  const info    = hasSave ? getSaveInfo() : null;
+
+  nav.innerHTML = '';
+
+  if (hasSave) {
+    const contBtn = document.createElement('button');
+    contBtn.className = 'menu-btn primary';
+    contBtn.textContent = info
+      ? `Continuar · Nv.${info.level} · ${formatSaveTime(info.timestamp)}`
+      : 'Continuar';
+    contBtn.onclick = () => startGame(true);
+    nav.appendChild(contBtn);
+  }
+
+  const newBtn = document.createElement('button');
+  newBtn.className = 'menu-btn' + (hasSave ? '' : ' primary');
+  newBtn.textContent = 'Nueva Partida';
+  newBtn.onclick = () => {
+    if (hasSave) {
+      confirmOverwrite(() => {
+        localStorage.removeItem('ashes_savegame');
+        // No borra ashesCharacter — el arma/reliquia elegida es independiente del save de progreso
+        if (needsCharacterSelection()) {
+          openCharacterSelection();
+        } else {
+          startGame(false);
+        }
+      });
+    } else if (needsCharacterSelection()) {
+      openCharacterSelection();
+    } else {
+      startGame(false);
+    }
+  };
+  nav.appendChild(newBtn);
+
+  const optBtn = document.createElement('button');
+  optBtn.className = 'menu-btn';
+  optBtn.textContent = 'Opciones';
+  optBtn.onclick = () => alert('Opciones — pendiente de implementar');
+  nav.appendChild(optBtn);
+}
+
+function confirmOverwrite(onConfirm) {
+  const ok = window.confirm('Iniciar una nueva partida borrará tu progreso guardado. ¿Continuar?');
+  if (ok) onConfirm();
+}
+
+function startGame(loadSave) {
+  fadeOut(() => {
+    window.location.href = loadSave ? './game.html?load=1' : './game.html';
+  }, 900);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SELECCIÓN DE PERSONAJE (arma + reliquia de Kael)
+//
+// Catálogo mínimo replicado aquí (mismos datos que data/relics.js) para
+// no depender de un <script type="module"> en este archivo, que hoy es
+// vanilla script — evita mezclar sistemas de módulos innecesariamente
+// en un archivo que solo hace fade/menú. Si data/relics.js cambia estos
+// valores, actualizar aquí también.
+// ═══════════════════════════════════════════════════════════════
+
+const CHARGEN_WEAPONS = [
+  { id: 'sword',  icon: '⚔️', name: 'Espada' },
+  { id: 'katana', icon: '🗡️', name: 'Katana' },
+  { id: 'bow',    icon: '🏹', name: 'Arco'   },
+];
+
+const CHARGEN_KAEL_ELEMENTS = [
+  { id: 'fuego',      icon: '🔥', name: 'Fuego',      color: '#ff5522' },
+  { id: 'rayo',       icon: '⚡', name: 'Rayo',       color: '#ffe066' },
+  { id: 'naturaleza', icon: '🌿', name: 'Naturaleza', color: '#5cb85c' },
+];
+
+let _chargenStep = 0; // 0 = arma, 1 = elemento de reliquia
+let _chargenChoice = { weapon: null, element: null };
+
+function needsCharacterSelection() {
+  return localStorage.getItem('ashesCharacter') === null;
+}
+
+function openCharacterSelection() {
+  _chargenStep = 0;
+  _chargenChoice = { weapon: null, element: null };
+  fadeOut(() => {
+    showScreen('chargen');
+    fadeIn(null, 1200);
+    _renderChargenStep();
+  }, 700);
+}
+
+function _renderChargenStep() {
+  const dot0 = document.getElementById('chargen-dot-0');
+  const dot1 = document.getElementById('chargen-dot-1');
+  dot0.className = 'chargen-progress-dot' + (_chargenStep === 0 ? ' active' : ' done');
+  dot1.className = 'chargen-progress-dot' + (_chargenStep === 1 ? ' active' : '');
+
+  const backBtn = document.getElementById('chargen-back');
+  backBtn.className = 'chargen-back-btn' + (_chargenStep === 0 ? ' hidden' : '');
+
+  const title = document.getElementById('chargen-title');
+  const sub   = document.getElementById('chargen-sub');
+  const cards = document.getElementById('chargen-cards');
+  cards.innerHTML = '';
+
+  if (_chargenStep === 0) {
+    title.textContent = 'Elige tu Arma';
+    sub.textContent = 'Kael — esta elección es permanente';
+    CHARGEN_WEAPONS.forEach(w => {
+      cards.appendChild(_buildChargenCard(w.icon, w.name, null, () => {
+        _chargenChoice.weapon = w.id;
+        _chargenStep = 1;
+        _renderChargenStep();
+      }));
+    });
+  } else {
+    title.textContent = 'Elige tu Reliquia';
+    sub.textContent = 'El elemento que infundirá tu arma';
+    CHARGEN_KAEL_ELEMENTS.forEach(el => {
+      cards.appendChild(_buildChargenCard(el.icon, el.name, el.color, () => {
+        _chargenChoice.element = el.id;
+        _finishCharacterSelection();
+      }));
+    });
+  }
+}
+
+function _buildChargenCard(icon, name, glowColor, onPick) {
+  const card = document.createElement('button');
+  card.className = 'chargen-card';
+  if (glowColor) card.style.setProperty('--card-glow', glowColor + '40');
+  card.innerHTML = `
+    <div class="chargen-card-icon">${icon}</div>
+    <div class="chargen-card-name">${name}</div>
+  `;
+  const pick = (e) => { e.preventDefault(); onPick(); };
+  card.addEventListener('click', pick);
+  card.addEventListener('touchstart', pick, { passive: false });
+  return card;
+}
+
+function _finishCharacterSelection() {
+  localStorage.setItem('ashesCharacter', JSON.stringify({
+    weapon: _chargenChoice.weapon,
+    relicElement: _chargenChoice.element,
+  }));
+  startGame(false);
+}
+
+document.getElementById('chargen-back').addEventListener('click', () => {
+  if (_chargenStep === 0) return;
+  _chargenStep = 0;
+  _renderChargenStep();
+});
+
+window.addEventListener('load', () => {
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch(() => {});
+  }
+
+  const warning = document.getElementById('rotate-warning');
+  function checkOrientation() {
+    const isPortrait = window.innerHeight > window.innerWidth;
+    warning.classList.toggle('show', isPortrait);
+  }
+  checkOrientation();
+  window.addEventListener('resize', checkOrientation);
+  window.addEventListener('orientationchange', checkOrientation);
+
+  // Logo del estudio → menú principal directo (sin narrativa)
+  showScreen('logo');
+  const logo = document.getElementById('studioLogo');
+  logo.classList.remove('reveal');
+  void logo.offsetWidth;
+  logo.classList.add('reveal');
+  fadeIn(null, 900);
+
+  setTimeout(() => {
+    const note = document.getElementById('audio-note');
+    note.classList.add('show');
+    setTimeout(() => note.classList.remove('show'), 3800);
+  }, 600);
+
+  showSkip();
+
+  setTimeout(() => {
+    fadeOut(() => {
+      hideSkip();
+      showScreen('menu');
+      fadeIn(null, 1800);
+      renderMenuOptions();
+    }, 1100);
+  }, 5200);
+});
+</script>
 </body>
 </html>
