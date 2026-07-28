@@ -3,6 +3,13 @@
 // Catálogo de las 18 reliquias (3 armas × 6 elementos). Cada entrada es la
 // "ficha" de la reliquia: nombre, color, ícono, y el effectId que la conecta
 // con su comportamiento real en core/relics.js (registerRelicEffect).
+//
+// NOTA DE REWORK (v2): las reliquias ya no se eligen en el menú pre-partida.
+// Ahora dropean en cofres de mazmorra como INSTANCIAS con rareza propia
+// ({relicId, rarity}), y se equipan/cambian desde un menú del inventario.
+// Este archivo sigue siendo el catálogo de las 18 IDENTIDADES (efecto base);
+// la rareza de una instancia dropeada escala ese efecto vía RARITY_MULTIPLIER,
+// no vía copias separadas del catálogo.
 
 export const WEAPONS  = ['sword', 'katana', 'bow'];
 export const ELEMENTS = ['fuego', 'hielo', 'viento', 'rayo', 'naturaleza', 'agua'];
@@ -13,6 +20,23 @@ export const ELEMENTS = ['fuego', 'hielo', 'viento', 'rayo', 'naturaleza', 'agua
 export const CHARACTER_ELEMENTS = {
   kael: ['fuego', 'rayo', 'naturaleza'],
   mika: ['hielo', 'viento', 'agua'],
+};
+
+// Rarezas de reliquia, en orden ascendente. Mismo esquema de 5 niveles
+// que el sistema de fusión de equipo, para mantener un solo lenguaje de
+// rareza en todo el juego.
+export const RELIC_RARITIES = ['comun', 'raro', 'epico', 'legendario', 'mitico'];
+
+// Multiplicador aplicado al valor base del efecto según la rareza de la
+// instancia dropeada. Reutiliza los mismos porcentajes que la fusión de
+// equipo (+8/+18/+30/+45/+65) para no inventar una escala nueva — pendiente
+// de que Luis confirme si quiere números distintos para reliquias.
+export const RARITY_MULTIPLIER = {
+  comun     : 1.00,
+  raro      : 1.08,
+  epico     : 1.18,
+  legendario: 1.30,
+  mitico    : 1.45,
 };
 
 const ELEMENT_ICON = {
@@ -32,6 +56,16 @@ const ELEMENT_COLOR = {
 
 const WEAPON_LABEL = {
   sword: 'Espada', katana: 'Katana', bow: 'Arco',
+};
+
+// Modelo de activación por arma (rework v2). Puramente informativo desde
+// este archivo — la lógica real vive en core/relics.js, pero se expone aquí
+// para que cualquier UI (inventario, tooltip) pueda mostrar cómo se activa
+// esta reliquia sin tener que conocer la lógica de combate.
+export const ACTIVATION_MODEL = {
+  sword : 'charge_shield',  // 4 golpes básicos -> botón 4s -> escudo 7s
+  katana: 'auto_combo',     // auto-activa en el 3er golpe del combo
+  bow   : 'aim_button',     // botón visible solo mientras se apunta
 };
 
 // Nombre temático + descripción corta por combinación (weapon_element).
@@ -64,6 +98,9 @@ const RELIC_INFO = {
 };
 
 // Catálogo final: 18 combinaciones ya llenas con nombre/color/effectId real.
+// Esto sigue siendo el catálogo de IDENTIDADES — no incluye rareza como
+// parte fija, porque la rareza ahora vive en la INSTANCIA dropeada, no en
+// la identidad de la reliquia (ver createRelicInstance()/RARITY_MULTIPLIER).
 export const RELICS = {};
 
 for (const weapon of WEAPONS) {
@@ -77,12 +114,12 @@ for (const weapon of WEAPONS) {
       section : 'reliquias',
       weapon,
       element,
-      rarity  : 'rara', // pendiente de balance de rareza — sin cambios respecto a antes
       icon    : ELEMENT_ICON[element],
       color   : ELEMENT_COLOR[element],
       name    : info?.name ?? `Reliquia de ${WEAPON_LABEL[weapon]} — ${ELEMENT_ICON[element]}`,
       desc    : info?.desc ?? '',
       effectId: key, // usado por core/relics.js para buscar su función de efecto
+      activation: ACTIVATION_MODEL[weapon],
     };
   }
 }
@@ -101,4 +138,51 @@ export function getElementColor(element) {
 
 export function getElementsForCharacter(charId) {
   return CHARACTER_ELEMENTS[charId] ?? ELEMENTS;
+}
+
+// ---------------------------------------------------------------------
+// Instancias de reliquia (rework v2 — loot de mazmorra)
+// ---------------------------------------------------------------------
+// Una instancia es lo que realmente vive en el inventario/loot del jugador:
+// la identidad (weapon+element) más una rareza propia. Dos reliquias con
+// el mismo relicId pueden tener distinta rareza si dropearon en mazmorras
+// distintas.
+
+let _instanceCounter = 0;
+
+// Crea una instancia de reliquia lista para meter al inventario/loot.
+// weapon/element: identidad (cuál de las 18). rarity: una de RELIC_RARITIES.
+export function createRelicInstance(weapon, element, rarity = 'comun') {
+  const base = getRelicData(weapon, element);
+  if (!base) return null;
+  if (!RELIC_RARITIES.includes(rarity)) rarity = 'comun';
+
+  _instanceCounter++;
+  return {
+    instanceId: `relicinst_${base.id}_${Date.now()}_${_instanceCounter}`,
+    relicId   : base.id,
+    weapon    : base.weapon,
+    element   : base.element,
+    rarity,
+    multiplier: RARITY_MULTIPLIER[rarity],
+  };
+}
+
+// Devuelve el valor de efecto ya escalado por la rareza de la instancia.
+// baseValue es el número base (ej. 0.08 para quemadura 8%) definido en el
+// balance oficial del proyecto; esta función solo aplica el multiplicador.
+export function getScaledEffectValue(baseValue, rarity) {
+  const mult = RARITY_MULTIPLIER[rarity] ?? 1;
+  return baseValue * mult;
+}
+
+// Filtra una lista de instancias de reliquia, dejando solo las que el
+// personaje dado puede equipar (arma fija del personaje + sus 3 elementos
+// permitidos). weaponOfCharacter es el arma ya elegida por ese personaje
+// (Kael: la elegida en pre-game; Mika: siempre 'bow').
+export function filterCompatibleInstances(instances, charId, weaponOfCharacter) {
+  const allowedElements = getElementsForCharacter(charId);
+  return instances.filter(inst =>
+    inst.weapon === weaponOfCharacter && allowedElements.includes(inst.element)
+  );
 }
