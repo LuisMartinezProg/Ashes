@@ -1,27 +1,56 @@
 // core/relics.js — Ashes of the Reborn | Valiant Gaming
 //
-// Sistema de activación de reliquias (reemplaza el modelo viejo de stats pasivos).
+// Sistema de activación de reliquias (rework v2).
 // Las reliquias NO suman stats. Cada reliquia tiene UN efecto activo único,
-// atado al par (arma, elemento), con duración y cooldown de 7s cada uno.
+// atado al par (arma, elemento) — pero AHORA la forma de activarla depende
+// del arma equipada, no es un solo botón universal:
 //
-// Los 18 efectos reales ya están registrados abajo (ver REGISTRO DE EFECTOS).
-// Activar una reliquia ahora sí produce un efecto de combate real, además del
-// tinte/partículas visuales que maneja este mismo archivo.
+//   Espada : se cargan 4 golpes básicos -> aparece un botón por 4s ->
+//            si se presiona, se activa un ESCUDO de 7s. Mientras el
+//            escudo está arriba, el efecto de la reliquia le pega al
+//            enemigo que golpee el escudo (como un contraataque).
+//   Katana : se cargan golpes básicos -> al 3er golpe, la reliquia se
+//            auto-activa sola (sin botón) por 7s, con el efecto normal
+//            por golpe conectado.
+//   Arco   : mientras el personaje está apuntando, aparece un botón de
+//            reliquia. Al presionarlo (o al disparar con él activo),
+//            se activa por 7s con el efecto normal por golpe conectado.
+//
+// La duración de 7s y el cooldown de 7s se mantienen para los 3 casos.
+// Los 18 efectos por combinación siguen siendo los mismos de antes.
 
 import { getRelicData, getElementColor } from '../data/relics.js';
 
-const EFFECT_DURATION = 7; // segundos
-const EFFECT_COOLDOWN = 7; // segundos
-const ENERGY_PER_HIT  = 15; // energía otorgada por golpe conectado mientras está activa (ver nota de balance abajo)
-const CHAIN_LIGHTNING_IMMUNITY = 3; // segundos que un enemigo queda "a salvo" de volver a ser blanco del rayo encadenado
+const EFFECT_DURATION = 7; // segundos que dura activa (katana/arco) o el escudo (espada)
+const EFFECT_COOLDOWN = 7; // segundos de cooldown tras terminar
+
+const ENERGY_PER_HIT  = 15; // energía otorgada por golpe conectado mientras está activa
+const CHAIN_LIGHTNING_IMMUNITY = 3; // segundos de "a salvo" tras ser blanco del rayo encadenado
+
+// Números de la carga de espada, confirmados por Luis:
+const SWORD_HITS_TO_CHARGE   = 4; // golpes básicos necesarios para que aparezca el botón
+const SWORD_BUTTON_WINDOW    = 4; // segundos que el botón permanece disponible antes de expirar
+const SWORD_SHIELD_DURATION  = 7; // segundos que dura el escudo una vez activado
+
+// Golpes necesarios para el auto-disparo de katana (patrón ya existente: 2 se acumulan, el 3ro libera)
+const KATANA_HITS_TO_TRIGGER = 3;
 
 // ── Estado de activación por personaje ─────────────────────────────────────
 function _makeState() {
   return {
-    active            : false,
-    timeRemaining     : 0,   // segundos restantes de efecto activo
-    cooldownRemaining : 0,   // segundos restantes de cooldown
-    hitsInWindow      : 0,   // golpes conectados desde que se activó (para efectos "3er golpe")
+    active            : false, // reliquia activa (katana/arco) O escudo activo (espada)
+    timeRemaining     : 0,     // segundos restantes de efecto activo / escudo
+    cooldownRemaining : 0,     // segundos restantes de cooldown
+
+    // Conteo de golpes básicos (espada y katana lo usan; arco no)
+    chargeHits        : 0,
+
+    // Espada: ventana en la que el botón está disponible tras cargar los golpes
+    buttonAvailable      : false,
+    buttonWindowRemaining: 0,
+
+    // Arco: si el personaje está actualmente en modo apuntado
+    isAiming: false,
   };
 }
 
@@ -31,12 +60,9 @@ const _state = {
 };
 
 // ── Registro de efectos por combinación (arma, elemento) ───────────────────
-// Firma esperada: (charId) => void — se ejecuta UNA VEZ al activarse la
-// reliquia (efectos de área/instantáneos). Los efectos "por golpe" (quemar
-// al impactar, curar por flecha, etc.) se manejan en onRelicHitConnected(),
-// más abajo, porque necesitan saber CUÁNDO conecta un golpe, no solo cuándo
-// se activó la reliquia.
-const _effects = {}; // key: `${weapon}_${element}` → función de efecto
+// (Sin cambios respecto a antes — se mantiene disponible para efectos
+// instantáneos futuros; hoy los 18 casos se resuelven en _applyPerHitEffect.)
+const _effects = {};
 
 export function registerRelicEffect(weapon, element, effectFn) {
   _effects[`${weapon}_${element}`] = effectFn;
@@ -66,59 +92,162 @@ export function getEquippedBy(relicId) {
   return null;
 }
 
-// ── Activación ───────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════
+// CARGA POR GOLPES — espada y katana comparten este conteo, pero cada
+// una reacciona distinto al llegar al umbral. Llamar desde combat.js en
+// CADA golpe básico conectado (no solo mientras la reliquia está activa).
+// ══════════════════════════════════════════════════════════════════════
 
-export function canActivateRelic(charId) {
+export function onBasicHitLanded(charId) {
+  const relic = getEquippedRelic(charId);
+  if (!relic) return;
+
   const state = _state[charId];
-  if (!state) return false;
-  if (state.active) return false;
-  if (state.cooldownRemaining > 0) return false;
-  return !!getEquippedRelic(charId);
+  if (!state) return;
+
+  // Si ya hay un escudo/reliquia activa, o está en cooldown, no se acumula
+  // (evita que el conteo siga corriendo mientras el efecto ya está en curso).
+  if (state.active || state.cooldownRemaining > 0) return;
+
+  if (relic.weapon === 'sword') {
+    state.chargeHits++;
+    if (state.chargeHits >= SWORD_HITS_TO_CHARGE) {
+      state.chargeHits = 0;
+      state.buttonAvailable       = true;
+      state.buttonWindowRemaining = SWORD_BUTTON_WINDOW;
+    }
+  } else if (relic.weapon === 'katana') {
+    state.chargeHits++;
+    if (state.chargeHits >= KATANA_HITS_TO_TRIGGER) {
+      state.chargeHits = 0;
+      _activateKatanaOrBow(charId, relic); // auto-activación, sin botón
+    }
+  }
+  // Arco no acumula golpes — su condición es isAiming, ver más abajo.
 }
 
+// Espada: ¿el botón de escudo está visible ahora mismo? (para que el HUD
+// sepa cuándo mostrarlo)
+export function isSwordButtonAvailable(charId) {
+  return !!_state[charId]?.buttonAvailable;
+}
+
+// Arco: la UI de apuntado llama esto al entrar/salir de ese modo.
+export function setAiming(charId, isAiming) {
+  const state = _state[charId];
+  if (!state) return;
+  state.isAiming = isAiming;
+}
+
+export function isAiming(charId) {
+  return !!_state[charId]?.isAiming;
+}
+
+// ── ¿Se puede activar la reliquia ahora mismo? (para el botón, el que sea) ──
+// La condición cambia según el arma equipada:
+//   espada  -> el botón de escudo debe estar disponible (ventana de 4s abierta)
+//   katana  -> nunca se activa por botón, es automática (ver onBasicHitLanded)
+//   arco    -> debe estar en modo apuntado
+export function canActivateRelic(charId) {
+  const state = _state[charId];
+  const relic = getEquippedRelic(charId);
+  if (!state || !relic) return false;
+  if (state.active) return false;
+  if (state.cooldownRemaining > 0) return false;
+
+  if (relic.weapon === 'sword') return state.buttonAvailable;
+  if (relic.weapon === 'bow')   return state.isAiming;
+  return false; // katana no se activa manualmente
+}
+
+// Punto de entrada manual (botón de espada presionado, o botón de arco
+// presionado/disparo con el arco apuntando). Katana NUNCA pasa por aquí.
 export function activateRelic(charId) {
   if (!canActivateRelic(charId)) return false;
 
   const relic = getEquippedRelic(charId);
-  if (!relic) return false;
+  const state = _state[charId];
 
+  if (relic.weapon === 'sword') {
+    state.buttonAvailable       = false;
+    state.buttonWindowRemaining = 0;
+    _activateSwordShield(charId, relic);
+    return true;
+  }
+
+  if (relic.weapon === 'bow') {
+    _activateKatanaOrBow(charId, relic);
+    return true;
+  }
+
+  return false;
+}
+
+// ── Activación real: katana (auto) y arco (botón/disparo) ──────────────────
+// Comparten el mismo comportamiento: 7s activa, efecto normal por golpe.
+function _activateKatanaOrBow(charId, relic) {
   const state = _state[charId];
   state.active            = true;
   state.timeRemaining     = EFFECT_DURATION;
   state.cooldownRemaining = EFFECT_COOLDOWN;
-  state.hitsInWindow      = 0;
 
   _spawnWeaponInfusion(charId, relic);
 
   const effectFn = _getEffectFn(relic.weapon, relic.element);
   if (effectFn) effectFn(charId);
-
-  return true;
 }
 
-// ── Golpe conectado mientras la reliquia está activa ────────────────────────
-// Llamado desde combat.js cada vez que un ataque básico impacta a un
-// enemigo (o se dispara, en el caso de armas a distancia). Maneja:
-//  1) el bono de energía (siempre, mismo valor para las 18 reliquias)
-//  2) los efectos "por golpe" que dependen del elemento/arma específicos
-//     (quemar al impactar, curar por flecha, el estallido del 3er golpe, etc.)
-// target puede ser null para efectos que no requieren un enemigo (curación,
-// escudo, buffs de movimiento). allEnemies es la lista completa de enemigos
-// activos en este momento — la necesita 'bow_rayo' (Flecha Fulgurante) para
-// encontrar a quién encadenar el rayo; el resto de efectos la ignoran.
-export function onRelicHitConnected(charId, target, allEnemies = []) {
+// ── Activación real: espada (escudo) ────────────────────────────────────────
+// No aplica el efecto al activarse — el efecto se dispara cuando un
+// enemigo golpea el escudo (ver onShieldHitByEnemy más abajo).
+function _activateSwordShield(charId, relic) {
   const state = _state[charId];
-  if (!state?.active) return;
+  state.active            = true; // "active" ahora significa "escudo arriba"
+  state.timeRemaining     = SWORD_SHIELD_DURATION;
+  state.cooldownRemaining = EFFECT_COOLDOWN;
 
-  state.hitsInWindow++;
+  _spawnWeaponInfusion(charId, relic);
+  // El escudo en sí (absorción de daño mientras dure) debe consultarse desde
+  // combat.js/el sistema de daño con isShieldActive(charId) antes de restar
+  // vida al personaje, igual que ya se hacía con el _shieldAmount anterior.
+}
 
-  const prog = _getProgression(charId);
-  prog?.addMagicEnergy?.(ENERGY_PER_HIT);
+export function isShieldActive(charId) {
+  const relic = getEquippedRelic(charId);
+  return relic?.weapon === 'sword' && !!_state[charId]?.active;
+}
+
+// Llamar desde el sistema de daño cuando un enemigo golpea al personaje Y
+// isShieldActive(charId) es true — en vez de restar vida, dispara el
+// efecto de la reliquia contra ESE enemigo (como un contraataque).
+// Asunción de diseño, pendiente de confirmar con Luis si no es lo esperado.
+export function onShieldHitByEnemy(charId, attacker) {
+  if (!isShieldActive(charId)) return;
 
   const relic = getEquippedRelic(charId);
   if (!relic) return;
 
-  _applyPerHitEffect(charId, relic, target, state.hitsInWindow, allEnemies);
+  _applyPerHitEffect(charId, relic, attacker, 3, []); // 3 = fuerza el "3er golpe" en efectos tipo katana, no aplica a espada pero no rompe nada
+
+  const prog = _getProgression(charId);
+  prog?.addMagicEnergy?.(ENERGY_PER_HIT);
+}
+
+// ── Golpe conectado por el JUGADOR mientras katana/arco están activas ──────
+// (Espada NO pasa por aquí — su efecto se dispara en onShieldHitByEnemy.)
+export function onRelicHitConnected(charId, target, allEnemies = []) {
+  const state = _state[charId];
+  if (!state?.active) return;
+
+  const relic = getEquippedRelic(charId);
+  if (!relic || relic.weapon === 'sword') return; // espada usa el flujo del escudo, no este
+
+  state.chargeHits++; // reutilizado aquí como conteo de golpes DENTRO de la ventana activa (para el patrón "3er golpe" de katana, si aplica dentro de la ventana también)
+
+  const prog = _getProgression(charId);
+  prog?.addMagicEnergy?.(ENERGY_PER_HIT);
+
+  _applyPerHitEffect(charId, relic, target, state.chargeHits, allEnemies);
 }
 
 // ── Tick (llamar cada frame desde el loop principal) ────────────────────────
@@ -132,11 +261,22 @@ export function update(delta) {
       if (state.timeRemaining <= 0) {
         state.timeRemaining = 0;
         state.active        = false;
+        state.chargeHits     = 0;
         _clearWeaponInfusion(charId);
       }
     } else if (state.cooldownRemaining > 0) {
       state.cooldownRemaining -= delta;
       if (state.cooldownRemaining < 0) state.cooldownRemaining = 0;
+    }
+
+    // Ventana del botón de espada: si expira sin presionarse, se cierra
+    // y hay que volver a cargar los 4 golpes desde cero.
+    if (state.buttonAvailable) {
+      state.buttonWindowRemaining -= delta;
+      if (state.buttonWindowRemaining <= 0) {
+        state.buttonAvailable       = false;
+        state.buttonWindowRemaining = 0;
+      }
     }
   }
 }
@@ -150,7 +290,7 @@ export function isRelicActive(charId) {
 export function getRelicCooldownPct(charId) {
   const state = _state[charId];
   if (!state) return 1;
-  if (state.active) return 1; // durante el efecto se considera "disponible visualmente lleno"
+  if (state.active) return 1;
   return 1 - (state.cooldownRemaining / EFFECT_COOLDOWN);
 }
 
@@ -160,13 +300,10 @@ export function getRelicTimeRemaining(charId) {
 
 // ══════════════════════════════════════════════════════════════════════
 // Infusión visual: tinte del arma + partículas del elemento.
-// Busca el mesh del arma equipada en window._player (kael) o
-// window._companion (mika) — ambos exponen su weapon actual vía
-// window._combat.weapon / window._companion (ver combat.js/companion.js).
-// Si no encuentra el mesh, no rompe nada — simplemente no hay efecto visual.
+// (Sin cambios respecto a la versión anterior.)
 // ══════════════════════════════════════════════════════════════════════
 
-const _activeInfusions = {}; // charId → { originalEmissive, particles[] }
+const _activeInfusions = {};
 
 function _getWeaponMesh(charId) {
   if (charId === 'mika') {
@@ -180,7 +317,7 @@ function _getScene(charId) {
 }
 
 function _spawnWeaponInfusion(charId, relic) {
-  _clearWeaponInfusion(charId); // por si quedó algo de una activación anterior
+  _clearWeaponInfusion(charId);
 
   const mesh  = _getWeaponMesh(charId);
   const color = getElementColor(relic.element);
@@ -188,8 +325,6 @@ function _spawnWeaponInfusion(charId, relic) {
 
   const infusion = { mesh, originalEmissive: null, particles: [], color };
 
-  // Tinte: guarda el emissive original del material para poder restaurarlo,
-  // y lo reemplaza por el color del elemento mientras dura el efecto.
   if (mesh?.material?.emissive) {
     infusion.originalEmissive = mesh.material.emissive.clone();
     mesh.material.emissive.set(color);
@@ -199,9 +334,6 @@ function _spawnWeaponInfusion(charId, relic) {
     }
   }
 
-  // Partículas: un pequeño sistema simple, 12 partículas orbitando el arma
-  // (o el jugador si no hay mesh de arma disponible), recicladas cada frame
-  // vía update() → _updateInfusionParticles().
   if (scene && window.THREE) {
     const THREE = window.THREE;
     const anchor = mesh ?? window._player ?? null;
@@ -244,8 +376,6 @@ function _clearWeaponInfusion(charId) {
   delete _activeInfusions[charId];
 }
 
-// Llamar cada frame (junto con update() de arriba) para animar las
-// partículas orbitando el arma/personaje mientras la reliquia está activa.
 export function updateInfusionParticles(delta) {
   for (const charId of Object.keys(_activeInfusions)) {
     const infusion = _activeInfusions[charId];
@@ -265,12 +395,9 @@ export function updateInfusionParticles(delta) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// REGISTRO DE EFECTOS — las 18 combinaciones, ya conectadas.
-// applyBurn(dps, seconds) y applySlow(pct, seconds) ya existen en los
-// enemigos (confirmado por su uso en combat.js) — se reusan aquí.
-// Para efectos de jugador (curar, escudo, velocidad, esquiva) se usa el
-// personaje activo vía window._partyManager?.getActiveCharacter() ??
-// window._player, siguiendo el mismo patrón que combat.js ya usa.
+// REGISTRO DE EFECTOS — las 18 combinaciones. Sin cambios en el contenido
+// de cada efecto respecto a la versión anterior; solo cambió QUIÉN y
+// CUÁNDO los llama (ver onRelicHitConnected y onShieldHitByEnemy arriba).
 // ══════════════════════════════════════════════════════════════════════
 
 function _getActiveChar() {
@@ -284,11 +411,6 @@ function _healActiveChar(amount) {
   char.onDamage?.(char.hp, char.maxHp);
 }
 
-// Escudo simple: un campo _shieldAmount en el personaje activo que combat.js
-// / el sistema de daño puede consultar para absorber golpes antes que la
-// vida. Si el proyecto no tiene todavía ese consumo implementado del lado
-// de "recibir daño", el escudo se otorga igual (queda listo para cuando
-// exista ese enganche) — no rompe nada mientras tanto.
 function _grantShield(amount, seconds) {
   const char = _getActiveChar();
   if (!char) return;
@@ -299,14 +421,14 @@ function _grantShield(amount, seconds) {
 function _grantSpeedBuff(pct, seconds) {
   const char = _getActiveChar();
   if (!char) return;
-  char._speedBuffPct    = pct;
+  char._speedBuffPct      = pct;
   char._speedBuffExpireAt = performance.now() + seconds * 1000;
 }
 
 function _grantDodgeChance(pct, seconds) {
   const char = _getActiveChar();
   if (!char) return;
-  char._dodgeChancePct    = pct;
+  char._dodgeChancePct      = pct;
   char._dodgeChanceExpireAt = performance.now() + seconds * 1000;
 }
 
@@ -327,9 +449,6 @@ function _pushCharForward(strength) {
   char.position.z += Math.cos(char.rotation.y) * strength;
 }
 
-// Busca, dentro de allEnemies, al enemigo vivo más cercano a 'from' que NO
-// tenga la marca de inmunidad al encadenado activa todavía. Usado por
-// 'bow_rayo' (Flecha Fulgurante) para no rebotar siempre entre los mismos 2.
 function _findChainTarget(from, allEnemies) {
   if (!from?.mesh?.position) return null;
   const now = performance.now();
@@ -348,33 +467,22 @@ function _findChainTarget(from, allEnemies) {
   return closest;
 }
 
-// Efectos "por golpe" — se llaman desde onRelicHitConnected(). hitsInWindow
-// es el conteo de golpes desde la activación (usado por los efectos que
-// solo actúan en el 3er golpe, patrón Katana). allEnemies solo lo usa
-// 'bow_rayo' para el encadenado — el resto de casos lo ignora.
 function _applyPerHitEffect(charId, relic, target, hitsInWindow, allEnemies) {
   const key = `${relic.weapon}_${relic.element}`;
-  const isThirdHit = (hitsInWindow % 3 === 0); // patrón Katana: cada 3er golpe
+  const isThirdHit = (hitsInWindow % 3 === 0);
 
   switch (key) {
-    // 🔥 Fuego
     case 'sword_fuego':      target?.applyBurn?.(4, 3); break;
     case 'katana_fuego':     if (isThirdHit) target?.applyBurn?.(8, 3); break;
     case 'bow_fuego':        target?.applyBurn?.(3, 4); break;
 
-    // ❄️ Hielo
     case 'sword_hielo':      target?.applySlow?.(0.35, 2.5); break;
     case 'katana_hielo':     if (isThirdHit) target?.applySlow?.(0.6, 2.5); break;
     case 'bow_hielo':        target?.applySlow?.(0.3, 2); break;
 
-    // ⚡ Rayo
     case 'sword_rayo':       if (Math.random() < 0.35) target?.applyStun?.(1.2); break;
     case 'katana_rayo':      if (isThirdHit) target?.takeDamage?.(18); break;
     case 'bow_rayo': {
-      // Flecha Fulgurante: encadena el rayo al enemigo vivo más cercano al
-      // golpeado que no esté ya "inmune" al encadenado (evita rebotar
-      // siempre entre los mismos 2). Si no hay ninguno disponible, el
-      // golpe simplemente no encadena esta vez — no rompe nada.
       const chainTarget = _findChainTarget(target, allEnemies);
       if (chainTarget) {
         chainTarget.takeDamage?.(10);
@@ -383,36 +491,21 @@ function _applyPerHitEffect(charId, relic, target, hitsInWindow, allEnemies) {
       break;
     }
 
-    // 🌪️ Viento (beneficio jugador)
     case 'sword_viento':     _pushCharForward(1.2); break;
     case 'katana_viento':    if (isThirdHit) _grantSpeedBuff(0.3, 2); break;
     case 'bow_viento':       if (target) _pushCharAwayFrom(target, 1.0); break;
 
-    // 🌿 Naturaleza (beneficio jugador)
     case 'sword_naturaleza': _healActiveChar(6); break;
     case 'katana_naturaleza':if (isThirdHit) _healActiveChar(14); break;
     case 'bow_naturaleza':   _healActiveChar(3); break;
 
-    // 💧 Agua (beneficio jugador)
     case 'sword_agua':       _grantShield(15, 3); break;
     case 'katana_agua':      if (isThirdHit) _grantShield(25, 3); break;
     case 'bow_agua':         _grantDodgeChance(0.25, 3); break;
   }
 }
 
-// ── Efectos "al activarse" (área/instantáneos, no dependen de golpes) ──────
-// Las 18 reliquias ya están cubiertas por efectos "por golpe" arriba —
-// ninguna necesitaba además un efecto instantáneo separado al activarse,
-// así que este registro queda disponible para el futuro pero vacío por ahora.
-// (Se deja registerRelicEffect/_getEffectFn funcionando por si alguna
-// reliquia futura sí lo necesita.)
-
 // ── Compatibilidad con el sistema viejo (stats) ─────────────────────────────
-// Las reliquias ya no suman stats. Estas funciones se mantienen porque
-// combat.js y otros archivos dependen de window._effectiveStats /
-// window._effectiveStatsMika para calcular daño (eff.atk). Ahora simplemente
-// devuelven los stats base sin modificar, para no romper nada existente.
-
 export function computeEffectiveStats(baseStats) {
   return { ...baseStats };
 }
