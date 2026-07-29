@@ -220,11 +220,10 @@ export class Enemy {
 
     this._lookAt(activePos);
   }
-
-  _doAttack() {
+_doAttack() {
     const target = this._getActiveTarget();
     if (!target) return;
-    target.takeDamage?.(ATTACK_DAMAGE);
+    target.takeDamage?.(ATTACK_DAMAGE, this); // ahora pasa "this" (el enemigo) como atacante
 
     for (const mat of this._materials) mat.color.setHex(0xff6600);
     setTimeout(() => {
@@ -234,7 +233,8 @@ export class Enemy {
       }
     }, 80);
   }
-
+  
+  
   _moveTo(target, speed, delta) {
     if (!this.mesh) return;
     const pos  = this.mesh.position;
