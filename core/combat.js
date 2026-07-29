@@ -6,7 +6,7 @@ import { SwordWeapon  } from './weapons/sword.js';
 import { MagicWeapon  } from './weapons/magic.js';
 import { BowWeapon    } from './weapons/bow.js';
 import { BranchMissionSystem } from './branchMissions.js';
-import { isRelicActive, onRelicHitConnected } from './relics.js';
+import { isRelicActive, onRelicHitConnected, onBasicHitLanded } from './relics.js';
 
 const ATTACK_RANGE        = 2.5;
 const COMBO_WINDOW        = 600;
@@ -79,19 +79,28 @@ export class CombatSystem {
       ?? this._progression.getStats();
   }
 
-  // ── Reliquia: bono de energía + efectos por golpe si está activa ────────
-  // CAMBIO: ahora también pasa this.enemies (la lista completa de enemigos
-  // en pantalla) a onRelicHitConnected(), porque el efecto de la reliquia
-  // 'Flecha Fulgurante' (rayo del arco) necesita esa lista para encontrar
-  // a qué otro enemigo cercano encadenar el rayo. El resto de los 17
-  // efectos de reliquia ignoran esta lista sin problema.
-  _grantRelicEnergyIfActive(target = null) {
+  // ── Identidad del personaje activo (para relics.js) ──────────────────────
+  _getActiveCharId() {
     const active = window._partyManager?.getActiveCharacter?.();
-    const charId = (active && active === window._companion) ? 'mika' : 'kael';
+    return (active && active === window._companion) ? 'mika' : 'kael';
+  }
 
+  // ── Reliquia: bono de energía + efectos por golpe si está activa ────────
+  // Pasa this.enemies (lista completa de enemigos en pantalla), porque el
+  // efecto 'Flecha Fulgurante' (rayo del arco) necesita esa lista para
+  // encontrar a qué otro enemigo cercano encadenar el rayo. El resto de
+  // los efectos de reliquia ignoran esta lista sin problema.
+  _grantRelicEnergyIfActive(target = null) {
+    const charId = this._getActiveCharId();
     if (!isRelicActive(charId)) return;
-
     onRelicHitConnected(charId, target, this.enemies);
+  }
+
+  // ── NUEVO: avisa a relics.js que se dio un golpe básico, para que
+  // espada/katana puedan acumular su conteo de carga (independiente de si
+  // la reliquia está activa o no — este aviso siempre se manda).
+  _notifyBasicHit() {
+    onBasicHitLanded(this._getActiveCharId());
   }
 
   setWeapon(type) {
@@ -172,6 +181,7 @@ export class CombatSystem {
       this.weapon.execute(hitIndex, this.enemies);
       this._triggerShake(0.5);
       this._grantRelicEnergyIfActive(this.closestEnemyInRange());
+      this._notifyBasicHit(); // arco: no acumula carga, pero no rompe nada avisarlo igual
 
       if (subtypeId && this._missions) {
         const estimatedDmg = this.weapon.getDamage?.(hitIndex) ?? 0;
@@ -187,9 +197,7 @@ export class CombatSystem {
 
         // ── Bonus de arma: usa el arma EQUIPADA si existe (sus stats.ATK
         // reemplazan la fórmula), o si no hay ninguna equipada, cae a la
-        // fórmula original por nivel de arma. Antes esto llamaba a un método
-        // que no existía en prog (getWeaponDamageBonus no era método de
-        // instancia), por lo que el bonus nunca se aplicaba: bug corregido.
+        // fórmula original por nivel de arma.
         const weaponDamage = prog.getEffectiveWeaponDamage?.(this._weaponType) ?? 0;
         if (weaponDamage) dmg += weaponDamage;
 
@@ -201,6 +209,7 @@ export class CombatSystem {
         target.takeDamage(dmg);
         this._triggerShake(1.0);
         this._grantRelicEnergyIfActive(target);
+        this._notifyBasicHit(); // espada/katana: acumula carga hacia el botón/auto-activación
 
         if (subtypeId && this._missions) {
           this._missions.registerDamage(this._weaponType, subtypeId, dmg);
