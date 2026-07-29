@@ -6,12 +6,28 @@
 // posición dentro del tier desc (la versión II/más evolucionada).
 // Sin elección del jugador; se recalcula en cada refresh().
 //
-// Nuevo: botón 🌳 abre el panel de árbol de habilidades (4 ramas × 9
-// slots del arma activa) con desbloqueo real vía progression.unlockTreeSkill().
+// Botón 🌳 abre el panel de árbol de habilidades (4 ramas × 9 slots del
+// arma activa) con desbloqueo real vía progression.unlockTreeSkill().
 // Tier 3 se muestra bloqueado con candado distinto (🔒 Pendiente) — pausado
 // a propósito hasta que exista contenido narrativo de jefes.
+//
+// REWORK v2 — reliquia: el botón único de reliquia (💠, tap libre para
+// cualquier arma) se reemplaza por 2 botones situacionales, cada uno
+// visible solo cuando le corresponde a su arma:
+//   - Espada: botón de ESCUDO, visible solo durante la ventana de 4s tras
+//     cargar 4 golpes básicos (isSwordButtonAvailable). Al presionarlo,
+//     activa el escudo de 7s.
+//   - Arco: botón de reliquia normal, visible mientras el arco esté
+//     equipado y disponible (no hay modo de apuntado en el juego, así que
+//     esa es la condición real, no "mientras apunta").
+//   - Katana: SIN botón — se auto-activa sola al 3er golpe del combo, no
+//     necesita ninguna acción del jugador aquí. Su progreso de carga se
+//     verá en el propio personaje 3D, no en este HUD 2D.
 
-import { activateRelic, isRelicActive, getRelicCooldownPct, getEquippedRelic } from '../core/relics.js';
+import {
+  activateRelic, isRelicActive, getRelicCooldownPct, getEquippedRelic,
+  isSwordButtonAvailable,
+} from '../core/relics.js';
 import { SKILL_LAYERS } from '../data/palette.js';
 import { getWeaponTree, getAllBranchIds, getBranch } from '../core/skillData.js';
 
@@ -34,7 +50,8 @@ export class SkillBar {
     this._sprintBtn         = null;
     this._buildBtn          = null;
     this._jumpBtn           = null;
-    this._relicBtn          = null;
+    this._relicBtn          = null; // usado por arco (reliquia normal)
+    this._shieldBtn         = null; // usado por espada (activar escudo)
     this._treeBtn           = null;
     this._container         = null;
     this._cooldowns         = {};
@@ -53,7 +70,7 @@ export class SkillBar {
     this._resizeHandler = () => this._rebuild();
     window.addEventListener('resize', this._resizeHandler);
     this._proximityInterval   = setInterval(() => this._checkEnemyProximity(), 500);
-    this._relicUpdateInterval = setInterval(() => this._updateRelicBtn(), 100);
+    this._relicUpdateInterval = setInterval(() => this._updateRelicButtons(), 100);
   }
 
   setWeapon(type) {
@@ -103,8 +120,6 @@ export class SkillBar {
       branch.skills.forEach((skill, idxInBranch) => {
         if (!skill?.id) return;
         if (!prog.hasPassedTrial(skill.id)) return;
-        // idxInTier: posición dentro de su propio tier (0,1,2), usado como
-        // desempate — mayor posición = versión más evolucionada (ej. la "II").
         const tierStartIdx = { 1: 0, 2: 3, 3: 6 }[skill.tier] ?? 0;
         const idxInTier = idxInBranch - tierStartIdx;
         unlocked.push({
@@ -197,31 +212,57 @@ export class SkillBar {
     this._sprintBtn.title             = 'Sprint';
   }
 
-  // ── Reliquia: aparece/desaparece según estado ───────────────────────────
-  _updateRelicBtn() {
-    if (!this._relicBtn) return;
+  // ── Reliquia: qué arma tiene el personaje activo AHORA (para decidir
+  // cuál de los 2 botones situacionales mostrar, si alguno) ──────────────
+  _getActiveWeaponForRelic() {
+    // Mika siempre usa arco; Kael usa la que tenga equipada (this._weapon).
+    if (this._activeCharId === 'mika') return 'bow';
+    return this._activeWeapon ?? this._weapon;
+  }
 
+  // ── Reliquia: actualiza los 2 botones situacionales (arco y espada).
+  // Katana no tiene botón — no aparece nada para ella aquí.
+  _updateRelicButtons() {
     const charId = this._activeCharId ?? 'kael';
     const relic  = getEquippedRelic(charId);
+    const weapon = this._getActiveWeaponForRelic();
 
-    // Sin reliquia equipada: el botón no se muestra
+    // Sin reliquia equipada: ningún botón se muestra.
     if (!relic) {
-      this._relicBtn.style.display = 'none';
+      if (this._relicBtn)  this._relicBtn.style.display  = 'none';
+      if (this._shieldBtn) this._shieldBtn.style.display = 'none';
       return;
     }
-    window._tutorial?.notifyHasRelic?.();   //
-    // Activa: el botón desaparece por completo durante los 7s de efecto
-    if (isRelicActive(charId)) {
-      this._relicBtn.style.display = 'none';
-      return;
+    window._tutorial?.notifyHasRelic?.();
+
+    // ── Botón de arco ────────────────────────────────────────────────────
+    if (this._relicBtn) {
+      if (weapon !== 'bow') {
+        this._relicBtn.style.display = 'none';
+      } else if (isRelicActive(charId)) {
+        // Activa: desaparece durante los 7s de efecto, igual que antes.
+        this._relicBtn.style.display = 'none';
+      } else {
+        this._relicBtn.style.display = 'flex';
+        const pct = getRelicCooldownPct(charId);
+        const overlay = this._relicBtn.querySelector('.relic-cooldown');
+        if (overlay) overlay.style.height = `${(1 - pct) * 100}%`;
+        this._relicBtn.style.opacity = pct < 1 ? '0.55' : '1';
+      }
     }
 
-    // En cooldown o lista: visible, con overlay de progreso
-    this._relicBtn.style.display = 'flex';
-    const pct = getRelicCooldownPct(charId); // 0 a 1, 1 = lista
-    const overlay = this._relicBtn.querySelector('.relic-cooldown');
-    if (overlay) overlay.style.height = `${(1 - pct) * 100}%`;
-    this._relicBtn.style.opacity = pct < 1 ? '0.55' : '1';
+    // ── Botón de espada (escudo) ─────────────────────────────────────────
+    if (this._shieldBtn) {
+      if (weapon !== 'sword') {
+        this._shieldBtn.style.display = 'none';
+      } else if (isSwordButtonAvailable(charId)) {
+        // Solo visible durante la ventana de 4s tras cargar los 4 golpes.
+        this._shieldBtn.style.display = 'flex';
+        this._shieldBtn.style.opacity = '1';
+      } else {
+        this._shieldBtn.style.display = 'none';
+      }
+    }
   }
 
   _rebuild() {
@@ -230,14 +271,15 @@ export class SkillBar {
       const wasTreeVisible = this._treeVisible;
       if (this._container) this._container.remove();
       if (this._treePanel) this._treePanel.remove();
-      this._buttons   = [];
-      this._attackBtn = null;
-      this._sprintBtn = null;
-      this._buildBtn  = null;
-      this._jumpBtn   = null;
-      this._relicBtn  = null;
-      this._treeBtn   = null;
-      this._treePanel = null;
+      this._buttons    = [];
+      this._attackBtn  = null;
+      this._sprintBtn  = null;
+      this._buildBtn   = null;
+      this._jumpBtn    = null;
+      this._relicBtn   = null;
+      this._shieldBtn  = null;
+      this._treeBtn    = null;
+      this._treePanel  = null;
       this._build();
       this._buildTreePanel();
       if (this._weapon || this._activeWeapon) this.refresh();
@@ -385,7 +427,7 @@ export class SkillBar {
     this._jumpBtn.addEventListener('click', onJump);
     this._container.appendChild(this._jumpBtn);
 
-    // Botón reliquia
+    // ── Botón reliquia — ARCO (visible solo si el arma activa es arco) ────
     this._relicBtn = this._buildSmallBtn('💠', skSize, 'rgba(180,80,255,0.5)');
     this._placeFromBottomRight(this._relicBtn, 600, 200, skSize);
     this._relicBtn.style.overflow = 'hidden';
@@ -413,9 +455,29 @@ export class SkillBar {
     this._relicBtn.addEventListener('touchstart', onRelic, { passive: false });
     this._relicBtn.addEventListener('click', onRelic);
     this._container.appendChild(this._relicBtn);
-    this._updateRelicBtn();
 
-    // Botón árbol de habilidades (nuevo) — junto a la reliquia, un poco
+    // ── Botón reliquia — ESPADA (escudo, visible solo en la ventana de 4s
+    // tras cargar los 4 golpes básicos) ────────────────────────────────────
+    this._shieldBtn = this._buildSmallBtn('🛡️', skSize, 'rgba(120,180,255,0.7)');
+    this._placeFromBottomRight(this._shieldBtn, 600, 200, skSize); // misma posición que el de arco: nunca se muestran los 2 a la vez
+    this._shieldBtn.style.display = 'none';
+
+    const onShield = (e) => {
+      e.preventDefault();
+      const charId = this._activeCharId ?? 'kael';
+      const ok = activateRelic(charId);
+      if (ok) {
+        this._shieldBtn.style.transform = 'scale(0.88)';
+        setTimeout(() => this._shieldBtn.style.transform = 'scale(1)', 140);
+      }
+    };
+    this._shieldBtn.addEventListener('touchstart', onShield, { passive: false });
+    this._shieldBtn.addEventListener('click', onShield);
+    this._container.appendChild(this._shieldBtn);
+
+    this._updateRelicButtons();
+
+    // Botón árbol de habilidades — junto a la reliquia, un poco
     // más arriba para no chocar en pantallas angostas.
     this._treeBtn = this._buildSmallBtn('🌳', skSize, 'rgba(120,220,140,0.5)');
     this._placeFromBottomRight(this._treeBtn, 600, 270, skSize);
@@ -503,9 +565,6 @@ export class SkillBar {
     wrap.appendChild(layerDot);
     wrap.appendChild(cooldown);
 
-    // El botón ahora llama a castTreeSkill(weapon, branchId, slotId, prog)
-    // en vez de castSkill(skillId) directo — necesita weapon+branchId+slotId,
-    // guardados en el dataset por _updateButton().
     const onPress = (e) => {
       e.preventDefault();
       if (!wrap.dataset.skillId) return;
@@ -543,8 +602,8 @@ export class SkillBar {
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // Panel de árbol de habilidades — 4 ramas × 9 slots del arma activa,
-  // con estado visual y desbloqueo real vía progression.unlockTreeSkill().
+  // Panel de árbol de habilidades — sin cambios respecto a la versión
+  // anterior.
   // ══════════════════════════════════════════════════════════════════════
 
   _buildTreePanel() {
@@ -573,9 +632,6 @@ export class SkillBar {
     this._treeVisible = true;
     this._treePanel.style.display = 'block';
     this._renderTreePanel();
-    // Refresca cada 800ms mientras está abierto — así si el jugador gana
-    // xp/reputación/cristales en otra pantalla y vuelve, ve el estado real
-    // sin tener que cerrar y reabrir.
     this._treeUpdateInterval = setInterval(() => {
       if (this._treeVisible) this._renderTreePanel();
     }, 800);
@@ -609,7 +665,6 @@ export class SkillBar {
       this._treeActiveBranch = branchIds[0];
     }
 
-    // ── Header: título + botón cerrar ──────────────────────────────────
     const header = document.createElement('div');
     header.style.cssText = `
       display:flex;justify-content:space-between;align-items:center;
@@ -628,7 +683,6 @@ export class SkillBar {
     header.appendChild(closeBtn);
     this._treePanel.appendChild(header);
 
-    // ── Tabs de rama ────────────────────────────────────────────────────
     const tabRow = document.createElement('div');
     tabRow.style.cssText = 'display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;';
     branchIds.forEach(branchId => {
@@ -650,7 +704,6 @@ export class SkillBar {
     });
     this._treePanel.appendChild(tabRow);
 
-    // ── Grid de slots de la rama activa ────────────────────────────────
     const branch = getBranch(weapon, this._treeActiveBranch);
     const grid = document.createElement('div');
     grid.style.cssText = `
@@ -711,7 +764,6 @@ export class SkillBar {
     }
 
     if (isTier3) {
-      // Tier 3: pausado, candado explícito distinto al de "aún no cumples requisitos"
       const lock = document.createElement('div');
       lock.style.cssText = 'font-size:10px;color:#888;text-align:center;margin-top:auto;';
       lock.textContent = '🔒 Pendiente (contenido narrativo)';
@@ -722,7 +774,6 @@ export class SkillBar {
       badge.textContent = '✓ Desbloqueada';
       card.appendChild(badge);
     } else {
-      // Costo + botón de desbloqueo
       const cost = document.createElement('div');
       cost.style.cssText = 'font-size:9px;color:#999;';
       cost.textContent = `XP ${skill.cost?.xp ?? 0} · Rep ${skill.cost?.reputacion ?? 0} · 💎${skill.cost?.cristales ?? 0}`;
@@ -742,8 +793,8 @@ export class SkillBar {
         btn.addEventListener('click', () => {
           const result = prog.unlockTreeSkill(weapon, branchId, skill.id);
           if (result.ok) {
-            this._renderTreePanel(); // refresca el panel al instante
-            this.refresh();          // los 3 botones de combate pueden cambiar
+            this._renderTreePanel();
+            this.refresh();
           }
         });
       }
