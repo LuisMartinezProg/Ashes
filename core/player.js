@@ -3,6 +3,7 @@
  * Ashes of the Reborn | Valiant Gaming
  */
 import { notifyCharacterDown } from './gameOverSystem.js';
+import { isShieldActive, onShieldHitByEnemy } from './relics.js';
 import * as THREE from 'three';
 
 const MOVE_SPEED     = 5.0;
@@ -158,12 +159,25 @@ export class Player {
     return this.root.position.clone().add(new THREE.Vector3(0, 1.2, 0));
   }
 
-  takeDamage(amount) {
+  // CAMBIO: takeDamage ahora recibe también quién ataca (attacker), para
+  // que el escudo de reliquia de espada sepa a quién contraatacar. Si algo
+  // en el juego todavía llama takeDamage(amount) sin ese segundo dato,
+  // sigue funcionando igual que antes (attacker queda undefined, el escudo
+  // simplemente no tiene a quién pegarle ese golpe en particular).
+  takeDamage(amount, attacker = null) {
+    // Si el escudo de espada está arriba, el golpe no resta vida: en vez
+    // de eso, dispara el efecto de la reliquia contra el atacante (un
+    // contraataque), y ahí termina — no se procesa como daño normal.
+    if (isShieldActive('kael')) {
+      onShieldHitByEnemy('kael', attacker);
+      return;
+    }
+
     const def     = window._prog?.getStats?.()?.def ?? 5;
     const reduced = Math.max(1, Math.floor(amount * (1 - def / (def + 50))));
     this.hp       = Math.max(0, this.hp - reduced);
     if (this.onDamage) this.onDamage(this.hp, this.maxHp);
-    if (this.hp <= 0) notifyCharacterDown('kael');   // ← nuevo
+    if (this.hp <= 0) notifyCharacterDown('kael');
   }
 
   destroy() {
