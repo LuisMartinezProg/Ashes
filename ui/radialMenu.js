@@ -2,6 +2,8 @@
  * ui/radialMenu.js — Menú radial, botones se deslizan hacia la izquierda
  */
 
+import { MOCHIGO, THEME } from '../data/palette.js';
+
 const HOLD_DELAY = 500; // ms para distinguir tap de hold
 
 export class RadialMenu {
@@ -20,7 +22,7 @@ export class RadialMenu {
     this._btn.innerHTML = `
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
         <path d="M14 2 L16 12 L26 14 L16 16 L14 26 L12 16 L2 14 L12 12 Z"
-              fill="#C9A84C" opacity="0.9"/>
+              fill="${MOCHIGO.jahoda.gold}" opacity="0.9"/>
       </svg>
     `;
     Object.assign(this._btn.style, {
@@ -30,7 +32,7 @@ export class RadialMenu {
       width    : '44px',
       height   : '44px',
       borderRadius: '50%',
-      border   : '1px solid rgba(201,168,76,0.4)',
+      border   : `1px solid ${MOCHIGO.jahoda.gold}66`,
       background: 'rgba(10,8,20,0.88)',
       cursor   : 'pointer',
       zIndex   : '160',
@@ -59,7 +61,7 @@ export class RadialMenu {
       }, HOLD_DELAY);
 
       // Feedback visual de carga
-      this._btn.style.boxShadow = '0 0 0 0 rgba(201,168,76,0.6)';
+      this._btn.style.boxShadow = `0 0 0 0 ${MOCHIGO.jahoda.gold}99`;
       this._startHoldRing();
 
     }, { passive: false });
@@ -114,7 +116,7 @@ export class RadialMenu {
       height       : '52px',
       borderRadius : '50%',
       border       : '2px solid transparent',
-      borderTopColor: '#c9a84c',
+      borderTopColor: MOCHIGO.jahoda.gold,
       zIndex       : '159',
       pointerEvents: 'none',
       display      : 'none',
@@ -176,7 +178,7 @@ export class RadialMenu {
       btn.innerHTML = `
         <div style="font-size:22px;line-height:1;">${item.icon}</div>
         <div style="font-family:system-ui,sans-serif;font-size:8px;
-             letter-spacing:0.5px;color:${item.locked ? '#555' : '#c9a84c'};
+             letter-spacing:0.5px;color:${item.locked ? '#555' : MOCHIGO.jahoda.gold};
              margin-top:3px;white-space:nowrap;">${item.label}</div>
       `;
 
@@ -190,7 +192,7 @@ export class RadialMenu {
         width        : `${size}px`,
         height       : `${size}px`,
         borderRadius : '12px',
-        border       : `1px solid rgba(201,168,76,${item.locked ? '0.1' : '0.35'})`,
+        border       : `1px solid ${MOCHIGO.jahoda.gold}${item.locked ? '1A' : '59'}`,
         background   : `rgba(10,8,20,${item.locked ? '0.6' : '0.92'})`,
         cursor       : item.locked ? 'not-allowed' : 'pointer',
         zIndex       : '160',
@@ -233,7 +235,7 @@ export class RadialMenu {
     this._open = true;
     this._overlay.style.display = 'block';
     this._btn.style.transform   = 'rotate(45deg)';
-    this._btn.style.boxShadow   = '0 0 20px rgba(201,168,76,0.4)';
+    this._btn.style.boxShadow   = `0 0 20px ${MOCHIGO.jahoda.gold}66`;
     this._renderRays();
   }
 
