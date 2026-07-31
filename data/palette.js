@@ -9,12 +9,12 @@
 // con nombre, para no tener hex sueltos en ningún archivo de ui/.
 
 export const MOCHIGO = {
-  furina:   { dark: '#0D2B4E', light: '#4AB3E8' },
-  clorinde: { dark: '#2D1B4E', light: '#7B4FBF' },
-  skirk:    { light: '#E8E0F5', dark: '#3D1F6E', teal: '#4DD9D9', black: '#080810' },
-  navia:    { dark: '#2E5478', light: '#7EB8D4' },
-  jahoda:   { gold: '#C9A84C', purple: '#B07FEF', green: '#4CAF88' },
-  accent:   '#EDD47A',
+  furina:   { dark: ''#172B4D', light: ''#75C7E8' },
+  clorinde: { dark: ''#33294F', light: '#8A7DDB' },
+  skirk:    { light: '#D7E9FF', dark: '#141828', teal: '#57C6D9', black: '#080B14' },
+  navia:    { dark: '#285943', light: '#A8D98A' },
+  jahoda:   { gold: '#D7B35A', purple: '#8A7DDB', green: '#5FA86E' },
+  accent:   '#F3D98B',
 };
 
 // ── Roles semánticos (mismo mapeo que :root en mochigo.css) ──
