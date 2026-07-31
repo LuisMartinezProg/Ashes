@@ -1,5 +1,7 @@
 // ui/keybindMenu.js — Menú de keybindings | Ashes of the Reborn
 
+import { MOCHIGO } from '../data/palette.js';
+
 const ACTION_LABELS = {
   Adelante  : '⬆️ Adelante',
   Atrás     : '⬇️ Atrás',
@@ -55,7 +57,7 @@ export class KeybindMenu {
     Object.assign(title.style, {
       fontFamily   : "'Cinzel', serif",
       fontSize     : '18px',
-      color        : '#C9A84C',
+      color        : MOCHIGO.jahoda.gold,
       letterSpacing: '4px',
       marginBottom : '24px',
     });
@@ -65,7 +67,7 @@ export class KeybindMenu {
     const mouseNote = document.createElement('div');
     Object.assign(mouseNote.style, {
       fontFamily   : 'monospace', fontSize: '10px',
-      color        : 'rgba(201,168,76,0.6)',
+      color        : `${MOCHIGO.jahoda.gold}99`,
       marginBottom : '16px', letterSpacing: '1px',
       textAlign    : 'center',
     });
@@ -85,13 +87,13 @@ export class KeybindMenu {
         alignItems    : 'center',
         background    : 'rgba(255,255,255,0.04)',
         borderRadius  : '8px', padding: '8px 14px',
-        border        : '1px solid rgba(201,168,76,0.15)',
+        border        : `1px solid ${MOCHIGO.jahoda.gold}26`,
       });
 
       const actionLabel = document.createElement('div');
       Object.assign(actionLabel.style, {
         fontFamily   : 'monospace', fontSize: '12px',
-        color        : '#C9A84C', letterSpacing: '1px',
+        color        : MOCHIGO.jahoda.gold, letterSpacing: '1px',
       });
       actionLabel.textContent = label;
 
@@ -126,8 +128,8 @@ export class KeybindMenu {
     resetBtn.textContent = 'RESET';
     Object.assign(resetBtn.style, {
       fontFamily   : 'monospace', fontSize: '11px',
-      color        : '#C9A84C', background: 'transparent',
-      border       : '1px solid rgba(201,168,76,0.4)',
+      color        : MOCHIGO.jahoda.gold, background: 'transparent',
+      border       : `1px solid ${MOCHIGO.jahoda.gold}66`,
       borderRadius : '8px', padding: '8px 20px',
       cursor       : 'pointer', letterSpacing: '2px',
     });
@@ -144,9 +146,9 @@ export class KeybindMenu {
     this._confirmBtn.textContent = '✓ CONFIRMAR';
     Object.assign(this._confirmBtn.style, {
       fontFamily   : 'monospace', fontSize: '11px',
-      color        : '#44ff88',
-      background   : 'rgba(100,200,100,0.15)',
-      border       : '1px solid rgba(100,200,100,0.4)',
+      color        : MOCHIGO.jahoda.green,
+      background   : `${MOCHIGO.jahoda.green}26`,
+      border       : `1px solid ${MOCHIGO.jahoda.green}66`,
       borderRadius : '8px', padding: '8px 20px',
       cursor       : 'pointer', letterSpacing: '2px',
       display      : 'none',
@@ -165,8 +167,8 @@ export class KeybindMenu {
     Object.assign(closeBtn.style, {
       fontFamily   : 'monospace', fontSize: '11px',
       color        : '#fff',
-      background   : 'rgba(201,168,76,0.2)',
-      border       : '1px solid rgba(201,168,76,0.4)',
+      background   : `${MOCHIGO.jahoda.gold}33`,
+      border       : `1px solid ${MOCHIGO.jahoda.gold}66`,
       borderRadius : '8px', padding: '8px 20px',
       cursor       : 'pointer', letterSpacing: '2px',
     });
@@ -181,7 +183,7 @@ export class KeybindMenu {
       display   : 'flex', alignItems: 'center',
       gap       : '10px', marginTop: '16px',
       fontFamily: 'monospace', fontSize: '10px',
-      color     : 'rgba(201,168,76,0.7)',
+      color     : `${MOCHIGO.jahoda.gold}B3`,
     });
 
     const sizeLabel = document.createElement('span');
@@ -192,7 +194,7 @@ export class KeybindMenu {
     slider.min   = '50';
     slider.max   = '120';
     slider.value = localStorage.getItem('ashes_ui_scale') ?? '100';
-    Object.assign(slider.style, { flex: '1', accentColor: '#C9A84C' });
+    Object.assign(slider.style, { flex: '1', accentColor: MOCHIGO.jahoda.gold });
 
     const valLabel = document.createElement('span');
     valLabel.textContent = `${slider.value}%`;
@@ -248,9 +250,9 @@ export class KeybindMenu {
     const btn = this._rows[action];
     if (btn) {
       btn.textContent      = `${this._formatKey(code)} ✓?`;
-      btn.style.background = 'rgba(100,200,100,0.2)';
-      btn.style.border     = '1px solid #44ff88';
-      btn.style.color      = '#44ff88';
+      btn.style.background = `${MOCHIGO.jahoda.green}33`;
+      btn.style.border     = `1px solid ${MOCHIGO.jahoda.green}`;
+      btn.style.color      = MOCHIGO.jahoda.green;
     }
     if (this._confirmBtn) this._confirmBtn.style.display = 'flex';
     this._waiting = null;
@@ -274,9 +276,9 @@ export class KeybindMenu {
     });
 
     // Resaltar el activo
-    btn.style.background = 'rgba(201,168,76,0.3)';
-    btn.style.border     = '1px solid #C9A84C';
-    btn.style.color      = '#C9A84C';
+    btn.style.background = `${MOCHIGO.jahoda.gold}4D`;
+    btn.style.border     = `1px solid ${MOCHIGO.jahoda.gold}`;
+    btn.style.color      = MOCHIGO.jahoda.gold;
     btn.textContent      = '...';
   }
 
