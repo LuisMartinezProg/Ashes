@@ -64,6 +64,7 @@ import * as THREE from 'three';
 window.addEventListener('error', e => document.title = 'ERR: ' + e.message);
 window.addEventListener('unhandledrejection', e => document.title = 'ERR: ' + (e.reason?.message || e.reason));
 import { MOCHIGO, THEME } from './data/palette.js';
+import { applyPaletteToCSS } from './data/applyPaletteToCSS.js';
 import { initScene }        from './core/scene.js';
 import { startLoop, getPlayer, setSkillSystem, setCombatSystem, setEnemies,setNPCs, setDialogueUI, setTriggers, setResourceCallback } from './core/loop.js';
 import { initResize }       from './core/resize.js';
@@ -161,7 +162,9 @@ function _setWorldEnemiesVisible(visible) {
 }
 
 async function boot() {
+  
   try {
+    applyPaletteToCSS();
    window.onerror = (msg, src, line) => {
       document.body.innerHTML = `<pre style="color:#ff4444;padding:16px;font-size:11px;">${msg}\n${src}:${line}</pre>`;
    };
